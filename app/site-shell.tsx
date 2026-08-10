@@ -83,6 +83,19 @@ const products = [
   },
 ] as const;
 
+const organisations = [
+  { name: "Interim Spaces", logo: "/assets/clients/interim-spaces.jpg", width: 1920, height: 1920, className: "client-square" },
+  { name: "Brook", logo: "/assets/clients/brook.png", width: 979, height: 220, className: "client-wide" },
+  { name: "Bean About Town", logo: "/assets/clients/bean-about-town.png", width: 957, height: 762, className: "client-square" },
+  { name: "The Wild Ones", logo: "/assets/clients/the-wild-ones.png", width: 402, height: 383, className: "client-square" },
+  { name: "Traidcraft", logo: "/assets/clients/traidcraft.png", width: 942, height: 1024, className: "client-tall" },
+  { name: "AgriEvolve", logo: "/assets/clients/agrievolve.png", width: 173, height: 100, className: "client-wide" },
+  { name: "Diageo", logo: "/assets/clients/diageo.png", width: 226, height: 49, className: "client-wide" },
+  { name: "Kyoto Foundation", logo: "/assets/clients/kyoto-foundation.png", width: 992, height: 711, className: "client-landscape" },
+  { name: "Crouch End Festival", logo: "/assets/clients/crouch-end.png", width: 352, height: 276, className: "client-landscape" },
+  { name: "Stroke Association", logo: "/assets/clients/stroke-association.png", width: 300, height: 143, className: "client-wide" },
+] as const;
+
 function BrandMark({ small = false }: { small?: boolean }) {
   return (
     <span className={small ? "brand brand-small" : "brand"} aria-label="My Social Impact">
@@ -212,7 +225,9 @@ function ProductCard({ product, index }: { product: typeof products[number]; ind
       </div>
       <div className="product-preview">
         <div className={`product-mark ${product.logoClass}`}>
-          <Image src={product.logo} alt={`${product.name} logo`} width={product.logoWidth} height={product.logoHeight} unoptimized />
+          <div className="product-logo-stage">
+            <Image src={product.logo} alt={`${product.name} logo`} width={product.logoWidth} height={product.logoHeight} unoptimized />
+          </div>
           {index === 0 && <div className="product-credentials" aria-label="Social Impact Excellence certifications">
             <Image className="bcorp-logo" src="/assets/b-corp-logo-black.png" alt="Certified B Corporation" width={500} height={731} unoptimized />
             <Image className="impact-certified-logo" src="/assets/certified-for-impact-2026.png" alt="Social Impact Excellence — Certified for Impact 2026" width={1501} height={1048} unoptimized />
@@ -342,7 +357,7 @@ export function HomePage() {
 
       <section className="organisations section-pad major-section" id="organisations">
         <div className="section-intro" data-reveal><SectionLabel major>Organisations</SectionLabel><h2>Some of the organisations we’ve worked with.</h2><p>Our team has worked with organisations across charities, social enterprise, business, international development, events and the creative industries.</p></div>
-        <div className="organisation-list" data-reveal>{["Interim Spaces", "Brook", "Bean About Town", "The Wild Ones", "Traidcraft", "AgriEvolve", "Careto Foundation", "AGIO", "Crouch End Festival", "Stroke Association"].map((name, index) => <span key={name}><b>{String(index + 1).padStart(2, "0")}</b>{name}</span>)}</div>
+        <div className="organisation-list" data-reveal>{organisations.map((organisation, index) => <article className={`organisation-tile ${organisation.className}`} key={organisation.name}><b>{String(index + 1).padStart(2, "0")}</b><div className="organisation-logo-stage"><Image src={organisation.logo} alt={organisation.name} width={organisation.width} height={organisation.height} unoptimized /></div></article>)}</div>
       </section>
 
       <section className="team section-pad major-section" id="team">
