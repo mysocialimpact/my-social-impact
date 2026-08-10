@@ -2242,18 +2242,26 @@ main > section,
   padding: .35rem 0;
 }
 
-.home-page .product-grid .product-preview { grid-template-rows: 125px auto; }
+.home-page .product-grid .product-preview {
+  grid-template-rows: 180px auto;
+  gap: 1.25rem;
+}
 .home-page .product-grid .product-mark {
-  height: 125px;
-  padding: .35rem !important;
+  height: 180px;
+  padding: 0 !important;
+  display: flex;
+  align-items: center !important;
+  justify-content: center;
 }
 .home-page .product-grid .product-mark img {
   width: auto;
-  max-width: 170px;
-  max-height: 105px;
+  height: auto;
+  max-width: 100%;
+  max-height: 100%;
 }
-.home-page .product-grid .logo-square img { max-width: 105px; }
-.home-page .product-grid .logo-festival img { max-width: 180px; }
+.home-page .product-grid .charity-product .logo-square img { width: 158px; }
+.home-page .product-grid .festival-product .logo-festival img { width: min(100%, 255px); }
+.home-page .product-grid .claims-product .logo-square img { width: 172px; }
 
 .home-page .ecosystem-grid { align-items: start; }
 .home-page .ecosystem-mark,
@@ -2291,8 +2299,11 @@ main > section,
   .home-page .product-grid .product-name { font-size: 1.45rem; }
 
   .home-page .product-showcase > .flagship .product-name { font-size: 1.8rem; }
-  .home-page .product-grid .product-preview { grid-template-rows: 145px auto; }
-  .home-page .product-grid .product-mark { height: 145px; }
+  .home-page .product-grid .product-preview { grid-template-rows: 190px auto; }
+  .home-page .product-grid .product-mark { height: 190px; }
+  .home-page .product-grid .charity-product .logo-square img { width: 170px; }
+  .home-page .product-grid .festival-product .logo-festival img { width: min(100%, 275px); }
+  .home-page .product-grid .claims-product .logo-square img { width: 184px; }
   .home-page .ecosystem-grid { gap: 5.5rem; }
   .home-page .ecosystem-mark,
   .home-page .ecosystem-mark.ideas,
