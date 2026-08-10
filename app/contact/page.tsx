@@ -1,11 +1,5 @@
-import type { Metadata } from "next";
-import { ContactPage } from "../site-shell";
-
-export const metadata: Metadata = {
-  title: "Contact",
-  description: "Talk to My Social Impact about creating meaningful and measurable change.",
-};
+import { redirect } from "next/navigation";
 
 export default function Page() {
-  return <ContactPage />;
+  redirect("/#contact");
 }
