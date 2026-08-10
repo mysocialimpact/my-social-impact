@@ -124,9 +124,21 @@ export function SiteHeader() {
 export function Footer() {
   return (
     <footer className="site-footer">
-      <div><BrandMark small /><p>Strategy for Social Impact Excellence</p></div>
-      <div className="footer-links"><Link href="/">Home</Link><Link href="/blog">Blog</Link><Link href="/#contact">Contact</Link><a href="https://www.linkedin.com/company/my-social-impact" target="_blank" rel="noreferrer">LinkedIn ↗</a></div>
-      <div className="footer-meta"><p>Ideas brought to action with <a href="https://www.theideasshed.com/" target="_blank" rel="noreferrer">The Ideas Shed ↗</a></p><p>© {new Date().getFullYear()} My Social Impact</p></div>
+      <div className="footer-brand">
+        <BrandMark small />
+        <p>Strategy for Social Impact Excellence</p>
+      </div>
+      <div className="footer-ideas">
+        <p className="footer-kicker">Website built by</p>
+        <h2><a href="https://www.theideasshed.com/" target="_blank" rel="noreferrer">The Ideas Shed ↗</a></h2>
+        <p>A creative venture studio that turns promising ideas into practical projects, tools and businesses.</p>
+        <blockquote>Imagine a world where curiosity and creativity were valued as highly as certainty.</blockquote>
+        <a className="footer-address" href="https://www.theideasshed.com/" target="_blank" rel="noreferrer">www.theideasshed.com ↗</a>
+      </div>
+      <div className="footer-bottom">
+        <div className="footer-links"><Link href="/">Home</Link><Link href="/blog">Blog</Link><Link href="/#contact">Contact</Link><a href="https://www.linkedin.com/company/my-social-impact" target="_blank" rel="noreferrer">LinkedIn ↗</a></div>
+        <p className="footer-meta">© {new Date().getFullYear()} My Social Impact</p>
+      </div>
     </footer>
   );
 }
@@ -241,7 +253,7 @@ function Newsletter() {
 function LocationJourney() {
   return (
     <div className="location-journey" data-reveal>
-      <Image className="location-journey-desktop" src="/location-journey-editorial.png" alt="An editorial ink illustration travelling from the Somerset countryside, through London, to the Ugandan savannah" width={2048} height={817} unoptimized />
+      <Image className="location-journey-desktop" src="/location-journey-contemporary-v2.png" alt="A contemporary line illustration travelling from the Somerset countryside, through London, to Uganda, with a giraffe and a distant orange Land Rover" width={1981} height={793} unoptimized />
       <div className="location-journey-mobile" role="img" aria-label="An editorial ink journey from Somerset to London to Uganda">
         <span className="journey-crop journey-somerset"><b>Somerset</b></span>
         <span className="journey-crop journey-london"><b>London</b></span>
@@ -265,7 +277,8 @@ function ContactLocations() {
         <h2>Three places.<br />One team.</h2>
         <div className="contact-actions">
           <p>We work between Somerset, London and Kampala, bringing different perspectives, experiences and ideas into the work we do.</p>
-          <p><strong>Have something interesting to talk about?</strong><br />We’d love to hear about it.</p>
+          <p><strong>Have something interesting to talk about?</strong></p>
+          <p>We’d love to hear about it.</p>
           <a className="contact-email-link" href="mailto:marcus@mysocialimpact.org">marcus@mysocialimpact.org <span>↗</span></a>
           <a className="whatsapp-link" href="https://wa.me/447879812789" target="_blank" rel="noreferrer">WhatsApp us <span>↗</span></a>
         </div>
@@ -346,10 +359,10 @@ export function HomePage() {
 
       <section className="ecosystem section-pad major-section" id="ecosystem">
         <div className="section-intro" data-reveal><SectionLabel major>Ecosystem</SectionLabel><h2>Specialists,<br />working together.</h2><div className="section-support editorial-copy"><p>Sometimes the right expertise sits outside the traditional consultancy model.</p><p>We work alongside specialist ventures and collaborators where their expertise can make the work better.</p></div></div>
-        <div className="ecosystem-grid"><article data-reveal><div className="ecosystem-mark ideas"><Image src="/assets/ideas-shed.jpg" alt="The Ideas Shed — From ideas to action" width={1254} height={1254} unoptimized /></div><SectionLabel>The Ideas Shed</SectionLabel><h3>Turning ideas into action.</h3><p>The Ideas Shed explores new ideas, ventures and technologies, helping turn promising concepts into practical projects, tools and businesses.</p><p>Its work sits between strategy, creativity and experimentation: shaping early ideas, testing what has potential and finding clear routes from possibility to action.</p><p>We collaborate where a social impact challenge needs fresh thinking, a new product or a more imaginative way forward. That perspective helps keep innovation at the heart of My Social Impact.</p><p><a className="text-link" href="https://www.theideasshed.com/" target="_blank" rel="noreferrer">Explore The Ideas Shed →</a></p></article><article data-reveal style={{ "--delay": "90ms" } as React.CSSProperties}><div className="ecosystem-mark good"><Image src="/assets/good-numbers-transparent.png" alt="Good Numbers" width={1536} height={1024} unoptimized /></div><SectionLabel>Good Numbers</SectionLabel><h3>Social impact accountants for a world in which the numbers need to tell more than half the story.</h3><p>Good Numbers brings accounting and social impact together, helping charities and purpose-led organisations connect financial reporting with a clearer understanding of the difference they create.</p><p>A particular focus is SORP 2026 and the changing expectations around how charities communicate impact alongside their financial reporting.</p><p>Good Numbers also works with accountancy firms, providing specialist social impact expertise that complements their existing charity accounting, audit and advisory relationships.</p><p><a className="text-link" href="#contact">Explore Good Numbers →</a></p></article></div>
+        <div className="ecosystem-grid"><article data-reveal><div className="ecosystem-mark ideas"><Image src="/assets/ideas-shed-transparent.png" alt="The Ideas Shed — From ideas to action" width={1254} height={1251} unoptimized /></div><SectionLabel>The Ideas Shed</SectionLabel><h3>Turning ideas into action.</h3><p>The Ideas Shed explores new ideas, ventures and technologies, helping turn promising concepts into practical projects, tools and businesses.</p><p>Its work sits between strategy, creativity and experimentation: shaping early ideas, testing what has potential and finding clear routes from possibility to action.</p><p>We collaborate where a social impact challenge needs fresh thinking, a new product or a more imaginative way forward. That perspective helps keep innovation at the heart of My Social Impact.</p><p><a className="text-link" href="https://www.theideasshed.com/" target="_blank" rel="noreferrer">Explore The Ideas Shed →</a></p></article><article data-reveal style={{ "--delay": "90ms" } as React.CSSProperties}><div className="ecosystem-mark good"><Image src="/assets/good-numbers-transparent-cropped.png" alt="Good Numbers" width={1106} height={495} unoptimized /></div><SectionLabel>Good Numbers</SectionLabel><h3>Social impact accountants for a world in which the numbers need to tell more than half the story.</h3><p>Good Numbers brings accounting and social impact together, helping charities and purpose-led organisations connect financial reporting with a clearer understanding of the difference they create.</p><p>A particular focus is SORP 2026 and the changing expectations around how charities communicate impact alongside their financial reporting.</p><p>Good Numbers also works with accountancy firms, providing specialist social impact expertise that complements their existing charity accounting, audit and advisory relationships.</p><p><a className="text-link" href="#contact">Explore Good Numbers →</a></p></article></div>
       </section>
 
-      <section className="promise major-section" id="promise" data-reveal><SectionLabel major>Our promise</SectionLabel><div><blockquote>We will challenge you, support you and partner with you to create social impact that is real, meaningful and recognised today and for tomorrow.</blockquote><p>Not more measurement for the sake of measurement.<br />Not another report destined for a shelf.</p><p><strong>Better understanding. Better decisions. More impact.</strong></p></div></section>
+      <section className="promise major-section" id="promise" data-reveal><SectionLabel major>Our promise</SectionLabel><div><blockquote>We will challenge you, support you and partner with you to create social impact that is real, meaningful and recognised today and for tomorrow.</blockquote><p>Not more measurement for the sake of measurement.</p><p>Not another report destined for a shelf.</p><p><strong>Better understanding. Better decisions. More impact.</strong></p></div></section>
       <ContactLocations />
       <Newsletter />
     </main><Footer /></>
