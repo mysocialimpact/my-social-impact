@@ -2187,3 +2187,120 @@ main > section,
   .practice-feature.what-we-do > ul { margin-top: 0; }
   .home-page .section-intro > .section-support { grid-column: 1; grid-row: auto; }
 }
+
+/* Products and ecosystem share one restrained identity system. */
+.home-page .product-name,
+.home-page .flagship .product-name,
+.home-page .product-showcase > .flagship .product-name,
+.home-page .product-grid .product-name {
+  color: var(--ink);
+  font-family: var(--font-sans), Arial, sans-serif;
+  font-size: clamp(1.35rem, 1.7vw, 1.85rem);
+  font-weight: 760;
+  line-height: 1.08;
+  letter-spacing: -.035em;
+}
+
+.home-page .product-showcase > .flagship .product-name {
+  color: var(--orange);
+  font-size: clamp(1.7rem, 2.2vw, 2.45rem);
+}
+
+.home-page .product-summary .product-lead,
+.home-page .product-grid .product-summary .product-lead {
+  font-family: var(--font-sans), Arial, sans-serif;
+  font-size: clamp(1.05rem, 1.15vw, 1.2rem);
+  font-weight: 750;
+  line-height: 1.42;
+  letter-spacing: -.018em;
+}
+
+.home-page .product-mark,
+.home-page .product-grid .product-mark,
+.home-page .product-showcase > .flagship .product-mark,
+.home-page .product-credentials {
+  background: transparent !important;
+}
+
+.home-page .product-mark img {
+  object-fit: contain;
+  mix-blend-mode: multiply;
+}
+
+.home-page .product-showcase > .flagship .product-mark {
+  min-height: 150px;
+  padding: .25rem !important;
+}
+
+.home-page .product-showcase > .flagship .product-mark > img {
+  width: min(100%, 205px);
+  max-height: 105px;
+}
+
+.home-page .product-showcase > .flagship .product-credentials {
+  width: min(100%, 250px);
+  padding: .35rem 0;
+}
+
+.home-page .product-grid .product-preview { grid-template-rows: 125px auto; }
+.home-page .product-grid .product-mark {
+  height: 125px;
+  padding: .35rem !important;
+}
+.home-page .product-grid .product-mark img {
+  width: auto;
+  max-width: 170px;
+  max-height: 105px;
+}
+.home-page .product-grid .logo-square img { max-width: 105px; }
+.home-page .product-grid .logo-festival img { max-width: 180px; }
+
+.home-page .ecosystem-grid { align-items: start; }
+.home-page .ecosystem-mark,
+.home-page .ecosystem-mark.ideas,
+.home-page .ecosystem-mark.good {
+  width: 100%;
+  height: 220px;
+  min-height: 220px;
+  margin-bottom: 2.75rem;
+  padding: 0;
+  aspect-ratio: auto;
+  align-items: center;
+  justify-content: flex-start;
+  overflow: visible;
+  background: transparent;
+}
+
+.home-page .ecosystem-mark.ideas img {
+  width: 220px;
+  height: 220px;
+  object-fit: contain;
+  mix-blend-mode: multiply;
+}
+
+.home-page .ecosystem-mark.good img {
+  width: min(100%, 330px);
+  max-height: 150px;
+  object-fit: contain;
+}
+
+@media (max-width: 760px) {
+  .home-page .product-name,
+  .home-page .flagship .product-name,
+  .home-page .product-showcase > .flagship .product-name,
+  .home-page .product-grid .product-name { font-size: 1.45rem; }
+
+  .home-page .product-showcase > .flagship .product-name { font-size: 1.8rem; }
+  .home-page .product-grid .product-preview { grid-template-rows: 145px auto; }
+  .home-page .product-grid .product-mark { height: 145px; }
+  .home-page .ecosystem-grid { gap: 5.5rem; }
+  .home-page .ecosystem-mark,
+  .home-page .ecosystem-mark.ideas,
+  .home-page .ecosystem-mark.good {
+    height: 175px;
+    min-height: 175px;
+    margin-bottom: 2.25rem;
+  }
+  .home-page .ecosystem-mark.ideas img { width: 175px; height: 175px; }
+  .home-page .ecosystem-mark.good img { width: min(100%, 270px); max-height: 125px; }
+}
