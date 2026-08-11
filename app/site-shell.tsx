@@ -120,17 +120,42 @@ export function SiteHeader() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  useEffect(() => {
+    document.body.classList.toggle("menu-is-open", open);
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.body.classList.remove("menu-is-open");
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [open]);
+
+  const navigation = [
+    { href: "/social-impact-excellence", label: "Social Impact Excellence", note: "Our flagship methodology" },
+    { href: "/social-impact-report", label: "Charity Impact Reports", note: "Stronger evidence. Clearer storytelling." },
+    { href: "/social-impact-claims-code", label: "Social Impact Claims Code", note: "Make claims people can trust" },
+    { href: "/blog", label: "Blog", note: "Ideas, evidence and useful provocations" },
+  ];
+
   return (
-    <header className={`site-header ${scrolled ? "is-scrolled" : ""}`}>
+    <header className={`site-header ${scrolled ? "is-scrolled" : ""} ${open ? "is-menu-open" : ""}`}>
       <Link href="/" className="header-brand" aria-label="My Social Impact home">
         <Image className="header-logo" src="/assets/my-social-impact-horizontal.png" alt="" width={1088} height={124} priority unoptimized />
       </Link>
       <button className={`menu-button ${open ? "is-open" : ""}`} onClick={() => setOpen((current) => !current)} aria-expanded={open} aria-label="Toggle menu"><span /><span /></button>
       <nav className={open ? "nav-open" : ""} aria-label="Main navigation">
-        <Link href="/social-impact-excellence" className={pathname === "/social-impact-excellence" ? "is-current" : ""} aria-current={pathname === "/social-impact-excellence" ? "page" : undefined} onClick={() => setOpen(false)}>Social Impact Excellence</Link>
-        <Link href="/social-impact-report" className={pathname === "/social-impact-report" ? "is-current" : ""} aria-current={pathname === "/social-impact-report" ? "page" : undefined} onClick={() => setOpen(false)}>Charity Impact Reports</Link>
-        <Link href="/social-impact-claims-code" className={pathname === "/social-impact-claims-code" ? "is-current" : ""} aria-current={pathname === "/social-impact-claims-code" ? "page" : undefined} onClick={() => setOpen(false)}>Social Impact Claims Code</Link>
-        <Link href="/blog" onClick={() => setOpen(false)}>Blog</Link>
+        {navigation.map((item, index) => {
+          const current = pathname === item.href;
+          return (
+            <Link key={item.href} href={item.href} className={current ? "is-current" : ""} aria-current={current ? "page" : undefined} onClick={() => setOpen(false)}>
+              <span className="nav-number">{String(index + 1).padStart(2, "0")}</span>
+              <span className="nav-copy"><span className="nav-label">{item.label}</span><span className="nav-note">{item.note}</span></span>
+              <span className="nav-arrow" aria-hidden="true">↗</span>
+            </Link>
+          );
+        })}
       </nav>
     </header>
   );
