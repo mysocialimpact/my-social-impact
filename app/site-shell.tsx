@@ -266,7 +266,7 @@ function ProductCard({ product, index }: { product: typeof products[number]; ind
     </>
   );
 
-  return product.href ? <a className={`product-card ${product.className}`} href={product.href} target={product.href.startsWith("http") ? "_blank" : undefined} rel={product.href.startsWith("http") ? "noreferrer" : undefined} data-reveal style={{ "--delay": `${index * 70}ms` } as React.CSSProperties}>{content}</a> : <article className={`product-card ${product.className}`} data-reveal style={{ "--delay": `${index * 70}ms` } as React.CSSProperties}>{content}</article>;
+  return <a className={`product-card ${product.className}`} href={product.href} target={product.href.startsWith("http") ? "_blank" : undefined} rel={product.href.startsWith("http") ? "noreferrer" : undefined} data-reveal style={{ "--delay": `${index * 70}ms` } as React.CSSProperties}>{content}</a>;
 }
 
 export function ArticleCard({ post, index = 0 }: { post: typeof posts[number]; index?: number }) {
