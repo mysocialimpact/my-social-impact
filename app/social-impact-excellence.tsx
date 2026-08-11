@@ -16,11 +16,11 @@ const excellenceSections = [
 ] as const;
 
 const pillars = [
-  { number: "01", name: "Purpose", line: "Know why you exist.", copy: "Define a clear and meaningful purpose, understand the change you are trying to create and make sure that purpose genuinely influences strategy.", icon: "/assets/excellence/purpose.png" },
-  { number: "02", name: "Leadership", line: "Make impact everyone’s responsibility.", copy: "Create leadership, governance, accountability and a culture where impact matters when decisions are made.", icon: "/assets/excellence/leadership.png" },
-  { number: "03", name: "Data", line: "Know what’s actually happening.", copy: "Collect useful evidence, measure what matters and turn information into insight that people can actually use.", icon: "/assets/excellence/data.png" },
-  { number: "04", name: "Delivery", line: "Turn purpose into outcomes.", copy: "Translate ambition into programmes, products, services and activities capable of creating meaningful change.", icon: "/assets/excellence/delivery.png" },
-  { number: "05", name: "Communications", line: "Tell the story with substance.", copy: "Engage stakeholders and communicate impact clearly, credibly and transparently.", icon: "/assets/excellence/communications.png" },
+  { number: "01", name: "Purpose", line: "Know why you exist.", copy: "Define a clear and meaningful purpose, understand the change you are trying to create and make sure that purpose genuinely influences strategy.", icon: "/assets/excellence/purpose.png", iconOnly: "/assets/excellence/purpose-icon.png" },
+  { number: "02", name: "Leadership", line: "Make impact everyone’s responsibility.", copy: "Create leadership, governance, accountability and a culture where impact matters when decisions are made.", icon: "/assets/excellence/leadership.png", iconOnly: "/assets/excellence/leadership-icon.png" },
+  { number: "03", name: "Data", line: "Know what’s actually happening.", copy: "Collect useful evidence, measure what matters and turn information into insight that people can actually use.", icon: "/assets/excellence/data.png", iconOnly: "/assets/excellence/data-icon.png" },
+  { number: "04", name: "Delivery", line: "Turn purpose into outcomes.", copy: "Translate ambition into programmes, products, services and activities capable of creating meaningful change.", icon: "/assets/excellence/delivery.png", iconOnly: "/assets/excellence/delivery-icon.png" },
+  { number: "05", name: "Communications", line: "Tell the story with substance.", copy: "Engage stakeholders and communicate impact clearly, credibly and transparently.", icon: "/assets/excellence/communications.png", iconOnly: "/assets/excellence/communications-icon.png" },
 ] as const;
 
 const journey = [
@@ -68,8 +68,8 @@ function Action({ children = "Talk to us about Social Impact Excellence" }: { ch
   return <a className="sie-action" href="mailto:marcus@mysocialimpact.org?subject=Social%20Impact%20Excellence"><span><strong>{children}</strong><small>marcus@mysocialimpact.org</small></span><b aria-hidden="true">→</b></a>;
 }
 
-function PillarIcon({ pillar, compact = false }: { pillar: typeof pillars[number]; compact?: boolean }) {
-  return <div className={`sie-pillar-icon ${compact ? "is-compact" : ""}`}><Image src={pillar.icon} alt="" width={260} height={260} unoptimized /></div>;
+function PillarIcon({ pillar, compact = false, iconOnly = false }: { pillar: typeof pillars[number]; compact?: boolean; iconOnly?: boolean }) {
+  return <div className={`sie-pillar-icon ${compact ? "is-compact" : ""}`}><Image src={iconOnly ? pillar.iconOnly : pillar.icon} alt="" width={260} height={260} unoptimized /></div>;
 }
 
 function Blueprint() {
@@ -78,7 +78,7 @@ function Blueprint() {
     <div className="sie-blueprint-desktop" role="img" aria-label="The five Social Impact Excellence pillars are strengthened through maturity assessment, diagnostic, blueprint, roadmap and continuous improvement">
       <div className="sie-blueprint-stage-head"><span aria-hidden="true" />{journey.map(stage => <div key={stage.name}><b>{stage.number}</b><strong>{stage.name}</strong></div>)}</div>
       <div className="sie-blueprint-map">
-        {pillars.map((pillar) => <div className="sie-blueprint-track" key={pillar.name}><div className="sie-blueprint-pillar"><PillarIcon pillar={pillar} compact /><strong>{pillar.name}</strong></div><div className="sie-blueprint-beam"><span /><span /><span /><span /><span /></div></div>)}
+        {pillars.map((pillar) => <div className="sie-blueprint-track" key={pillar.name}><div className="sie-blueprint-pillar"><PillarIcon pillar={pillar} compact iconOnly /><strong>{pillar.name}</strong></div><div className="sie-blueprint-beam"><span /><span /><span /><span /><span /></div></div>)}
         <div className="sie-blueprint-return"><span>Continuous improvement</span><b aria-hidden="true">↺</b><span>Reassess</span></div>
       </div>
     </div>
@@ -113,7 +113,7 @@ export function SocialImpactExcellencePage() {
 
     <section className="sie-pillars">
       <SectionLead number="02" eyebrow="The five pillars" title={<>Excellence is a system.</>}><p>Our Social Impact Excellence methodology is built around five interconnected pillars. Strength in one area cannot compensate indefinitely for weakness in another.</p></SectionLead>
-      <div className="sie-pillar-list">{pillars.map((pillar) => <article className={pillar.name === "Communications" ? "is-communications" : undefined} key={pillar.name} data-reveal><header><span>{pillar.number}</span><PillarIcon pillar={pillar} /></header><div><h3>{pillar.name}</h3><strong>{pillar.line}</strong><p>{pillar.copy}</p></div></article>)}</div>
+      <div className="sie-pillar-list">{pillars.map((pillar) => <article className={pillar.name === "Communications" ? "is-communications" : undefined} key={pillar.name} data-reveal><header><span>{pillar.number}</span><PillarIcon pillar={pillar} iconOnly /></header><div><h3>{pillar.name}</h3><strong>{pillar.line}</strong><p>{pillar.copy}</p></div></article>)}</div>
     </section>
 
     <section className="sie-weakest">
