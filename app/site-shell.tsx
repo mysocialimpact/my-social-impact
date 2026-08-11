@@ -66,8 +66,8 @@ const products = [
     logoClass: "logo-festival",
     className: "festival-product",
     lead: "Helping festivals and cultural and community events understand the difference they make.",
-    copy: "We measure their economic, social and environmental impact, turning evidence into clearer decisions, stronger funding cases and credible stories.",
-    href: null,
+    copy: "We measure their economic, social and environmental impact. We have built a portal to make the before, during and after process faster and more efficient—from planning what to measure to organising evidence and producing the final report.",
+    href: "https://www.festivalimpact.org/",
   },
   {
     name: "Social Impact Claims Code",
@@ -266,7 +266,7 @@ function ProductCard({ product, index }: { product: typeof products[number]; ind
     </>
   );
 
-  return product.href ? <a className={`product-card ${product.className}`} href={product.href} data-reveal style={{ "--delay": `${index * 70}ms` } as React.CSSProperties}>{content}</a> : <article className={`product-card ${product.className}`} data-reveal style={{ "--delay": `${index * 70}ms` } as React.CSSProperties}>{content}</article>;
+  return product.href ? <a className={`product-card ${product.className}`} href={product.href} target={product.href.startsWith("http") ? "_blank" : undefined} rel={product.href.startsWith("http") ? "noreferrer" : undefined} data-reveal style={{ "--delay": `${index * 70}ms` } as React.CSSProperties}>{content}</a> : <article className={`product-card ${product.className}`} data-reveal style={{ "--delay": `${index * 70}ms` } as React.CSSProperties}>{content}</article>;
 }
 
 export function ArticleCard({ post, index = 0 }: { post: typeof posts[number]; index?: number }) {
