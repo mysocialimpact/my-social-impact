@@ -79,7 +79,7 @@ const products = [
     className: "claims-product",
     lead: "Because good intentions don’t automatically make an impact claim a good one.",
     copy: "A practical framework for making social impact claims clearer, more credible and easier to trust.",
-    href: null,
+    href: "/social-impact-claims-code",
   },
 ] as const;
 
@@ -128,6 +128,7 @@ export function SiteHeader() {
       <button className={`menu-button ${open ? "is-open" : ""}`} onClick={() => setOpen((current) => !current)} aria-expanded={open} aria-label="Toggle menu"><span /><span /></button>
       <nav className={open ? "nav-open" : ""} aria-label="Main navigation">
         <Link href="/social-impact-report" className={pathname === "/social-impact-report" ? "is-current" : ""} aria-current={pathname === "/social-impact-report" ? "page" : undefined} onClick={() => setOpen(false)}>Charity Impact Reports</Link>
+        <Link href="/social-impact-claims-code" className={pathname === "/social-impact-claims-code" ? "is-current" : ""} aria-current={pathname === "/social-impact-claims-code" ? "page" : undefined} onClick={() => setOpen(false)}>Social Impact Claims Code</Link>
         <Link href="/blog" onClick={() => setOpen(false)}>Blog</Link>
       </nav>
     </header>
@@ -233,7 +234,7 @@ function ProductCard({ product, index }: { product: typeof products[number]; ind
             <Image className="impact-certified-logo" src="/assets/certified-for-impact-2026.png" alt="Social Impact Excellence — Certified for Impact 2026" width={1501} height={1048} unoptimized />
           </div>}
         </div>
-        <div className="product-summary"><p className="product-lead">{product.lead}</p><p>{product.copy}</p>{product.href && <span className="product-link">Explore Charity Impact Reports <b>→</b></span>}</div>
+        <div className="product-summary"><p className="product-lead">{product.lead}</p><p>{product.copy}</p>{product.href && <span className="product-link">Explore {product.name.replace("™", "")} <b>→</b></span>}</div>
       </div>
     </>
   );
