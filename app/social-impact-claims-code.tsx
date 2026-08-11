@@ -129,10 +129,8 @@ function Flow({ items, label }: { items: readonly string[]; label: string }) {
   return <div className="sic-flow" role="img" aria-label={`${label}: ${items.join(" to ")}`}>{items.map((item, index) => <div key={item}><span>{String(index + 1).padStart(2, "0")}</span><strong>{item}</strong>{index < items.length - 1 && <i aria-hidden="true">→</i>}</div>)}</div>;
 }
 
-function ContactAction({ code = false }: { code?: boolean }) {
-  const href = code ? "mailto:chris@mysocialimpact.org?subject=Social%20Impact%20Claims%20Code" : "mailto:marcus@mysocialimpact.org?subject=Social%20impact";
-  const email = code ? "chris@mysocialimpact.org" : "marcus@mysocialimpact.org";
-  return <a className="sic-action" href={href}><span><strong>{code ? "Help shape the Code" : "Talk to us about your impact"}</strong><small>{email}</small></span><b aria-hidden="true">→</b></a>;
+function ContactAction() {
+  return <a className="sic-action" href="mailto:marcus@mysocialimpact.org?subject=Social%20impact"><span><strong>Talk to us about your impact</strong><small>marcus@mysocialimpact.org</small></span><b aria-hidden="true">→</b></a>;
 }
 
 export function SocialImpactClaimsCodePage() {
@@ -268,7 +266,7 @@ export function SocialImpactClaimsCodePage() {
       <div className="sic-shape-intro" data-reveal><Eyebrow>Help shape it</Eyebrow><h2>We started the Code. We don’t think we should finish it alone.</h2><h3>Help shape the Social Impact Claims Code.</h3><div><p>My Social Impact has initiated this work. We do not claim to be the sole authority on good impact practice.</p><p>We want the Code to be challenged, tested and improved by people with different expertise and experience.</p></div></div>
       <div className="sic-contributors" data-reveal><p>We’d particularly like to hear from:</p><div>{["Charities", "Businesses", "Social enterprises", "Accountants", "Funders", "Researchers", "Evaluators", "Trustees", "Impact practitioners", "Marketers", "Communicators", "People with lived experience"].map(item => <span key={item}>{item}</span>)}</div></div>
       <div className="sic-challenge-us" data-reveal>{["Challenge it.", "Tell us what we’ve missed.", "Tell us where you disagree.", "Give us examples that test the principles.", "Help us make it better."].map((item, index) => <p key={item}><span>0{index + 1}</span>{item}</p>)}</div>
-      <div className="sic-shape-contact" data-reveal><div><p>If you work in this field and would be willing to be interviewed or contribute your perspective, we’d love to hear from you.</p><a href="mailto:chris@mysocialimpact.org?subject=Social%20Impact%20Claims%20Code">chris@mysocialimpact.org ↗</a><ContactAction code /></div><p>Chris & Marcus<br /><strong>My Social Impact</strong></p></div>
+      <div className="sic-shape-contact" data-reveal><div><p>If you work in this field and would be willing to be interviewed or contribute your perspective, we’d love to hear from you. Contact Chris or Marcus.</p><div className="sic-shape-emails"><a href="mailto:chris@mysocialimpact.org?subject=Social%20Impact%20Claims%20Code"><span>Chris</span><strong>chris@mysocialimpact.org</strong><b aria-hidden="true">↗</b></a><a href="mailto:marcus@mysocialimpact.org?subject=Social%20Impact%20Claims%20Code"><span>Marcus</span><strong>marcus@mysocialimpact.org</strong><b aria-hidden="true">↗</b></a></div></div><p>Chris & Marcus<br /><strong>My Social Impact</strong></p></div>
     </section>
 
     <section className="sic-final" aria-label="The central principle"><p data-reveal>Make the strongest claim the evidence allows.</p><strong data-reveal>No stronger.</strong></section>
