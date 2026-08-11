@@ -137,6 +137,7 @@ export function SiteHeader() {
     { href: "/social-impact-report", label: "Charity Impact Reports", note: "Stronger evidence. Clearer storytelling." },
     { href: "/social-impact-claims-code", label: "Social Impact Claims Code", note: "Make claims people can trust" },
     { href: "/blog", label: "Blog", note: "Ideas, evidence and useful provocations" },
+    { href: "/#contact", label: "Contact", note: "Start a conversation" },
   ];
 
   return (
