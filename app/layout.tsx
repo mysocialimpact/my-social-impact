@@ -33,15 +33,15 @@ export async function generateMetadata(): Promise<Metadata> {
     icons: { icon: "/favicon.svg", shortcut: "/favicon.svg" },
     openGraph: {
       title: "My Social Impact",
-      description: "Strategy for Social Impact Excellence",
+      description: "Imagine a world where social impact was taken as seriously as financial performance.",
       type: "website",
       url: origin,
-      images: [{ url: socialImage, width: 1730, height: 909, alt: "My Social Impact — Strategy for Social Impact Excellence" }],
+      images: [{ url: socialImage, width: 1730, height: 909, alt: "My Social Impact — Imagine a world where social impact was taken as seriously as financial performance. Strategy for Social Impact Excellence." }],
     },
     twitter: {
       card: "summary_large_image",
       title: "My Social Impact",
-      description: "Strategy for Social Impact Excellence",
+      description: "Imagine a world where social impact was taken as seriously as financial performance.",
       images: [socialImage],
     },
   };
