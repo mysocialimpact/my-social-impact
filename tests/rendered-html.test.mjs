@@ -58,5 +58,8 @@ test("server-renders the Social Impact Excellence page", async () => {
   assert.match(html, /<title>Social Impact Excellence \| My Social Impact<\/title>/i);
   assert.match(html, /Imagine a world where social impact was taken as seriously as financial performance/i);
   assert.match(html, /The Social Impact Excellence Blueprint/i);
+  assert.match(html, /Data is often still the challenge/i);
+  assert.match(html, /five-star journey/i);
   assert.match(html, /Get access to the Maturity Assessment/i);
+  assert.match(html, /marcus@mysocialimpact\.org/i);
 });

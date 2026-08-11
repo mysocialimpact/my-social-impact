@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Footer, RevealObserver, SiteHeader } from "./site-shell";
 
@@ -64,7 +65,7 @@ function SectionLead({ number, eyebrow, title, children }: { number?: string; ey
 }
 
 function Action({ children = "Talk to us about Social Impact Excellence" }: { children?: React.ReactNode }) {
-  return <a className="sie-action" href="mailto:marcus@mysocialimpact.org?subject=Social%20Impact%20Excellence">{children}<span>→</span></a>;
+  return <a className="sie-action" href="mailto:marcus@mysocialimpact.org?subject=Social%20Impact%20Excellence"><span><strong>{children}</strong><small>marcus@mysocialimpact.org</small></span><b aria-hidden="true">→</b></a>;
 }
 
 function PillarIcon({ pillar, compact = false }: { pillar: typeof pillars[number]; compact?: boolean }) {
@@ -112,15 +113,15 @@ export function SocialImpactExcellencePage() {
 
     <section className="sie-pillars">
       <SectionLead number="02" eyebrow="The five pillars" title={<>Excellence is a system.</>}><p>Our Social Impact Excellence methodology is built around five interconnected pillars. Strength in one area cannot compensate indefinitely for weakness in another.</p></SectionLead>
-      <div className="sie-pillar-list">{pillars.map((pillar) => <article key={pillar.name} data-reveal><header><span>{pillar.number}</span><PillarIcon pillar={pillar} /></header><div><h3>{pillar.name}</h3><strong>{pillar.line}</strong><p>{pillar.copy}</p></div></article>)}</div>
+      <div className="sie-pillar-list">{pillars.map((pillar) => <article className={pillar.name === "Communications" ? "is-communications" : undefined} key={pillar.name} data-reveal><header><span>{pillar.number}</span><PillarIcon pillar={pillar} /></header><div><h3>{pillar.name}</h3><strong>{pillar.line}</strong><p>{pillar.copy}</p></div></article>)}</div>
     </section>
 
     <section className="sie-weakest">
       <div className="sie-weakest-head" data-reveal><Eyebrow>The system test</Eyebrow><h2>You’re only as strong as your weakest pillar.</h2></div>
-      <div className="sie-structure" role="img" aria-label="A structure supported by five pillars where one shorter pillar compromises the whole system" data-reveal><div className="sie-structure-beam"><span>Social Impact Excellence</span></div><div className="sie-structure-pillars">{pillars.map((pillar, index) => <div className={index === 3 ? "is-weak" : ""} key={pillar.name}><span>{pillar.number}</span><strong>{pillar.name}</strong></div>)}</div></div>
+      <div className="sie-structure" role="img" aria-label="A structure supported by five pillars where the shorter Data pillar compromises the whole system" data-reveal><div className="sie-structure-beam"><span>Social Impact Excellence</span></div><div className="sie-structure-pillars">{pillars.map((pillar, index) => <div className={index === 2 ? "is-weak" : ""} key={pillar.name}><span>{pillar.number}</span><strong>{pillar.name}</strong></div>)}</div></div>
       <div className="sie-weak-examples" data-reveal>{[
-        ["Great purpose + weak delivery", "Good intentions."],
         ["Great delivery + weak data", "Impact you struggle to understand or prove."],
+        ["Great purpose + weak delivery", "Good intentions."],
         ["Great data + weak leadership", "Evidence that doesn’t change decisions."],
         ["Great communications + weak evidence", "Claims people may struggle to trust."],
       ].map(([title, copy], index) => <article key={title}><span>0{index + 1}</span><h3>{title}</h3><p>{copy}</p></article>)}</div>
@@ -148,12 +149,13 @@ export function SocialImpactExcellencePage() {
     </section>
 
     <section className="sie-maturity" id="maturity">
-      <SectionLead number="05" eyebrow="Social Impact Maturity Assessment" title={<>Before deciding where to go,<br />understand where you are.</>}><p>Every Social Impact Excellence journey begins by developing a structured picture of the organisation’s current maturity across the five pillars.</p></SectionLead>
-      <div className="sie-maturity-scale" role="img" aria-label="A developmental scale from very early to fully embedded" data-reveal>{["Very early", "Developing", "Partly established", "Strong", "Fully embedded"].map((level, index) => <div key={level}><span>0{index + 1}</span><strong>{level}</strong></div>)}</div>
+      <SectionLead number="05" eyebrow="Social Impact Maturity Assessment" title={<>Before deciding where to go,<br />understand where you are.</>}><p>Every Social Impact Excellence journey begins by developing a structured picture of the organisation’s current maturity across the five pillars.</p><p>We express maturity as a simple one-to-five-star journey. It is developmental—not a pass or fail.</p></SectionLead>
+      <div className="sie-maturity-scale" role="img" aria-label="A developmental maturity scale from one star, very early, to five stars, fully embedded" data-reveal>{["Very early", "Developing", "Partly established", "Strong", "Fully embedded"].map((level, index) => <div key={level}><span>{index + 1} {index === 0 ? "star" : "stars"}</span><div className="sie-stars" aria-hidden="true">{"★".repeat(index + 1)}{"☆".repeat(4 - index)}</div><strong>{level}</strong></div>)}</div>
       <div className="sie-maturity-reassurance" data-reveal><h3>You don’t have to be excellent already.</h3><div>{["What’s working?", "What’s missing?", "Where are the weak pillars?", "What should we prioritise next?"].map((question, index) => <p key={question}><span>0{index + 1}</span>{question}</p>)}</div></div>
-      <div className="sie-profile" data-reveal><div><span>Illustrative maturity profile</span><p>Not a score or league table. A starting point for a useful conversation.</p></div><div className="sie-profile-bars">{[
-        ["Purpose", 72], ["Leadership", 55], ["Data", 78], ["Delivery", 42], ["Communications", 64],
-      ].map(([name, value]) => <div key={name}><span>{name}</span><i style={{ "--profile": `${value}%` } as React.CSSProperties} /><b>{value}%</b></div>)}</div></div>
+      <div className="sie-profile" data-reveal><div><span>Illustrative maturity profile</span><p>A developmental five-star profile—not a pass, fail or league table. It creates a useful starting point for conversation and action.</p></div><div className="sie-profile-chart"><div className="sie-profile-axis" aria-hidden="true"><span>0</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5 stars</span></div><div className="sie-profile-bars">{[
+        ["Purpose", 4.2], ["Leadership", 3.5], ["Data", 1.6], ["Delivery", 3.8], ["Communications", 3.1],
+      ].map(([name, value]) => { const score = Number(value); const rounded = Math.round(score); return <div key={name}><span>{name}</span><i style={{ "--profile": `${score * 20}%` } as React.CSSProperties} /><b aria-label={`${score} out of 5 stars`}><span aria-hidden="true">{"★".repeat(rounded)}{"☆".repeat(5 - rounded)}</span><small>{score}/5</small></b></div>; })}</div></div></div>
+      <div className="sie-data-note" data-reveal><span>Why Data is shown lowest</span><h3>Data is often still the challenge.</h3><div><p>Many organisations have a strong purpose and committed people, but struggle to collect, connect and use the evidence that shows what is actually changing.</p><p>That is why we have partnered with Fluid IT, a digital and IT consultancy, and why Gareth Murphy has become a core partner—bringing practical digital, data and systems expertise into the team.</p><Link href="/#team">Meet Gareth and the team <span aria-hidden="true">→</span></Link></div></div>
     </section>
 
     <section className="sie-platform" id="platform">

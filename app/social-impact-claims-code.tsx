@@ -131,7 +131,8 @@ function Flow({ items, label }: { items: readonly string[]; label: string }) {
 
 function ContactAction({ code = false }: { code?: boolean }) {
   const href = code ? "mailto:chris@mysocialimpact.org?subject=Social%20Impact%20Claims%20Code" : "mailto:marcus@mysocialimpact.org?subject=Social%20impact";
-  return <a className="sic-action" href={href}>{code ? "Help shape the Code" : "Talk to us about your impact"}<span>→</span></a>;
+  const email = code ? "chris@mysocialimpact.org" : "marcus@mysocialimpact.org";
+  return <a className="sic-action" href={href}><span><strong>{code ? "Help shape the Code" : "Talk to us about your impact"}</strong><small>{email}</small></span><b aria-hidden="true">→</b></a>;
 }
 
 export function SocialImpactClaimsCodePage() {

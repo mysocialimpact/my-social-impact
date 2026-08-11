@@ -194,7 +194,10 @@
 .cir-accountant-copy { margin-top: clamp(5rem,8vw,8rem); display: grid; grid-template-columns: 1fr .65fr; gap: clamp(3rem,8vw,10rem); }
 .cir-accountant-copy h3 { margin: 0; font-size: clamp(3rem,4.5vw,5.2rem); line-height: 1; }
 .cir-accountant-copy > div { color: var(--muted); font-size: 1.08rem; line-height: 1.7; }
-.cir-accountant-copy a { margin-top: 2rem; padding: .9rem 0; display: flex; justify-content: space-between; border-bottom: 1px solid var(--ink); color: var(--ink); font-size: .75rem; font-weight: 800; text-transform: uppercase; }
+.cir-accountant-copy a { margin-top: 2rem; padding: .9rem 0; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--ink); color: var(--ink); font-size: .75rem; text-transform: uppercase; }
+.cir-accountant-copy a > span { display: flex; flex-direction: column; gap: .35rem; }
+.cir-accountant-copy a strong { font-weight: 800; }
+.cir-accountant-copy a small { font-size: .75rem; font-weight: 600; text-transform: none; }
 
 .cir-why { background: var(--white); }
 .cir-accounting-question { padding: clamp(3rem,6vw,6rem); display: grid; grid-template-columns: 1fr .65fr; gap: clamp(3rem,8vw,9rem); background: var(--ink); color: var(--white); }
@@ -221,6 +224,7 @@
 .cir-final-cta h3 { margin: auto 0 1rem; font-size: clamp(2rem,3vw,3.4rem); line-height: 1; }
 .cir-final-cta > div:first-of-type p { margin: 0 0 2rem; }
 .cir-final-cta > div:first-of-type strong { font-size: .75rem; letter-spacing: .05em; text-transform: uppercase; }
+.cir-final-cta > div:first-of-type small { margin-top: .45rem; font-size: .72rem; text-transform: none; }
 .cir-signoff { padding: clamp(6rem,10vw,10rem) 0 0; display: flex; justify-content: space-between; align-items: end; }
 .cir-signoff p { margin: 0; font-family: var(--font-serif); font-size: clamp(3rem,5vw,6rem); letter-spacing: -.05em; line-height: 1; }
 .cir-signoff strong { color: var(--orange); font-size: clamp(1.2rem,2vw,2rem); text-transform: uppercase; }
