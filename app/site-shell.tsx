@@ -43,7 +43,7 @@ const products = [
     className: "flagship",
     lead: "A practical framework for organisations that want to get better at social impact, not simply report more of it.",
     copy: "Bringing purpose, leadership, evidence, delivery and communication together in one approach.",
-    href: null,
+    href: "/social-impact-excellence",
   },
   {
     name: "Charity Impact Reports",
@@ -98,7 +98,7 @@ const organisations = [
 
 function BrandMark({ small = false }: { small?: boolean }) {
   return (
-    <span className={small ? "brand brand-small" : "brand"} aria-label="My Social Impact">
+    <span className={small ? "brand brand-small" : "brand"} role="img" aria-label="My Social Impact">
       <span>MY</span><span>SOCIAL</span><span>IMPACT</span>
     </span>
   );
@@ -127,6 +127,7 @@ export function SiteHeader() {
       </Link>
       <button className={`menu-button ${open ? "is-open" : ""}`} onClick={() => setOpen((current) => !current)} aria-expanded={open} aria-label="Toggle menu"><span /><span /></button>
       <nav className={open ? "nav-open" : ""} aria-label="Main navigation">
+        <Link href="/social-impact-excellence" className={pathname === "/social-impact-excellence" ? "is-current" : ""} aria-current={pathname === "/social-impact-excellence" ? "page" : undefined} onClick={() => setOpen(false)}>Social Impact Excellence</Link>
         <Link href="/social-impact-report" className={pathname === "/social-impact-report" ? "is-current" : ""} aria-current={pathname === "/social-impact-report" ? "page" : undefined} onClick={() => setOpen(false)}>Charity Impact Reports</Link>
         <Link href="/social-impact-claims-code" className={pathname === "/social-impact-claims-code" ? "is-current" : ""} aria-current={pathname === "/social-impact-claims-code" ? "page" : undefined} onClick={() => setOpen(false)}>Social Impact Claims Code</Link>
         <Link href="/blog" onClick={() => setOpen(false)}>Blog</Link>
