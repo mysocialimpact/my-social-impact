@@ -1777,12 +1777,19 @@ main > section { scroll-margin-top: 70px; }
 }
 .audiences-grid .audience-contact { color: var(--ink); }
 .audience-contact a {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 1.5rem;
   overflow-wrap: anywhere;
   border-bottom: 1px solid currentColor;
+  font-size: .75rem;
   font-weight: 750;
+  letter-spacing: .04em;
+  text-transform: uppercase;
 }
+.audience-contact a span { color: var(--orange); transition: transform .3s ease; }
 .audience-contact a:hover { color: var(--orange); }
+.audience-contact a:hover span { transform: translateX(4px); }
 .audience-feature-link {
   margin-top: 1.5rem;
   padding-top: 1.25rem;
