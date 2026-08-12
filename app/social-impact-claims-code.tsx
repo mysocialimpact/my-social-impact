@@ -172,7 +172,7 @@ export function SocialImpactClaimsCodePage() {
 
     <section className="sic-definition">
       <div className="sic-definition-copy" data-reveal><Eyebrow>What is social impact?</Eyebrow><h2>What do we mean by social impact?</h2><div><p>We define social impact as a meaningful change in people’s lives, communities or society that results, at least in part, from an organisation’s actions.</p><p>For organisations seeking positive impact, the aim is not simply to create activity. It is to create meaningful positive change that lasts and can itself be sustained.</p><p>The same underlying principles can be applied to environmental impact.</p></div></div>
-      <Flow label="From activity to a responsible claim" items={["What did we do? — Activities & outputs", "What changed? — Outcomes & wider effects", "What can we claim? — A reasonable interpretation of the evidence"]} />
+      <Flow label="From activity to a responsible claim" items={["What did we do?: Activities & outputs", "What changed?: Outcomes & wider effects", "What can we claim?: A reasonable interpretation of the evidence"]} />
     </section>
 
     <section className="sic-proportion">

@@ -33,7 +33,7 @@ export const metadata: Metadata = {
     url: canonicalOrigin,
     siteName: "My Social Impact",
     locale: "en_GB",
-    images: [{ url: socialImage, width: 1730, height: 909, type: "image/png", alt: "My Social Impact — Imagine a world where social impact was taken as seriously as financial performance. Strategy for Social Impact Excellence." }],
+    images: [{ url: socialImage, width: 1730, height: 909, type: "image/png", alt: "My Social Impact: Imagine a world where social impact was taken as seriously as financial performance. Strategy for Social Impact Excellence." }],
   },
   twitter: {
     card: "summary_large_image",

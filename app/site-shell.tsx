@@ -17,7 +17,7 @@ const values = [
 
 const audiences = [
   ["Investors & development finance", "You need to know whether your capital is actually creating the change it was intended to create.", "We help investors and development finance organisations define, measure and understand impact, including social impact due diligence before investment and ongoing impact assessment afterwards. The result is stronger decision-making, clearer evidence and more credible reporting."],
-  ["Social enterprises & B Corps", "We love working with B Corps.", "We are currently on a mission to talk to every B Corp in Africa—around 100 organisations. Our first client was Agri Evolve, a Uganda-based B Corp."],
+  ["Social enterprises & B Corps", "We love working with B Corps.", "We are currently on a mission to talk to every B Corp in Africa, around 100 organisations. Our first client was Agri Evolve, a Uganda-based B Corp."],
   ["NGOs & charities", "You may have an amazing purpose and be doing extraordinary work. The challenge is proving that the difference you are making will have a lasting impact.", "That is where we help. We work with charities and NGOs to understand what is changing, build credible evidence and communicate impact clearly to funders, trustees, regulators, supporters and the communities they serve."],
   ["Corporates & brands", "Customers are questioning corporate claims. Greenwashing and impact-washing have made trust harder to earn.", "We help organisations find genuine purpose, understand the impact behind their claims and communicate it credibly to build trust."],
 ] as const;
@@ -36,7 +36,7 @@ const serviceAreas = [
       ["Measurement framework", "Decide what actually matters and how you will know whether it’s working."],
       ["Practical roadmap", "Turn the strategy into priorities, responsibilities and action."],
     ],
-    benefit: "Clarity about where you’re going—and a practical way to get there.",
+    benefit: "Clarity about where you’re going, and a practical way to get there.",
   },
   {
     name: "Projects",
@@ -51,13 +51,13 @@ const serviceAreas = [
       ["Impact improvement projects", "Focused work across Purpose, Leadership, Data, Delivery or Communication."],
       ["Impact communications & claims", "Turn evidence into stories and claims people can understand and trust."],
     ],
-    benefit: "Senior expertise focused on a clear problem—with something useful at the end of it.",
+    benefit: "Senior expertise focused on a clear problem, with something useful at the end of it.",
   },
   {
     name: "Ongoing support",
     line: "Keep improving every month.",
     intro: "Social impact doesn’t happen once a year.",
-    copy: <>We can work alongside your organisation every month—helping you implement, measure, learn and improve.</>,
+    copy: <>We can work alongside your organisation every month, helping you implement, measure, learn and improve.</>,
     feature: "Outsourced Impact Director",
     featureCopy: "Senior impact expertise without necessarily hiring another full-time senior employee.",
     listLabel: "We can help you",
@@ -68,7 +68,7 @@ const serviceAreas = [
       ["Stay ready", "Prepare continuously for reporting, funders, investors, boards or requirements such as SORP 2026."],
       ["Tell the story", "Make sure evidence gathered throughout the year becomes credible reporting and communication."],
     ],
-    benefit: "Impact becomes something you actively manage—not something you scramble to report at year-end.",
+    benefit: "Impact becomes something you actively manage, not something you scramble to report at year-end.",
   },
 ] as const;
 
@@ -106,7 +106,7 @@ const products = [
     logoClass: "logo-festival",
     className: "festival-product",
     lead: "Helping festivals and cultural and community events understand the difference they make.",
-    copy: "We measure their economic, social and environmental impact. We have built a portal to make the before, during and after process faster and more efficient—from planning what to measure to organising evidence and producing the final report.",
+    copy: "We measure their economic, social and environmental impact. We have built a portal to make the before, during and after process faster and more efficient, from planning what to measure to organising evidence and producing the final report.",
     href: "https://www.festivalimpact.org/",
   },
   {
@@ -298,7 +298,7 @@ function ProductCard({ product, index }: { product: typeof products[number]; ind
               <Image src={product.logo} alt={`${product.name} logo`} width={product.logoWidth} height={product.logoHeight} unoptimized />
             </div>
             <div className="product-logo-stage">
-              <Image src="/assets/certified-for-impact-2026-transparent.png" alt="Social Impact Excellence — Certified for Impact 2026" width={1200} height={1200} unoptimized />
+              <Image src="/assets/certified-for-impact-2026-transparent.png" alt="Social Impact Excellence: Certified for Impact 2026" width={1200} height={1200} unoptimized />
             </div>
           </div> : <div className="product-logo-stage">
             <Image src={product.logo} alt={`${product.name} logo`} width={product.logoWidth} height={product.logoHeight} unoptimized />
@@ -393,7 +393,7 @@ export function HomePage() {
       </section>
 
       <section className="impact-definition major-section" id="impact-definition" data-reveal>
-        <div className="definition-copy"><SectionLabel major>Our definition</SectionLabel><blockquote>“Social impact is the meaningful change that individuals and organisations help to create for people, communities, society and the wider environment, delivered through a model that is sustainable and endures over time.”</blockquote><p className="definition-attribution">— My Social Impact</p></div>
+        <div className="definition-copy"><SectionLabel major>Our definition</SectionLabel><blockquote>“Social impact is the meaningful change that individuals and organisations help to create for people, communities, society and the wider environment, delivered through a model that is sustainable and endures over time.”</blockquote><p className="definition-attribution">My Social Impact</p></div>
         <aside className="definition-founders" aria-label="My Social Impact co-founders"><div className="definition-portraits"><div><Image src="/assets/marcus-final.jpg" alt="Marcus Warry" fill sizes="(max-width: 760px) 48vw, 20vw" unoptimized /></div><div><Image src="/assets/chris-final.jpg" alt="Dr Chris Arnold" fill sizes="(max-width: 760px) 48vw, 20vw" unoptimized /></div></div><div className="definition-founder-copy"><p><strong>Marcus Warry</strong> and <strong>Dr Chris Arnold</strong> are the co-founders of My Social Impact.</p><a href="#team">Meet the people behind the thinking <span>↓</span></a></div></aside>
       </section>
 
@@ -440,7 +440,7 @@ export function HomePage() {
         <p className="team-together">Together, the team combines strategy, finance, brand, communications, data and technology around a common question: how can organisations create more meaningful social impact?</p>
       </section>
 
-      <section className="associates section-pad major-section" id="associates" data-reveal><div className="section-intro"><SectionLabel major>Associates</SectionLabel><h2>A wider network when we need it.</h2><div className="section-support"><p><strong>We deliberately keep our core team small and senior.</strong></p><p>When a project needs additional specialist expertise, we work with a wider network of trusted independent associates across disciplines, sectors and geographies.</p><p>That allows us to build the right team around the problem rather than carrying a large permanent consultancy structure.</p></div></div><div className="associate-invitation"><p>If you’re an independent specialist in Uganda, elsewhere in East Africa, the UK or anywhere around the world—and would like to become an associate—we’d love to hear from you.</p><a href="mailto:marcus@mysocialimpact.org?subject=My%20Social%20Impact%20associate">marcus@mysocialimpact.org <span>↗</span></a></div><small>Small core team. Wider expertise when it matters.</small></section>
+      <section className="associates section-pad major-section" id="associates" data-reveal><div className="section-intro"><SectionLabel major>Associates</SectionLabel><h2>A wider network when we need it.</h2><div className="section-support"><p><strong>We deliberately keep our core team small and senior.</strong></p><p>When a project needs additional specialist expertise, we work with a wider network of trusted independent associates across disciplines, sectors and geographies.</p><p>That allows us to build the right team around the problem rather than carrying a large permanent consultancy structure.</p></div></div><div className="associate-invitation"><p>If you’re an independent specialist in Uganda, elsewhere in East Africa, the UK or anywhere around the world, and would like to become an associate, we’d love to hear from you.</p><a href="mailto:marcus@mysocialimpact.org?subject=My%20Social%20Impact%20associate">marcus@mysocialimpact.org <span>↗</span></a></div><small>Small core team. Wider expertise when it matters.</small></section>
 
       <section className="insights section-pad major-section" id="insights">
         <div className="section-intro compact" data-reveal><SectionLabel major>Thinking</SectionLabel><h2>The latest thinking from My Social Impact.</h2><p>We’re curious about where social impact is going next. Our thinking covers impact measurement, reporting, charity regulation, social impact claims, new approaches to evidence and the occasional idea that simply seemed too interesting not to explore.</p></div>
@@ -450,7 +450,7 @@ export function HomePage() {
 
       <section className="ecosystem section-pad major-section" id="ecosystem">
         <div className="section-intro" data-reveal><SectionLabel major>Ecosystem</SectionLabel><h2>Specialists,<br />working together.</h2><div className="section-support editorial-copy"><p>Sometimes the right expertise sits outside the traditional consultancy model.</p><p>We work alongside specialist ventures and collaborators where their expertise can make the work better.</p></div></div>
-        <div className="ecosystem-grid"><article data-reveal><div className="ecosystem-mark ideas"><Image src="/assets/ideas-shed-transparent.png" alt="The Ideas Shed — From ideas to action" width={1254} height={1251} unoptimized /></div><SectionLabel>The Ideas Shed</SectionLabel><h3>Turning ideas into action.</h3><p>The Ideas Shed explores new ideas, ventures and technologies, helping turn promising concepts into practical projects, tools and businesses.</p><p>Its work sits between strategy, creativity and experimentation: shaping early ideas, testing what has potential and finding clear routes from possibility to action.</p><p>We collaborate where a social impact challenge needs fresh thinking, a new product or a more imaginative way forward. That perspective helps keep innovation at the heart of My Social Impact.</p><p><a className="text-link" href="https://www.theideasshed.com/" target="_blank" rel="noreferrer">Explore The Ideas Shed →</a></p></article><article data-reveal style={{ "--delay": "90ms" } as React.CSSProperties}><div className="ecosystem-mark good"><Image src="/assets/good-numbers-transparent-cropped.png" alt="Good Numbers" width={1106} height={495} unoptimized /></div><SectionLabel>Good Numbers</SectionLabel><h3>Social impact accountants for a world in which the numbers need to tell more than half the story.</h3><p>Good Numbers brings accounting and social impact together, helping charities and purpose-led organisations connect financial reporting with a clearer understanding of the difference they create.</p><p>A particular focus is SORP 2026 and the changing expectations around how charities communicate impact alongside their financial reporting.</p><p>Good Numbers also works with accountancy firms, providing specialist social impact expertise that complements their existing charity accounting, audit and advisory relationships.</p><p><a className="text-link" href="#contact">Explore Good Numbers →</a></p></article></div>
+        <div className="ecosystem-grid"><article data-reveal><div className="ecosystem-mark ideas"><Image src="/assets/ideas-shed-transparent.png" alt="The Ideas Shed: From ideas to action" width={1254} height={1251} unoptimized /></div><SectionLabel>The Ideas Shed</SectionLabel><h3>Turning ideas into action.</h3><p>The Ideas Shed explores new ideas, ventures and technologies, helping turn promising concepts into practical projects, tools and businesses.</p><p>Its work sits between strategy, creativity and experimentation: shaping early ideas, testing what has potential and finding clear routes from possibility to action.</p><p>We collaborate where a social impact challenge needs fresh thinking, a new product or a more imaginative way forward. That perspective helps keep innovation at the heart of My Social Impact.</p><p><a className="text-link" href="https://www.theideasshed.com/" target="_blank" rel="noreferrer">Explore The Ideas Shed →</a></p></article><article data-reveal style={{ "--delay": "90ms" } as React.CSSProperties}><div className="ecosystem-mark good"><Image src="/assets/good-numbers-transparent-cropped.png" alt="Good Numbers" width={1106} height={495} unoptimized /></div><SectionLabel>Good Numbers</SectionLabel><h3>Social impact accountants for a world in which the numbers need to tell more than half the story.</h3><p>Good Numbers brings accounting and social impact together, helping charities and purpose-led organisations connect financial reporting with a clearer understanding of the difference they create.</p><p>A particular focus is SORP 2026 and the changing expectations around how charities communicate impact alongside their financial reporting.</p><p>Good Numbers also works with accountancy firms, providing specialist social impact expertise that complements their existing charity accounting, audit and advisory relationships.</p><p><a className="text-link" href="#contact">Explore Good Numbers →</a></p></article></div>
       </section>
 
       <section className="promise major-section" id="promise" data-reveal><SectionLabel major>Our promise</SectionLabel><div><blockquote>We will challenge you, support you and partner with you to create social impact that is real, meaningful and recognised today and for tomorrow.</blockquote><p>Not more measurement for the sake of measurement.</p><p>Not another report destined for a shelf.</p><p><strong>Better understanding. Better decisions. More impact.</strong></p></div></section>

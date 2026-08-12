@@ -45,7 +45,7 @@ export const team = [
     bio: [
       "Nicholas is an American international development specialist based in Kampala, with more than 20 years’ experience working across development programmes and donor-funded environments.",
       "His experience includes USAID-related work, programme design and delivery, monitoring and evaluation, localisation and systems thinking. He has also spent several years exploring how AI can strengthen research, programme design, delivery and learning.",
-      "At My Social Impact, Nicholas brings deep on-the-ground experience of how impact programmes actually work—particularly in Uganda and international development.",
+      "At My Social Impact, Nicholas brings deep on-the-ground experience of how impact programmes actually work, particularly in Uganda and international development.",
     ],
   },
   {
