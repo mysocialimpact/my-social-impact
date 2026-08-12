@@ -390,9 +390,8 @@ export function HomePage() {
       </section>
 
       <section className="impact-definition major-section" id="impact-definition" data-reveal>
-        <SectionLabel major>Our definition</SectionLabel>
-        <blockquote>“Social impact is the meaningful change that individuals and organisations help to create for people, communities, society and the wider environment, delivered through a model that is sustainable and endures over time.”</blockquote>
-        <p className="definition-attribution">— My Social Impact</p>
+        <div className="definition-copy"><SectionLabel major>Our definition</SectionLabel><blockquote>“Social impact is the meaningful change that individuals and organisations help to create for people, communities, society and the wider environment, delivered through a model that is sustainable and endures over time.”</blockquote><p className="definition-attribution">— My Social Impact</p></div>
+        <aside className="definition-founders" aria-label="My Social Impact co-founders"><div className="definition-portraits"><div><Image src="/assets/marcus-final.jpg" alt="Marcus Warry" fill sizes="(max-width: 760px) 48vw, 20vw" unoptimized /></div><div><Image src="/assets/chris-final.jpg" alt="Dr Chris Arnold" fill sizes="(max-width: 760px) 48vw, 20vw" unoptimized /></div></div><div className="definition-founder-copy"><p><strong>Marcus Warry</strong> and <strong>Dr Chris Arnold</strong> are the co-founders of My Social Impact.</p><a href="#team">Meet the people behind the thinking <span>↓</span></a></div></aside>
       </section>
 
       <section className="audiences section-pad major-section" id="who-we-help">

@@ -2570,20 +2570,14 @@ main > section,
 /* Homepage copy and hierarchy refinement. */
 .impact-definition {
   position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(320px, .75fr);
+  gap: clamp(3rem, 7vw, 8rem);
+  align-items: center;
   padding: clamp(6rem, 11vw, 12rem) var(--pad);
   border-block: 1px solid var(--line);
   background: var(--white);
   overflow: hidden;
-}
-.impact-definition::before {
-  content: "“";
-  position: absolute;
-  right: clamp(1rem, 5vw, 6rem);
-  top: clamp(1rem, 2.5vw, 3rem);
-  color: rgba(255, 59, 17, .1);
-  font-family: var(--font-serif), Georgia, serif;
-  font-size: clamp(15rem, 30vw, 34rem);
-  line-height: .72;
 }
 .definition-attribution {
   position: relative;
@@ -2598,16 +2592,24 @@ main > section,
 .impact-definition blockquote {
   position: relative;
   z-index: 1;
-  max-width: 19ch;
+  max-width: none;
   margin: clamp(2.5rem, 4vw, 4.5rem) 0 clamp(2rem, 3vw, 3.5rem);
   font-family: var(--font-serif), Georgia, serif;
-  font-size: clamp(1.65rem, 2.7vw, 3.15rem);
+  font-size: clamp(1.65rem, 2.45vw, 2.85rem);
   font-weight: 500;
   line-height: 1.025;
   letter-spacing: -.05em;
 }
 .definition-attribution { color: var(--ink); }
-.impact-definition > .section-marker { position: relative; z-index: 1; }
+.definition-copy > .section-marker { position: relative; z-index: 1; }
+.definition-founders { position: relative; z-index: 1; align-self: stretch; display: flex; flex-direction: column; justify-content: center; }
+.definition-portraits { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; background: var(--white); }
+.definition-portraits > div { position: relative; aspect-ratio: .82; overflow: hidden; background: #ebe8e2; }
+.definition-portraits img { object-fit: cover; object-position: center top; }
+.definition-founder-copy { padding: clamp(1.5rem, 2.4vw, 2.5rem); background: var(--ink); color: var(--white); }
+.definition-founder-copy p { margin: 0; font-size: clamp(1rem, 1.15vw, 1.2rem); line-height: 1.55; }
+.definition-founder-copy a { margin-top: 1.5rem; padding-bottom: .45rem; display: inline-flex; gap: 2rem; border-bottom: 1px solid var(--white); color: var(--white); font-size: .75rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+.definition-founder-copy a span { color: var(--orange); }
 
 .services-section {
   border-bottom: 1px solid var(--line);
@@ -2724,14 +2726,15 @@ main > section,
 .associates > small { display: block; max-width: 68rem; margin: 3rem 0 0 auto; padding-top: 1rem; border-top: 1px solid var(--ink); font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
 
 @media (max-width: 1100px) {
+  .impact-definition { grid-template-columns: minmax(0, 1fr) minmax(280px, .7fr); }
   .services-heading { grid-template-columns: minmax(130px, .3fr) minmax(0, 1fr); }
   .services-heading > p:last-child { grid-column: 2; }
   .service-offer > header { min-height: 500px; }
 }
 
 @media (max-width: 760px) {
-  .impact-definition { padding-block: 6.5rem; }
-  .impact-definition blockquote { font-size: clamp(2.25rem, 10vw, 3rem); }
+  .impact-definition { grid-template-columns: 1fr; gap: 4rem; padding-block: 6.5rem; }
+  .impact-definition blockquote { font-size: clamp(1.85rem, 8.3vw, 2.45rem); line-height: 1.04; }
   .services-heading,
   .service-offers,
   .associates { grid-template-columns: 1fr; }
