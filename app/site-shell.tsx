@@ -17,7 +17,7 @@ const values = [
 
 const audiences = [
   ["Investors & development finance", "You need to know whether your capital is actually creating the change it was intended to create.", "We help investors and development finance organisations define, measure and understand impact, including social impact due diligence before investment and ongoing impact assessment afterwards. The result is stronger decision-making, clearer evidence and more credible reporting."],
-  ["Social enterprises & B Corps", "Purpose may be built into your organisation, but proving your impact as you grow is harder.", "We help turn purpose into a practical management approach, with the evidence and systems to understand what is working and communicate it credibly."],
+  ["Social enterprises & B Corps", "We love working with B Corps.", "We are currently on a mission to talk to every B Corp in Africa—around 100 organisations. Our first client was Agri Evolve, a Uganda-based B Corp."],
   ["NGOs & charities", "You may have an amazing purpose and be doing extraordinary work. The challenge is proving that the difference you are making will have a lasting impact.", "That is where we help. We work with charities and NGOs to understand what is changing, build credible evidence and communicate impact clearly to funders, trustees, regulators, supporters and the communities they serve."],
   ["Corporates & brands", "Customers are questioning corporate claims. Greenwashing and impact-washing have made trust harder to earn.", "We help organisations find genuine purpose, understand the impact behind their claims and communicate it credibly to build trust."],
 ] as const;
@@ -399,7 +399,7 @@ export function HomePage() {
 
       <section className="audiences section-pad major-section" id="who-we-help">
         <div className="section-intro compact" data-reveal><SectionLabel major>Who we help</SectionLabel><h2>Different organisations. Different pressures. The same need for credible impact.</h2></div>
-        <div className="audiences-grid">{audiences.map(([name, lead, body], index) => <article key={name} data-reveal style={{ "--delay": `${index * 70}ms` } as React.CSSProperties}><span>0{index + 1}</span><h3>{name}</h3><p className="audience-lead">{lead}</p><p>{body}</p></article>)}</div>
+        <div className="audiences-grid">{audiences.map(([name, lead, body], index) => <article className={index === 1 ? "audience-bcorp" : undefined} key={name} data-reveal style={{ "--delay": `${index * 70}ms` } as React.CSSProperties}><span>0{index + 1}</span>{index === 1 ? <div className="audience-heading-with-logo"><h3>{name}</h3><Image src="/assets/b-corp-logo-black.png" alt="Certified B Corporation" width={500} height={731} unoptimized /></div> : <h3>{name}</h3>}<p className="audience-lead">{lead}</p><p>{body}</p>{index === 1 && <><p>Our passion for B Corps extends to the UK and around the world.</p><p className="audience-contact">For a chat, email <a href="mailto:marcus@mysocialimpact.org">marcus@mysocialimpact.org</a>.</p></>}</article>)}</div>
       </section>
 
       <section className="better-tools section-pad major-section" id="better-tools" data-reveal>

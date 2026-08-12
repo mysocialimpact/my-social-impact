@@ -1761,6 +1761,28 @@ main > section { scroll-margin-top: 70px; }
 }
 .audiences-grid p { max-width: 48rem; color: var(--muted); }
 .audiences-grid .audience-lead { color: var(--ink); font-weight: 700; }
+.audience-heading-with-logo {
+  margin: 2.5rem 0 1.75rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: clamp(1.25rem, 2.5vw, 2.5rem);
+  align-items: center;
+}
+.audiences-grid .audience-heading-with-logo h3 { margin: 0; }
+.audience-heading-with-logo img {
+  width: auto;
+  height: clamp(76px, 7vw, 104px);
+  object-fit: contain;
+  background: transparent;
+}
+.audiences-grid .audience-contact { color: var(--ink); }
+.audience-contact a {
+  display: inline-block;
+  overflow-wrap: anywhere;
+  border-bottom: 1px solid currentColor;
+  font-weight: 750;
+}
+.audience-contact a:hover { color: var(--orange); }
 
 .better-tools {
   display: grid;
@@ -1840,6 +1862,8 @@ main > section { scroll-margin-top: 70px; }
   .better-tools,
   .organisation-list { grid-template-columns: 1fr; }
   .audiences-grid article { min-height: 0; padding: 2.5rem 0; border-right: 0; }
+  .audience-heading-with-logo { gap: 1rem; }
+  .audience-heading-with-logo img { height: 72px; }
   .better-tools > div,
   .practice-intro,
   .approach-feature .practice-intro { grid-column: 1; }
