@@ -336,7 +336,7 @@ function Newsletter() {
 function LocationJourney() {
   return (
     <div className="location-journey" data-reveal>
-      <Image className="location-journey-desktop" src="/location-journey-contemporary-v2.png" alt="A contemporary line illustration travelling from the Somerset countryside, through London, to Uganda, with a giraffe and a distant orange Land Rover" width={1981} height={793} unoptimized />
+      <Image className="location-journey-desktop" src="/location-journey-contemporary-v3.png" alt="A simple contemporary line illustration travelling from the Somerset countryside, through London, to Uganda, with a small orange detail in each location" width={1981} height={793} unoptimized />
       <div className="location-journey-mobile" role="img" aria-label="An editorial ink journey from Somerset to London to Uganda">
         <span className="journey-crop journey-somerset"><b>Somerset</b></span>
         <span className="journey-crop journey-london"><b>London</b></span>

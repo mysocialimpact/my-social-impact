@@ -54,8 +54,8 @@ export const team = [
     image: "/assets/gareth-final.jpg",
     linkedin: "https://uk.linkedin.com/in/gareth-murphy-a706524",
     bio: [
-      "Gareth is Managing Director of Fluid IT and brings deep expertise in technology, data and business systems. His work spans data architecture, CRM, digital transformation and the systems organisations need to turn information into something genuinely useful for management and decision-making.",
-      "At My Social Impact, Gareth helps bridge the gap between impact ambition and the technology and data infrastructure required to support it, particularly where organisations need better systems for collecting, managing, analysing and reporting impact information.",
+      "Gareth is Managing Director of Fluid IT, a digital and IT consultancy based in Leeds in the UK. He brings deep expertise in technology, data and business systems, spanning data architecture, CRM, digital transformation and the systems organisations need to turn information into something genuinely useful for management and decision-making.",
+      "Gareth is a key partner for My Social Impact. He helps bridge the gap between impact ambition and the technology and data infrastructure required to support it, especially where organisations need better systems for collecting, managing, analysing and reporting impact information.",
     ],
   },
 ] as const;

@@ -1669,7 +1669,7 @@ main > section { scroll-margin-top: 70px; }
   width: 100%;
   height: auto;
   display: block;
-  mix-blend-mode: multiply;
+  background: #fff;
 }
 .location-journey-mobile { display: none !important; }
 
@@ -1705,10 +1705,10 @@ main > section { scroll-margin-top: 70px; }
     position: relative;
     min-height: 225px;
     display: block;
-    background-image: url('/location-journey-contemporary-v2.png');
+    background-image: url('/location-journey-contemporary-v3.png');
     background-repeat: no-repeat;
     background-size: 300% auto;
-    background-color: var(--paper);
+    background-color: #fff;
   }
   .journey-somerset { background-position: left center; }
   .journey-london { background-position: center center; }
