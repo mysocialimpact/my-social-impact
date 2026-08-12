@@ -22,14 +22,54 @@ const audiences = [
   ["Corporates & brands", "Customers are questioning corporate claims. Greenwashing and impact-washing have made trust harder to earn.", "We help organisations find genuine purpose, understand the impact behind their claims and communicate it credibly to build trust."],
 ] as const;
 
-const services = [
-  ["Impact strategy & measurement", "Clarifying what you are trying to achieve, how change happens and what is worth measuring."],
-  ["Organisational learning & evaluation", "Using evidence to understand what is working, what isn’t and what to do differently."],
-  ["Impact reporting", "Turning evidence into clear, credible reporting that people can actually understand."],
-  ["Social Impact Excellence", "Strengthening purpose, leadership, data, delivery and communications."],
-  ["Social Impact Claims", "Helping organisations make claims that are meaningful, proportionate and credible."],
-  ["Capability building & training", "Helping teams develop the confidence and skills to manage impact themselves."],
-  ["Tools & process design", "Using technology, including AI, to make social impact work simpler, quicker and more useful."],
+const serviceAreas = [
+  {
+    name: "Strategy",
+    line: "Design the approach.",
+    intro: "We help you work out where you are, where you want to go and how to get there.",
+    copy: <>We act as the architects of your approach to social impact, using <strong>Social Impact Excellence</strong> to connect purpose with practical action.</>,
+    listLabel: "What we can help with",
+    items: [
+      ["Impact strategy", "A clear direction for the difference you want to create."],
+      ["Social Impact Excellence assessment", "Understand where you are strong and where you can improve."],
+      ["Theory of change", "Connect what you do with the change you want to create."],
+      ["Measurement framework", "Decide what actually matters and how you will know whether it’s working."],
+      ["Practical roadmap", "Turn the strategy into priorities, responsibilities and action."],
+    ],
+    benefit: "Clarity about where you’re going—and a practical way to get there.",
+  },
+  {
+    name: "Projects",
+    line: "Get important work done.",
+    intro: "Sometimes you don’t need another strategy. You need something done.",
+    copy: <>We deliver focused pieces of work that help organisations understand, improve and communicate their impact.</>,
+    listLabel: "What we can deliver",
+    items: [
+      ["Impact Reports", "Credible, engaging evidence of the difference you’re making."],
+      ["Evaluation", "Understand what worked, what changed and what should happen next."],
+      ["Data & measurement", "Better KPIs, evidence, dashboards and ways of collecting useful information."],
+      ["Impact improvement projects", "Focused work across Purpose, Leadership, Data, Delivery or Communication."],
+      ["Impact communications & claims", "Turn evidence into stories and claims people can understand and trust."],
+    ],
+    benefit: "Senior expertise focused on a clear problem—with something useful at the end of it.",
+  },
+  {
+    name: "Ongoing support",
+    line: "Keep improving every month.",
+    intro: "Social impact doesn’t happen once a year.",
+    copy: <>We can work alongside your organisation every month—helping you implement, measure, learn and improve.</>,
+    feature: "Outsourced Impact Director",
+    featureCopy: "Senior impact expertise without necessarily hiring another full-time senior employee.",
+    listLabel: "We can help you",
+    items: [
+      ["Stay on track", "Regular check-ins against your impact priorities and roadmap."],
+      ["Use evidence", "Review data and turn it into better management decisions."],
+      ["Keep improving", "Identify gaps and strengthen Purpose, Leadership, Data, Delivery and Communication."],
+      ["Stay ready", "Prepare continuously for reporting, funders, investors, boards or requirements such as SORP 2026."],
+      ["Tell the story", "Make sure evidence gathered throughout the year becomes credible reporting and communication."],
+    ],
+    benefit: "Impact becomes something you actively manage—not something you scramble to report at year-end.",
+  },
 ] as const;
 
 const products = [
@@ -205,12 +245,12 @@ export function SectionLabel({ children, major = false }: { children: React.Reac
 }
 
 const homeSections = [
-  ["introduction", "About", ["introduction", "who-we-help", "better-tools"]],
+  ["introduction", "About", ["introduction", "impact-definition", "who-we-help", "better-tools"]],
   ["products", "Products", ["products"]],
   ["values", "How we show up", ["values"]],
+  ["approach", "How we work", ["approach"]],
   ["what-we-do", "What we do", ["what-we-do"]],
-  ["approach", "How we work", ["approach", "working-with-us"]],
-  ["team", "People", ["organisations", "team"]],
+  ["team", "People", ["organisations", "team", "associates"]],
   ["insights", "Thinking", ["insights"]],
   ["ecosystem", "Ecosystem", ["ecosystem", "promise"]],
   ["contact", "Contact", ["contact", "newsletter"]],
@@ -349,6 +389,12 @@ export function HomePage() {
         <div className="intro-side" data-reveal style={{ "--delay": "100ms" } as React.CSSProperties}><p>We combine curiosity, creativity and rigour to turn evidence into better decisions, clearer stories and stronger impact.</p><div className="spray-quote"><Spray className="spray-quote-yellow" /><blockquote>Serious about impact.<br />Human about everything else.</blockquote></div></div>
       </section>
 
+      <section className="impact-definition major-section" id="impact-definition" data-reveal>
+        <p className="definition-label">What we mean by social impact</p>
+        <blockquote>“Social impact is the meaningful change that individuals and organisations help to create for people, communities, society and the wider environment, delivered through a model that is sustainable and endures over time.”</blockquote>
+        <p className="definition-attribution">— My Social Impact</p>
+      </section>
+
       <section className="audiences section-pad major-section" id="who-we-help">
         <div className="section-intro compact" data-reveal><SectionLabel major>Who we help</SectionLabel><h2>Different organisations. Different pressures. The same need for credible impact.</h2></div>
         <div className="audiences-grid">{audiences.map(([name, lead, body], index) => <article key={name} data-reveal style={{ "--delay": `${index * 70}ms` } as React.CSSProperties}><span>0{index + 1}</span><h3>{name}</h3><p className="audience-lead">{lead}</p><p>{body}</p></article>)}</div>
@@ -377,11 +423,9 @@ export function HomePage() {
       </section>
 
       <section className="practice-sections">
-        <article className="practice-feature what-we-do section-pad major-section" id="what-we-do" data-reveal><SectionLabel major>What we do</SectionLabel><h2>We work with mission-driven organisations that want to understand their impact and create more of it.</h2><p className="practice-intro">Our work ranges from focused research and reporting to longer-term support embedding social impact across an organisation.</p><ul>{services.map(([title, copy]) => <li key={title}><strong>{title}</strong><span>{copy}</span></li>)}</ul></article>
-        <article className="practice-feature approach-feature section-pad major-section" id="approach" data-reveal><SectionLabel major>How we work</SectionLabel><p className="practice-intro">Good social impact work starts with understanding the problem, not reaching immediately for a framework.</p><div className="approach-steps">{[["Listen & understand", "We start by listening properly: to the people involved, the context, the evidence already available and the questions that actually matter."],["Think & co-create", "We bring ideas, challenge assumptions and work with you to find an approach that fits."],["Act & deliver", "We turn thinking into something useful: a strategy, measurement framework, report, workshop, tool or better process."],["Measure & improve", "We use what we discover to help you learn, adapt and make better decisions next time."]].map(([title, copy], i) => <div className="approach-step" key={title}><span>0{i + 1}</span><h3>{title}</h3><p>{copy}</p></div>)}</div></article>
+        <article className="practice-feature approach-feature section-pad major-section" id="approach" data-reveal><SectionLabel major>How we work</SectionLabel><p className="practice-intro"><strong>Good social impact work starts with understanding the problem, not reaching immediately for a framework.</strong></p><div className="approach-steps">{[["Listen & understand", "Where are you now? What matters? What are you trying to change?"],["Think & co-create", "Where do you want to be? What evidence matters? What is the right approach?"],["Act & deliver", "Turn the thinking into practical action, tools, systems and work that gets done."],["Measure & improve", "Understand what changed, learn from it and keep getting better."]].map(([title, copy], i) => <div className="approach-step" key={title}><span>0{i + 1}</span><h3>{title}</h3><p>{copy}</p></div>)}</div></article>
+        <article className="services-section section-pad major-section" id="what-we-do" data-reveal><div className="services-heading"><SectionLabel major>What we do</SectionLabel><h2>Three ways we can help.</h2><p>Understand the offer in ten seconds. Choose the level of support that fits.</p></div><div className="service-offers">{serviceAreas.map((service, index) => <article className="service-offer" key={service.name}><header><span>0{index + 1}</span><p>{service.line}</p><h3>{service.name}</h3><strong>{service.intro}</strong><div className="service-copy"><p>{service.copy}</p></div>{"feature" in service && <div className="service-feature"><small>Think of us as an</small><b>{service.feature}</b><p>{service.featureCopy}</p></div>}</header><div className="service-list"><h4>{service.listLabel}</h4>{service.items.map(([title, copy]) => <div key={title}><strong>{title}</strong><p>{copy}</p></div>)}</div><footer><small>The benefit</small><strong>{service.benefit}</strong></footer></article>)}</div><div className="services-summary"><h3><span>Strategy</span><b>→</b><span>Projects</span><b>→</b><span>Ongoing support</span></h3><p>We can design the approach, deliver the work, or stay alongside you as you put it into practice.</p></div></article>
       </section>
-
-      <section className="working section-pad major-section" id="working-with-us" data-reveal><Spray className="spray-working-pink" /><div className="working-layout"><SectionLabel major>Working with us</SectionLabel><h2>Collaborative.<br />Straightforward.<br />Thought-provoking.<br /><em>Occasionally quite funny.</em></h2><div className="working-copy editorial-copy"><p>We ask questions. We challenge assumptions. We say what we think. We also listen.</p><p>We want clients to enjoy working with us because good conversations tend to produce better thinking, and better thinking tends to produce better work.</p><p>We take the work seriously. We don’t always take ourselves quite so seriously.</p></div></div></section>
 
       <section className="organisations section-pad major-section" id="organisations">
         <div className="section-intro" data-reveal><SectionLabel major>Organisations</SectionLabel><h2>Some of the organisations we’ve worked with.</h2><p>Our team has worked with organisations across charities, social enterprise, business, international development, events and the creative industries.</p></div>
@@ -389,10 +433,12 @@ export function HomePage() {
       </section>
 
       <section className="team section-pad major-section" id="team">
-        <div className="section-intro" data-reveal><SectionLabel major>People</SectionLabel><h2>Senior people,<br />directly involved.</h2><div className="section-support editorial-copy"><p>My Social Impact is a boutique consultancy, deliberately kept small and senior.</p><p>Our clients work directly with the people doing the thinking and the work.</p><p>We stay closely involved from the first conversation through to delivery. When a project needs additional specialist expertise, we bring in trusted professionals from our wider network.</p><p>It means we can remain experienced, flexible and close to the problem, without building unnecessary layers between our clients and us.</p></div></div>
-        <div className="team-grid">{team.map((person, i) => <article className="profile-card" key={person.name} data-reveal style={{ "--delay": `${i * 100}ms` } as React.CSSProperties}><div className="portrait"><Image src={person.image} alt={person.name} fill sizes="(max-width: 760px) 100vw, (max-width: 1050px) 50vw, 33vw" unoptimized /></div><div className="profile-head"><div><h3>{person.name}</h3><p>{person.title}</p></div><a href={person.linkedin} target="_blank" rel="noreferrer" aria-label={`${person.name} on LinkedIn`}>in</a></div><div className="profile-bio">{person.bio.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}</div></article>)}</div>
+        <div className="section-intro" data-reveal><SectionLabel major>People</SectionLabel><h2>Senior people,<br />directly involved.</h2><div className="section-support editorial-copy"><p>My Social Impact is a boutique consultancy, deliberately kept small and senior.</p><p>Our clients work directly with the people doing the thinking and the work, from the first conversation through to delivery.</p></div></div>
+        <div className="team-grid">{team.map((person, i) => <article className="profile-card" key={person.name} data-reveal style={{ "--delay": `${i * 100}ms` } as React.CSSProperties}><div className="portrait"><Image src={person.image} alt={person.name} fill sizes="(max-width: 760px) 100vw, (max-width: 1050px) 50vw, 33vw" unoptimized /></div><div className="profile-head"><div><h3>{person.name}</h3><p>{person.title}</p></div><a href={person.linkedin} target="_blank" rel="noreferrer" aria-label={`${person.name} on LinkedIn`}>LinkedIn →</a></div><div className="profile-bio">{person.bio.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}</div></article>)}</div>
         <p className="team-together">Together, the team combines strategy, finance, brand, communications, data and technology around a common question: how can organisations create more meaningful social impact?</p>
       </section>
+
+      <section className="associates section-pad major-section" id="associates" data-reveal><SectionLabel major>Associates</SectionLabel><div><h2>A wider network when we need it.</h2><p><strong>We deliberately keep our core team small and senior.</strong></p><p>When a project needs additional specialist expertise, we work with a wider network of trusted independent associates across disciplines, sectors and geographies.</p><p>That allows us to build the right team around the problem rather than carrying a large permanent consultancy structure.</p><small>Small core team. Wider expertise when it matters.</small></div></section>
 
       <section className="insights section-pad major-section" id="insights">
         <div className="section-intro compact" data-reveal><SectionLabel major>Thinking</SectionLabel><h2>The latest thinking from My Social Impact.</h2><p>We’re curious about where social impact is going next. Our thinking covers impact measurement, reporting, charity regulation, social impact claims, new approaches to evidence and the occasional idea that simply seemed too interesting not to explore.</p></div>
