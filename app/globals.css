@@ -2745,29 +2745,35 @@ main > section,
 .home-page .profile-card:nth-child(3) .portrait img { object-position: center 18%; }
 
 .associates {
+  padding-top: clamp(3rem, 5vw, 5rem);
+  padding-bottom: clamp(3rem, 5vw, 5rem);
   border-top: 1px solid var(--line);
   background: #f0ede7;
 }
-.associates .section-intro { margin-bottom: clamp(4rem, 7vw, 7rem); }
-.associates .section-intro h2 { color: var(--ink); }
-.associates p { max-width: 48rem; margin: 0; color: var(--muted); font-size: clamp(1.05rem, 1.12vw, 1.2rem); line-height: 1.68; }
-.associates p + p { margin-top: 1.2em; }
+.associates .section-intro {
+  margin-bottom: clamp(2rem, 3vw, 3rem);
+  grid-template-columns: minmax(130px, .28fr) minmax(260px, .62fr) minmax(300px, .72fr);
+  gap: clamp(2rem, 4vw, 5rem);
+}
+.associates .section-intro h2 { color: var(--ink); font-size: clamp(2.2rem, 3.6vw, 4.4rem); }
+.associates p { max-width: 48rem; margin: 0; color: var(--muted); font-size: clamp(.92rem, 1vw, 1.05rem); line-height: 1.55; }
+.associates p + p { margin-top: .85em; }
 .associates p strong { color: var(--ink); }
 .associate-invitation {
-  max-width: 68rem;
+  max-width: 62rem;
   margin-left: auto;
-  padding: clamp(2rem, 3.5vw, 4rem);
+  padding: clamp(1.35rem, 2vw, 2rem);
   display: grid;
   grid-template-columns: 1fr auto;
-  gap: clamp(2rem, 5vw, 6rem);
-  align-items: end;
+  gap: clamp(1.5rem, 3vw, 3rem);
+  align-items: center;
   border: 1px solid var(--ink);
   background: var(--white);
 }
-.associate-invitation p { color: var(--ink); font-family: var(--font-serif), Georgia, serif; font-size: clamp(1.45rem, 2.2vw, 2.5rem); line-height: 1.15; letter-spacing: -.025em; }
-.associate-invitation a { padding-bottom: .45rem; border-bottom: 1px solid var(--ink); font-weight: 800; overflow-wrap: anywhere; }
+.associate-invitation p { color: var(--ink); font-family: var(--font-sans), Arial, sans-serif; font-size: clamp(.95rem, 1.15vw, 1.15rem); font-weight: 650; line-height: 1.45; letter-spacing: -.012em; }
+.associate-invitation a { padding-bottom: .35rem; border-bottom: 1px solid var(--ink); font-size: .8rem; font-weight: 800; overflow-wrap: anywhere; }
 .associate-invitation a span { color: var(--orange); }
-.associates > small { display: block; max-width: 68rem; margin: 3rem 0 0 auto; padding-top: 1rem; border-top: 1px solid var(--ink); font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+.associates > small { display: block; max-width: 62rem; margin: 1.5rem 0 0 auto; padding-top: .75rem; border-top: 1px solid var(--ink); font-size: .68rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
 
 @media (max-width: 1100px) {
   .impact-definition { grid-template-columns: minmax(0, 1fr) minmax(280px, .7fr); }
@@ -2790,5 +2796,8 @@ main > section,
   .services-summary h3 { flex-direction: column; gap: .65rem; }
   .services-summary h3 b { transform: rotate(90deg); }
   .home-page .team-grid { grid-template-columns: 1fr; }
-  .associate-invitation { grid-template-columns: 1fr; align-items: start; }
+  .associates { padding-block: 3.5rem; }
+  .associates .section-intro { gap: 1.5rem; margin-bottom: 2rem; }
+  .associates .section-intro h2 { font-size: 2.4rem; }
+  .associate-invitation { grid-template-columns: 1fr; align-items: start; padding: 1.35rem; }
 }
