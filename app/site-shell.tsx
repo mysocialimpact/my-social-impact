@@ -76,9 +76,9 @@ const products = [
   {
     name: "Social Impact Excellence™",
     kicker: "Flagship product",
-    logo: "/assets/social-impact-excellence.svg",
-    logoWidth: 1002,
-    logoHeight: 693,
+    logo: "/assets/social-impact-excellence-transparent.png",
+    logoWidth: 1200,
+    logoHeight: 1200,
     logoClass: "logo-landscape",
     className: "flagship",
     lead: "A practical framework for organisations that want to get better at social impact, not simply report more of it.",
@@ -293,12 +293,15 @@ function ProductCard({ product, index }: { product: typeof products[number]; ind
       </div>
       <div className="product-preview">
         <div className={`product-mark ${product.logoClass}`}>
-          <div className="product-logo-stage">
+          {index === 0 ? <div className="product-logo-pair" aria-label="Social Impact Excellence and Certified for Impact 2026">
+            <div className="product-logo-stage">
+              <Image src={product.logo} alt={`${product.name} logo`} width={product.logoWidth} height={product.logoHeight} unoptimized />
+            </div>
+            <div className="product-logo-stage">
+              <Image src="/assets/certified-for-impact-2026-transparent.png" alt="Social Impact Excellence — Certified for Impact 2026" width={1200} height={1200} unoptimized />
+            </div>
+          </div> : <div className="product-logo-stage">
             <Image src={product.logo} alt={`${product.name} logo`} width={product.logoWidth} height={product.logoHeight} unoptimized />
-          </div>
-          {index === 0 && <div className="product-credentials" aria-label="Social Impact Excellence certifications">
-            <Image className="bcorp-logo" src="/assets/b-corp-logo-black.png" alt="Certified B Corporation" width={500} height={731} unoptimized />
-            <Image className="impact-certified-logo" src="/assets/certified-for-impact-2026.png" alt="Social Impact Excellence — Certified for Impact 2026" width={1501} height={1048} unoptimized />
           </div>}
         </div>
         <div className="product-summary"><p className="product-lead">{product.lead}</p><p>{product.copy}</p>{product.href && <span className="product-link">Explore {product.name.replace("™", "")} <b>→</b></span>}</div>

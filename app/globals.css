@@ -2493,7 +2493,26 @@ main > section,
   transform-origin: center;
 }
 
-.home-page .logo-landscape .product-logo-stage img { max-width: 88% !important; max-height: 62% !important; }
+.home-page .product-logo-pair {
+  width: min(100%, 480px);
+  margin-inline: auto;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: center;
+  gap: clamp(1.25rem, 3vw, 2.5rem);
+}
+
+.home-page .product-logo-pair .product-logo-stage {
+  width: 100%;
+}
+
+.home-page .product-logo-pair .product-logo-stage img {
+  width: 82% !important;
+  height: 82% !important;
+  max-width: none !important;
+  max-height: none !important;
+}
+
 .home-page .logo-festival .product-logo-stage img { max-width: 94% !important; max-height: 56% !important; }
 .home-page .charity-product .product-logo-stage img { max-width: 76% !important; max-height: 76% !important; }
 .home-page .claims-product .product-logo-stage img { max-width: 78% !important; max-height: 78% !important; }
@@ -2508,6 +2527,7 @@ main > section,
 
 @media (max-width: 760px) {
   .home-page .product-logo-stage { width: min(100%, 230px); }
+  .home-page .product-logo-pair { width: min(100%, 420px); gap: 1rem; }
   .home-page .product-grid .product-preview { grid-template-rows: auto auto; }
 }
 
