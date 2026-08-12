@@ -40,7 +40,7 @@ export const team = [
   {
     name: "Nicholas Demeter",
     title: "International Development, Evaluation & Systems",
-    image: "/assets/nicholas-final.jpg",
+    image: "/assets/nicholas-final-v2.png",
     linkedin: "https://ug.linkedin.com/in/nicholasdemeter",
     bio: [
       "Nicholas is an American international development specialist based in Kampala, with more than 20 years’ experience working across development programmes and donor-funded environments.",

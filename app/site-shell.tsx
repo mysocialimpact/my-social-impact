@@ -247,7 +247,7 @@ export function SectionLabel({ children, major = false }: { children: React.Reac
 const homeSections = [
   ["introduction", "About", ["introduction", "impact-definition", "who-we-help", "better-tools"]],
   ["products", "Products", ["products"]],
-  ["values", "How we show up", ["values"]],
+  ["values", "Our values", ["values"]],
   ["approach", "How we work", ["approach"]],
   ["what-we-do", "What we do", ["what-we-do"]],
   ["team", "People", ["organisations", "team", "associates"]],
@@ -390,7 +390,7 @@ export function HomePage() {
       </section>
 
       <section className="impact-definition major-section" id="impact-definition" data-reveal>
-        <p className="definition-label">What we mean by social impact</p>
+        <SectionLabel major>Our definition</SectionLabel>
         <blockquote>“Social impact is the meaningful change that individuals and organisations help to create for people, communities, society and the wider environment, delivered through a model that is sustainable and endures over time.”</blockquote>
         <p className="definition-attribution">— My Social Impact</p>
       </section>
@@ -418,7 +418,7 @@ export function HomePage() {
       </section>
 
       <section className="values section-pad major-section" id="values">
-        <div className="section-intro compact" data-reveal><SectionLabel major>How we show up</SectionLabel><h2>How we work matters almost as much as what we do.</h2></div>
+        <div className="section-intro compact" data-reveal><SectionLabel major>Our values</SectionLabel><h2>How we work matters almost as much as what we do.</h2></div>
         <div className="values-grid">{values.map(([name, body], i) => <article key={name} data-reveal style={{ "--delay": `${i * 55}ms` } as React.CSSProperties}><span>0{i + 1}</span><h3>{name}</h3><p>{body}</p></article>)}</div>
       </section>
 
@@ -438,7 +438,7 @@ export function HomePage() {
         <p className="team-together">Together, the team combines strategy, finance, brand, communications, data and technology around a common question: how can organisations create more meaningful social impact?</p>
       </section>
 
-      <section className="associates section-pad major-section" id="associates" data-reveal><SectionLabel major>Associates</SectionLabel><div><h2>A wider network when we need it.</h2><p><strong>We deliberately keep our core team small and senior.</strong></p><p>When a project needs additional specialist expertise, we work with a wider network of trusted independent associates across disciplines, sectors and geographies.</p><p>That allows us to build the right team around the problem rather than carrying a large permanent consultancy structure.</p><small>Small core team. Wider expertise when it matters.</small></div></section>
+      <section className="associates section-pad major-section" id="associates" data-reveal><div className="section-intro"><SectionLabel major>Associates</SectionLabel><h2>A wider network when we need it.</h2><div className="section-support"><p><strong>We deliberately keep our core team small and senior.</strong></p><p>When a project needs additional specialist expertise, we work with a wider network of trusted independent associates across disciplines, sectors and geographies.</p><p>That allows us to build the right team around the problem rather than carrying a large permanent consultancy structure.</p></div></div><div className="associate-invitation"><p>If you’re an independent specialist in Uganda, elsewhere in East Africa, the UK or anywhere around the world—and would like to become an associate—we’d love to hear from you.</p><a href="mailto:marcus@mysocialimpact.org?subject=My%20Social%20Impact%20associate">marcus@mysocialimpact.org <span>↗</span></a></div><small>Small core team. Wider expertise when it matters.</small></section>
 
       <section className="insights section-pad major-section" id="insights">
         <div className="section-intro compact" data-reveal><SectionLabel major>Thinking</SectionLabel><h2>The latest thinking from My Social Impact.</h2><p>We’re curious about where social impact is going next. Our thinking covers impact measurement, reporting, charity regulation, social impact claims, new approaches to evidence and the occasional idea that simply seemed too interesting not to explore.</p></div>

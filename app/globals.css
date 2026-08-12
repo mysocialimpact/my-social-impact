@@ -2585,7 +2585,6 @@ main > section,
   font-size: clamp(15rem, 30vw, 34rem);
   line-height: .72;
 }
-.definition-label,
 .definition-attribution {
   position: relative;
   z-index: 1;
@@ -2602,12 +2601,13 @@ main > section,
   max-width: 19ch;
   margin: clamp(2.5rem, 4vw, 4.5rem) 0 clamp(2rem, 3vw, 3.5rem);
   font-family: var(--font-serif), Georgia, serif;
-  font-size: clamp(2.5rem, 5.1vw, 6rem);
+  font-size: clamp(1.65rem, 2.7vw, 3.15rem);
   font-weight: 500;
   line-height: 1.025;
   letter-spacing: -.05em;
 }
 .definition-attribution { color: var(--ink); }
+.impact-definition > .section-marker { position: relative; z-index: 1; }
 
 .services-section {
   border-bottom: 1px solid var(--line);
@@ -2674,7 +2674,7 @@ main > section,
 .service-list > div { padding: 1rem 0; border-top: 1px solid var(--line); }
 .service-list strong { display: block; margin-bottom: .3rem; font-size: .9rem; }
 .service-list p { margin: 0; color: var(--muted); font-size: .9rem; line-height: 1.5; }
-.service-offer > footer { min-height: 180px; background: #f0ede7; }
+.service-offer > footer { height: 230px; background: #f0ede7; }
 .service-offer:nth-child(2) > footer { background: var(--ink); color: var(--white); }
 .service-offer:nth-child(3) > footer { background: var(--orange); color: var(--white); }
 .service-offer > footer > strong { display: block; font-family: var(--font-serif), Georgia, serif; font-size: clamp(1.4rem, 1.8vw, 2rem); font-weight: 500; line-height: 1.14; }
@@ -2699,18 +2699,29 @@ main > section,
 .home-page .profile-card:nth-child(3) .portrait img { object-position: center 18%; }
 
 .associates {
-  display: grid;
-  grid-template-columns: minmax(190px, .32fr) minmax(0, 1fr);
-  gap: clamp(2.75rem, 4.5vw, 5.5rem);
   border-top: 1px solid var(--line);
   background: #f0ede7;
 }
-.associates > div { max-width: 68rem; }
-.associates h2 { margin: 0 0 2.5rem; font-family: var(--font-serif), Georgia, serif; font-size: clamp(2.8rem, 4.25vw, 5rem); font-weight: 500; line-height: 1.035; letter-spacing: -.05em; }
+.associates .section-intro { margin-bottom: clamp(4rem, 7vw, 7rem); }
+.associates .section-intro h2 { color: var(--ink); }
 .associates p { max-width: 48rem; margin: 0; color: var(--muted); font-size: clamp(1.05rem, 1.12vw, 1.2rem); line-height: 1.68; }
 .associates p + p { margin-top: 1.2em; }
 .associates p strong { color: var(--ink); }
-.associates small { display: block; margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--ink); font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+.associate-invitation {
+  max-width: 68rem;
+  margin-left: auto;
+  padding: clamp(2rem, 3.5vw, 4rem);
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: clamp(2rem, 5vw, 6rem);
+  align-items: end;
+  border: 1px solid var(--ink);
+  background: var(--white);
+}
+.associate-invitation p { color: var(--ink); font-family: var(--font-serif), Georgia, serif; font-size: clamp(1.45rem, 2.2vw, 2.5rem); line-height: 1.15; letter-spacing: -.025em; }
+.associate-invitation a { padding-bottom: .45rem; border-bottom: 1px solid var(--ink); font-weight: 800; overflow-wrap: anywhere; }
+.associate-invitation a span { color: var(--orange); }
+.associates > small { display: block; max-width: 68rem; margin: 3rem 0 0 auto; padding-top: 1rem; border-top: 1px solid var(--ink); font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
 
 @media (max-width: 1100px) {
   .services-heading { grid-template-columns: minmax(130px, .3fr) minmax(0, 1fr); }
@@ -2728,9 +2739,9 @@ main > section,
   .services-heading > p:last-child { grid-column: 1; }
   .service-offer > header { min-height: 0; }
   .service-offer h3 { font-size: clamp(2.65rem, 12vw, 3.5rem); }
-  .service-offer > footer { min-height: 0; }
+  .service-offer > footer { height: auto; min-height: 0; }
   .services-summary h3 { flex-direction: column; gap: .65rem; }
   .services-summary h3 b { transform: rotate(90deg); }
   .home-page .team-grid { grid-template-columns: 1fr; }
-  .associates { gap: 2.5rem; }
+  .associate-invitation { grid-template-columns: 1fr; align-items: start; }
 }
