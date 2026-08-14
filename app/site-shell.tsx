@@ -217,7 +217,7 @@ export function Footer() {
         <a className="footer-address" href="https://www.theideasshed.com/" target="_blank" rel="noreferrer">www.theideasshed.com ↗</a>
       </div>
       <div className="footer-bottom">
-        <div className="footer-links"><Link href="/">Home</Link><Link href="/blog">Blog</Link><Link href="/#contact">Contact</Link><a href="https://www.linkedin.com/company/my-social-impact" target="_blank" rel="noreferrer">LinkedIn ↗</a></div>
+        <div className="footer-links"><Link href="/">Home</Link><Link href="/blog">Blog</Link><Link href="/#contact">Contact</Link><a href="https://platform.mysocialimpact.org/" target="_blank" rel="noreferrer">Start your 10–15 minute Maturity Snapshot ↗</a><a href="https://www.linkedin.com/company/my-social-impact" target="_blank" rel="noreferrer">LinkedIn ↗</a></div>
         <p className="footer-meta">© {new Date().getFullYear()} My Social Impact</p>
       </div>
     </footer>
@@ -417,6 +417,11 @@ export function HomePage() {
             {products.slice(1).map((product, index) => <ProductCard key={product.name} product={product} index={index + 1} />)}
           </div>
         </div>
+        <a className="home-assessment-cta" href="https://platform.mysocialimpact.org/" target="_blank" rel="noreferrer" data-reveal>
+          <span><small>Ready to begin?</small><strong>Start your Social Impact Maturity Snapshot today.</strong></span>
+          <span><small>Your first step</small><strong>About 10–15 minutes</strong></span>
+          <b aria-hidden="true">↗</b>
+        </a>
       </section>
 
       <section className="values section-pad major-section" id="values">

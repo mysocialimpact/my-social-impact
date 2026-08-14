@@ -2041,6 +2041,27 @@ main > section { scroll-margin-top: 70px; }
   text-transform: uppercase;
 }
 .product-link b { color: var(--orange); }
+.home-assessment-cta {
+  margin-top: clamp(2rem, 3vw, 3rem);
+  padding: clamp(1.35rem, 2.5vw, 2.5rem);
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(190px, .5fr) auto;
+  gap: clamp(1.5rem, 4vw, 5rem);
+  align-items: end;
+  border: 1px solid var(--ink);
+  color: var(--ink);
+  transition: background .3s var(--ease-out), color .3s var(--ease-out);
+}
+.home-assessment-cta:hover { background: var(--ink); color: var(--white); }
+.home-assessment-cta > span { display: grid; gap: .55rem; }
+.home-assessment-cta small { font-size: .68rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.home-assessment-cta strong { font-family: var(--font-serif), Georgia, serif; font-size: clamp(1.45rem, 2.2vw, 2.6rem); font-weight: 500; letter-spacing: -.035em; line-height: 1.05; }
+.home-assessment-cta b { color: var(--orange); font-size: 1.4rem; }
+
+@media (max-width: 760px) {
+  .home-assessment-cta { grid-template-columns: 1fr auto; }
+  .home-assessment-cta > span:nth-child(2) { grid-column: 1; }
+}
 
 .product-grid {
   display: grid;

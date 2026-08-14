@@ -64,8 +64,8 @@ function SectionLead({ number, eyebrow, title, children }: { number?: string; ey
   return <div className="sie-section-lead" data-reveal><div><Eyebrow>{eyebrow}</Eyebrow>{number && <span className="sie-section-number">{number}</span>}</div><h2>{title}</h2>{children && <div className="sie-lead-copy">{children}</div>}</div>;
 }
 
-function Action({ children = "Talk to us about Social Impact Excellence" }: { children?: React.ReactNode }) {
-  return <a className="sie-action" href="mailto:marcus@mysocialimpact.org?subject=Social%20Impact%20Excellence"><span><strong>{children}</strong><small>marcus@mysocialimpact.org</small></span><b aria-hidden="true">→</b></a>;
+function AssessmentAction({ children = "Start your Social Impact Maturity Snapshot" }: { children?: React.ReactNode }) {
+  return <a className="sie-action" href="https://platform.mysocialimpact.org/" target="_blank" rel="noreferrer"><span><strong>{children}</strong><small>Start today · your first step takes about 10–15 minutes</small></span><b aria-hidden="true">↗</b></a>;
 }
 
 function PillarIcon({ pillar, compact = false, iconOnly = false }: { pillar: typeof pillars[number]; compact?: boolean; iconOnly?: boolean }) {
@@ -94,7 +94,7 @@ export function SocialImpactExcellencePage() {
     <section className="sie-hero" id="excellence">
       <div className="sie-hero-top" data-reveal><Eyebrow>Social Impact Excellence</Eyebrow><p>My Social Impact’s flagship methodology</p></div>
       <h1 data-reveal>Imagine a world where social impact was taken as seriously as financial performance.</h1>
-      <div className="sie-hero-bottom" data-reveal><strong>Social impact should be treated as a management discipline.</strong><div><p>Organisations don’t achieve financial excellence simply by producing annual accounts. They build leadership, systems, information, accountability and ways of continually improving performance.</p><p>Social impact deserves the same rigour.</p><p>Social Impact Excellence is our flagship methodology for helping organisations embed impact into how they think, decide, operate, measure, learn and communicate.</p></div></div>
+      <div className="sie-hero-bottom" data-reveal><strong>Social impact should be treated as a management discipline.</strong><div><p>Organisations don’t achieve financial excellence simply by producing annual accounts. They build leadership, systems, information, accountability and ways of continually improving performance.</p><p>Social impact deserves the same rigour.</p><p>Social Impact Excellence is our flagship methodology for helping organisations embed impact into how they think, decide, operate, measure, learn and communicate.</p><AssessmentAction /></div></div>
     </section>
 
     <section className="sie-reassurance">
@@ -146,12 +146,14 @@ export function SocialImpactExcellencePage() {
       <div className="sie-blueprint-title" data-reveal><Eyebrow>Signature methodology</Eyebrow><h2>The Social Impact Excellence Blueprint</h2><p>Five pillars. One management system. A continuous journey of improvement.</p></div>
       <Blueprint />
       <div className="sie-stage-details">{journey.map(stage => <article key={stage.name} data-reveal><header><span>{stage.number}</span><h3>{stage.name}</h3></header><strong>{stage.question}</strong><p>{stage.purpose}</p><footer><span>Output</span>{stage.output}</footer></article>)}</div>
+      <div className="sie-inline-cta" data-reveal><p>You can begin the journey now with a quick picture of where your organisation stands today.</p><AssessmentAction>Start the 10–15 minute Maturity Snapshot</AssessmentAction></div>
     </section>
 
     <section className="sie-maturity" id="maturity">
       <SectionLead number="05" eyebrow="Social Impact Maturity Assessment" title={<>Before deciding where to go,<br />understand where you are.</>}><p>Every Social Impact Excellence journey begins by developing a structured picture of the organisation’s current maturity across the five pillars.</p><p>We express maturity as a simple one-to-five-star journey. It is developmental, not a pass or fail.</p></SectionLead>
       <div className="sie-maturity-scale" role="img" aria-label="A developmental maturity scale from one star, very early, to five stars, fully embedded" data-reveal>{["Very early", "Developing", "Partly established", "Strong", "Fully embedded"].map((level, index) => <div key={level}><span>{index + 1} {index === 0 ? "star" : "stars"}</span><div className="sie-stars" aria-hidden="true">{"★".repeat(index + 1)}{"☆".repeat(4 - index)}</div><strong>{level}</strong></div>)}</div>
       <div className="sie-maturity-reassurance" data-reveal><h3>You don’t have to be excellent already.</h3><div>{["What’s working?", "What’s missing?", "Where are the weak pillars?", "What should we prioritise next?"].map((question, index) => <p key={question}><span>0{index + 1}</span>{question}</p>)}</div></div>
+      <div className="sie-inline-cta is-dark" data-reveal><p>Start where you are. The first step is designed to take about 10–15 minutes.</p><AssessmentAction>Start your Maturity Snapshot today</AssessmentAction></div>
       <div className="sie-profile" data-reveal><div><span>Illustrative maturity profile</span><p>A developmental five-star profile, not a pass, fail or league table. It creates a useful starting point for conversation and action.</p></div><div className="sie-profile-chart"><div className="sie-profile-axis" aria-hidden="true"><span>0</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5 stars</span></div><div className="sie-profile-bars">{[
         ["Purpose", 4.2], ["Leadership", 3.5], ["Data", 1.6], ["Delivery", 3.8], ["Communications", 3.1],
       ].map(([name, value]) => { const score = Number(value); const rounded = Math.round(score); return <div key={name}><span>{name}</span><i style={{ "--profile": `${score * 20}%` } as React.CSSProperties} /><b aria-label={`${score} out of 5 stars`}><span aria-hidden="true">{"★".repeat(rounded)}{"☆".repeat(5 - rounded)}</span><small>{score}/5</small></b></div>; })}</div></div></div>
@@ -161,6 +163,7 @@ export function SocialImpactExcellencePage() {
     <section className="sie-platform" id="platform">
       <SectionLead number="06" eyebrow="The Social Impact Excellence Platform" title={<>We’ve made the first step easier.</>}><p>Serious methodology. Simple experience.</p><p>The platform guides organisations through the Maturity Assessment and turns responses into a useful picture of current maturity across the five pillars.</p></SectionLead>
       <div className="sie-platform-system" data-reveal><div className="sie-platform-questions"><span>Structured assessment</span>{["What are you trying to change?", "Who owns impact?", "What evidence can people use?", "How does delivery improve?", "Can your claims be trusted?"].map((question, index) => <p key={question}><b>0{index + 1}</b>{question}</p>)}</div><div className="sie-platform-output"><span>Useful output</span><strong>A clearer picture of where you are, and what deserves attention next.</strong><div>{pillars.map(pillar => <PillarIcon key={pillar.name} pillar={pillar} compact />)}</div></div></div>
+      <div className="sie-inline-cta" data-reveal><p>The platform is ready when you are. Create your account and take the first step today.</p><AssessmentAction>Go to the Social Impact Excellence Platform</AssessmentAction></div>
       <div className="sie-human-tech" data-reveal><div><p>Technology and AI help us remove friction, analyse more information and work more efficiently.</p><p>Our role is to act as a critical friend: bringing perspective, challenging assumptions and helping organisations make better decisions.</p></div><div>{["Curiosity", "Creativity", "Critical thinking", "Judgement", "Asking the right questions"].map(item => <span key={item}>{item}</span>)}</div></div>
       <p className="sie-tech-line" data-reveal>The technology sits under the bonnet.<br /><strong>The thinking remains the point.</strong></p>
     </section>
@@ -177,7 +180,7 @@ export function SocialImpactExcellencePage() {
       <p className="sie-continuous-statement" data-reveal>Social Impact Excellence is continuous.</p>
       <div className="sie-loop" role="img" aria-label="Assess, understand, design, act, learn and assess again" data-reveal>{["Assess", "Understand", "Design", "Act", "Learn", "Assess again"].map((item, index) => <div key={item}><span>{String(index + 1).padStart(2, "0")}</span><strong>{item}</strong>{index < 5 && <i aria-hidden="true">→</i>}</div>)}</div>
       <div className="sie-continuous-question" data-reveal><p>The maturity assessment isn’t merely the beginning. Over time it becomes a way of asking:</p><strong>Are we actually getting better?</strong></div>
-      <div className="sie-final-cta" data-reveal><span>Start where you are.</span><h2>Your first step towards Social Impact Excellence is understanding where you are today.</h2><div><p>Start with the Social Impact Maturity Assessment.</p><ul><li>Understand your strengths.</li><li>Identify your gaps.</li><li>See where your weakest pillars are.</li><li>Decide what deserves attention next.</li></ul><p>Access to the assessment is currently by invitation.</p><Action>Get access to the Maturity Assessment</Action></div></div>
+      <div className="sie-final-cta" data-reveal><span>Start where you are.</span><h2>Your first step towards Social Impact Excellence is understanding where you are today.</h2><div><p>Start with the Social Impact Maturity Snapshot. It takes about 10–15 minutes to complete the first step.</p><ul><li>Understand your strengths.</li><li>Identify your gaps.</li><li>See where your weakest pillars are.</li><li>Decide what deserves attention next.</li></ul><AssessmentAction>Start your Maturity Snapshot today</AssessmentAction></div></div>
     </section>
   </main><Footer /></>;
 }
