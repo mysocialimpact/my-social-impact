@@ -304,12 +304,12 @@ function ProductCard({ product, index }: { product: typeof products[number]; ind
             <Image src={product.logo} alt={`${product.name} logo`} width={product.logoWidth} height={product.logoHeight} unoptimized />
           </div>}
         </div>
-        <div className="product-summary"><p className="product-lead">{product.lead}</p><p>{product.copy}</p>{product.href && <span className="product-link">Explore {product.name.replace("™", "")} <b>→</b></span>}</div>
+        <div className="product-summary"><p className="product-lead">{product.lead}</p><p>{product.copy}</p>{index === 0 ? <div className="product-card-actions"><Link className="product-link" href={product.href}>Explore Social Impact Excellence <b>→</b></Link><a className="product-link product-start-link" href="https://platform.mysocialimpact.org/" target="_blank" rel="noreferrer"><span>Start your Social Impact Maturity Snapshot today<small>About 10–15 minutes</small></span><b>↗</b></a></div> : product.href && <span className="product-link">Explore {product.name.replace("™", "")} <b>→</b></span>}</div>
       </div>
     </>
   );
 
-  return <a className={`product-card ${product.className}`} href={product.href} target={product.href.startsWith("http") ? "_blank" : undefined} rel={product.href.startsWith("http") ? "noreferrer" : undefined} data-reveal style={{ "--delay": `${index * 70}ms` } as React.CSSProperties}>{content}</a>;
+  return index === 0 ? <article className={`product-card ${product.className}`} data-reveal style={{ "--delay": `${index * 70}ms` } as React.CSSProperties}>{content}</article> : <a className={`product-card ${product.className}`} href={product.href} target={product.href.startsWith("http") ? "_blank" : undefined} rel={product.href.startsWith("http") ? "noreferrer" : undefined} data-reveal style={{ "--delay": `${index * 70}ms` } as React.CSSProperties}>{content}</a>;
 }
 
 export function ArticleCard({ post, index = 0 }: { post: typeof posts[number]; index?: number }) {
@@ -417,11 +417,6 @@ export function HomePage() {
             {products.slice(1).map((product, index) => <ProductCard key={product.name} product={product} index={index + 1} />)}
           </div>
         </div>
-        <a className="home-assessment-cta" href="https://platform.mysocialimpact.org/" target="_blank" rel="noreferrer" data-reveal>
-          <span><small>Ready to begin?</small><strong>Start your Social Impact Maturity Snapshot today.</strong></span>
-          <span><small>Your first step</small><strong>About 10–15 minutes</strong></span>
-          <b aria-hidden="true">↗</b>
-        </a>
       </section>
 
       <section className="values section-pad major-section" id="values">
