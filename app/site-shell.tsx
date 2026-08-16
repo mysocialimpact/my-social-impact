@@ -223,6 +223,9 @@ export function Footer() {
         <p>Strategy for Social Impact Excellence</p>
       </div>
       <div className="footer-ideas">
+        <a className="footer-ideas-logo" href="https://www.theideasshed.com/" target="_blank" rel="noreferrer" aria-label="The Ideas Shed">
+          <Image src="/assets/ideas-shed-logo.png" alt="The Ideas Shed, from ideas to action" width={760} height={738} unoptimized />
+        </a>
         <p className="footer-kicker">Website built by</p>
         <h2><a href="https://www.theideasshed.com/" target="_blank" rel="noreferrer">The Ideas Shed ↗</a></h2>
         <p>A creative venture studio that turns promising ideas into practical projects, tools and businesses.</p>

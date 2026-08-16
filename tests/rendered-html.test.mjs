@@ -33,6 +33,7 @@ test("server-renders the My Social Impact homepage", async () => {
   assert.match(html, /href="\/social-impact-claims-code"/i);
   assert.match(html, /href="\/social-impact-excellence"/i);
   assert.match(html, /href="\/purpose-works"/i);
+  assert.match(html, /\/assets\/ideas-shed-logo\.png/i);
   assert.match(html, /Start your Social Impact Maturity Snapshot today/i);
   assert.match(html, /href="https:\/\/platform\.mysocialimpact\.org\/"/i);
   assert.doesNotMatch(html, /codex-preview|Your site is taking shape/i);
@@ -55,6 +56,7 @@ test("server-renders the Purpose Works page", async () => {
   assert.match(html, /GIIN estimates the global impact investing market at \$1\.571 trillion in 2024/i);
   assert.match(html, /the market would approach \$5 trillion by 2030/i);
   assert.match(html, /UK \+ global thinking/i);
+  assert.match(html, /\/assets\/ideas-shed-logo\.png/i);
   assert.match(html, /href="\/social-impact-excellence"/i);
   assert.match(html, /mailto:marcus@mysocialimpact\.org/i);
   assert.match(html, /mailto:chris@mysocialimpact\.org/i);

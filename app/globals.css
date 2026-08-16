@@ -474,6 +474,8 @@ img { max-width: 100%; display: block; }
 .site-footer .footer-brand .brand.brand-small { font-size: clamp(2.8rem, 4.8vw, 5.2rem); }
 .footer-brand > p { max-width: 24rem; margin: 2rem 0 0; color: rgba(255,255,255,.68); font-size: clamp(1.05rem, 1.5vw, 1.4rem); line-height: 1.35; }
 .footer-ideas { max-width: 47rem; padding-left: clamp(1.5rem, 4vw, 4.5rem); border-left: 1px solid rgba(255,255,255,.2); }
+.footer-ideas-logo { width: min(180px, 42vw); margin: 0 0 1.5rem; display: block; }
+.footer-ideas-logo img { width: 100%; height: auto; display: block; }
 .footer-kicker { margin: 0 0 1.2rem; color: var(--orange); font-size: .72rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
 .footer-ideas h2 { margin: 0 0 1.5rem; font-family: var(--font-serif); font-size: clamp(2.5rem, 4.7vw, 5.2rem); font-weight: 500; line-height: .95; letter-spacing: -.05em; }
 .footer-ideas h2 a:hover, .footer-address:hover { color: var(--orange); }
