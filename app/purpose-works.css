@@ -1,4 +1,4 @@
-/* Purpose Works — PDF-inspired editorial art direction within the MSI system. */
+/* Purpose Works: PDF-inspired editorial art direction within the MSI system. */
 .pw-page {
   --pw-pad: clamp(1.35rem, 5.75vw, 6.75rem);
   --pw-space: clamp(6rem, 10vw, 11rem);

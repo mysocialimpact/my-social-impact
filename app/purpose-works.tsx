@@ -93,7 +93,7 @@ export function PurposeWorksPage() {
           </div>
           <div className="pw-hero-definition" data-reveal style={{ "--delay": "140ms" } as React.CSSProperties}>
             <h1>My Social Impact’s specialist purpose, social impact marketing and communications offer.</h1>
-            <p>Helping organisations align what they say, what they do and what they stand for — and turn credible social impact into stronger stakeholder trust.</p>
+            <p>Helping organisations align what they say, what they do and what they stand for, turning credible social impact into stronger stakeholder trust.</p>
           </div>
         </section>
 
@@ -153,7 +153,7 @@ export function PurposeWorksPage() {
             <strong>$5tn+</strong>
             <p>The global impact economy is projected to double to over $5 trillion by 2030. Capital is increasingly flowing towards organisations able to demonstrate meaningful impact and responsible business practice.</p>
           </div>
-          <div className="pw-regions" data-reveal><div><h3>Global thinking.</h3><p>International perspective for organisations competing in a world of rising stakeholder expectations.</p></div><div><h3>East African understanding.</h3><p>Regional experience across fast-growing markets — a differentiator, not a boundary. The UK remains the primary market.</p></div></div>
+          <div className="pw-regions" data-reveal><div><h3>Global thinking.</h3><p>International perspective for organisations competing in a world of rising stakeholder expectations.</p></div><div><h3>East African understanding.</h3><p>Regional experience across fast-growing markets. This is a differentiator, not a boundary. The UK remains the primary market.</p></div></div>
         </section>
 
         <section className="pw-offer pw-pad" id="offer">
