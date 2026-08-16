@@ -16,11 +16,11 @@ const sections = [
 ] as const;
 
 const pillars = [
-  ["01", "Purpose", "Where the organisation is going and why.", "primary"],
-  ["02", "Leadership", "How purpose becomes accountable and embedded.", "support"],
-  ["03", "Data", "The evidence that makes claims credible.", "evidence"],
-  ["04", "Delivery", "The operational substance beneath the story.", "evidence"],
-  ["05", "Communications", "How impact is understood, shared and trusted.", "primary"],
+  ["01", "Purpose", "Where the organisation is going and why.", "primary", "/assets/excellence/purpose-icon.png"],
+  ["02", "Leadership", "How purpose becomes accountable and embedded.", "support", "/assets/excellence/leadership-icon.png"],
+  ["03", "Data", "The evidence that makes claims credible.", "evidence", "/assets/excellence/data-icon.png"],
+  ["04", "Delivery", "The operational substance beneath the story.", "evidence", "/assets/excellence/delivery-icon.png"],
+  ["05", "Communications", "How impact is understood, shared and trusted.", "primary", "/assets/excellence/communications-icon.png"],
 ] as const;
 
 const caseStudies = [
@@ -174,8 +174,8 @@ export function PurposeWorksPage() {
 
         <section className="pw-excellence pw-pad" id="excellence">
           <Marker number="06">The My Social Impact connection</Marker>
-          <div className="pw-excellence-head" data-reveal><h2>The five pillars create credibility.</h2><p>Purpose Works operates especially across <strong>Purpose + Communications</strong>, with Leadership helping embed purpose. Data + Delivery provide the evidence and operational substance that make communications credible.</p></div>
-          <div className="pw-pillars" data-reveal>{pillars.map(([number, name, copy, role]) => <article className={"is-" + role} key={name}><span>{number}</span><h3>{name}</h3><p>{copy}</p><small>{role === "primary" ? "Purpose Works core" : role === "support" ? "Embedding purpose" : "Credibility underneath"}</small></article>)}</div>
+          <div className="pw-excellence-head" data-reveal><h2>The five pillars create credibility.</h2><div><p><a href="/social-impact-excellence">Social Impact Excellence</a> is My Social Impact’s flagship methodology. It brings Purpose, Leadership, Data, Delivery and Communications together as one practical approach.</p><p><strong>Purpose Works delivers directly across Purpose, Leadership and Communications.</strong> Data and Delivery provide the evidence and operational substance that make this work credible.</p><a className="pw-excellence-link" href="/social-impact-excellence">Explore Social Impact Excellence <span>↗</span></a></div></div>
+          <div className="pw-pillars" data-reveal>{pillars.map(([number, name, copy, role, icon]) => <article className={"is-" + role} key={name}><span>{number}</span><div className="pw-pillar-icon"><Image src={icon} alt="" width={260} height={260} unoptimized /></div><h3>{name}</h3><p>{copy}</p><small>{role === "evidence" ? "Evidence and substance" : "Purpose Works delivers here"}</small></article>)}</div>
           <div className="pw-management" data-reveal>
             <p>Imagine a world where social impact is taken as seriously as financial performance.</p>
             <div><strong>Measure</strong><i>→</i><strong>Manage</strong><i>→</i><strong>Communicate</strong></div>

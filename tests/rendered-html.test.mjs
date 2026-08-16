@@ -50,6 +50,8 @@ test("server-renders the Purpose Works page", async () => {
   assert.match(html, /What they say/i);
   assert.match(html, /What they do/i);
   assert.match(html, /What they stand for/i);
+  assert.match(html, /My Social Impact’s flagship methodology/i);
+  assert.match(html, /href="\/social-impact-excellence"/i);
   assert.doesNotMatch(html, /Creative Edge|Purpose Edge/i);
 });
 

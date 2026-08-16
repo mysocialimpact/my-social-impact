@@ -351,8 +351,32 @@
   gap: clamp(3rem, 8vw, 10rem);
 }
 .pw-excellence-head h2 { margin: 0; font-size: clamp(4rem, 7vw, 8.5rem); line-height: .85; }
-.pw-excellence-head p { align-self: end; margin: 0; color: var(--muted); font-size: 1.08rem; line-height: 1.7; }
+.pw-excellence-head > div { align-self: end; }
+.pw-excellence-head p { margin: 0; color: var(--muted); font-size: 1.08rem; line-height: 1.7; }
+.pw-excellence-head p + p { margin-top: 1.25rem; }
+.pw-excellence-head p > a {
+  color: var(--ink);
+  font-weight: 800;
+  text-decoration: underline;
+  text-decoration-color: var(--pw-orange);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 4px;
+}
 .pw-excellence-head strong { color: var(--pw-readable-orange); }
+.pw-excellence-link {
+  margin-top: 1.8rem;
+  padding: .85rem 0;
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 1px solid var(--ink);
+  color: var(--ink);
+  font-size: .7rem;
+  font-weight: 800;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+}
+.pw-excellence-link span { color: var(--pw-readable-orange); }
 .pw-pillars {
   margin-top: clamp(6rem, 10vw, 11rem);
   display: grid;
@@ -372,6 +396,14 @@
 .pw-pillars .is-support { background: var(--yellow); }
 .pw-pillars .is-evidence { background: var(--paper); }
 .pw-pillars span { font-size: .67rem; font-weight: 800; }
+.pw-pillar-icon {
+  width: min(100%, 104px);
+  aspect-ratio: 1;
+  margin: 1.5rem auto;
+  display: grid;
+  place-items: center;
+}
+.pw-pillar-icon img { width: 100%; height: 100%; object-fit: contain; }
 .pw-pillars h3 { margin: auto 0 1rem; font-size: clamp(1.55rem, 2.3vw, 2.8rem); line-height: .95; overflow-wrap: anywhere; }
 .pw-pillars p { min-height: 5em; margin: 0; color: var(--muted); line-height: 1.5; }
 .pw-pillars small { margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid currentColor; font-size: .62rem; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; }
@@ -571,6 +603,7 @@
   .pw-pillars article:last-child { min-height: 220px; border-right: 0; border-bottom: 1px solid var(--ink); }
   .pw-pillars article:last-child { border-bottom: 0; }
   .pw-pillars h3 { font-size: 2.5rem; overflow-wrap: normal; }
+  .pw-pillar-icon { width: 110px; margin-block: 1.25rem; }
   .pw-management > div { display: grid; }
   .pw-gap > h2 { font-size: clamp(4rem, 18vw, 6rem); }
   .pw-gap-grid { grid-template-columns: 1fr; }
