@@ -212,8 +212,11 @@ export function PurposeWorksPage() {
           <div className="pw-closing" data-reveal>
             <p>The future belongs to trusted organisations.</p>
             <h2>Purpose works.</h2>
-            <p>Purpose Works operates at the intersection of purpose, trust, impact, strategy and communications.</p>
-            <a href="mailto:marcus@mysocialimpact.org?subject=Purpose%20Works">Start a conversation <span>↗</span></a>
+            <p>Ready to align what your organisation says, does and stands for? Talk to us about turning credible social impact into stronger stakeholder trust.</p>
+            <div className="pw-contact-links">
+              <a href="mailto:marcus@mysocialimpact.org?subject=Purpose%20Works%20enquiry"><span><small>Talk to Marcus</small><strong>marcus@mysocialimpact.org</strong></span><b>↗</b></a>
+              <a href="mailto:chris@mysocialimpact.org?subject=Purpose%20Works%20enquiry"><span><small>Talk to Chris</small><strong>chris@mysocialimpact.org</strong></span><b>↗</b></a>
+            </div>
           </div>
         </section>
       </main>
