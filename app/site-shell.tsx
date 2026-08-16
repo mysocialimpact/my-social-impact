@@ -87,7 +87,7 @@ const products = [
   },
   {
     name: "Purpose Works",
-    kicker: "Purpose, impact and communications — aligned.",
+    kicker: "Purpose, impact and communications. Aligned.",
     logo: "/assets/purpose-works-wordmark.png",
     logoWidth: 1942,
     logoHeight: 809,
@@ -186,7 +186,7 @@ export function SiteHeader() {
 
   const navigation = [
     { href: "/social-impact-excellence", label: "Social Impact Excellence", note: "Our flagship methodology" },
-    { href: "/purpose-works", label: "Purpose Works", note: "Purpose, impact and communications — aligned" },
+    { href: "/purpose-works", label: "Purpose Works", note: "Purpose, impact and communications. Aligned." },
     { href: "/social-impact-report", label: "Charity Impact Reports", note: "Stronger evidence. Clearer storytelling." },
     { href: "/social-impact-claims-code", label: "Social Impact Claims Code", note: "Make claims people can trust" },
     { href: "/blog", label: "Blog", note: "Ideas, evidence and useful provocations" },
