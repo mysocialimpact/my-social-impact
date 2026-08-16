@@ -86,6 +86,18 @@ const products = [
     href: "/social-impact-excellence",
   },
   {
+    name: "Purpose Works",
+    kicker: "Purpose, impact and communications — aligned.",
+    logo: "/assets/purpose-works-wordmark.png",
+    logoWidth: 1942,
+    logoHeight: 809,
+    logoClass: "logo-purpose",
+    className: "purpose-works-product",
+    lead: "Helping organisations align what they say, what they do and what they stand for.",
+    copy: "A specialist purpose, social impact marketing and communications offer built to strengthen credibility and stakeholder trust.",
+    href: "/purpose-works",
+  },
+  {
     name: "Charity Impact Reports",
     kicker: "Stronger evidence. Clearer storytelling.",
     logo: "/assets/charity-impact-reports-transparent.png",
@@ -174,6 +186,7 @@ export function SiteHeader() {
 
   const navigation = [
     { href: "/social-impact-excellence", label: "Social Impact Excellence", note: "Our flagship methodology" },
+    { href: "/purpose-works", label: "Purpose Works", note: "Purpose, impact and communications — aligned" },
     { href: "/social-impact-report", label: "Charity Impact Reports", note: "Stronger evidence. Clearer storytelling." },
     { href: "/social-impact-claims-code", label: "Social Impact Claims Code", note: "Make claims people can trust" },
     { href: "/blog", label: "Blog", note: "Ideas, evidence and useful provocations" },

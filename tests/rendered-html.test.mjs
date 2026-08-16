@@ -32,9 +32,25 @@ test("server-renders the My Social Impact homepage", async () => {
   assert.match(html, /Imagine a world where social impact was taken as seriously as financial performance/i);
   assert.match(html, /href="\/social-impact-claims-code"/i);
   assert.match(html, /href="\/social-impact-excellence"/i);
+  assert.match(html, /href="\/purpose-works"/i);
   assert.match(html, /Start your Social Impact Maturity Snapshot today/i);
   assert.match(html, /href="https:\/\/platform\.mysocialimpact\.org\/"/i);
   assert.doesNotMatch(html, /codex-preview|Your site is taking shape/i);
+});
+
+test("server-renders the Purpose Works page", async () => {
+  const response = await render("/purpose-works");
+  assert.equal(response.status, 200);
+  assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
+
+  const html = await response.text();
+  assert.match(html, /<title>Purpose Works \| My Social Impact<\/title>/i);
+  assert.match(html, /specialist purpose, social impact marketing and communications offer/i);
+  assert.match(html, /Trust is becoming a strategic asset/i);
+  assert.match(html, /What they say/i);
+  assert.match(html, /What they do/i);
+  assert.match(html, /What they stand for/i);
+  assert.doesNotMatch(html, /Creative Edge|Purpose Edge/i);
 });
 
 test("server-renders the Social Impact Claims Code page", async () => {

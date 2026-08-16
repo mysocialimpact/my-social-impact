@@ -2573,6 +2573,7 @@ main > section,
 }
 
 .home-page .logo-festival .product-logo-stage img { max-width: 94% !important; max-height: 56% !important; }
+.home-page .logo-purpose .product-logo-stage img { max-width: 96% !important; max-height: 58% !important; }
 .home-page .charity-product .product-logo-stage img { max-width: 76% !important; max-height: 76% !important; }
 .home-page .claims-product .product-logo-stage img { max-width: 78% !important; max-height: 78% !important; }
 .home-page .product-credentials { margin-top: -1rem; }
@@ -2588,6 +2589,19 @@ main > section,
   .home-page .product-logo-stage { width: min(100%, 230px); }
   .home-page .product-logo-pair { width: min(100%, 420px); gap: 1rem; }
   .home-page .product-grid .product-preview { grid-template-rows: auto auto; }
+}
+
+@media (min-width: 1101px) {
+  .home-page .product-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+
+@media (min-width: 761px) and (max-width: 1100px) {
+  .home-page .product-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .home-page .product-grid .product-card:nth-child(3) {
+    border-top: 1px solid var(--line);
+    border-left: 0;
+  }
+  .home-page .product-grid .product-card:nth-child(4) { border-top: 1px solid var(--line); }
 }
 
 .home-page .organisation-list {
