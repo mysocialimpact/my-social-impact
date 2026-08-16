@@ -150,10 +150,10 @@ export function PurposeWorksPage() {
           </div>
           <div className="pw-economy" data-reveal>
             <span>The impact economy</span>
-            <strong>$5tn+</strong>
-            <p>The global impact economy is projected to double to over $5 trillion by 2030. Capital is increasingly flowing towards organisations able to demonstrate meaningful impact and responsible business practice.</p>
+            <strong>$1.57 trillion</strong>
+            <p>GIIN estimates the global impact investing market at $1.571 trillion in 2024, representing 21% compound annual growth since 2019.<br /><br /><b>If recent growth continued at that rate, the market would approach $5 trillion by 2030.</b><br /><br />Capital is increasingly flowing towards organisations able to demonstrate meaningful impact and responsible business practice.<br /><br /><small>Source: <a href="https://thegiin.org/publication/research/sizing-the-impact-investing-market-2024/" target="_blank" rel="noreferrer">Global Impact Investing Network, <i>Sizing the Impact Investing Market 2024</i></a>.</small></p>
           </div>
-          <div className="pw-regions" data-reveal><div><h3>Global thinking.</h3><p>International perspective for organisations competing in a world of rising stakeholder expectations.</p></div><div><h3>East African understanding.</h3><p>Regional experience across fast-growing markets. This is a differentiator, not a boundary. The UK remains the primary market.</p></div></div>
+          <div className="pw-regions" data-reveal><div><h3>UK + global thinking.</h3><p>Purpose Works combines UK and international strategic thinking with first-hand understanding of delivering and measuring impact in East Africa.</p></div><div><h3>East African understanding.</h3><p>That gives us a wider perspective: from boardroom purpose, reputation and communications to the practical realities of creating meaningful impact in contexts where needs can be acute, resources constrained and delivery really matters. That breadth of perspective strengthens our thinking everywhere we work.</p></div></div>
         </section>
 
         <section className="pw-offer pw-pad" id="offer">
