@@ -108,6 +108,7 @@ const products = [
     lead: "A clearer way for charities to explain the difference they make.",
     copy: "Credible, accessible impact reporting that brings together strategy, evidence, outcomes and stories.",
     href: "/social-impact-report",
+    secondaryHref: "https://sorp2026.mysocialimpact.org",
   },
   {
     name: "Festival Impact Reports",
@@ -320,12 +321,12 @@ function ProductCard({ product, index }: { product: typeof products[number]; ind
             <Image src={product.logo} alt={`${product.name} logo`} width={product.logoWidth} height={product.logoHeight} unoptimized />
           </div>}
         </div>
-        <div className="product-summary"><p className="product-lead">{product.lead}</p><p>{product.copy}</p>{index === 0 ? <div className="product-card-actions"><Link className="product-link" href={product.href}>Explore Social Impact Excellence <b>→</b></Link><a className="product-link product-start-link" href="https://platform.mysocialimpact.org/" target="_blank" rel="noreferrer"><span>Start your Social Impact Maturity Snapshot today<small>About 10–15 minutes</small></span><b>↗</b></a></div> : product.href && <span className="product-link">Explore {product.name.replace("™", "")} <b>→</b></span>}</div>
+        <div className="product-summary"><p className="product-lead">{product.lead}</p><p>{product.copy}</p>{index === 0 ? <div className="product-card-actions"><Link className="product-link" href={product.href}>Explore Social Impact Excellence <b>→</b></Link><a className="product-link product-start-link" href="https://platform.mysocialimpact.org/" target="_blank" rel="noreferrer"><span>Start your Social Impact Maturity Snapshot today<small>About 10–15 minutes</small></span><b>↗</b></a></div> : "secondaryHref" in product ? <div className="product-card-actions"><Link className="product-link" href={product.href}>Explore {product.name} <b>→</b></Link><a className="product-link product-start-link" href={product.secondaryHref} target="_blank" rel="noreferrer">Ask SORP 2026 <b>→</b></a></div> : product.href && <span className="product-link">Explore {product.name.replace("™", "")} <b>→</b></span>}</div>
       </div>
     </>
   );
 
-  return index === 0 ? <article className={`product-card ${product.className}`} data-reveal style={{ "--delay": `${index * 70}ms` } as React.CSSProperties}>{content}</article> : <a className={`product-card ${product.className}`} href={product.href} target={product.href.startsWith("http") ? "_blank" : undefined} rel={product.href.startsWith("http") ? "noreferrer" : undefined} data-reveal style={{ "--delay": `${index * 70}ms` } as React.CSSProperties}>{content}</a>;
+  return index === 0 || "secondaryHref" in product ? <article className={`product-card ${product.className}`} data-reveal style={{ "--delay": `${index * 70}ms` } as React.CSSProperties}>{content}</article> : <a className={`product-card ${product.className}`} href={product.href} target={product.href.startsWith("http") ? "_blank" : undefined} rel={product.href.startsWith("http") ? "noreferrer" : undefined} data-reveal style={{ "--delay": `${index * 70}ms` } as React.CSSProperties}>{content}</a>;
 }
 
 export function ArticleCard({ post, index = 0 }: { post: typeof posts[number]; index?: number }) {
