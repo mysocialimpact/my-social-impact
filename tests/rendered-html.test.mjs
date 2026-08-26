@@ -64,6 +64,9 @@ test("server-renders the Purpose Works page", async () => {
   assert.match(html, /Procter &amp; Gamble/i);
   assert.match(html, /Unilever/i);
   assert.match(html, /Ricoh/i);
+  assert.match(html, /\/assets\/experience\/starbucks\.svg/i);
+  assert.match(html, /\/assets\/experience\/actionaid\.svg/i);
+  assert.match(html, /\/assets\/experience\/traidcraft\.webp/i);
   assert.match(html, /Request the showreel/i);
   assert.match(html, /mailto:marcus@mysocialimpact\.org\?subject=Purpose%20Works%20showreel/i);
   assert.match(html, /Social impact accounting asks whether impact can be substantiated/i);

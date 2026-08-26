@@ -44,7 +44,15 @@ const caseStudies = [
   },
 ] as const;
 
-const selectedExperience = ["Diageo", "Procter & Gamble", "Unilever", "Ricoh", "Starbucks", "ActionAid", "Traidcraft"] as const;
+const selectedExperience = [
+  { name: "Diageo", src: "/assets/clients/diageo.png", width: 226, height: 49, className: "is-wide" },
+  { name: "Procter & Gamble", src: "/assets/experience/procter-gamble.svg", width: 720, height: 720, className: "is-icon" },
+  { name: "Unilever", src: "/assets/experience/unilever.svg", width: 1000, height: 214, className: "is-wide" },
+  { name: "Ricoh", src: "/assets/experience/ricoh.svg", width: 200, height: 36, className: "is-wide" },
+  { name: "Starbucks", src: "/assets/experience/starbucks.svg", width: 512, height: 512, className: "is-icon" },
+  { name: "ActionAid", src: "/assets/experience/actionaid.svg", width: 1182, height: 156, className: "is-wide is-actionaid" },
+  { name: "Traidcraft", src: "/assets/experience/traidcraft.webp", width: 1500, height: 348, className: "is-wide is-traidcraft" },
+] as const;
 
 function PurposeWorksNavigation() {
   const [active, setActive] = useState("overview");
@@ -236,10 +244,9 @@ export function PurposeWorksPage() {
       <Footer />
       <div className="pw-experience-bar-spacer" aria-hidden="true" />
       <aside className="pw-experience-bar" aria-label="Selected experience across the team">
-        <p>Selected experience across the team</p>
         <div className="pw-experience-bar-viewport">
           <div className="pw-experience-bar-marquee">
-            {[false, true].map((duplicate) => <ul key={String(duplicate)} aria-hidden={duplicate || undefined}>{selectedExperience.map((name) => <li key={name}>{name}</li>)}</ul>)}
+            {[false, true].map((duplicate) => <ul key={String(duplicate)} aria-hidden={duplicate || undefined}>{selectedExperience.map((brand) => <li className={brand.className} key={brand.name}><Image src={brand.src} alt={duplicate ? "" : brand.name} width={brand.width} height={brand.height} unoptimized /></li>)}</ul>)}
           </div>
         </div>
       </aside>
