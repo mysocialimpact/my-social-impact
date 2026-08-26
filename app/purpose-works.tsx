@@ -44,6 +44,8 @@ const caseStudies = [
   },
 ] as const;
 
+const selectedExperience = ["Diageo", "Procter & Gamble", "Unilever", "Ricoh", "Starbucks", "ActionAid", "Traidcraft"] as const;
+
 function PurposeWorksNavigation() {
   const [active, setActive] = useState("overview");
 
@@ -158,7 +160,7 @@ export function PurposeWorksPage() {
 
         <section className="pw-offer pw-pad" id="offer">
           <Marker number="05">What Purpose Works actually does</Marker>
-          <div className="pw-offer-title" data-reveal><h2>Connecting purpose, evidence and communications.</h2><p>Helping organisations align what they say, do and stand for through impact strategy, stakeholder engagement, behavioural change and credible communications.</p></div>
+          <div className="pw-offer-title" data-reveal><h2>Connecting purpose, evidence and communications.</h2><p>Helping organisations align what they say, do and stand for through impact strategy, stakeholder engagement, behavioural change and credible communications. Social impact accounting asks whether impact can be substantiated. Social impact marketing asks whether it can be communicated clearly and honestly. Purpose Works connects the two.</p></div>
           <div className="pw-offer-grid">
             <article data-reveal>
               <span>01</span><h3>Strategy + purpose</h3><p>Helping organisations define what they stand for.</p>
@@ -169,7 +171,7 @@ export function PurposeWorksPage() {
               <ul>{["Behavioural change campaigns", "Social media campaigns", "Impact storytelling", "Stakeholder engagement", "Internal communications", "Impact reporting", "Responsible social impact messaging"].map(item => <li key={item}>{item}</li>)}</ul>
             </article>
           </div>
-          <div className="pw-long-term" data-reveal><h3>From strategy to delivery.</h3><p>We help organisations define a credible purpose, embed it in leadership and decision-making, engage stakeholders, deliver communications and behavioural change campaigns, and report impact clearly.</p></div>
+          <div className="pw-long-term" data-reveal><h3>From strategy to delivery.</h3><p>We help organisations define a credible purpose, embed it in leadership and decision-making, engage stakeholders, deliver communications and behavioural change campaigns, and report impact clearly. We can act as a constructive critical friend from strategy through to delivery, not simply arrive at the end to make the story look better.</p></div>
         </section>
 
         <section className="pw-excellence pw-pad" id="excellence">
@@ -206,6 +208,17 @@ export function PurposeWorksPage() {
           <p className="pw-founders">Marcus Warry and Dr Chris Arnold are co-founders of My Social Impact.</p>
         </section>
 
+        <section className="pw-showreel pw-pad" aria-labelledby="pw-showreel-title">
+          <div data-reveal>
+            <p className="pw-showreel-kicker">Selected work</p>
+            <h2 id="pw-showreel-title">See the work.</h2>
+          </div>
+          <div className="pw-showreel-copy" data-reveal style={{ "--delay": "90ms" } as React.CSSProperties}>
+            <p>Our experience spans behavioural change, strategy, marketing, communications, stakeholder engagement and social impact for major organisations in the UK and internationally.</p>
+            <a href="mailto:marcus@mysocialimpact.org?subject=Purpose%20Works%20showreel&amp;body=Hi%20Marcus%2C%0D%0A%0D%0AI%27d%20like%20to%20see%20the%20Purpose%20Works%20showreel.%0D%0A%0D%0AThanks%2C%0D%0A" aria-label="Request the Purpose Works showreel by email"><span>Request the showreel<small>Opens your email</small></span><b aria-hidden="true">↗</b></a>
+          </div>
+        </section>
+
         <section className="pw-final" id="start">
           <Marker number="10">How we help</Marker>
           <div className="pw-start-grid" data-reveal><div><h2>Make purpose work across the organisation.</h2><p>We connect purpose to strategy, leadership, culture, operations, stakeholder relationships and the decisions people make every day.</p></div><div><h2>Communicate impact with credibility.</h2><p>We turn real evidence and operational substance into clear reporting, campaigns, engagement and stories that people can trust.</p></div></div>
@@ -221,6 +234,15 @@ export function PurposeWorksPage() {
         </section>
       </main>
       <Footer />
+      <div className="pw-experience-bar-spacer" aria-hidden="true" />
+      <aside className="pw-experience-bar" aria-label="Selected experience across the team">
+        <p>Selected experience across the team</p>
+        <div className="pw-experience-bar-viewport">
+          <div className="pw-experience-bar-marquee">
+            {[false, true].map((duplicate) => <ul key={String(duplicate)} aria-hidden={duplicate || undefined}>{selectedExperience.map((name) => <li key={name}>{name}</li>)}</ul>)}
+          </div>
+        </div>
+      </aside>
     </>
   );
 }

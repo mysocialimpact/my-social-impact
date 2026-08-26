@@ -60,6 +60,14 @@ test("server-renders the Purpose Works page", async () => {
   assert.match(html, /GIIN estimates the global impact investing market at \$1\.571 trillion in 2024/i);
   assert.match(html, /the market would approach \$5 trillion by 2030/i);
   assert.match(html, /UK \+ global thinking/i);
+  assert.match(html, /Selected experience across the team/i);
+  assert.match(html, /Procter &amp; Gamble/i);
+  assert.match(html, /Unilever/i);
+  assert.match(html, /Ricoh/i);
+  assert.match(html, /Request the showreel/i);
+  assert.match(html, /mailto:marcus@mysocialimpact\.org\?subject=Purpose%20Works%20showreel/i);
+  assert.match(html, /Social impact accounting asks whether impact can be substantiated/i);
+  assert.match(html, /constructive critical friend/i);
   assert.match(html, /\/assets\/ideas-shed-logo\.png/i);
   assert.match(html, /href="\/social-impact-excellence"/i);
   assert.match(html, /mailto:marcus@mysocialimpact\.org/i);
