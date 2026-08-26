@@ -63,6 +63,10 @@ test("server-renders the Purpose Works page", async () => {
   assert.match(html, /Selected experience across the team/i);
   assert.match(html, /\/assets\/clients\/agrievolve\.png/i);
   assert.match(html, /\/assets\/clients\/diageo\.png/i);
+  assert.match(html, /\/assets\/experience\/o2\.svg/i);
+  assert.match(html, /\/assets\/experience\/hackney\.svg/i);
+  assert.match(html, /\/assets\/experience\/stop-the-traffik\.svg/i);
+  assert.match(html, /\/assets\/experience\/dlr\.svg/i);
   assert.match(html, /Procter &amp; Gamble/i);
   assert.match(html, /Unilever/i);
   assert.match(html, /Ricoh/i);
@@ -79,6 +83,8 @@ test("server-renders the Purpose Works page", async () => {
   assert.match(html, /mailto:chris@mysocialimpact\.org/i);
   assert.match(html, /Message us to request our showreel/i);
   assert.match(html, /Work delivered for organisations and brands over the years/i);
+  assert.match(html, /id="showreel"/i);
+  assert.match(html, /href="#showreel"/i);
   assert.doesNotMatch(html, /Creative Edge|Purpose Edge/i);
 });
 

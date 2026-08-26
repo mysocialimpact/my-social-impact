@@ -55,12 +55,17 @@ const caseStudies = [
 
 const selectedExperience = [
   { name: "Diageo", src: "/assets/clients/diageo.png", width: 226, height: 49, className: "is-wide" },
-  { name: "Procter & Gamble", src: "/assets/experience/procter-gamble.svg", width: 720, height: 720, className: "is-icon" },
-  { name: "Unilever", src: "/assets/experience/unilever.svg", width: 1000, height: 214, className: "is-wide" },
-  { name: "Ricoh", src: "/assets/experience/ricoh.svg", width: 200, height: 36, className: "is-wide" },
-  { name: "Starbucks", src: "/assets/experience/starbucks.svg", width: 512, height: 512, className: "is-icon" },
   { name: "ActionAid", src: "/assets/experience/actionaid.svg", width: 1182, height: 156, className: "is-wide is-actionaid" },
+  { name: "O2", src: "/assets/experience/o2.svg", width: 306, height: 301, className: "is-icon" },
   { name: "Traidcraft", src: "/assets/experience/traidcraft.webp", width: 1500, height: 348, className: "is-wide is-traidcraft" },
+  { name: "Procter & Gamble", src: "/assets/experience/procter-gamble.svg", width: 720, height: 720, className: "is-icon" },
+  { name: "Hackney Council", src: "/assets/experience/hackney.svg", width: 208, height: 37, className: "is-wide is-hackney" },
+  { name: "Agri Evolve", src: "/assets/clients/agrievolve.png", width: 173, height: 100, className: "is-agri-evolve" },
+  { name: "Unilever", src: "/assets/experience/unilever.svg", width: 1000, height: 214, className: "is-wide" },
+  { name: "STOP THE TRAFFIK", src: "/assets/experience/stop-the-traffik.svg", width: 392, height: 29, className: "is-wide is-stop-the-traffik" },
+  { name: "Ricoh", src: "/assets/experience/ricoh.svg", width: 200, height: 36, className: "is-wide" },
+  { name: "DLR", src: "/assets/experience/dlr.svg", width: 615, height: 500, className: "is-icon is-dlr" },
+  { name: "Starbucks", src: "/assets/experience/starbucks.svg", width: 512, height: 512, className: "is-icon" },
 ] as const;
 
 function PurposeWorksNavigation() {
@@ -305,7 +310,7 @@ export function PurposeWorksPage() {
             <div className="pw-contact-links">
               <a href="mailto:marcus@mysocialimpact.org?subject=Purpose%20Works%20enquiry"><span><small>Talk to Marcus</small><strong>marcus@mysocialimpact.org</strong></span><b>↗</b></a>
               <a href="mailto:chris@mysocialimpact.org?subject=Purpose%20Works%20enquiry"><span><small>Talk to Chris</small><strong>chris@mysocialimpact.org</strong></span><b>↗</b></a>
-              <a className="pw-contact-showreel" href="mailto:marcus@mysocialimpact.org?cc=chris@mysocialimpact.org&amp;subject=Purpose%20Works%20showreel&amp;body=Hi%20Marcus%20and%20Chris%2C%0D%0A%0D%0AI%27d%20like%20to%20see%20the%20Purpose%20Works%20showreel.%0D%0A%0D%0AThanks%2C%0D%0A"><span><small>See the work</small><strong>Message us to request our showreel</strong><em>Work delivered for organisations and brands over the years.</em></span><b>↗</b></a>
+              <a id="showreel" className="pw-contact-showreel" href="mailto:marcus@mysocialimpact.org?cc=chris@mysocialimpact.org&amp;subject=Purpose%20Works%20showreel&amp;body=Hi%20Marcus%20and%20Chris%2C%0D%0A%0D%0AI%27d%20like%20to%20see%20the%20Purpose%20Works%20showreel.%0D%0A%0D%0AThanks%2C%0D%0A"><span><small>See the work</small><strong>Message us to request our showreel</strong><em>Work delivered for organisations and brands over the years.</em></span><b>↗</b></a>
             </div>
           </div>
         </section>
@@ -313,11 +318,13 @@ export function PurposeWorksPage() {
       <Footer />
       <div className="pw-experience-bar-spacer" aria-hidden="true" />
       <aside className="pw-experience-bar" aria-label="Selected experience across the team">
-        <div className="pw-experience-bar-viewport">
-          <div className="pw-experience-bar-marquee">
-            {[false, true].map((duplicate) => <ul key={String(duplicate)} aria-hidden={duplicate || undefined}>{selectedExperience.map((brand) => <li className={brand.className} key={brand.name}><Image src={brand.src} alt={duplicate ? "" : brand.name} width={brand.width} height={brand.height} unoptimized /></li>)}</ul>)}
+        <a className="pw-experience-bar-link" href="#showreel" aria-label="Go to the Purpose Works showreel request">
+          <div className="pw-experience-bar-viewport">
+            <div className="pw-experience-bar-marquee">
+              {[false, true].map((duplicate) => <ul key={String(duplicate)} aria-hidden={duplicate || undefined}>{selectedExperience.map((brand) => <li className={brand.className} key={brand.name}><Image src={brand.src} alt={duplicate ? "" : brand.name} width={brand.width} height={brand.height} loading="eager" unoptimized /></li>)}</ul>)}
+            </div>
           </div>
-        </div>
+        </a>
       </aside>
     </>
   );

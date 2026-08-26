@@ -673,27 +673,36 @@
 .pw-showreel-modal-card > a b { color: var(--pw-orange); font-size: 1.25rem; }
 .pw-showreel-modal-card > a:focus-visible { outline: 3px solid var(--pw-orange); outline-offset: 5px; }
 
-.pw-experience-bar-spacer { height: 86px; background: var(--ink); }
+.pw-experience-bar-spacer { height: 94px; background: var(--ink); }
 .pw-experience-bar {
-  height: 66px;
+  height: 74px;
   position: fixed;
   inset: auto clamp(.75rem, 1.5vw, 1.5rem) clamp(.75rem, 1.4vw, 1rem);
   z-index: 60;
   overflow: hidden;
-  border: 1px solid var(--ink);
+  border: 0;
   border-radius: 3px;
   background: rgba(251, 250, 247, .97);
   backdrop-filter: blur(16px);
-  box-shadow: 0 12px 34px rgba(0, 0, 0, .18);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .14), inset 0 1px 0 rgba(255, 255, 255, .72);
+  transition: background-color .2s ease, box-shadow .2s ease;
 }
+.pw-experience-bar:hover { background: rgba(251, 250, 247, .99); box-shadow: 0 13px 34px rgba(0, 0, 0, .17), inset 0 1px 0 rgba(255, 255, 255, .82); }
+.pw-experience-bar:focus-within { outline: 3px solid var(--pw-orange); outline-offset: 3px; }
+.pw-experience-bar-link { display: block; height: 100%; color: inherit; text-decoration: none; }
+.pw-experience-bar-link:focus { outline: none; }
 .pw-experience-bar-viewport { height: 100%; overflow: hidden; -webkit-mask-image: linear-gradient(to right, transparent, black 4%, black 96%, transparent); mask-image: linear-gradient(to right, transparent, black 4%, black 96%, transparent); }
 .pw-experience-bar-marquee { height: 100%; display: flex; width: max-content; animation: pw-experience-scroll 32s linear infinite; will-change: transform; }
 .pw-experience-bar ul { height: 100%; margin: 0; padding: 0 clamp(3rem, 6vw, 7rem) 0 0; display: flex; align-items: center; gap: clamp(3rem, 6vw, 7rem); list-style: none; }
 .pw-experience-bar li { height: 100%; display: grid; place-items: center; flex: 0 0 auto; }
-.pw-experience-bar img { width: auto; height: 25px; max-width: 148px; display: block; object-fit: contain; }
+.pw-experience-bar img { width: auto; height: 27px; max-width: 158px; display: block; object-fit: contain; filter: grayscale(1) contrast(1.08); mix-blend-mode: multiply; opacity: .72; }
 .pw-experience-bar .is-icon img { width: 38px; height: 38px; }
 .pw-experience-bar .is-actionaid img { height: 20px; }
 .pw-experience-bar .is-traidcraft img { height: 28px; max-width: 150px; }
+.pw-experience-bar .is-hackney img { height: 24px; max-width: 150px; }
+.pw-experience-bar .is-agri-evolve img { height: 34px; max-width: 70px; }
+.pw-experience-bar .is-stop-the-traffik img { height: 15px; max-width: 196px; }
+.pw-experience-bar .is-dlr img { width: 54px; height: 44px; }
 
 .pw-final {
   padding: var(--pw-space) var(--pw-pad) 0;
@@ -741,7 +750,7 @@
 .pw-contact-links small { font-size: .65rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
 .pw-contact-links strong { font-size: clamp(.95rem, 1.35vw, 1.25rem); font-weight: 700; letter-spacing: -.02em; }
 .pw-contact-links b { font-size: 1rem; }
-.pw-contact-links .pw-contact-showreel { grid-column: 1 / -1; }
+.pw-contact-links .pw-contact-showreel { grid-column: 1 / -1; scroll-margin-top: 10rem; }
 .pw-contact-showreel em { color: var(--muted); font-size: .78rem; font-style: normal; font-weight: 500; line-height: 1.4; }
 
 @media (max-width: 1060px) {
@@ -850,14 +859,18 @@
   .pw-closing h2 { font-size: clamp(5rem, 24vw, 8rem); line-height: .78; }
   .pw-contact-links { grid-template-columns: 1fr; gap: 1.5rem; }
 
-  .pw-experience-bar-spacer { height: calc(74px + env(safe-area-inset-bottom)); }
-  .pw-experience-bar { height: 56px; inset: auto .55rem max(.55rem, env(safe-area-inset-bottom)); }
+  .pw-experience-bar-spacer { height: calc(84px + env(safe-area-inset-bottom)); }
+  .pw-experience-bar { height: 66px; inset: auto .55rem max(.55rem, env(safe-area-inset-bottom)); }
   .pw-experience-bar-marquee { animation-duration: 27s; }
   .pw-experience-bar ul { padding-right: 2.8rem; gap: 2.8rem; }
-  .pw-experience-bar img { height: 21px; max-width: 124px; }
-  .pw-experience-bar .is-icon img { width: 32px; height: 32px; }
+  .pw-experience-bar img { height: 23px; max-width: 136px; }
+  .pw-experience-bar .is-icon img { width: 36px; height: 36px; }
   .pw-experience-bar .is-actionaid img { height: 17px; }
   .pw-experience-bar .is-traidcraft img { height: 23px; max-width: 125px; }
+  .pw-experience-bar .is-hackney img { height: 20px; max-width: 118px; }
+  .pw-experience-bar .is-agri-evolve img { height: 29px; max-width: 58px; }
+  .pw-experience-bar .is-stop-the-traffik img { height: 13px; max-width: 176px; }
+  .pw-experience-bar .is-dlr img { width: 48px; height: 39px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
