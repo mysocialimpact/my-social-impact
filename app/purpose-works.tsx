@@ -26,18 +26,27 @@ const pillars = [
 const caseStudies = [
   {
     name: "Agri Evolve",
+    logo: "/assets/clients/agrievolve.png",
+    logoWidth: 173,
+    logoHeight: 100,
     discipline: "Social impact reporting",
     copy: "Led the development of Agri Evolve’s first Social Impact Report, translating field-level activity into a clear account of social and environmental impact.",
     result: "Strengthened stakeholder communication and impact credibility.",
   },
   {
     name: "Diageo",
+    logo: "/assets/clients/diageo.png",
+    logoWidth: 226,
+    logoHeight: 49,
     discipline: "Behaviour change strategy",
     copy: "Developed a student-led engagement campaign promoting responsible drinking and behavioural change across Europe.",
     result: "Reached over 14 million students across 14 countries.",
   },
   {
     name: "ActionAid",
+    logo: "/assets/experience/actionaid.svg",
+    logoWidth: 1182,
+    logoHeight: 156,
     discipline: "Campaign strategy & accountability",
     copy: "Developed strategic communications that helped mobilise public engagement around fairness, accountability and systemic change.",
     result: "Built national visibility and public engagement.",
@@ -271,7 +280,7 @@ export function PurposeWorksPage() {
         <section className="pw-experience pw-pad" id="experience">
           <Marker number="08">Selected experience across the team</Marker>
           <div className="pw-experience-head" data-reveal><h2>Purpose Works is new. The expertise behind it is not.</h2><p>Experience across AgriEvolve, ActionAid, Harrods, Starbucks, Brewers Decorator Centres, JCWI, Diageo, Stroke Association, Ashima, Brook, Tonight Change, Family Planning Association and Traidcraft.</p></div>
-          <div className="pw-case-grid">{caseStudies.map((item, index) => <article key={item.name} data-reveal style={{ "--delay": String(index * 75) + "ms" } as React.CSSProperties}><span>{String(index + 1).padStart(2, "0")}</span><p className="pw-case-discipline">{item.discipline}</p><h3>{item.name}</h3><p>{item.copy}</p><div><small>Result</small><strong>{item.result}</strong></div></article>)}</div>
+          <div className="pw-case-grid">{caseStudies.map((item, index) => <article key={item.name} data-reveal style={{ "--delay": String(index * 75) + "ms" } as React.CSSProperties}><span>{String(index + 1).padStart(2, "0")}</span><p className="pw-case-discipline">{item.discipline}</p><h3 className="pw-case-logo"><Image src={item.logo} alt={item.name} width={item.logoWidth} height={item.logoHeight} unoptimized /></h3><p>{item.copy}</p><div><small>Result</small><strong>{item.result}</strong></div></article>)}</div>
           <div className="pw-behaviour" data-reveal><h3>Behavioural change is part of the work.</h3><p>We create campaigns designed to influence <strong>behaviour, culture and trust.</strong> Our experience includes responsible drinking, financial inclusion, sustainability, public engagement, health and social change.</p></div>
         </section>
 
@@ -296,6 +305,7 @@ export function PurposeWorksPage() {
             <div className="pw-contact-links">
               <a href="mailto:marcus@mysocialimpact.org?subject=Purpose%20Works%20enquiry"><span><small>Talk to Marcus</small><strong>marcus@mysocialimpact.org</strong></span><b>↗</b></a>
               <a href="mailto:chris@mysocialimpact.org?subject=Purpose%20Works%20enquiry"><span><small>Talk to Chris</small><strong>chris@mysocialimpact.org</strong></span><b>↗</b></a>
+              <a className="pw-contact-showreel" href="mailto:marcus@mysocialimpact.org?cc=chris@mysocialimpact.org&amp;subject=Purpose%20Works%20showreel&amp;body=Hi%20Marcus%20and%20Chris%2C%0D%0A%0D%0AI%27d%20like%20to%20see%20the%20Purpose%20Works%20showreel.%0D%0A%0D%0AThanks%2C%0D%0A"><span><small>See the work</small><strong>Message us to request our showreel</strong><em>Work delivered for organisations and brands over the years.</em></span><b>↗</b></a>
             </div>
           </div>
         </section>
