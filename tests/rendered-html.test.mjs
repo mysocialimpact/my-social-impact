@@ -67,8 +67,8 @@ test("server-renders the Purpose Works page", async () => {
   assert.match(html, /\/assets\/experience\/starbucks\.svg/i);
   assert.match(html, /\/assets\/experience\/actionaid\.svg/i);
   assert.match(html, /\/assets\/experience\/traidcraft\.webp/i);
-  assert.match(html, /Request the showreel/i);
-  assert.match(html, /mailto:marcus@mysocialimpact\.org\?subject=Purpose%20Works%20showreel/i);
+  assert.match(html, /Play showreel/i);
+  assert.match(html, /\/assets\/showreel\/purpose-works-showreel-poster\.jpg/i);
   assert.match(html, /Social impact accounting asks whether impact can be substantiated/i);
   assert.match(html, /constructive critical friend/i);
   assert.match(html, /\/assets\/ideas-shed-logo\.png/i);

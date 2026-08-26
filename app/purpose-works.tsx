@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Footer, RevealObserver, SiteHeader } from "./site-shell";
 
 const sections = [
@@ -84,6 +84,74 @@ function PurposeWorksNavigation() {
 
 function Marker({ number, children }: { number: string; children: React.ReactNode }) {
   return <p className="pw-marker"><span>{number}</span>{children}</p>;
+}
+
+function PurposeWorksShowreel() {
+  const [isOpen, setIsOpen] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const closeRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const trigger = triggerRef.current;
+    const previousOverflow = document.body.style.overflow;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setIsOpen(false);
+    };
+
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", closeOnEscape);
+    window.requestAnimationFrame(() => closeRef.current?.focus());
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", closeOnEscape);
+      window.requestAnimationFrame(() => trigger?.focus());
+    };
+  }, [isOpen]);
+
+  return (
+    <>
+      <section className="pw-showreel pw-pad" aria-labelledby="pw-showreel-title">
+        <div className="pw-showreel-poster" data-reveal>
+          <Image
+            src="/assets/showreel/purpose-works-showreel-poster.jpg"
+            alt=""
+            fill
+            sizes="(max-width: 760px) 100vw, 90vw"
+            unoptimized
+          />
+          <div className="pw-showreel-shade" aria-hidden="true" />
+          <div className="pw-showreel-title">
+            <p>Purpose Works</p>
+            <h2 id="pw-showreel-title">Showreel.</h2>
+          </div>
+          <div className="pw-showreel-client">
+            <Image src="/assets/clients/diageo.png" alt="Diageo" width={226} height={49} unoptimized />
+          </div>
+          <button ref={triggerRef} className="pw-showreel-play" type="button" onClick={() => setIsOpen(true)} aria-haspopup="dialog">
+            <span className="pw-showreel-play-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg></span>
+            <span>Play showreel<small>Request access</small></span>
+          </button>
+        </div>
+      </section>
+
+      {isOpen && (
+        <div className="pw-showreel-modal" role="dialog" aria-modal="true" aria-labelledby="pw-showreel-dialog-title" aria-describedby="pw-showreel-dialog-copy" onClick={(event) => { if (event.currentTarget === event.target) setIsOpen(false); }}>
+          <div className="pw-showreel-modal-card">
+            <button ref={closeRef} className="pw-showreel-modal-close" type="button" onClick={() => setIsOpen(false)} aria-label="Close showreel request">×</button>
+            <p className="pw-showreel-modal-kicker">Purpose Works showreel</p>
+            <h2 id="pw-showreel-dialog-title">Want to see the work?</h2>
+            <p id="pw-showreel-dialog-copy">The showreel is available privately. Email Marcus and we’ll send you access.</p>
+            <a href="mailto:marcus@mysocialimpact.org?subject=Purpose%20Works%20showreel&amp;body=Hi%20Marcus%2C%0D%0A%0D%0AI%27d%20like%20to%20see%20the%20Purpose%20Works%20showreel.%0D%0A%0D%0AThanks%2C%0D%0A" aria-label="Email Marcus to request the Purpose Works showreel">
+              <span><small>Request by email</small><strong>marcus@mysocialimpact.org</strong></span><b aria-hidden="true">↗</b>
+            </a>
+          </div>
+        </div>
+      )}
+    </>
+  );
 }
 
 export function PurposeWorksPage() {
@@ -216,16 +284,7 @@ export function PurposeWorksPage() {
           <p className="pw-founders">Marcus Warry and Dr Chris Arnold are co-founders of My Social Impact.</p>
         </section>
 
-        <section className="pw-showreel pw-pad" aria-labelledby="pw-showreel-title">
-          <div data-reveal>
-            <p className="pw-showreel-kicker">Selected work</p>
-            <h2 id="pw-showreel-title">See the work.</h2>
-          </div>
-          <div className="pw-showreel-copy" data-reveal style={{ "--delay": "90ms" } as React.CSSProperties}>
-            <p>Our experience spans behavioural change, strategy, marketing, communications, stakeholder engagement and social impact for major organisations in the UK and internationally.</p>
-            <a href="mailto:marcus@mysocialimpact.org?subject=Purpose%20Works%20showreel&amp;body=Hi%20Marcus%2C%0D%0A%0D%0AI%27d%20like%20to%20see%20the%20Purpose%20Works%20showreel.%0D%0A%0D%0AThanks%2C%0D%0A" aria-label="Request the Purpose Works showreel by email"><span>Request the showreel<small>Opens your email</small></span><b aria-hidden="true">↗</b></a>
-          </div>
-        </section>
+        <PurposeWorksShowreel />
 
         <section className="pw-final" id="start">
           <Marker number="10">How we help</Marker>
