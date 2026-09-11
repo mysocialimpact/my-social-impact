@@ -30,6 +30,10 @@ test("server-renders the My Social Impact homepage", async () => {
   const html = await response.text();
   assert.match(html, /<title>My Social Impact \| Strategy for Social Impact Excellence<\/title>/i);
   assert.match(html, /Imagine a world where social impact was taken as seriously as financial performance/i);
+  assert.match(html, /We’re a boutique social impact consultancy/i);
+  assert.match(html, /Strategy[\s\S]*Projects[\s\S]*Ongoing support/i);
+  assert.ok(html.indexOf('id="consultancy"') > html.indexOf('id="vision"'));
+  assert.ok(html.indexOf('id="consultancy"') < html.indexOf('id="introduction"'));
   assert.match(html, /href="\/social-impact-claims-code"/i);
   assert.match(html, /href="\/social-impact-excellence"/i);
   assert.match(html, /href="\/purpose-works"/i);

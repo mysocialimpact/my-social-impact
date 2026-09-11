@@ -72,6 +72,12 @@ const serviceAreas = [
   },
 ] as const;
 
+const consultancyOffers = [
+  ["Strategy", "Define your purpose, impact priorities and a practical roadmap."],
+  ["Projects", "Deliver evaluation, measurement, reporting and credible communications."],
+  ["Ongoing support", "Bring in senior impact expertise to help you keep improving."],
+] as const;
+
 const products = [
   {
     name: "Social Impact Excellence™",
@@ -262,7 +268,7 @@ export function SectionLabel({ children, major = false }: { children: React.Reac
 }
 
 const homeSections = [
-  ["introduction", "About", ["introduction", "impact-definition", "who-we-help", "better-tools"]],
+  ["introduction", "About", ["consultancy", "introduction", "impact-definition", "who-we-help", "better-tools"]],
   ["products", "Products", ["products"]],
   ["values", "Our values", ["values"]],
   ["approach", "How we work", ["approach"]],
@@ -401,7 +407,19 @@ export function HomePage() {
         <Spray className="spray-hero-pink" />
         <div className="hero-brand" data-reveal><BrandMark /><p>Strategy for Social Impact Excellence</p></div>
         <div className="hero-vision" data-reveal style={{ "--delay": "100ms" } as React.CSSProperties}><SectionLabel major>Our vision</SectionLabel><h1>Imagine a world where social impact was taken as seriously as financial performance.</h1><p>That’s the world we’re working for.</p></div>
-        <a className="scroll-cue" href="#introduction" aria-label="Scroll to introduction"><span />Explore</a>
+        <a className="scroll-cue" href="#consultancy" aria-label="Scroll to what we are and what we offer"><span />Explore</a>
+      </section>
+
+      <section className="consultancy-snapshot major-section" id="consultancy" aria-labelledby="consultancy-heading">
+        <div className="consultancy-statement" data-reveal>
+          <SectionLabel major>What we are</SectionLabel>
+          <h2 id="consultancy-heading">We’re a boutique social impact consultancy.</h2>
+          <p>We help organisations understand, improve and communicate the difference they make.</p>
+        </div>
+        <div className="consultancy-offers" aria-label="Our consultancy offer">
+          {consultancyOffers.map(([name, copy], index) => <article key={name} data-reveal style={{ "--delay": `${(index + 1) * 70}ms` } as React.CSSProperties}><span>0{index + 1}</span><h3>{name}</h3><p>{copy}</p></article>)}
+        </div>
+        <a className="consultancy-link" href="#what-we-do" data-reveal>See how we can help <span>↓</span></a>
       </section>
 
       <section className="introduction split-section major-section" id="introduction">

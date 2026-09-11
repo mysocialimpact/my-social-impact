@@ -2858,3 +2858,105 @@ main > section,
   .associates .section-intro h2 { font-size: 2.4rem; }
   .associate-invitation { grid-template-columns: 1fr; align-items: start; padding: 1.35rem; }
 }
+
+/* A clear consultancy proposition immediately after the homepage hero. */
+.consultancy-snapshot {
+  position: relative;
+  padding: clamp(5.5rem, 9vw, 9rem) var(--pad) clamp(4rem, 6.5vw, 6.5rem);
+  background: var(--ink);
+  color: var(--white);
+  overflow: hidden;
+}
+.consultancy-snapshot::after {
+  content: "";
+  position: absolute;
+  width: clamp(100px, 12vw, 175px);
+  height: 9px;
+  top: 0;
+  right: var(--pad);
+  background: var(--pink);
+}
+.consultancy-statement {
+  display: grid;
+  grid-template-columns: minmax(180px, .31fr) minmax(420px, 1fr) minmax(260px, .48fr);
+  gap: clamp(2.5rem, 5vw, 6rem);
+  align-items: start;
+}
+.consultancy-statement h2 {
+  margin: 0;
+  font-family: var(--font-serif), Georgia, serif;
+  font-size: clamp(3rem, 5.25vw, 6.25rem);
+  font-weight: 500;
+  line-height: .98;
+  letter-spacing: -.055em;
+  text-wrap: balance;
+}
+.consultancy-statement > p:last-child {
+  max-width: 30rem;
+  margin: .35rem 0 0;
+  color: #d2cfca;
+  font-size: clamp(1.05rem, 1.3vw, 1.3rem);
+  line-height: 1.58;
+}
+.consultancy-offers {
+  margin-top: clamp(4rem, 7vw, 7rem);
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border-block: 1px solid rgba(255,255,255,.42);
+}
+.consultancy-offers article {
+  min-height: 230px;
+  padding: clamp(1.65rem, 2.6vw, 2.8rem);
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid rgba(255,255,255,.22);
+}
+.consultancy-offers article:first-child { border-left: 0; }
+.consultancy-offers article > span {
+  color: var(--orange);
+  font-size: .72rem;
+  font-weight: 800;
+  letter-spacing: .1em;
+}
+.consultancy-offers h3 {
+  margin: auto 0 .85rem;
+  font-family: var(--font-serif), Georgia, serif;
+  font-size: clamp(2rem, 3vw, 3.5rem);
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -.045em;
+}
+.consultancy-offers p { max-width: 26rem; margin: 0; color: #d2cfca; line-height: 1.55; }
+.consultancy-link {
+  width: min(100%, 24rem);
+  margin: clamp(2.5rem, 4vw, 4rem) 0 0 auto;
+  padding-bottom: .75rem;
+  display: flex;
+  justify-content: space-between;
+  gap: 2rem;
+  border-bottom: 1px solid var(--white);
+  font-size: .76rem;
+  font-weight: 800;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+}
+.consultancy-link span { color: var(--orange); transition: transform .3s var(--ease); }
+.consultancy-link:hover span { transform: translateY(4px); }
+
+@media (max-width: 1100px) {
+  .consultancy-statement { grid-template-columns: minmax(150px, .3fr) minmax(0, 1fr); }
+  .consultancy-statement > p:last-child { grid-column: 2; }
+}
+
+@media (max-width: 760px) {
+  .consultancy-snapshot { padding-block: 5.5rem 4.75rem; }
+  .consultancy-snapshot::after { right: 1.25rem; width: 76px; height: 6px; }
+  .consultancy-statement { grid-template-columns: 1fr; gap: 2rem; }
+  .consultancy-statement h2 { font-size: clamp(2.8rem, 13.5vw, 4.2rem); }
+  .consultancy-statement > p:last-child { grid-column: 1; margin-top: 0; }
+  .consultancy-offers { margin-top: 3.5rem; grid-template-columns: 1fr; }
+  .consultancy-offers article { min-height: 0; padding: 2rem 0; border-left: 0; border-top: 1px solid rgba(255,255,255,.22); }
+  .consultancy-offers article:first-child { border-top: 0; }
+  .consultancy-offers h3 { margin: 2.5rem 0 .75rem; font-size: 2.6rem; }
+  .consultancy-link { width: 100%; margin-top: 2.5rem; }
+}
