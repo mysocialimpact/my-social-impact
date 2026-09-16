@@ -7,6 +7,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: baseUrl, changeFrequency: "monthly", priority: 1 },
     { url: `${baseUrl}/social-impact-excellence`, changeFrequency: "monthly", priority: 0.95 },
     { url: `${baseUrl}/purpose-works`, changeFrequency: "monthly", priority: 0.95 },
+    { url: `${baseUrl}/community-mapping`, changeFrequency: "monthly", priority: 0.95 },
     { url: `${baseUrl}/social-impact-report`, changeFrequency: "monthly", priority: 0.9 },
     { url: `${baseUrl}/social-impact-claims-code`, changeFrequency: "monthly", priority: 0.9 },
     { url: `${baseUrl}/blog`, changeFrequency: "weekly", priority: 0.8 },

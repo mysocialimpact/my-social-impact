@@ -104,6 +104,18 @@ const products = [
     href: "/purpose-works",
   },
   {
+    name: "COMMUNITY MAPPING",
+    kicker: "People. Place. Insight.",
+    logo: "/assets/community-mapping-network.png",
+    logoWidth: 1672,
+    logoHeight: 941,
+    logoClass: "logo-mapping",
+    className: "community-mapping-product",
+    lead: "Understand a community beyond the data.",
+    copy: "Understand the people, places, needs, relationships and opportunities shaping a community. From £3,000.",
+    href: "/community-mapping",
+  },
+  {
     name: "Charity Impact Reports",
     kicker: "Stronger evidence. Clearer storytelling.",
     logo: "/assets/charity-impact-reports-transparent.png",
@@ -194,6 +206,7 @@ export function SiteHeader() {
   const navigation = [
     { href: "/social-impact-excellence", label: "Social Impact Excellence", note: "Our flagship methodology" },
     { href: "/purpose-works", label: "Purpose Works", note: "Purpose, impact and communications. Aligned." },
+    { href: "/community-mapping", label: "COMMUNITY MAPPING", note: "People. Place. Insight." },
     { href: "/social-impact-report", label: "Charity Impact Reports", note: "Stronger evidence. Clearer storytelling." },
     { href: "/social-impact-claims-code", label: "Social Impact Claims Code", note: "Make claims people can trust" },
     { href: "/blog", label: "Blog", note: "Ideas, evidence and useful provocations" },

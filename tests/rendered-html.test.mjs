@@ -37,10 +37,35 @@ test("server-renders the My Social Impact homepage", async () => {
   assert.match(html, /href="\/social-impact-claims-code"/i);
   assert.match(html, /href="\/social-impact-excellence"/i);
   assert.match(html, /href="\/purpose-works"/i);
+  assert.match(html, /href="\/community-mapping"/i);
+  assert.match(html, /COMMUNITY MAPPING/i);
   assert.match(html, /\/assets\/ideas-shed-logo\.png/i);
   assert.match(html, /Start your Social Impact Maturity Snapshot today/i);
   assert.match(html, /href="https:\/\/platform\.mysocialimpact\.org\/"/i);
   assert.doesNotMatch(html, /codex-preview|Your site is taking shape/i);
+});
+
+test("server-renders the Community Mapping product page", async () => {
+  const response = await render("/community-mapping");
+  assert.equal(response.status, 200);
+  assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
+
+  const html = await response.text();
+  assert.match(html, /<title>Community Mapping \| My Social Impact<\/title>/i);
+  assert.match(html, /COMMUNITY MAPPING/i);
+  assert.match(html, /Understand a community/i);
+  assert.match(html, /Community Intelligence tells you what it means/i);
+  assert.match(html, /People understand people/i);
+  assert.match(html, /BREWERS DECORATING CENTRES/i);
+  assert.match(html, /YORK/i);
+  assert.match(html, /CANTERBURY/i);
+  assert.match(html, /SHREWSBURY/i);
+  assert.match(html, /WELLINGBOROUGH/i);
+  assert.match(html, /£3,000 – £10,000/i);
+  assert.match(html, /mailto:marcus@mysocialimpact\.org/i);
+  assert.match(html, /mailto:chris@mysocialimpact\.org/i);
+  assert.match(html, /\/assets\/community-mapping-network\.png/i);
+  assert.match(html, /href="\/social-impact-excellence"/i);
 });
 
 test("server-renders the Purpose Works page", async () => {
