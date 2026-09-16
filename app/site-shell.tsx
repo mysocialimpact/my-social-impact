@@ -218,6 +218,7 @@ export function SiteHeader() {
       <Link href="/" className="header-brand" aria-label="My Social Impact home">
         <Image className="header-logo" src="/assets/my-social-impact-horizontal.png" alt="" width={1088} height={124} priority unoptimized />
       </Link>
+      <a className="header-assessment-cta" href="https://platform.mysocialimpact.org/snapshot" target="_blank" rel="noreferrer"><span className="header-cta-desktop">Start Maturity Assessment</span><span className="header-cta-mobile">Start Assessment</span></a>
       <button className={`menu-button ${open ? "is-open" : ""}`} onClick={() => setOpen((current) => !current)} aria-expanded={open} aria-label="Toggle menu"><span /><span /></button>
       <nav className={open ? "nav-open" : ""} aria-label="Main navigation">
         {navigation.map((item, index) => {
@@ -253,7 +254,7 @@ export function Footer() {
         <a className="footer-address" href="https://www.theideasshed.com/" target="_blank" rel="noreferrer">www.theideasshed.com ↗</a>
       </div>
       <div className="footer-bottom">
-        <div className="footer-links"><Link href="/">Home</Link><Link href="/blog">Blog</Link><Link href="/#contact">Contact</Link><a href="https://platform.mysocialimpact.org/" target="_blank" rel="noreferrer">Start your 10–15 minute Maturity Snapshot ↗</a><a href="https://www.linkedin.com/company/my-social-impact" target="_blank" rel="noreferrer">LinkedIn ↗</a></div>
+        <div className="footer-links"><Link href="/">Home</Link><Link href="/blog">Blog</Link><Link href="/#contact">Contact</Link><a href="https://platform.mysocialimpact.org/snapshot" target="_blank" rel="noreferrer">Start your 10–15 minute Maturity Assessment ↗</a><a href="https://www.linkedin.com/company/my-social-impact" target="_blank" rel="noreferrer">LinkedIn ↗</a></div>
         <p className="footer-meta">© {new Date().getFullYear()} My Social Impact</p>
       </div>
     </footer>
@@ -340,7 +341,7 @@ function ProductCard({ product, index }: { product: typeof products[number]; ind
             <Image src={product.logo} alt={`${product.name} logo`} width={product.logoWidth} height={product.logoHeight} unoptimized />
           </div>}
         </div>
-        <div className="product-summary"><p className="product-lead">{product.lead}</p><p>{product.copy}</p>{index === 0 ? <div className="product-card-actions"><Link className="product-link" href={product.href}>Explore Social Impact Excellence <b>→</b></Link><a className="product-link product-start-link" href="https://platform.mysocialimpact.org/" target="_blank" rel="noreferrer"><span>Start your Social Impact Maturity Snapshot today<small>About 10–15 minutes</small></span><b>↗</b></a></div> : "secondaryHref" in product ? <div className="product-card-actions"><Link className="product-link" href={product.href}>Explore {product.name} <b>→</b></Link><a className="product-link product-start-link" href={product.secondaryHref} target="_blank" rel="noreferrer">Ask SORP 2026 <b>→</b></a></div> : product.href && <span className="product-link">Explore {product.name.replace("™", "")} <b>→</b></span>}</div>
+        <div className="product-summary"><p className="product-lead">{product.lead}</p><p>{product.copy}</p>{index === 0 ? <div className="product-card-actions"><Link className="product-link" href={product.href}>Explore Social Impact Excellence <b>→</b></Link><a className="product-link product-start-link" href="https://platform.mysocialimpact.org/snapshot" target="_blank" rel="noreferrer"><span>Start your Social Impact Maturity Assessment today<small>About 10–15 minutes</small></span><b>↗</b></a></div> : "secondaryHref" in product ? <div className="product-card-actions"><Link className="product-link" href={product.href}>Explore {product.name} <b>→</b></Link><a className="product-link product-start-link" href={product.secondaryHref} target="_blank" rel="noreferrer">Ask SORP 2026 <b>→</b></a></div> : product.href && <span className="product-link">Explore {product.name.replace("™", "")} <b>→</b></span>}</div>
       </div>
     </>
   );

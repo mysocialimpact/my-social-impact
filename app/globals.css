@@ -337,9 +337,12 @@ img { max-width: 100%; display: block; }
 .site-header.is-scrolled { height: 70px; background: rgba(251,250,247,.94); box-shadow: 0 1px rgba(17,16,15,.08); backdrop-filter: blur(14px); }
 .header-brand { flex: 0 0 auto; display: flex; align-items: center; }
 .header-logo { display: block; width: clamp(11.5rem, 16vw, 14rem); height: auto; }
+.header-assessment-cta { order: 2; min-height: 42px; margin-left: 1rem; padding: .78rem 1rem; display: inline-flex; align-items: center; justify-content: center; background: var(--orange); color: var(--white); font-size: .68rem; font-weight: 800; line-height: 1; letter-spacing: .075em; text-transform: uppercase; white-space: nowrap; }
+.header-assessment-cta:hover { background: var(--ink); color: var(--white); }
+.header-cta-mobile { display: none; }
 .brand { display: inline-flex; flex-direction: column; font-weight: 800; font-size: clamp(4rem, 8.7vw, 9rem); line-height: .74; letter-spacing: -.075em; color: var(--orange); text-transform: uppercase; }
 .brand-small { font-size: 1.25rem; line-height: .75; letter-spacing: -.06em; }
-.site-header nav { display: flex; align-items: center; gap: clamp(1.5rem, 3vw, 3rem); font-size: .78rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; }
+.site-header nav { order: 1; margin-left: auto; display: flex; align-items: center; gap: clamp(1.5rem, 3vw, 3rem); font-size: .78rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; }
 .site-header nav a { position: relative; padding: .5rem 0; }
 .site-header nav a::after { content: ""; position: absolute; left: 0; right: 100%; bottom: 0; height: 1px; background: var(--orange); transition: right .35s var(--ease); }
 .site-header nav a:hover::after { right: 0; }
@@ -1209,8 +1212,11 @@ main > section { scroll-margin-top: 70px; }
 @media (max-width: 1100px) {
   body.menu-is-open { overflow: hidden; }
   .site-header.is-menu-open { height: 70px; background: transparent; box-shadow: none; backdrop-filter: none; }
-  .site-header.is-menu-open .header-brand { position: relative; z-index: 2; }
-  .menu-button { display: block; position: relative; z-index: 2; }
+  .site-header.is-menu-open .header-brand, .site-header.is-menu-open .header-assessment-cta { position: relative; z-index: 2; }
+  .header-assessment-cta { order: 1; position: relative; z-index: 2; min-height: 40px; margin-left: auto; margin-right: .35rem; padding: .7rem .85rem; }
+  .header-cta-desktop { display: none; }
+  .header-cta-mobile { display: inline; }
+  .menu-button { order: 2; display: block; position: relative; z-index: 2; }
   .site-header nav {
     position: fixed;
     inset: 0;
@@ -1897,6 +1903,8 @@ main > section { scroll-margin-top: 70px; }
 }
 
 @media (max-width: 760px) {
+  .header-logo { width: clamp(7.2rem, 31vw, 8.6rem); }
+  .header-assessment-cta { min-height: 38px; padding: .68rem .7rem; font-size: clamp(.55rem, 2.25vw, .63rem); letter-spacing: .055em; }
   .audiences-grid,
   .better-tools,
   .organisation-list { grid-template-columns: 1fr; }

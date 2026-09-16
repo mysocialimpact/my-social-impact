@@ -40,8 +40,9 @@ test("server-renders the My Social Impact homepage", async () => {
   assert.match(html, /href="\/community-mapping"/i);
   assert.match(html, /COMMUNITY MAPPING/i);
   assert.match(html, /\/assets\/ideas-shed-logo\.png/i);
-  assert.match(html, /Start your Social Impact Maturity Snapshot today/i);
-  assert.match(html, /href="https:\/\/platform\.mysocialimpact\.org\/"/i);
+  assert.match(html, /Start your Social Impact Maturity Assessment today/i);
+  assert.match(html, /Start Maturity Assessment/i);
+  assert.match(html, /href="https:\/\/platform\.mysocialimpact\.org\/snapshot"/i);
   assert.doesNotMatch(html, /codex-preview|Your site is taking shape/i);
 });
 
@@ -141,7 +142,7 @@ test("server-renders the Social Impact Excellence page", async () => {
   assert.match(html, /The Social Impact Excellence Blueprint/i);
   assert.match(html, /Data is often still the challenge/i);
   assert.match(html, /five-star journey/i);
-  assert.match(html, /Start your Maturity Snapshot today/i);
+  assert.match(html, /Start your Maturity Assessment today/i);
   assert.match(html, /10–15 minutes/i);
-  assert.match(html, /href="https:\/\/platform\.mysocialimpact\.org\/"/i);
+  assert.match(html, /href="https:\/\/platform\.mysocialimpact\.org\/snapshot"/i);
 });
