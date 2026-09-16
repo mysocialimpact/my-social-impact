@@ -57,6 +57,9 @@ test("server-renders the Community Mapping product page", async () => {
   assert.match(html, /Community Intelligence tells you what it means/i);
   assert.match(html, /People understand people/i);
   assert.match(html, /BREWERS DECORATING CENTRES/i);
+  assert.match(html, /We have undertaken Community Mapping work/i);
+  assert.doesNotMatch(html, /Members of the My Social Impact team/i);
+  assert.doesNotMatch(html, /cm-process-line/i);
   assert.match(html, /YORK/i);
   assert.match(html, /CANTERBURY/i);
   assert.match(html, /SHREWSBURY/i);

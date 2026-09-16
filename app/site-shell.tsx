@@ -104,7 +104,7 @@ const products = [
     href: "/purpose-works",
   },
   {
-    name: "COMMUNITY MAPPING",
+    name: "Community Mapping",
     kicker: "People. Place. Insight.",
     logo: "/assets/community-mapping-network.png",
     logoWidth: 1672,

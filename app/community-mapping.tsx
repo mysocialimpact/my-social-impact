@@ -160,7 +160,6 @@ export function CommunityMappingPage() {
     <section className="cm-process" id="how-it-works">
       <header data-reveal><p className="cm-section-number">04 / HOW COMMUNITY MAPPING WORKS</p><h2>From a place and a question<br />to useful understanding.</h2></header>
       <div className="cm-process-grid">{process.map(([title, copy], index) => <article key={title} data-reveal style={{ "--delay": `${index * 65}ms` } as React.CSSProperties}><span>{String(index + 1).padStart(2, "0")}</span><h3>{title}</h3><p>{copy}</p></article>)}</div>
-      <div className="cm-process-line" data-reveal><span>DEFINE</span><b>→</b><span>MAP</span><b>→</b><span>LISTEN</span><b>→</b><span>UNDERSTAND</span><b>→</b><span>ACT</span></div>
     </section>
 
     <section className="cm-deliverables" id="what-you-get">
@@ -170,7 +169,7 @@ export function CommunityMappingPage() {
     </section>
 
     <section className="cm-experience" id="experience">
-      <div className="cm-experience-copy" data-reveal><p className="cm-section-number">06 / PROVEN EXPERIENCE</p><h2>We’ve already mapped communities across the UK.</h2><p className="cm-client">BREWERS DECORATING CENTRES</p><p>Members of the My Social Impact team have previously undertaken Community Mapping work for Brewers Decorator Centres across four UK locations.</p><p>Each project involved understanding the local area around the location and building a clearer picture of the surrounding community, local assets and opportunities.</p><small>Previous work delivered by members of the My Social Impact team.</small></div>
+      <div className="cm-experience-copy" data-reveal><p className="cm-section-number">06 / PROVEN EXPERIENCE</p><h2>We’ve already mapped communities across the UK.</h2><p className="cm-client">BREWERS DECORATING CENTRES</p><p>We have undertaken Community Mapping work for Brewers Decorator Centres across four UK locations.</p><p>Each project involved understanding the local area around the location and building a clearer picture of the surrounding community, local assets and opportunities.</p></div>
       <div className="cm-experience-visual" data-reveal><MapArtwork compact /><div className="cm-location-list">{["YORK", "CANTERBURY", "SHREWSBURY", "WELLINGBOROUGH"].map((location, index) => <span key={location}><b>0{index + 1}</b>{location}</span>)}</div><div className="cm-location-statement"><strong>4 LOCATIONS</strong><span>1 APPROACH</span><span>DIFFERENT COMMUNITIES</span></div></div>
     </section>
 
