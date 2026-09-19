@@ -60,10 +60,9 @@ test("server-renders the Are You SORP Ready product page", async () => {
   assert.match(html, /Same assessment/i);
   assert.match(html, /Two ways to do it/i);
   assert.match(html, /15 core questions/i);
-  assert.match(html, /A useful result\. No account\. No email gate\./i);
-  assert.match(html, /Five short setup questions/i);
-  assert.match(html, /same 15 impact-readiness questions/i);
-  assert.match(html, /Start my snapshot/i);
+  assert.match(html, /href="\/are-you-sorp-ready\/snapshot"/i);
+  assert.doesNotMatch(html, /A useful result\. No account\. No email gate\./i);
+  assert.doesNotMatch(html, /id="snapshot-tool"/i);
   assert.match(html, /https:\/\/sorp2026\.mysocialimpact\.org/i);
   assert.match(html, /MUST \/ SHOULD \/ MAY/i);
   assert.match(html, /Judgement is an MSI explanatory category/i);
@@ -75,6 +74,30 @@ test("server-renders the Are You SORP Ready product page", async () => {
   assert.match(html, /Impact Readiness Review/i);
   assert.match(html, /not a statutory audit/i);
   assert.doesNotMatch(html, /final 15-question method and scoring are still being developed/i);
+});
+
+test("server-renders the focused SORP snapshot workspace", async () => {
+  const response = await render("/are-you-sorp-ready/snapshot");
+  assert.equal(response.status, 200);
+
+  const html = await response.text();
+  assert.match(html, /<title>SORP Ready Snapshot \| My Social Impact<\/title>/i);
+  assert.match(html, /A useful result\. No account\. No email gate\./i);
+  assert.match(html, /Five short setup questions/i);
+  assert.match(html, /same 15 impact-readiness questions/i);
+  assert.match(html, /Start my snapshot/i);
+  assert.match(html, /Save &amp; exit/i);
+  assert.match(html, /id="snapshot-tool"/i);
+});
+
+test("server-renders the dedicated SORP results workspace", async () => {
+  const response = await render("/are-you-sorp-ready/results");
+  assert.equal(response.status, 200);
+
+  const html = await response.text();
+  assert.match(html, /<title>Your SORP Ready Result \| My Social Impact<\/title>/i);
+  assert.match(html, /Loading your result/i);
+  assert.match(html, /Your impact-readiness result/i);
 });
 
 test("server-renders the Community Mapping product page", async () => {

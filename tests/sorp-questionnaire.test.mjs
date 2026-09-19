@@ -73,6 +73,8 @@ test("SORP snapshot contains exactly five setup questions and transparent condit
   assert.deepEqual([...source.matchAll(/Setup question (\d{2}) of 05/g)].map((match) => match[1]), ["01", "02", "03", "04", "05"]);
   assert.match(source, /These checks create separate SORP flags\. They do not change the main 0–100 score/);
   assert.match(source, /Why am I seeing this\?/);
+  assert.match(source, /Save &amp; exit/);
+  assert.match(source, /\/are-you-sorp-ready\/results/);
   assert.match(source, /window\.localStorage\.setItem\(RESULT_KEY/);
   assert.match(source, /The current assistant will not receive it automatically yet/);
   assert.doesNotMatch(source, /email.*required|required.*email/i);

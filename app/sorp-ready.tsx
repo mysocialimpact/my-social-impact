@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { Footer, RevealObserver, SiteHeader } from "./site-shell";
-import { SorpAssessment } from "./sorp-assessment";
+import { SorpSnapshotLink } from "./sorp-snapshot-link";
 
 const conversationUrl = "https://sorp2026.mysocialimpact.org";
 
@@ -97,7 +97,7 @@ export function SorpReadyPage() {
               <p className="sorp-ready-lead">SORP 2026 changes what many charities need to report about their impact.</p>
               <p>Find out where you stand — for free — and start getting ready before year-end.</p>
               <div className="sorp-ready-actions">
-                <a className="sorp-ready-action is-primary" href="#assessment">Check your readiness <span>↓</span></a>
+                <SorpSnapshotLink className="sorp-ready-action is-primary" arrow="→" />
                 <a className="sorp-ready-action" href={conversationUrl} target="_blank" rel="noreferrer">Talk it through <span>↗</span></a>
               </div>
             </div>
@@ -132,7 +132,7 @@ export function SorpReadyPage() {
               <div className="sorp-route-top"><span>Route 01</span><strong>15 core questions<br />Around 8 minutes</strong></div>
               <h3>Quick<br />snapshot</h3>
               <p>For people who prefer a clear structure and want a quick picture of where they stand.</p>
-              <a href="#snapshot-tool">Take the snapshot <span>→</span></a>
+              <SorpSnapshotLink startLabel="Take the snapshot" />
             </article>
             <article className="sorp-route is-conversation" data-reveal>
               <div className="sorp-route-top"><span>Route 02</span><strong>Have a conversation<br />instead</strong></div>
@@ -141,8 +141,6 @@ export function SorpReadyPage() {
               <a href={conversationUrl} target="_blank" rel="noreferrer">Start a conversation <span>↗</span></a>
             </article>
           </div>
-
-          <SorpAssessment />
 
           <div className="sorp-route-note" data-reveal>
             <h3>We’re not particularly fond of forms either.</h3>
@@ -199,7 +197,7 @@ export function SorpReadyPage() {
         </section>
 
         <section className="sorp-result sorp-section" id="result">
-          <SectionHeading number="08" eyebrow="What the free result shows" title={<>A clear picture.<br />Useful next steps.</>} copy={<p>This is an illustrative example of the free result. Your own result is calculated only after you complete the snapshot above.</p>} />
+          <SectionHeading number="08" eyebrow="What the free result shows" title={<>A clear picture.<br />Useful next steps.</>} copy={<p>This is an illustrative example of the free result. Your own result is calculated only after you complete the snapshot.</p>} />
           <div className="sorp-result-card" data-reveal>
             <header><div><p>Your SORP 2026</p><h3>Impact readiness</h3></div><strong>68 <span>/ 100</span></strong></header>
             <div className="sorp-result-bars">{readinessAreas.map(([name, score]) => <div key={name}><span>{name}</span><i><b style={{ width: `${score}%` }} /></i><strong>{score}</strong></div>)}</div>
@@ -233,7 +231,7 @@ export function SorpReadyPage() {
           ].map(([name, copy, href], index) => href.startsWith("/") ? <Link href={href} key={name} data-reveal><span>0{index + 1}</span><h3>{name}</h3><p>{copy}</p><strong>Explore <b>→</b></strong></Link> : <a href={href} key={name} data-reveal><span>0{index + 1}</span><h3>{name}</h3><p>{copy}</p><strong>Talk to us <b>→</b></strong></a>)}</div>
         </section>
 
-        <section className="sorp-final" data-reveal><p>SORP 2026 · Impact reporting</p><h2>This looks useful.<br /><em>I should probably deal with this now.</em></h2><div><a href="#assessment">Check your readiness <span>↑</span></a><a href={conversationUrl} target="_blank" rel="noreferrer">Talk it through <span>↗</span></a></div></section>
+        <section className="sorp-final" data-reveal><p>SORP 2026 · Impact reporting</p><h2>This looks useful.<br /><em>I should probably deal with this now.</em></h2><div><SorpSnapshotLink arrow="→" /><a href={conversationUrl} target="_blank" rel="noreferrer">Talk it through <span>↗</span></a></div></section>
       </main>
       <Footer />
     </>
