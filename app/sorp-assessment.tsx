@@ -198,6 +198,7 @@ export function SorpAssessment({ view = "snapshot" }: { view?: "snapshot" | "res
   };
 
   const nextFromCore = () => {
+    if (!currentQuestion || !coreAnswers[currentQuestion.id]) return;
     if (coreIndex < coreQuestions.length - 1) setCoreIndex((index) => index + 1);
     else { setExtraIndex(0); go("extras_intro"); }
   };
@@ -208,6 +209,7 @@ export function SorpAssessment({ view = "snapshot" }: { view?: "snapshot" | "res
   };
 
   const nextFromExtra = () => {
+    if (!currentExtra || !extraAnswers[currentExtra.id]) return;
     if (extraIndex < extras.length - 1) setExtraIndex((index) => index + 1);
     else finishAssessment();
   };
@@ -305,7 +307,7 @@ export function SorpAssessment({ view = "snapshot" }: { view?: "snapshot" | "res
           <p className="sorp-tool-kicker">Before we begin · Not scored</p>
           <h3>Who are you completing this for?</h3>
           <ChoiceButtons label="Who are you completing this for?" value={setup.role} onChange={(role) => updateSetup({ role })} options={[["staff", "I work for the charity"], ["trustee", "I’m a trustee"], ["adviser", "I’m an accountant or adviser completing this for a charity"], ["other", "Other"]]} />
-          <Controls onBack={() => go("welcome")} onExit={saveAndExit} onNext={() => go("location")} nextLabel={setup.role ? "Continue" : "Skip"} />
+          <Controls onBack={() => go("welcome")} onExit={saveAndExit} onNext={() => go("location")} nextDisabled={!setup.role} nextLabel="Continue" />
         </section>}
 
         {mode === "location" && <section className="sorp-tool-panel">

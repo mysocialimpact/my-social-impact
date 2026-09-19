@@ -94,3 +94,14 @@ test("SORP snapshot contains exactly five setup questions and transparent condit
   assert.match(source, /\/are-you-sorp-ready\/conversation\?from=snapshot/);
   assert.doesNotMatch(source, /email.*required|required.*email/i);
 });
+
+test("every snapshot question must be answered before continuing", async () => {
+  const source = await readFile(experiencePath, "utf8");
+
+  assert.doesNotMatch(source, /nextLabel=\{setup\.role \? "Continue" : "Skip"\}/);
+  assert.match(source, /nextDisabled=\{!setup\.role\} nextLabel="Continue"/);
+  assert.match(source, /if \(!currentQuestion \|\| !coreAnswers\[currentQuestion\.id\]\) return;/);
+  assert.match(source, /if \(!currentExtra \|\| !extraAnswers\[currentExtra\.id\]\) return;/);
+  assert.match(source, /nextDisabled=\{!coreAnswers\[currentQuestion\.id\]\}/);
+  assert.match(source, /nextDisabled=\{!extraAnswers\[currentExtra\.id\]\}/);
+});
