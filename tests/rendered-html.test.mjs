@@ -91,27 +91,42 @@ test("product grid expands incomplete rows without leaving empty holes", async (
   assert.match(css, /\.home-page \.product-mark\.logo-sorp \{[\s\S]*?background: var\(--yellow\) !important;/);
 });
 
-test("shared top navigation includes every destination and a scrollable eight-item mobile menu", async () => {
+test("shared top navigation prioritises flagship work and groups the wider MSI offer", async () => {
   const css = await readFile(new URL("../app/globals.css", import.meta.url), "utf8");
   const shell = await readFile(new URL("../app/site-shell.tsx", import.meta.url), "utf8");
 
   for (const href of [
     "/social-impact-excellence",
+    "/social-impact-claims-code",
     "/are-you-sorp-ready",
     "/purpose-works",
     "/community-mapping",
     "/social-impact-report",
-    "/social-impact-claims-code",
     "/blog",
-    "/#contact",
+    "/contact",
+    "/#introduction",
+    "/#values",
+    "/#approach",
+    "/#what-we-do",
+    "/#team",
   ]) assert.match(shell, new RegExp(`href: "${href.replace("/", "\\/")}"`));
+  assert.match(shell, /desktopLabel: "Claims Code"/);
+  assert.match(shell, /desktopLabel: "SORP Ready"/);
+  assert.match(shell, /<p>Products<\/p>/);
+  assert.match(shell, /<p>About MSI<\/p>/);
+  assert.match(shell, /<p>Featured<\/p>/);
+  assert.match(shell, /<p>More from MSI<\/p>/);
+  assert.match(shell, />Explore Assessments <span/);
+  assert.doesNotMatch(shell, /Other Products/);
+  assert.doesNotMatch(shell, /Festival Impact Reports/);
   assert.match(shell, /aria-controls="site-navigation"/);
   assert.match(shell, /id="site-navigation"/);
-  assert.match(shell, /pathname\.startsWith\(`\$\{item\.href\}\/`\)/);
-  assert.match(css, /grid-template-rows: repeat\(8, minmax\(58px, auto\)\);[\s\S]*?overflow-y: auto;[\s\S]*?overscroll-behavior: contain;/);
-  assert.match(css, /\.site-header,[\s\S]*?\.site-header\.is-scrolled \{ height: 112px; padding-block: 8px; \}/);
-  assert.match(css, /\.site-header nav a,[\s\S]*?height: 2\.75rem;[\s\S]*?white-space: normal;/);
-  assert.doesNotMatch(css, /\.site-header nav a,[\s\S]{0,350}?border-bottom: 1px solid var\(--line\)/);
+  assert.match(shell, /pathname\.startsWith\(`\$\{href\}\/`\)/);
+  assert.match(css, /\.desktop-navigation \{[\s\S]*?display: flex;/);
+  assert.match(css, /\.more-menu-panel \{[\s\S]*?grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/);
+  assert.match(css, /\.mobile-navigation \{[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/);
+  assert.match(css, /@media \(max-width: 760px\) \{[\s\S]*?\.mobile-navigation \{ grid-template-columns: 1fr;/);
+  assert.match(css, /\.site-header \.global-navigation,[\s\S]*?overflow-y: auto;[\s\S]*?overscroll-behavior: contain;/);
 });
 
 test("the Ideas Shed footer is a compact concrete-backed band", async () => {

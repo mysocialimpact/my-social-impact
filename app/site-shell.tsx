@@ -196,13 +196,14 @@ function Spray({ className }: { className: string }) {
 
 export function SiteHeader() {
   const [open, setOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const pathname = usePathname();
 
   useEffect(() => {
     const syncHeader = () => {
       const nextScrolled = window.scrollY > 16;
-      const headerHeight = window.innerWidth <= 760 ? 70 : window.innerWidth <= 1100 ? (nextScrolled ? 70 : 88) : 112;
+      const headerHeight = window.innerWidth <= 760 ? 70 : window.innerWidth <= 1100 ? (nextScrolled ? 70 : 78) : (nextScrolled ? 72 : 82);
 
       setScrolled(nextScrolled);
       document.documentElement.style.setProperty("--site-header-height", `${headerHeight}px`);
@@ -221,7 +222,10 @@ export function SiteHeader() {
   useEffect(() => {
     document.body.classList.toggle("menu-is-open", open);
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setOpen(false);
+      if (event.key === "Escape") {
+        setOpen(false);
+        setMoreOpen(false);
+      }
     };
     window.addEventListener("keydown", onKeyDown);
     return () => {
@@ -230,37 +234,85 @@ export function SiteHeader() {
     };
   }, [open]);
 
-  const navigation = [
-    { href: "/social-impact-excellence", label: "Social Impact Excellence", note: "Our flagship methodology" },
-    { href: "/are-you-sorp-ready", label: "Are You SORP Ready?", note: "Get ready for SORP 2026 impact reporting" },
-    { href: "/purpose-works", label: "Purpose Works", note: "Purpose, impact and communications. Aligned." },
-    { href: "/community-mapping", label: "COMMUNITY MAPPING", note: "People. Place. Insight." },
-    { href: "/social-impact-report", label: "Charity Impact Reports", note: "Stronger evidence. Clearer storytelling." },
-    { href: "/social-impact-claims-code", label: "Social Impact Claims Code", note: "Make claims people can trust" },
-    { href: "/blog", label: "Blog", note: "Ideas, evidence and useful provocations" },
-    { href: "/#contact", label: "Contact", note: "Start a conversation" },
+  const featuredNavigation = [
+    { href: "/social-impact-excellence", desktopLabel: "Social Impact Excellence", mobileLabel: "Social Impact Excellence" },
+    { href: "/social-impact-claims-code", desktopLabel: "Claims Code", mobileLabel: "Social Impact Claims Code" },
+    { href: "/are-you-sorp-ready", desktopLabel: "SORP Ready", mobileLabel: "Are You SORP Ready?" },
   ];
+  const moreProducts = [
+    { href: "/purpose-works", label: "Purpose Works" },
+    { href: "/community-mapping", label: "Community Mapping" },
+    { href: "/social-impact-report", label: "Charity Impact Reports" },
+  ];
+  const aboutNavigation = [
+    { href: "/#introduction", label: "About / overview" },
+    { href: "/#values", label: "Our values" },
+    { href: "/#approach", label: "How we work" },
+    { href: "/#what-we-do", label: "What we do" },
+    { href: "/#team", label: "People" },
+  ];
+  const utilityNavigation = [
+    { href: "/blog", label: "Thinking" },
+    { href: "/contact", label: "Contact" },
+  ];
+  const isCurrent = (href: string) => !href.includes("#") && (pathname === href || pathname.startsWith(`${href}/`));
+  const moreCurrent = moreProducts.some((item) => isCurrent(item.href));
+  const closeNavigation = () => {
+    setOpen(false);
+    setMoreOpen(false);
+  };
 
   return (
     <header className={`site-header ${scrolled ? "is-scrolled" : ""} ${open ? "is-menu-open" : ""}`}>
       <Link href="/" className="header-brand" aria-label="My Social Impact home">
         <Image className="header-logo" src="/assets/my-social-impact-horizontal.png" alt="" width={1088} height={124} priority unoptimized />
       </Link>
-      <Link className="header-assessment-cta" href="/assessments"><span className="header-cta-desktop">Explore Assessments</span><span className="header-cta-mobile">Explore Assessments</span></Link>
+      <Link className="header-assessment-cta" href="/assessments">Explore Assessments</Link>
       <button className={`menu-button ${open ? "is-open" : ""}`} onClick={() => setOpen((current) => !current)} aria-expanded={open} aria-controls="site-navigation" aria-label={open ? "Close menu" : "Open menu"}><span /><span /></button>
-      <nav id="site-navigation" className={open ? "nav-open" : ""} aria-label="Main navigation">
-        {navigation.map((item, index) => {
-          const current = item.href.startsWith("/#")
-            ? pathname === "/"
-            : pathname === item.href || pathname.startsWith(`${item.href}/`);
-          return (
-            <Link key={item.href} href={item.href} className={current ? "is-current" : ""} aria-current={current ? "page" : undefined} onClick={() => setOpen(false)}>
-              <span className="nav-number">{String(index + 1).padStart(2, "0")}</span>
-              <span className="nav-copy"><span className="nav-label">{item.label}</span><span className="nav-note">{item.note}</span></span>
-              <span className="nav-arrow" aria-hidden="true">↗</span>
-            </Link>
-          );
-        })}
+      <nav id="site-navigation" className={`global-navigation ${open ? "nav-open" : ""}`} aria-label="Main navigation">
+        <div className="desktop-navigation">
+          {featuredNavigation.map((item) => {
+            const current = isCurrent(item.href);
+            return <Link key={item.href} href={item.href} className={current ? "is-current" : ""} aria-current={current ? "page" : undefined}>{item.desktopLabel}</Link>;
+          })}
+          <div className={`more-menu ${moreCurrent ? "is-current" : ""}`} onBlur={(event) => {
+            if (!event.currentTarget.contains(event.relatedTarget)) setMoreOpen(false);
+          }}>
+            <button type="button" className="more-menu-trigger" aria-expanded={moreOpen} aria-controls="more-menu-panel" onClick={() => setMoreOpen((current) => !current)}>More <span aria-hidden="true">⌄</span></button>
+            <div id="more-menu-panel" className="more-menu-panel" hidden={!moreOpen}>
+              <div className="more-menu-group">
+                <p>Products</p>
+                {moreProducts.map((item) => <Link key={item.href} href={item.href} className={isCurrent(item.href) ? "is-current" : ""} aria-current={isCurrent(item.href) ? "page" : undefined} onClick={closeNavigation}>{item.label}<span aria-hidden="true">→</span></Link>)}
+              </div>
+              <div className="more-menu-group">
+                <p>About MSI</p>
+                {aboutNavigation.map((item) => <Link key={item.href} href={item.href} onClick={closeNavigation}>{item.label}<span aria-hidden="true">→</span></Link>)}
+              </div>
+            </div>
+          </div>
+          {utilityNavigation.map((item) => {
+            const current = isCurrent(item.href);
+            return <Link key={item.href} href={item.href} className={current ? "is-current" : ""} aria-current={current ? "page" : undefined}>{item.label}</Link>;
+          })}
+        </div>
+        <div className="mobile-navigation">
+          <div className="mobile-nav-group mobile-nav-featured">
+            <p>Featured</p>
+            {featuredNavigation.map((item) => <Link key={item.href} href={item.href} className={isCurrent(item.href) ? "is-current" : ""} aria-current={isCurrent(item.href) ? "page" : undefined} onClick={closeNavigation}>{item.mobileLabel}<span aria-hidden="true">→</span></Link>)}
+          </div>
+          <div className="mobile-nav-group">
+            <p>More from MSI</p>
+            {moreProducts.map((item) => <Link key={item.href} href={item.href} className={isCurrent(item.href) ? "is-current" : ""} aria-current={isCurrent(item.href) ? "page" : undefined} onClick={closeNavigation}>{item.label}<span aria-hidden="true">→</span></Link>)}
+          </div>
+          <div className="mobile-nav-group">
+            <p>About MSI</p>
+            {aboutNavigation.map((item) => <Link key={item.href} href={item.href} onClick={closeNavigation}>{item.label}<span aria-hidden="true">→</span></Link>)}
+          </div>
+          <div className="mobile-nav-group mobile-nav-utility">
+            {utilityNavigation.map((item) => <Link key={item.href} href={item.href} className={isCurrent(item.href) ? "is-current" : ""} aria-current={isCurrent(item.href) ? "page" : undefined} onClick={closeNavigation}>{item.label}<span aria-hidden="true">→</span></Link>)}
+          </div>
+          <Link className="mobile-assessment-cta" href="/assessments" onClick={closeNavigation}>Explore Assessments <span aria-hidden="true">→</span></Link>
+        </div>
       </nav>
     </header>
   );
