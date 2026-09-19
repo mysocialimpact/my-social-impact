@@ -214,7 +214,7 @@ export function SiteHeader() {
   useEffect(() => {
     const syncHeader = () => {
       const nextScrolled = window.scrollY > 16;
-      const headerHeight = window.innerWidth <= 760 ? 70 : window.innerWidth <= 1100 ? (nextScrolled ? 70 : 88) : nextScrolled ? 94 : 112;
+      const headerHeight = window.innerWidth <= 760 ? 70 : window.innerWidth <= 1100 ? (nextScrolled ? 70 : 88) : 112;
 
       setScrolled(nextScrolled);
       document.documentElement.style.setProperty("--site-header-height", `${headerHeight}px`);

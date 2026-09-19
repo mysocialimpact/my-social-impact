@@ -94,7 +94,9 @@ test("shared top navigation includes every destination and a scrollable eight-it
   assert.match(shell, /id="site-navigation"/);
   assert.match(shell, /pathname\.startsWith\(`\$\{item\.href\}\/`\)/);
   assert.match(css, /grid-template-rows: repeat\(8, minmax\(58px, auto\)\);[\s\S]*?overflow-y: auto;[\s\S]*?overscroll-behavior: contain;/);
-  assert.match(css, /\.site-header \.nav-label \{ min-height: 2\.4em; display: flex; align-items: center;/);
+  assert.match(css, /\.site-header,[\s\S]*?\.site-header\.is-scrolled \{ height: 112px; padding-block: 8px; \}/);
+  assert.match(css, /\.site-header nav a,[\s\S]*?height: 2\.75rem;[\s\S]*?white-space: normal;/);
+  assert.doesNotMatch(css, /\.site-header nav a,[\s\S]{0,350}?border-bottom: 1px solid var\(--line\)/);
 });
 
 test("the Ideas Shed footer is a compact concrete-backed band", async () => {

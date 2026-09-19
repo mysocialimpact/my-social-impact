@@ -2723,8 +2723,8 @@ main > section,
 
 /* The expanded product family uses a calm two-line desktop navigation. */
 @media (min-width: 1101px) {
-  .site-header { height: 112px; }
-  .site-header.is-scrolled { height: 94px; }
+  .site-header,
+  .site-header.is-scrolled { height: 112px; padding-block: 8px; }
   .site-header + .section-navigation { top: var(--site-header-height); transition: top .5s var(--ease); }
   .site-header nav,
   .site-header.is-menu-open nav {
@@ -2753,12 +2753,12 @@ main > section,
   }
   .site-header nav a,
   .site-header.is-menu-open nav a {
-    min-height: 3.15rem;
-    padding: .35rem .1rem;
+    height: 2.75rem;
+    min-height: 0;
+    padding: .25rem .1rem;
     display: flex;
     align-items: center;
     border: 0;
-    border-bottom: 1px solid var(--line);
     background: transparent;
     box-shadow: none;
     color: inherit;
@@ -2770,14 +2770,14 @@ main > section,
   .site-header nav a:nth-child(2),
   .site-header nav a:nth-child(3),
   .site-header nav a:nth-child(4),
-  .site-header nav a:nth-child(5) { background: transparent; border-color: var(--line); box-shadow: none; color: inherit; }
+  .site-header nav a:nth-child(5) { background: transparent; box-shadow: none; color: inherit; }
   .site-header nav a.is-current { outline: 0; color: var(--orange); }
   .site-header nav a::after { display: block; }
   .site-header .nav-number,
   .site-header .nav-note,
   .site-header .nav-arrow { display: none; }
   .site-header .nav-copy { width: 100%; display: block; }
-  .site-header .nav-label { min-height: 2.4em; display: flex; align-items: center; font: inherit; letter-spacing: inherit; line-height: 1.2; text-wrap: balance; }
+  .site-header .nav-label { display: flex; align-items: center; font: inherit; letter-spacing: inherit; line-height: 1.2; text-wrap: balance; }
   .site-header .menu-button { display: none; }
 }
 
