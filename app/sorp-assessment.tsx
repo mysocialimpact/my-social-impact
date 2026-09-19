@@ -77,6 +77,13 @@ function formatDate(value: string) {
   return new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "long", year: "numeric" }).format(new Date(`${value}T12:00:00`));
 }
 
+function reviewPrice(setup: Setup) {
+  if (setup.income === "tier2") return "Tier 2 · £100";
+  if (setup.income === "tier3") return "Tier 3 · £200";
+  if (setup.income === "tier1_low" || setup.income === "tier1_high") return "Tier 1 · £50";
+  return "Tiered review pricing";
+}
+
 function StageProgress({ current }: { current: number }) {
   return (
     <ol className="sorp-tool-progress" aria-label={current > 6 ? "All six assessment stages complete" : `Assessment stage ${current} of 6`}>
@@ -288,8 +295,8 @@ export function SorpAssessment({ view = "snapshot" }: { view?: "snapshot" | "res
         {mode === "welcome" && <section className="sorp-tool-welcome">
           <p className="sorp-tool-kicker">A useful result. No account. No email gate.</p>
           <h3>Find out what applies — and what needs attention.</h3>
-          <p>Five short setup questions establish the charity’s likely SORP context. Everyone then answers the same 15 impact-readiness questions, followed only by clearly explained additional checks that may be relevant.</p>
-          <div className="sorp-tool-welcome-grid"><span><b>01</b> Does SORP 2026 apply?</span><span><b>02</b> What is your likely tier?</span><span><b>03</b> How ready are you?</span></div>
+          <p>Five short setup questions establish whether SORP appears to apply, the charity’s jurisdiction and reporting period, its accounting basis and likely tier. Everyone then answers the same 15 impact-readiness questions, followed only by clearly explained additional checks that may be relevant.</p>
+          <div className="sorp-tool-welcome-grid"><span><b>01</b> Does SORP 2026 appear to apply?</span><span><b>02</b> Which jurisdiction?</span><span><b>03</b> Which reporting period?</span><span><b>04</b> Accruals or receipts &amp; payments?</span><span><b>05</b> What is the likely tier?</span></div>
           <p className="sorp-tool-disclaimer">This is a readiness snapshot focused on impact and narrative reporting. It is not a declaration of compliance with every accounting requirement in the Charities SORP.</p>
           <Controls onBack={saveAndExit} onExit={saveAndExit} onNext={() => go("role")} nextLabel={Object.keys(coreAnswers).length ? "Continue my snapshot" : "Start my snapshot"} />
         </section>}
@@ -333,8 +340,8 @@ export function SorpAssessment({ view = "snapshot" }: { view?: "snapshot" | "res
           <p className="sorp-tool-kicker">Your first SORP check</p>
           <h3>{eligibility.status}</h3>
           <ul>{eligibility.reasons.map((reason) => <li key={reason}>{reason}</li>)}</ul>
-          <p>You can continue whatever the answer. We will keep this context visible rather than silently changing the assessment.</p>
-          <Controls onBack={() => go("accounts")} onExit={saveAndExit} onNext={() => go("income")} />
+          <p>You can continue whatever the answer. The impact questions may still be useful, and we will keep this context visible rather than silently changing the assessment.</p>
+          <Controls onBack={() => go("accounts")} onExit={saveAndExit} onNext={() => go("income")} nextLabel={eligibility.tone === "yes" ? "Continue" : "Continue anyway"} />
         </section>}
 
         {mode === "income" && <section className="sorp-tool-panel">
@@ -357,7 +364,7 @@ export function SorpAssessment({ view = "snapshot" }: { view?: "snapshot" | "res
         {mode === "context" && <section className="sorp-context-summary">
           <p className="sorp-tool-kicker">Your current SORP picture</p>
           <h3>We’ll keep this in mind as we go.</h3>
-          <dl><div><dt>Registered</dt><dd>{{ ew: "England & Wales", scotland: "Scotland", ni: "Northern Ireland", roi: "Republic of Ireland", elsewhere: "Somewhere else", not_sure: "Not confirmed" }[setup.jurisdiction]}</dd></div><div><dt>Reporting period begins</dt><dd>{formatDate(setup.startDate)}</dd></div><div><dt>Accounting basis</dt><dd>{{ accruals: "Accruals accounts", receipts: "Receipts & payments accounts", not_sure: "Not yet confirmed" }[setup.accounts]}</dd></div><div><dt>Likely tier</dt><dd>{tierLabel(setup)}</dd></div><div><dt>Additional areas</dt><dd>{setup.activities.includes("none") ? "None identified" : setup.activities.includes("not_sure") ? "To be checked" : setup.activities.map((value) => activityOptions.find(([id]) => id === value)?.[1]).filter(Boolean).join(" · ")}</dd></div></dl>
+          <dl><div><dt>SORP applicability</dt><dd>{eligibility.status}</dd></div><div><dt>Registered</dt><dd>{{ ew: "England & Wales", scotland: "Scotland", ni: "Northern Ireland", roi: "Republic of Ireland", elsewhere: "Somewhere else", not_sure: "Not confirmed" }[setup.jurisdiction]}</dd></div><div><dt>Reporting period begins</dt><dd>{formatDate(setup.startDate)}</dd></div><div><dt>Accounting basis</dt><dd>{{ accruals: "Accruals accounts", receipts: "Receipts & payments accounts", not_sure: "Not yet confirmed" }[setup.accounts]}</dd></div><div><dt>Likely tier</dt><dd>{tierLabel(setup)}</dd></div><div><dt>Additional areas</dt><dd>{setup.activities.includes("none") ? "None identified" : setup.activities.includes("not_sure") ? "To be checked" : setup.activities.map((value) => activityOptions.find(([id]) => id === value)?.[1]).filter(Boolean).join(" · ")}</dd></div></dl>
           <p className="sorp-context-note">The five setup answers personalise the explanations and additional checks. They do not change or remove the 15 core readiness questions.</p>
           <Controls onBack={() => go("activities")} onExit={saveAndExit} onNext={() => { setCoreIndex(0); go("core"); }} nextLabel="Start readiness questions" />
         </section>}
@@ -401,7 +408,7 @@ export function SorpAssessment({ view = "snapshot" }: { view?: "snapshot" | "res
             <article><h4>Additional checks</h4>{extras.length ? <ul>{extras.map((check) => <li key={check.id}><strong>{check.title}:</strong> {answerOptions.find((option) => option.value === extraAnswers[check.id])?.label ?? (extraAnswers[check.id] === "not_applicable" ? "Not applicable" : "Not answered")}</li>)}</ul> : <p>No additional checks were triggered by the setup answers.</p>}</article>
           </div>
           <div className="sorp-result-handoff"><div><span>Want to explore your result?</span><h4>Talk it through with our SORP assistant.</h4><p>It can help explore weaker answers, uncertainty, relevant MUST / SHOULD / MAY requirements and areas requiring judgement.</p><small>Your Snapshot will be carried into the conversation on this device, so you will not need to answer all 15 questions again.</small></div><a href="/are-you-sorp-ready/conversation?from=snapshot">Talk through my result <span>→</span></a></div>
-          <Controls onBack={returnToLastQuestion} onExit={saveAndExit} onNext={() => router.push("/are-you-sorp-ready#review")} nextLabel="Explore the £50 review" />
+          <Controls onBack={returnToLastQuestion} onExit={saveAndExit} onNext={() => router.push("/are-you-sorp-ready#review")} nextLabel={`Explore ${reviewPrice(setup)}`} />
         </section>}
       </div>
     </div>

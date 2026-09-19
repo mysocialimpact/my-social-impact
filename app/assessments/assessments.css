@@ -1,0 +1,47 @@
+.assessment-hub { --hub-pad: clamp(1.25rem, 4vw, 4.5rem); padding-top: 112px; background: var(--paper); }
+.assessment-hub-intro { min-height: 55svh; padding: clamp(5rem, 9vw, 9rem) var(--hub-pad); display: grid; grid-template-columns: minmax(160px, .35fr) minmax(420px, 1.1fr) minmax(260px, .55fr); gap: clamp(2.5rem, 5vw, 6rem); align-items: start; border-bottom: 1px solid var(--ink); }
+.assessment-hub-intro > p { margin: .65rem 0 0; color: var(--orange); font-size: .75rem; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; }
+.assessment-hub-intro h1 { margin: 0; font-family: var(--font-serif), Georgia, serif; font-size: clamp(4.2rem, 7.5vw, 9rem); font-weight: 500; letter-spacing: -.065em; line-height: .86; text-transform: uppercase; }
+.assessment-hub-intro > span { max-width: 30rem; align-self: end; font-family: var(--font-serif), Georgia, serif; font-size: clamp(1.4rem, 2vw, 2.15rem); line-height: 1.22; }
+.assessment-hub-options { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid var(--ink); }
+.assessment-choice { min-width: 0; min-height: 720px; padding: clamp(2rem, 4vw, 4.5rem); display: flex; flex-direction: column; }
+.assessment-choice + .assessment-choice { border-left: 1px solid var(--ink); }
+.assessment-choice.is-maturity { background: var(--white); box-shadow: inset 0 10px 0 var(--orange); }
+.assessment-choice.is-sorp { background: var(--yellow); box-shadow: inset 0 10px 0 var(--orange); }
+.assessment-choice header { display: flex; justify-content: space-between; gap: 2rem; padding-bottom: 1rem; border-bottom: 1px solid var(--ink); font-size: .72rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.assessment-choice header p { margin: 0; text-align: right; }
+.assessment-choice h2 { max-width: 12ch; margin: clamp(3.5rem, 7vw, 7rem) 0 2.5rem; font-family: var(--font-serif), Georgia, serif; font-size: clamp(3rem, 4.5vw, 5.6rem); font-weight: 500; letter-spacing: -.055em; line-height: .94; text-transform: uppercase; }
+.assessment-choice-copy { max-width: 38rem; font-size: 1.05rem; line-height: 1.65; }
+.assessment-choice-copy ul { margin: 1.5rem 0; padding: 0; display: flex; flex-wrap: wrap; gap: .45rem; list-style: none; }
+.assessment-choice-copy li { padding: .42rem .7rem; border: 1px solid currentColor; font-size: .72rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+.assessment-choice-actions { margin-top: auto; padding-top: 3rem; display: grid; gap: .75rem; }
+.assessment-choice-actions a { min-height: 56px; padding: 1rem 1.1rem; display: flex; align-items: center; justify-content: space-between; gap: 2rem; border: 1px solid var(--ink); font-size: .72rem; font-weight: 800; letter-spacing: .055em; text-transform: uppercase; transition: background .25s ease, color .25s ease; }
+.assessment-choice-actions a:hover { background: var(--ink); color: var(--white); }
+.assessment-choice-actions a.is-primary { background: var(--ink); color: var(--white); }
+.assessment-choice.is-maturity .assessment-choice-actions a.is-primary { background: var(--orange); border-color: var(--orange); }
+.assessment-choice-actions a.is-primary:hover { background: var(--white); border-color: var(--ink); color: var(--ink); }
+.assessment-hub-guidance { padding: clamp(3rem, 6vw, 6rem) var(--hub-pad); display: grid; grid-template-columns: minmax(220px, .55fr) 1fr 1fr; gap: clamp(2rem, 5vw, 6rem); border-bottom: 1px solid var(--ink); }
+.assessment-hub-guidance strong { color: var(--orange); font-size: .78rem; letter-spacing: .08em; text-transform: uppercase; }
+.assessment-hub-guidance p { max-width: 35rem; margin: 0; font-size: 1.02rem; line-height: 1.65; }
+
+@media (max-width: 1100px) {
+  .assessment-hub { padding-top: 70px; }
+  .assessment-hub-intro { grid-template-columns: minmax(150px, .3fr) 1fr; }
+  .assessment-hub-intro h1 { grid-column: 2; }
+  .assessment-hub-intro > span { grid-column: 2; }
+  .assessment-choice { min-height: 650px; }
+  .assessment-hub-guidance { grid-template-columns: 1fr 1fr; }
+  .assessment-hub-guidance strong { grid-column: 1 / -1; }
+}
+
+@media (max-width: 760px) {
+  .assessment-hub-intro { min-height: auto; padding: 4rem 1rem; display: block; }
+  .assessment-hub-intro h1 { margin: 2rem 0; font-size: clamp(3.55rem, 17vw, 5.3rem); overflow-wrap: anywhere; }
+  .assessment-hub-intro > span { display: block; font-size: 1.45rem; }
+  .assessment-hub-options { grid-template-columns: 1fr; }
+  .assessment-choice { min-height: 0; padding: 3rem 1rem; }
+  .assessment-choice + .assessment-choice { border-left: 0; border-top: 1px solid var(--ink); }
+  .assessment-choice h2 { margin: 4rem 0 2rem; font-size: clamp(3rem, 14vw, 4.5rem); }
+  .assessment-choice-actions { margin-top: 3rem; }
+  .assessment-hub-guidance { padding: 3rem 1rem; grid-template-columns: 1fr; gap: 1.5rem; }
+}

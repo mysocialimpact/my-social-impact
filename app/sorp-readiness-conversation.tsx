@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useRef, useState } from "react";
-import { additionalChecks, coreQuestions, readinessStages, type AdditionalAnswerValue, type AnswerValue, type AssessmentSetup } from "./sorp-questionnaire";
+import { additionalChecks, coreQuestions, eligibilityFor, readinessStages, tierLabel, type AdditionalAnswerValue, type AnswerValue, type AssessmentSetup } from "./sorp-questionnaire";
 
 const SNAPSHOT_RESULT_KEY = "msi-sorp-readiness-result-v2";
 const CONVERSATION_KEY = "msi-sorp-readiness-conversation-v1";
@@ -112,6 +112,18 @@ function Paragraphs({ text }: { text: string }) {
 
 function recordingTime(seconds: number) {
   return `${Math.floor(seconds / 60).toString().padStart(2, "0")}:${(seconds % 60).toString().padStart(2, "0")}`;
+}
+
+function dateLabel(value: string) {
+  if (!value) return "To establish";
+  return new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric" }).format(new Date(`${value}T12:00:00`));
+}
+
+function reviewPrice(setup: AssessmentSetup) {
+  if (setup.income === "tier2") return "Tier 2 · £100";
+  if (setup.income === "tier3") return "Tier 3 · £200";
+  if (setup.income === "tier1_low" || setup.income === "tier1_high") return "Tier 1 · £50";
+  return "Tiered pricing from £50";
 }
 
 function ResultList({ title, items, empty }: { title: string; items: string[]; empty: string }) {
@@ -280,11 +292,13 @@ export function SorpReadinessConversation() {
 
   const completedCount = state.completedStages.length;
   const currentStage = Math.min(Math.max(state.currentStage || 1, 1), 6);
+  const eligibility = eligibilityFor(state.setup);
+  const hasEligibilityContext = Boolean(state.setup.jurisdiction && state.setup.startDate && state.setup.accounts);
 
   if (!started) return <section className="readiness-intro">
     <p className="readiness-kicker">SORP 2026<br /><strong>Impact readiness</strong></p>
     <h1>Let’s work out<br />how ready you are.</h1>
-    <div className="readiness-intro-copy"><p>I’ll ask enough to understand your charity, explain relevant SORP requirements as we go, and build the same readiness picture as our Quick Snapshot.</p><p>You don’t need to know the technical language.</p><p>Just answer naturally.</p></div>
+    <div className="readiness-intro-copy"><p>I’ll begin by establishing whether SORP appears to apply, your jurisdiction and reporting period, whether the accounts are accruals or receipts &amp; payments, and your likely tier.</p><p>If SORP may not apply, you can still continue—the impact questions may still be useful.</p><p>You don’t need to know the technical language. Just answer naturally.</p></div>
     <div className="readiness-intro-actions"><button type="button" onClick={() => startConversation(false)}>Start the conversation <span>→</span></button>{snapshotAvailable && <button type="button" className="is-secondary" onClick={() => startConversation(true)}>Use my completed Snapshot <span>→</span></button>}</div>
     <p className="readiness-intro-note">Your progress is saved only in this browser. This is an impact-readiness assessment, not a declaration of SORP compliance.</p>
   </section>;
@@ -294,6 +308,17 @@ export function SorpReadinessConversation() {
       <div><span>SORP readiness</span><strong>{readinessStages[currentStage - 1]}</strong><small>{completedCount} of 6 stages complete</small></div>
       <div className="readiness-progress-track" aria-label={`${completedCount} of 6 assessment stages complete`}>{readinessStages.map((stage, index) => <span key={stage} className={state.completedStages.includes(index + 1) ? "is-complete" : index + 1 === currentStage ? "is-current" : ""}><i />{index < 5 && <b />}</span>)}</div>
     </header>
+
+    <section className="readiness-context" aria-label="Current SORP context" aria-live="polite">
+      <dl>
+        <div><dt>SORP applicability</dt><dd>{hasEligibilityContext ? eligibility.status : "To establish"}</dd></div>
+        <div><dt>Jurisdiction</dt><dd>{{ ew: "England & Wales", scotland: "Scotland", ni: "Northern Ireland", roi: "Republic of Ireland", elsewhere: "Outside the UK / Ireland", not_sure: "Not confirmed", "": "To establish" }[state.setup.jurisdiction]}</dd></div>
+        <div><dt>Period begins</dt><dd>{dateLabel(state.setup.startDate)}</dd></div>
+        <div><dt>Accounts</dt><dd>{{ accruals: "Accruals", receipts: "Receipts & payments", not_sure: "Not confirmed", "": "To establish" }[state.setup.accounts]}</dd></div>
+        <div><dt>Likely tier</dt><dd>{state.setup.income ? tierLabel(state.setup) : "To establish"}</dd></div>
+      </dl>
+      {hasEligibilityContext && eligibility.tone !== "yes" && <div className="readiness-continue-anyway"><p>{eligibility.reasons.at(-1)} The impact questions may still be useful.</p><button type="button" onClick={() => composerRef.current?.focus()}>Continue anyway <span>→</span></button></div>}
+    </section>
 
     <div className="readiness-thread" aria-live="polite">
       {messages.map((message, index) => <article key={`${index}-${message.content.slice(0, 24)}`} className={`readiness-message is-${message.role}`}>
@@ -309,7 +334,7 @@ export function SorpReadinessConversation() {
         <p className="readiness-result-note">This is an impact-readiness assessment. It does not say the charity is SORP compliant.</p>
         <div className="readiness-result-sections">{result.sectionScores.map((section) => <article key={section.section}><div><h3>{section.label}</h3><strong>{section.score}</strong></div><i><b style={{ width: `${section.score}%` }} /></i><p>{section.narrative}</p></article>)}</div>
         <div className="readiness-result-grid"><ResultList title="What looks strong" items={result.strong} empty="No clear strength has been evidenced yet." /><ResultList title="What needs attention" items={result.attention} empty="No immediate weaker area was identified." /><ResultList title="MUST areas" items={result.must} empty="No applicable MUST area was flagged by this initial assessment." /><ResultList title="SHOULD opportunities" items={result.should} empty="No weaker SHOULD opportunity was identified." /><ResultList title="MAY options" items={result.may} empty="No additional MAY option was identified." /><ResultList title="JUDGEMENT areas" items={result.judgement} empty="No specific judgement area was flagged, although context still matters." /><ResultList title="Additional SORP checks" items={result.additionalChecks} empty="No additional check was triggered by the information supplied." /><ResultList title="Three priority actions" items={result.priorities} empty="Add more context to build practical priorities." /></div>
-        <aside className="readiness-human-review"><div><span>Want a human view?</span><h3>SORP 2026<br />Impact Readiness Review</h3><p>£50 · 60 minutes</p></div><div><p>When you arrange the review, you can share this readiness assessment and conversation beforehand, so you won’t need to repeat everything.</p><p>You can also optionally send your latest Trustees’ Annual Report and/or latest Impact Report.</p><ul><li>Your readiness</li><li>Gaps</li><li>Judgement areas</li><li>Practical next steps</li><li>Opportunities beyond minimum compliance</li></ul><strong>The £50 is credited against subsequent MSI project work.</strong><a href="/are-you-sorp-ready#review">Explore the £50 review <span>→</span></a></div></aside>
+        <aside className="readiness-human-review"><div><span>Want a human view?</span><h3>SORP 2026<br />Impact Readiness Review</h3><p>{reviewPrice(state.setup)} · 60 minutes</p></div><div><p>When you arrange the review, you can share this readiness assessment and conversation beforehand, so you won’t need to repeat everything.</p><p>You can also optionally send your latest Trustees’ Annual Report and/or latest Impact Report.</p><ul><li>Your readiness</li><li>Gaps</li><li>Judgement areas</li><li>Practical next steps</li><li>Opportunities beyond minimum compliance</li></ul><strong>The review fee is credited against subsequent MSI project work.</strong><a href="/are-you-sorp-ready#review">Explore human review <span>→</span></a></div></aside>
       </section>}
       <div ref={threadEndRef} />
     </div>

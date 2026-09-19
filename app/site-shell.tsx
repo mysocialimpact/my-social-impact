@@ -246,7 +246,7 @@ export function SiteHeader() {
       <Link href="/" className="header-brand" aria-label="My Social Impact home">
         <Image className="header-logo" src="/assets/my-social-impact-horizontal.png" alt="" width={1088} height={124} priority unoptimized />
       </Link>
-      <a className="header-assessment-cta" href="https://platform.mysocialimpact.org/snapshot" target="_blank" rel="noreferrer"><span className="header-cta-desktop">Start Maturity Assessment</span><span className="header-cta-mobile">Start Assessment</span></a>
+      <Link className="header-assessment-cta" href="/assessments"><span className="header-cta-desktop">Start an Assessment</span><span className="header-cta-mobile">Start an Assessment</span></Link>
       <button className={`menu-button ${open ? "is-open" : ""}`} onClick={() => setOpen((current) => !current)} aria-expanded={open} aria-label="Toggle menu"><span /><span /></button>
       <nav className={open ? "nav-open" : ""} aria-label="Main navigation">
         {navigation.map((item, index) => {

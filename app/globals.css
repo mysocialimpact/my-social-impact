@@ -2714,6 +2714,72 @@ main > section,
   background: var(--white);
 }
 
+/* The expanded product family uses a calm two-line desktop navigation. */
+@media (min-width: 1101px) {
+  .site-header { height: 112px; }
+  .site-header.is-scrolled { height: 94px; }
+  .site-header nav,
+  .site-header.is-menu-open nav {
+    position: static;
+    inset: auto;
+    z-index: auto;
+    width: min(52vw, 720px);
+    height: auto;
+    margin-left: auto;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-rows: repeat(2, auto);
+    justify-content: stretch;
+    align-content: center;
+    gap: .45rem clamp(.8rem, 1.35vw, 1.45rem);
+    overflow: visible;
+    background: transparent;
+    font-family: var(--font-sans);
+    font-size: clamp(.61rem, .68vw, .7rem);
+    line-height: 1.2;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    opacity: 1;
+    transform: none;
+  }
+  .site-header nav a,
+  .site-header.is-menu-open nav a {
+    min-height: 0;
+    padding: .35rem .1rem;
+    display: block;
+    border: 0;
+    border-bottom: 1px solid var(--line);
+    background: transparent;
+    box-shadow: none;
+    color: inherit;
+    opacity: 1;
+    transform: none;
+    white-space: nowrap;
+  }
+  .site-header nav a:nth-child(1),
+  .site-header nav a:nth-child(2),
+  .site-header nav a:nth-child(3),
+  .site-header nav a:nth-child(4),
+  .site-header nav a:nth-child(5) { background: transparent; border-color: var(--line); box-shadow: none; color: inherit; }
+  .site-header nav a.is-current { outline: 0; color: var(--orange); }
+  .site-header nav a::after { display: block; }
+  .site-header .nav-number,
+  .site-header .nav-note,
+  .site-header .nav-arrow { display: none; }
+  .site-header .nav-copy { display: block; }
+  .site-header .nav-label { font: inherit; letter-spacing: inherit; line-height: inherit; }
+  .site-header .menu-button { display: none; }
+}
+
+@media (max-width: 1100px) {
+  .site-header nav {
+    grid-template-rows: repeat(8, minmax(58px, auto));
+    align-content: start;
+    overflow-y: auto;
+  }
+}
+
 .home-page .organisation-tile > b {
   position: relative;
   z-index: 1;

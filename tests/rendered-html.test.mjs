@@ -44,7 +44,8 @@ test("server-renders the My Social Impact homepage", async () => {
   assert.match(html, /COMMUNITY MAPPING/i);
   assert.match(html, /\/assets\/ideas-shed-logo\.png/i);
   assert.match(html, /Start your Social Impact Maturity Assessment today/i);
-  assert.match(html, /Start Maturity Assessment/i);
+  assert.match(html, /Start an Assessment/i);
+  assert.match(html, /href="\/assessments"/i);
   assert.match(html, /href="https:\/\/platform\.mysocialimpact\.org\/snapshot"/i);
   assert.doesNotMatch(html, /codex-preview|Your site is taking shape/i);
 });
@@ -56,7 +57,10 @@ test("server-renders the Are You SORP Ready product page", async () => {
 
   const html = await response.text();
   assert.match(html, /<title>Are You SORP Ready\? \| My Social Impact<\/title>/i);
-  assert.match(html, /SORP 2026 changes what many charities need to report about their impact/i);
+  assert.match(html, /Built for UK charities/i);
+  assert.match(html, /Useful beyond the UK/i);
+  assert.match(html, /preparing accruals accounts for reporting periods beginning on or after 1 January 2026/i);
+  assert.match(html, /We’re genuinely excited by that/i);
   assert.match(html, /Same assessment/i);
   assert.match(html, /Two ways to do it/i);
   assert.match(html, /15 core questions/i);
@@ -69,11 +73,33 @@ test("server-renders the Are You SORP Ready product page", async () => {
   assert.match(html, /Up to £500,000/i);
   assert.match(html, /Over £500,000 and up to £15 million/i);
   assert.match(html, /Over £15 million/i);
+  assert.match(html, /Does SORP 2026/i);
+  assert.match(html, /Charitable company ≠ CIC/i);
+  assert.match(html, /Outside the UK/i);
+  assert.match(html, /This isn’t a chatbot designed/i);
   assert.match(html, /Illustrative front-end preview/i);
   assert.match(html, /£50/i);
+  assert.match(html, /£100/i);
+  assert.match(html, /£200/i);
   assert.match(html, /Impact Readiness Review/i);
+  assert.match(html, /Cost genuinely a barrier/i);
   assert.match(html, /not a statutory audit/i);
   assert.doesNotMatch(html, /final 15-question method and scoring are still being developed/i);
+});
+
+test("server-renders the simple assessment hub", async () => {
+  const response = await render("/assessments");
+  assert.equal(response.status, 200);
+
+  const html = await response.text();
+  assert.match(html, /<title>Start an Assessment \| My Social Impact<\/title>/i);
+  assert.match(html, /Start with[\s\S]*where you are/i);
+  assert.match(html, /Social Impact Maturity Assessment/i);
+  assert.match(html, /Are you SORP ready/i);
+  assert.match(html, /Start the Maturity Assessment/i);
+  assert.match(html, /Check my SORP readiness/i);
+  assert.match(html, /href="https:\/\/platform\.mysocialimpact\.org\/snapshot"/i);
+  assert.match(html, /href="\/are-you-sorp-ready\/snapshot"/i);
 });
 
 test("server-renders the focused SORP snapshot workspace", async () => {
@@ -84,6 +110,8 @@ test("server-renders the focused SORP snapshot workspace", async () => {
   assert.match(html, /<title>SORP Ready Snapshot \| My Social Impact<\/title>/i);
   assert.match(html, /A useful result\. No account\. No email gate\./i);
   assert.match(html, /Five short setup questions/i);
+  assert.match(html, /whether SORP appears to apply/i);
+  assert.match(html, /Accruals or receipts &amp; payments/i);
   assert.match(html, /same 15 impact-readiness questions/i);
   assert.match(html, /Start my snapshot/i);
   assert.match(html, /Save &amp; exit/i);
@@ -110,6 +138,7 @@ test("server-renders the conversational SORP readiness workspace", async () => {
   assert.match(html, /how ready you are/i);
   assert.match(html, /Start the conversation/i);
   assert.match(html, /You don’t need to know the technical language/i);
+  assert.match(html, /whether SORP appears to apply/i);
 });
 
 test("server-renders the Community Mapping product page", async () => {
