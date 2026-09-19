@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 async function render(pathname = "/") {
@@ -47,7 +48,16 @@ test("server-renders the My Social Impact homepage", async () => {
   assert.match(html, /Start an Assessment/i);
   assert.match(html, /href="\/assessments"/i);
   assert.match(html, /href="https:\/\/platform\.mysocialimpact\.org\/snapshot"/i);
+  assert.doesNotMatch(html, /id="ecosystem"/i);
+  assert.doesNotMatch(html, /Good Numbers/i);
+  assert.doesNotMatch(html, />Ecosystem</i);
   assert.doesNotMatch(html, /codex-preview|Your site is taking shape/i);
+});
+
+test("desktop homepage navigation clears the expanded site header", async () => {
+  const css = await readFile(new URL("../app/globals.css", import.meta.url), "utf8");
+  assert.match(css, /\.site-header \+ \.section-navigation \{ top: 112px;/);
+  assert.match(css, /\.site-header\.is-scrolled \+ \.section-navigation \{ top: 94px;/);
 });
 
 test("server-renders the Are You SORP Ready product page", async () => {

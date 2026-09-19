@@ -1933,7 +1933,7 @@ main > section { scroll-margin-top: 70px; }
 .section-navigation > div {
   width: 100%;
   display: grid;
-  grid-template-columns: repeat(9, minmax(0, 1fr));
+  grid-template-columns: repeat(8, minmax(0, 1fr));
   overflow: visible;
   scroll-snap-type: none;
 }
@@ -2718,6 +2718,8 @@ main > section,
 @media (min-width: 1101px) {
   .site-header { height: 112px; }
   .site-header.is-scrolled { height: 94px; }
+  .site-header + .section-navigation { top: 112px; transition: top .5s var(--ease); }
+  .site-header.is-scrolled + .section-navigation { top: 94px; }
   .site-header nav,
   .site-header.is-menu-open nav {
     position: static;
