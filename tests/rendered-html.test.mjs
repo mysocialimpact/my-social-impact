@@ -228,6 +228,11 @@ test("server-renders the conversational SORP readiness workspace", async () => {
   assert.match(source, /readiness-message-heading/);
   assert.match(source, /readiness-message-list/);
   assert.doesNotMatch(source, /where it is registered, its reporting year, approximate income/);
+  assert.match(source, /readiness-organisation-card/);
+  assert.match(source, /Choose an answer/);
+  assert.match(source, /Public information used/);
+  assert.match(source, /publicly_observed/);
+  assert.match(source, /sendMessage\(action\.value\)/);
 });
 
 test("server-renders the Community Mapping product page", async () => {
