@@ -36,6 +36,9 @@ test("server-renders the My Social Impact homepage", async () => {
   assert.ok(html.indexOf('id="consultancy"') < html.indexOf('id="introduction"'));
   assert.match(html, /href="\/social-impact-claims-code"/i);
   assert.match(html, /href="\/social-impact-excellence"/i);
+  assert.match(html, /href="\/are-you-sorp-ready"/i);
+  assert.match(html, /Are You SORP Ready/i);
+  assert.ok(html.indexOf("Are You SORP Ready") < html.indexOf("Purpose Works"));
   assert.match(html, /href="\/purpose-works"/i);
   assert.match(html, /href="\/community-mapping"/i);
   assert.match(html, /COMMUNITY MAPPING/i);
@@ -44,6 +47,29 @@ test("server-renders the My Social Impact homepage", async () => {
   assert.match(html, /Start Maturity Assessment/i);
   assert.match(html, /href="https:\/\/platform\.mysocialimpact\.org\/snapshot"/i);
   assert.doesNotMatch(html, /codex-preview|Your site is taking shape/i);
+});
+
+test("server-renders the Are You SORP Ready product page", async () => {
+  const response = await render("/are-you-sorp-ready");
+  assert.equal(response.status, 200);
+  assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
+
+  const html = await response.text();
+  assert.match(html, /<title>Are You SORP Ready\? \| My Social Impact<\/title>/i);
+  assert.match(html, /SORP 2026 changes what many charities need to report about their impact/i);
+  assert.match(html, /Same assessment/i);
+  assert.match(html, /Two ways to do it/i);
+  assert.match(html, /15 questions/i);
+  assert.match(html, /https:\/\/sorp2026\.mysocialimpact\.org/i);
+  assert.match(html, /MUST \/ SHOULD \/ MAY/i);
+  assert.match(html, /Judgement is an MSI explanatory category/i);
+  assert.match(html, /Up to £500,000/i);
+  assert.match(html, /Over £500,000 and up to £15 million/i);
+  assert.match(html, /Over £15 million/i);
+  assert.match(html, /Illustrative front-end preview/i);
+  assert.match(html, /£50/i);
+  assert.match(html, /Impact Readiness Review/i);
+  assert.match(html, /not a statutory audit/i);
 });
 
 test("server-renders the Community Mapping product page", async () => {

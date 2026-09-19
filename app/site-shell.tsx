@@ -78,7 +78,23 @@ const consultancyOffers = [
   ["Ongoing support", "Bring in senior impact expertise to help you keep improving."],
 ] as const;
 
-const products = [
+type Product = {
+  name: string;
+  kicker: string;
+  logo?: string;
+  textLogo?: string;
+  logoWidth?: number;
+  logoHeight?: number;
+  logoClass: string;
+  className: string;
+  lead: string;
+  copy: string;
+  href: string;
+  secondaryHref?: string;
+  secondaryLabel?: string;
+};
+
+const products: Product[] = [
   {
     name: "Social Impact Excellence™",
     kicker: "Flagship product",
@@ -90,6 +106,16 @@ const products = [
     lead: "A practical framework for organisations that want to get better at social impact, not simply report more of it.",
     copy: "Bringing purpose, leadership, evidence, delivery and communication together in one approach.",
     href: "/social-impact-excellence",
+  },
+  {
+    name: "Are You SORP Ready?",
+    kicker: "Get ready for SORP 2026 impact reporting",
+    textLogo: "ARE YOU\nSORP READY?",
+    logoClass: "logo-sorp",
+    className: "sorp-product",
+    lead: "A free readiness tool for charities.",
+    copy: "Take a quick snapshot or talk it through with our SORP assistant. Understand what you MUST, SHOULD and MAY do — and where judgement is needed.",
+    href: "/are-you-sorp-ready",
   },
   {
     name: "Purpose Works",
@@ -126,19 +152,8 @@ const products = [
     lead: "A clearer way for charities to explain the difference they make.",
     copy: "Credible, accessible impact reporting that brings together strategy, evidence, outcomes and stories.",
     href: "/social-impact-report",
-    secondaryHref: "https://sorp2026.mysocialimpact.org",
-  },
-  {
-    name: "Festival Impact Reports",
-    kicker: "Impact for culture and events",
-    logo: "/assets/festival-impact-reports.svg",
-    logoWidth: 2400,
-    logoHeight: 988,
-    logoClass: "logo-festival",
-    className: "festival-product",
-    lead: "Helping festivals and cultural and community events understand the difference they make.",
-    copy: "We measure their economic, social and environmental impact. We have built a portal to make the before, during and after process faster and more efficient, from planning what to measure to organising evidence and producing the final report.",
-    href: "https://www.festivalimpact.org/",
+    secondaryHref: "/are-you-sorp-ready",
+    secondaryLabel: "Are you SORP ready?",
   },
   {
     name: "Social Impact Claims Code",
@@ -152,7 +167,19 @@ const products = [
     copy: "A practical framework for making social impact claims clearer, more credible and easier to trust.",
     href: "/social-impact-claims-code",
   },
-] as const;
+  {
+    name: "Festival Impact Reports",
+    kicker: "Impact for culture and events",
+    logo: "/assets/festival-impact-reports.svg",
+    logoWidth: 2400,
+    logoHeight: 988,
+    logoClass: "logo-festival",
+    className: "festival-product",
+    lead: "Helping festivals and cultural and community events understand the difference they make.",
+    copy: "We measure their economic, social and environmental impact. We have built a portal to make the before, during and after process faster and more efficient, from planning what to measure to organising evidence and producing the final report.",
+    href: "https://www.festivalimpact.org/",
+  },
+];
 
 const organisations = [
   { name: "Interim Spaces", logo: "/assets/clients/interim-spaces.jpg", width: 1920, height: 1920, className: "client-square" },
@@ -205,6 +232,7 @@ export function SiteHeader() {
 
   const navigation = [
     { href: "/social-impact-excellence", label: "Social Impact Excellence", note: "Our flagship methodology" },
+    { href: "/are-you-sorp-ready", label: "Are You SORP Ready?", note: "Get ready for SORP 2026 impact reporting" },
     { href: "/purpose-works", label: "Purpose Works", note: "Purpose, impact and communications. Aligned." },
     { href: "/community-mapping", label: "COMMUNITY MAPPING", note: "People. Place. Insight." },
     { href: "/social-impact-report", label: "Charity Impact Reports", note: "Stronger evidence. Clearer storytelling." },
@@ -330,23 +358,23 @@ function ProductCard({ product, index }: { product: typeof products[number]; ind
       </div>
       <div className="product-preview">
         <div className={`product-mark ${product.logoClass}`}>
-          {index === 0 ? <div className="product-logo-pair" aria-label="Social Impact Excellence and Certified for Impact 2026">
+          {product.textLogo ? <div className="product-text-logo" aria-label={product.name}>{product.textLogo.split("\n").map((line) => <span key={line}>{line}</span>)}</div> : index === 0 ? <div className="product-logo-pair" aria-label="Social Impact Excellence and Certified for Impact 2026">
             <div className="product-logo-stage">
-              <Image src={product.logo} alt={`${product.name} logo`} width={product.logoWidth} height={product.logoHeight} unoptimized />
+              <Image src={product.logo!} alt={`${product.name} logo`} width={product.logoWidth!} height={product.logoHeight!} unoptimized />
             </div>
             <div className="product-logo-stage">
               <Image src="/assets/certified-for-impact-2026-transparent.png" alt="Social Impact Excellence: Certified for Impact 2026" width={1200} height={1200} unoptimized />
             </div>
           </div> : <div className="product-logo-stage">
-            <Image src={product.logo} alt={`${product.name} logo`} width={product.logoWidth} height={product.logoHeight} unoptimized />
+            <Image src={product.logo!} alt={`${product.name} logo`} width={product.logoWidth!} height={product.logoHeight!} unoptimized />
           </div>}
         </div>
-        <div className="product-summary"><p className="product-lead">{product.lead}</p><p>{product.copy}</p>{index === 0 ? <div className="product-card-actions"><Link className="product-link" href={product.href}>Explore Social Impact Excellence <b>→</b></Link><a className="product-link product-start-link" href="https://platform.mysocialimpact.org/snapshot" target="_blank" rel="noreferrer"><span>Start your Social Impact Maturity Assessment today<small>About 10–15 minutes</small></span><b>↗</b></a></div> : "secondaryHref" in product ? <div className="product-card-actions"><Link className="product-link" href={product.href}>Explore {product.name} <b>→</b></Link><a className="product-link product-start-link" href={product.secondaryHref} target="_blank" rel="noreferrer">Ask SORP 2026 <b>→</b></a></div> : product.href && <span className="product-link">Explore {product.name.replace("™", "")} <b>→</b></span>}</div>
+        <div className="product-summary"><p className="product-lead">{product.lead}</p><p>{product.copy}</p>{index === 0 ? <div className="product-card-actions"><Link className="product-link" href={product.href}>Explore Social Impact Excellence <b>→</b></Link><a className="product-link product-start-link" href="https://platform.mysocialimpact.org/snapshot" target="_blank" rel="noreferrer"><span>Start your Social Impact Maturity Assessment today<small>About 10–15 minutes</small></span><b>↗</b></a></div> : product.secondaryHref ? <div className="product-card-actions"><Link className="product-link" href={product.href}>Explore {product.name} <b>→</b></Link><Link className="product-link product-start-link" href={product.secondaryHref}>{product.secondaryLabel} <b>→</b></Link></div> : product.href && <span className="product-link">Explore {product.name.replace("™", "")} <b>→</b></span>}</div>
       </div>
     </>
   );
 
-  return index === 0 || "secondaryHref" in product ? <article className={`product-card ${product.className}`} data-reveal style={{ "--delay": `${index * 70}ms` } as React.CSSProperties}>{content}</article> : <a className={`product-card ${product.className}`} href={product.href} target={product.href.startsWith("http") ? "_blank" : undefined} rel={product.href.startsWith("http") ? "noreferrer" : undefined} data-reveal style={{ "--delay": `${index * 70}ms` } as React.CSSProperties}>{content}</a>;
+  return index === 0 || product.secondaryHref ? <article className={`product-card ${product.className}`} data-reveal style={{ "--delay": `${index * 70}ms` } as React.CSSProperties}>{content}</article> : <a className={`product-card ${product.className}`} href={product.href} target={product.href.startsWith("http") ? "_blank" : undefined} rel={product.href.startsWith("http") ? "noreferrer" : undefined} data-reveal style={{ "--delay": `${index * 70}ms` } as React.CSSProperties}>{content}</a>;
 }
 
 export function ArticleCard({ post, index = 0 }: { post: typeof posts[number]; index?: number }) {
