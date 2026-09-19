@@ -257,6 +257,7 @@ test("server-renders the conversational SORP readiness workspace", async () => {
   assert.match(source, /Impact readiness mode/);
   assert.match(source, /publicly_observed/);
   assert.match(source, /sendMessage\(action\.value\)/);
+  assert.match(source, /Looking for the right organisation…/);
 
   const proxy = await readFile(new URL("../app/api/readiness/route.ts", import.meta.url), "utf8");
   assert.match(proxy, /runtime = "nodejs"/);
