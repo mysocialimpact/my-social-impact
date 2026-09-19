@@ -397,19 +397,6 @@ function Newsletter() {
   );
 }
 
-function LocationJourney() {
-  return (
-    <div className="location-journey" data-reveal>
-      <Image className="location-journey-desktop" src="/location-journey-contemporary-v3.png" alt="A simple contemporary line illustration travelling from the Somerset countryside, through London, to Uganda, with a small orange detail in each location" width={1981} height={793} unoptimized />
-      <div className="location-journey-mobile" role="img" aria-label="An editorial ink journey from Somerset to London to Uganda">
-        <span className="journey-crop journey-somerset"><b>Somerset</b></span>
-        <span className="journey-crop journey-london"><b>London</b></span>
-        <span className="journey-crop journey-uganda"><b>Uganda</b></span>
-      </div>
-    </div>
-  );
-}
-
 function ContactLocations() {
   const locations = [
     ["Somerset", ["The Offices", "10 Marketplace", "Shepton Mallet", "Somerset", "BA4 5AZ", "United Kingdom"]],
@@ -433,7 +420,6 @@ function ContactLocations() {
       <div className="locations-grid">
         {locations.map(([name, address], index) => <article className="location-column" key={name} data-reveal style={{ "--delay": `${index * 80}ms` } as React.CSSProperties}><span>0{index + 1}</span><h3>{name}</h3><address>{address.map((line) => <span key={line}>{line}</span>)}</address></article>)}
       </div>
-      <LocationJourney />
     </section>
   );
 }
