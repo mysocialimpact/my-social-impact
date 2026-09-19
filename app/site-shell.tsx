@@ -212,10 +212,22 @@ export function SiteHeader() {
   const pathname = usePathname();
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 16);
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    const syncHeader = () => {
+      const nextScrolled = window.scrollY > 16;
+      const headerHeight = window.innerWidth <= 760 ? 70 : window.innerWidth <= 1100 ? (nextScrolled ? 70 : 88) : nextScrolled ? 94 : 112;
+
+      setScrolled(nextScrolled);
+      document.documentElement.style.setProperty("--site-header-height", `${headerHeight}px`);
+    };
+
+    syncHeader();
+    window.addEventListener("scroll", syncHeader, { passive: true });
+    window.addEventListener("resize", syncHeader);
+    return () => {
+      window.removeEventListener("scroll", syncHeader);
+      window.removeEventListener("resize", syncHeader);
+      document.documentElement.style.removeProperty("--site-header-height");
+    };
   }, []);
 
   useEffect(() => {
@@ -247,10 +259,12 @@ export function SiteHeader() {
         <Image className="header-logo" src="/assets/my-social-impact-horizontal.png" alt="" width={1088} height={124} priority unoptimized />
       </Link>
       <Link className="header-assessment-cta" href="/assessments"><span className="header-cta-desktop">Start an Assessment</span><span className="header-cta-mobile">Start an Assessment</span></Link>
-      <button className={`menu-button ${open ? "is-open" : ""}`} onClick={() => setOpen((current) => !current)} aria-expanded={open} aria-label="Toggle menu"><span /><span /></button>
-      <nav className={open ? "nav-open" : ""} aria-label="Main navigation">
+      <button className={`menu-button ${open ? "is-open" : ""}`} onClick={() => setOpen((current) => !current)} aria-expanded={open} aria-controls="site-navigation" aria-label={open ? "Close menu" : "Open menu"}><span /><span /></button>
+      <nav id="site-navigation" className={open ? "nav-open" : ""} aria-label="Main navigation">
         {navigation.map((item, index) => {
-          const current = pathname === item.href;
+          const current = item.href.startsWith("/#")
+            ? pathname === "/"
+            : pathname === item.href || pathname.startsWith(`${item.href}/`);
           return (
             <Link key={item.href} href={item.href} className={current ? "is-current" : ""} aria-current={current ? "page" : undefined} onClick={() => setOpen(false)}>
               <span className="nav-number">{String(index + 1).padStart(2, "0")}</span>

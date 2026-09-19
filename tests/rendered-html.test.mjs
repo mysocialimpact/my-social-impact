@@ -58,10 +58,43 @@ test("server-renders the My Social Impact homepage", async () => {
   assert.doesNotMatch(html, /codex-preview|Your site is taking shape/i);
 });
 
-test("desktop homepage navigation clears the expanded site header", async () => {
+test("global and page navigation share one responsive header offset", async () => {
   const css = await readFile(new URL("../app/globals.css", import.meta.url), "utf8");
-  assert.match(css, /\.site-header \+ \.section-navigation \{ top: 112px;/);
-  assert.match(css, /\.site-header\.is-scrolled \+ \.section-navigation \{ top: 94px;/);
+  const shell = await readFile(new URL("../app/site-shell.tsx", import.meta.url), "utf8");
+  const productStyles = await Promise.all([
+    "claims-code.css",
+    "social-impact-excellence.css",
+    "community-mapping.css",
+    "purpose-works.css",
+    "sorp-ready.css",
+  ].map((file) => readFile(new URL(`../app/${file}`, import.meta.url), "utf8")));
+
+  assert.match(shell, /--site-header-height/);
+  assert.match(shell, /window\.addEventListener\("resize", syncHeader\)/);
+  assert.match(css, /\.section-navigation \{[\s\S]*?inset: var\(--site-header-height\) 0 auto;/);
+  assert.match(css, /\.cir-subnav \{[^}]*inset: var\(--site-header-height\) 0 auto;/);
+  for (const styles of productStyles) assert.match(styles, /(?:inset|top):\s*var\(--site-header-height\)/);
+});
+
+test("shared top navigation includes every destination and a scrollable eight-item mobile menu", async () => {
+  const css = await readFile(new URL("../app/globals.css", import.meta.url), "utf8");
+  const shell = await readFile(new URL("../app/site-shell.tsx", import.meta.url), "utf8");
+
+  for (const href of [
+    "/social-impact-excellence",
+    "/are-you-sorp-ready",
+    "/purpose-works",
+    "/community-mapping",
+    "/social-impact-report",
+    "/social-impact-claims-code",
+    "/blog",
+    "/#contact",
+  ]) assert.match(shell, new RegExp(`href: "${href.replace("/", "\\/")}"`));
+  assert.match(shell, /aria-controls="site-navigation"/);
+  assert.match(shell, /id="site-navigation"/);
+  assert.match(shell, /pathname\.startsWith\(`\$\{item\.href\}\/`\)/);
+  assert.match(css, /grid-template-rows: repeat\(8, minmax\(58px, auto\)\);[\s\S]*?overflow-y: auto;[\s\S]*?overscroll-behavior: contain;/);
+  assert.match(css, /\.site-header \.nav-label \{ min-height: 2\.4em; display: flex; align-items: center;/);
 });
 
 test("the Ideas Shed footer is a compact concrete-backed band", async () => {

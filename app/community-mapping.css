@@ -8,7 +8,7 @@
   color: var(--ink);
 }
 
-.cm-page section { scroll-margin-top: 112px; }
+.cm-page section { scroll-margin-top: calc(var(--site-header-height) + 42px); }
 .cm-page h1,
 .cm-page h2,
 .cm-page h3,
@@ -18,12 +18,13 @@
 
 .cm-subnav {
   position: fixed;
-  inset: 70px 0 auto;
+  inset: var(--site-header-height) 0 auto;
   z-index: 45;
   padding-inline: var(--cm-pad, clamp(1.35rem, 5.75vw, 6.75rem));
   background: rgba(251, 250, 247, .94);
   border-block: 1px solid var(--line);
   backdrop-filter: blur(16px);
+  transition: top .5s var(--ease);
 }
 .cm-subnav > div { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); overflow-x: auto; scrollbar-width: none; }
 .cm-subnav > div::-webkit-scrollbar { display: none; }
