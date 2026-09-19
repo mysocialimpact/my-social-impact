@@ -237,7 +237,7 @@ export function SiteHeader() {
   const featuredNavigation = [
     { href: "/social-impact-excellence", desktopLabel: "Social Impact Excellence", mobileLabel: "Social Impact Excellence" },
     { href: "/social-impact-claims-code", desktopLabel: "Claims Code", mobileLabel: "Social Impact Claims Code" },
-    { href: "/are-you-sorp-ready", desktopLabel: "SORP Ready", mobileLabel: "Are You SORP Ready?" },
+    { href: "/are-you-sorp-ready", desktopLabel: "SORP Ready?", mobileLabel: "Are You SORP Ready?" },
   ];
   const moreProducts = [
     { href: "/purpose-works", label: "Purpose Works" },

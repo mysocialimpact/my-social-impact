@@ -111,7 +111,7 @@ test("shared top navigation prioritises flagship work and groups the wider MSI o
     "/#team",
   ]) assert.match(shell, new RegExp(`href: "${href.replace("/", "\\/")}"`));
   assert.match(shell, /desktopLabel: "Claims Code"/);
-  assert.match(shell, /desktopLabel: "SORP Ready"/);
+  assert.match(shell, /desktopLabel: "SORP Ready\?"/);
   assert.match(shell, /<p>Products<\/p>/);
   assert.match(shell, /<p>About MSI<\/p>/);
   assert.match(shell, /<p>Featured<\/p>/);
