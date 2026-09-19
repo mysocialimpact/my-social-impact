@@ -242,6 +242,11 @@ test("server-renders the conversational SORP readiness workspace", async () => {
   assert.match(source, /Impact readiness mode/);
   assert.match(source, /publicly_observed/);
   assert.match(source, /sendMessage\(action\.value\)/);
+
+  const proxy = await readFile(new URL("../app/api/readiness/route.ts", import.meta.url), "utf8");
+  assert.match(proxy, /runtime = "nodejs"/);
+  assert.match(proxy, /maxDuration = 60/);
+  assert.doesNotMatch(proxy, /OPENAI_API_KEY|authorization.*Bearer/i);
 });
 
 test("server-renders the Community Mapping product page", async () => {

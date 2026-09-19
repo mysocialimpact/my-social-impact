@@ -1,4 +1,5 @@
-export const runtime = "edge";
+export const runtime = "nodejs";
+export const maxDuration = 60;
 
 const endpoint = process.env.SORP_READINESS_API_URL || "https://sorp2026.mysocialimpact.org/api/readiness";
 
