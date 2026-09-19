@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { Footer, RevealObserver, SiteHeader } from "./site-shell";
+import { SorpAssessment } from "./sorp-assessment";
 
 const conversationUrl = "https://sorp2026.mysocialimpact.org";
 
@@ -69,16 +70,8 @@ function SectionHeading({ number, eyebrow, title, copy }: { number: string; eyeb
 }
 
 export function SorpReadyPage() {
-  const [snapshotOpen, setSnapshotOpen] = useState(false);
-  const [snapshotChoice, setSnapshotChoice] = useState("");
   const [bookingOpen, setBookingOpen] = useState(false);
-  const snapshotRef = useRef<HTMLDivElement>(null);
   const bookingRef = useRef<HTMLDivElement>(null);
-
-  const openSnapshot = () => {
-    setSnapshotOpen(true);
-    window.setTimeout(() => snapshotRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }), 80);
-  };
 
   const openBooking = () => {
     setBookingOpen(true);
@@ -129,17 +122,17 @@ export function SorpReadyPage() {
         </section>
 
         <section className="sorp-free sorp-section">
-          <SectionHeading number="02" eyebrow="Useful from the start" title={<>Built to be useful.<br />And free to start.</>} copy={<><p>We know SORP can feel complicated — particularly for smaller charities trying to work out what actually applies to them.</p><p>So we are building a free tool to translate the impact-reporting requirements into plain English and help charities understand where they stand.</p><p>If there is a clear answer, we want to give it. Human support comes in where context and judgement genuinely add something.</p></>} />
+          <SectionHeading number="02" eyebrow="Useful from the start" title={<>Built to be useful.<br />And free to start.</>} copy={<><p>We know SORP can feel complicated — particularly for smaller charities trying to work out what actually applies to them.</p><p>So we built a free tool to translate the impact-reporting requirements into plain English and help charities understand where they stand.</p><p>If there is a clear answer, we want to give it. Human support comes in where context and judgement genuinely add something.</p></>} />
         </section>
 
         <section className="sorp-assessment sorp-section" id="assessment">
           <SectionHeading number="03" eyebrow="Choose how you think" title={<>Same assessment.<br />Two ways to do it.</>} />
           <div className="sorp-route-grid">
             <article className="sorp-route is-snapshot" data-reveal>
-              <div className="sorp-route-top"><span>Route 01</span><strong>15 questions<br />Around 3 minutes</strong></div>
+              <div className="sorp-route-top"><span>Route 01</span><strong>15 core questions<br />Around 8 minutes</strong></div>
               <h3>Quick<br />snapshot</h3>
               <p>For people who prefer a clear structure and want a quick picture of where they stand.</p>
-              <button type="button" onClick={openSnapshot}>Take the snapshot <span>→</span></button>
+              <a href="#snapshot-tool">Take the snapshot <span>→</span></a>
             </article>
             <article className="sorp-route is-conversation" data-reveal>
               <div className="sorp-route-top"><span>Route 02</span><strong>Have a conversation<br />instead</strong></div>
@@ -149,20 +142,7 @@ export function SorpReadyPage() {
             </article>
           </div>
 
-          <div className={`sorp-snapshot-start ${snapshotOpen ? "is-open" : ""}`} ref={snapshotRef} aria-live="polite">
-            <div className="sorp-snapshot-head">
-              <div><span>Readiness snapshot · Preview</span><strong>Question 01 <i>of 15</i></strong></div>
-              {snapshotOpen && <button type="button" onClick={() => setSnapshotOpen(false)} aria-label="Close assessment preview">Close ×</button>}
-            </div>
-            {snapshotOpen ? <div className="sorp-snapshot-question">
-              <div><p>Let’s begin with the basics.</p><h3>Which best describes how your charity currently prepares its accounts?</h3><small>If you do not know the terminology, choose “Not sure yet”. The finished tool will explain what applies.</small></div>
-              <div className="sorp-snapshot-options" role="group" aria-label="Accounts preparation">
-                {["Accruals accounts", "Receipts & payments accounts", "Not sure yet"].map((choice) => <button type="button" className={snapshotChoice === choice ? "is-selected" : ""} key={choice} onClick={() => setSnapshotChoice(choice)}><span>{choice}</span><b aria-hidden="true">{snapshotChoice === choice ? "●" : "○"}</b></button>)}
-                {snapshotChoice && <p className="sorp-preview-note" role="status"><strong>Preview only.</strong> The final 15-question method and scoring are still being developed, so this answer has not been saved. You can use the live SORP assistant now for guidance.</p>}
-                <a href={conversationUrl} target="_blank" rel="noreferrer">Talk it through now <span>↗</span></a>
-              </div>
-            </div> : <button className="sorp-snapshot-closed" type="button" onClick={openSnapshot}>Open the assessment preview <span>↓</span></button>}
-          </div>
+          <SorpAssessment />
 
           <div className="sorp-route-note" data-reveal>
             <h3>We’re not particularly fond of forms either.</h3>
@@ -185,7 +165,7 @@ export function SorpReadyPage() {
           <div className="sorp-accounts-grid" data-reveal>
             <article><span>Accruals accounts</span><p>Income and costs are recorded when they are earned or incurred, rather than simply when cash is received or paid.</p></article>
             <article><span>Receipts & payments accounts</span><p>A simpler approach based principally on money actually received and paid.</p></article>
-            <article className="is-unsure"><span>Not sure?</span><p>That’s fine. The finished tool will help establish what applies rather than expecting you to know accounting terminology already.</p></article>
+            <article className="is-unsure"><span>Not sure?</span><p>That’s fine. The snapshot helps establish what applies rather than expecting you to know accounting terminology already.</p></article>
           </div>
           <div className="sorp-tiers" data-reveal>
             <header><p>SORP tiers</p><h3>Requirements depend partly on annual gross income.</h3></header>
@@ -219,14 +199,14 @@ export function SorpReadyPage() {
         </section>
 
         <section className="sorp-result sorp-section" id="result">
-          <SectionHeading number="08" eyebrow="What the free result could show" title={<>A clear picture.<br />Useful next steps.</>} copy={<p>This is an illustrative preview of the eventual free assessment result. No assessment has been completed and no score has been calculated.</p>} />
+          <SectionHeading number="08" eyebrow="What the free result shows" title={<>A clear picture.<br />Useful next steps.</>} copy={<p>This is an illustrative example of the free result. Your own result is calculated only after you complete the snapshot above.</p>} />
           <div className="sorp-result-card" data-reveal>
             <header><div><p>Your SORP 2026</p><h3>Impact readiness</h3></div><strong>68 <span>/ 100</span></strong></header>
             <div className="sorp-result-bars">{readinessAreas.map(([name, score]) => <div key={name}><span>{name}</span><i><b style={{ width: `${score}%` }} /></i><strong>{score}</strong></div>)}</div>
             <div className="sorp-result-findings">{["What looks strong", "What needs attention", "MUST requirements to address", "SHOULD opportunities", "MAY options", "Areas requiring judgement"].map((item, index) => <span key={item}><b>0{index + 1}</b>{item}</span>)}</div>
             <small>Illustrative front-end preview · not an assessment result</small>
           </div>
-          <div className="sorp-continue" data-reveal><div><p>Want to explore your result?</p><h3>Continue with the SORP assistant.</h3><span>The finished journey will carry forward your answers, comments, tier information, result and areas of uncertainty — so you do not have to start again.</span></div><a href={conversationUrl} target="_blank" rel="noreferrer">Talk through my result <span>↗</span></a></div>
+          <div className="sorp-continue" data-reveal><div><p>Want to explore your result?</p><h3>Continue with the SORP assistant.</h3><span>Your result is saved on this device ready for a future direct handoff. For now, the assistant opens separately and can help you explore the relevant requirements and judgement areas.</span></div><a href={conversationUrl} target="_blank" rel="noreferrer">Talk through my result <span>↗</span></a></div>
         </section>
 
         <section className="sorp-review sorp-section" id="review">

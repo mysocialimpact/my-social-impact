@@ -59,7 +59,11 @@ test("server-renders the Are You SORP Ready product page", async () => {
   assert.match(html, /SORP 2026 changes what many charities need to report about their impact/i);
   assert.match(html, /Same assessment/i);
   assert.match(html, /Two ways to do it/i);
-  assert.match(html, /15 questions/i);
+  assert.match(html, /15 core questions/i);
+  assert.match(html, /A useful result\. No account\. No email gate\./i);
+  assert.match(html, /Five short setup questions/i);
+  assert.match(html, /same 15 impact-readiness questions/i);
+  assert.match(html, /Start my snapshot/i);
   assert.match(html, /https:\/\/sorp2026\.mysocialimpact\.org/i);
   assert.match(html, /MUST \/ SHOULD \/ MAY/i);
   assert.match(html, /Judgement is an MSI explanatory category/i);
@@ -70,6 +74,7 @@ test("server-renders the Are You SORP Ready product page", async () => {
   assert.match(html, /£50/i);
   assert.match(html, /Impact Readiness Review/i);
   assert.match(html, /not a statutory audit/i);
+  assert.doesNotMatch(html, /final 15-question method and scoring are still being developed/i);
 });
 
 test("server-renders the Community Mapping product page", async () => {

@@ -1,0 +1,382 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import {
+  answerOptions,
+  classificationFor,
+  coreQuestions,
+  eligibilityFor,
+  relevantAdditionalChecks,
+  scoreForAnswer,
+  sectionLabels,
+  tierFromSetup,
+  tierLabel,
+  type AdditionalAnswerValue,
+  type AdditionalCheck,
+  type AnswerValue,
+  type AssessmentSetup,
+  type Classification,
+  type CoreQuestion,
+} from "./sorp-questionnaire";
+
+const STORAGE_KEY = "msi-sorp-readiness-v2";
+const RESULT_KEY = "msi-sorp-readiness-result-v2";
+
+type Mode = "welcome" | "role" | "location" | "period" | "accounts" | "eligibility" | "income" | "activities" | "context" | "core" | "extras_intro" | "extra" | "result";
+
+type Setup = AssessmentSetup;
+
+type SavedAssessment = {
+  mode: Mode;
+  coreIndex: number;
+  extraIndex: number;
+  setup: Setup;
+  coreAnswers: Record<number, AnswerValue>;
+  coreContext: Record<number, string>;
+  extraAnswers: Record<string, AdditionalAnswerValue>;
+};
+
+const emptySetup: Setup = {
+  role: "",
+  jurisdiction: "",
+  startDate: "",
+  endDate: "",
+  accounts: "",
+  income: "",
+  nearBoundary: false,
+  activities: [],
+};
+
+const stages = ["Does it apply?", "About you", "Readiness", "Extra checks", "Result"];
+
+const activityOptions = [
+  ["volunteers", "Volunteers"],
+  ["grant_making", "Grant-making"],
+  ["social_investment", "Social investment"],
+  ["fundraising", "Fundraising activities"],
+  ["investments", "Material financial investments"],
+  ["group", "Subsidiaries / a charity group"],
+  ["none", "None of these"],
+  ["not_sure", "Not sure"],
+] as const;
+
+function stageFor(mode: Mode) {
+  if (["welcome", "role", "location", "period", "accounts", "eligibility"].includes(mode)) return 1;
+  if (["income", "activities", "context"].includes(mode)) return 2;
+  if (mode === "core") return 3;
+  if (["extras_intro", "extra"].includes(mode)) return 4;
+  return 5;
+}
+
+function classLabel(classification: Classification) {
+  return classification === "MSI_READINESS" ? "MSI readiness" : classification;
+}
+
+function formatDate(value: string) {
+  if (!value) return "Not provided";
+  return new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "long", year: "numeric" }).format(new Date(`${value}T12:00:00`));
+}
+
+function StageProgress({ current }: { current: number }) {
+  return (
+    <ol className="sorp-tool-progress" aria-label={`Assessment stage ${current} of 5`}>
+      {stages.map((label, index) => <li key={label} className={index + 1 === current ? "is-current" : index + 1 < current ? "is-complete" : ""} aria-current={index + 1 === current ? "step" : undefined}><span>0{index + 1}</span>{label}</li>)}
+    </ol>
+  );
+}
+
+function ChoiceButtons({ options, value, onChange, label }: { options: readonly (readonly [string, string])[]; value: string; onChange: (value: string) => void; label: string }) {
+  return (
+    <div className="sorp-tool-options" role="group" aria-label={label}>
+      {options.map(([optionValue, optionLabel]) => <button type="button" key={optionValue} className={value === optionValue ? "is-selected" : ""} aria-pressed={value === optionValue} onClick={() => onChange(optionValue)}><span>{optionLabel}</span><b aria-hidden="true">{value === optionValue ? "●" : "○"}</b></button>)}
+    </div>
+  );
+}
+
+function AnswerButtons({ value, onChange, additional = false }: { value?: AdditionalAnswerValue; onChange: (value: AdditionalAnswerValue) => void; additional?: boolean }) {
+  const options: { value: AdditionalAnswerValue; label: string }[] = [...answerOptions.map(({ value: optionValue, label }) => ({ value: optionValue, label }))];
+  if (additional) options.push({ value: "not_applicable", label: "Not applicable" });
+  return (
+    <div className="sorp-answer-grid" role="group" aria-label="Choose your answer">
+      {options.map((option) => <button type="button" key={option.value} className={value === option.value ? "is-selected" : ""} aria-pressed={value === option.value} onClick={() => onChange(option.value)}><span>{option.label}</span><b aria-hidden="true">{value === option.value ? "●" : "○"}</b></button>)}
+    </div>
+  );
+}
+
+function Controls({ onBack, onNext, nextDisabled = false, nextLabel = "Continue" }: { onBack?: () => void; onNext: () => void; nextDisabled?: boolean; nextLabel?: string }) {
+  return <div className="sorp-tool-controls">{onBack ? <button type="button" className="is-back" onClick={onBack}>← Back</button> : <span />}<button type="button" className="is-next" onClick={onNext} disabled={nextDisabled}>{nextLabel} <span>→</span></button></div>;
+}
+
+export function SorpAssessment() {
+  const [mode, setMode] = useState<Mode>("welcome");
+  const [coreIndex, setCoreIndex] = useState(0);
+  const [extraIndex, setExtraIndex] = useState(0);
+  const [setup, setSetup] = useState<Setup>(emptySetup);
+  const [coreAnswers, setCoreAnswers] = useState<Record<number, AnswerValue>>({});
+  const [coreContext, setCoreContext] = useState<Record<number, string>>({});
+  const [extraAnswers, setExtraAnswers] = useState<Record<string, AdditionalAnswerValue>>({});
+  const [hydrated, setHydrated] = useState(false);
+  const [saveNote, setSaveNote] = useState("");
+
+  const extras = useMemo(() => relevantAdditionalChecks(setup), [setup]);
+  const stage = stageFor(mode);
+  const tier = tierFromSetup(setup);
+  const eligibility = eligibilityFor(setup);
+
+  useEffect(() => {
+    const restore = window.setTimeout(() => {
+      try {
+        const raw = window.localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const saved = JSON.parse(raw) as SavedAssessment;
+          setMode(saved.mode ?? "welcome");
+          setCoreIndex(Math.min(saved.coreIndex ?? 0, coreQuestions.length - 1));
+          setExtraIndex(Math.max(saved.extraIndex ?? 0, 0));
+          setSetup({ ...emptySetup, ...saved.setup });
+          setCoreAnswers(saved.coreAnswers ?? {});
+          setCoreContext(saved.coreContext ?? {});
+          setExtraAnswers(saved.extraAnswers ?? {});
+        }
+      } catch {
+        setSaveNote("We could not restore the previous local copy, so this assessment has started cleanly.");
+      }
+      setHydrated(true);
+    }, 0);
+    return () => window.clearTimeout(restore);
+  }, []);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    const saved: SavedAssessment = { mode, coreIndex, extraIndex, setup, coreAnswers, coreContext, extraAnswers };
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
+  }, [mode, coreIndex, extraIndex, setup, coreAnswers, coreContext, extraAnswers, hydrated]);
+
+  const updateSetup = (patch: Partial<Setup>) => setSetup((current) => ({ ...current, ...patch }));
+  const go = (nextMode: Mode) => { setSaveNote(""); setMode(nextMode); };
+  const saveForLater = () => {
+    setSaveNote("Saved on this device. You can close this page and continue later in the same browser.");
+    window.setTimeout(() => setSaveNote(""), 5000);
+  };
+
+  const toggleActivity = (value: string) => {
+    setSetup((current) => {
+      if (value === "none" || value === "not_sure") return { ...current, activities: current.activities.includes(value) ? [] : [value] };
+      const withoutExclusive = current.activities.filter((item) => item !== "none" && item !== "not_sure");
+      return { ...current, activities: withoutExclusive.includes(value) ? withoutExclusive.filter((item) => item !== value) : [...withoutExclusive, value] };
+    });
+  };
+
+  const backFromCore = () => {
+    if (coreIndex > 0) setCoreIndex((index) => index - 1);
+    else go("context");
+  };
+
+  const nextFromCore = () => {
+    if (coreIndex < coreQuestions.length - 1) setCoreIndex((index) => index + 1);
+    else { setExtraIndex(0); go("extras_intro"); }
+  };
+
+  const backFromExtra = () => {
+    if (extraIndex > 0) setExtraIndex((index) => index - 1);
+    else go("extras_intro");
+  };
+
+  const nextFromExtra = () => {
+    if (extraIndex < extras.length - 1) setExtraIndex((index) => index + 1);
+    else go("result");
+  };
+
+  const score = Math.round(coreQuestions.reduce((total, question) => total + scoreForAnswer(coreAnswers[question.id]), 0) / 60 * 100);
+  const band = score < 40 ? "Not ready yet" : score < 60 ? "Important gaps" : score < 80 ? "Getting ready" : "Well prepared";
+
+  const sectionScores = useMemo(() => Object.entries(sectionLabels).map(([section, label]) => {
+    const questions = coreQuestions.filter((question) => question.section === section);
+    const points = questions.reduce((total, question) => total + scoreForAnswer(coreAnswers[question.id]), 0);
+    return { section, label, score: Math.round(points / (questions.length * 4) * 100) };
+  }), [coreAnswers]);
+
+  const weakQuestions = [...coreQuestions].sort((a, b) => scoreForAnswer(coreAnswers[a.id]) - scoreForAnswer(coreAnswers[b.id])).slice(0, 3);
+  const strongSections = [...sectionScores].sort((a, b) => b.score - a.score).slice(0, 2);
+  const { mustFlags, shouldFlags, mayFlags, judgementFlags } = useMemo(() => {
+    const flaggedCore = coreQuestions.filter((question) => scoreForAnswer(coreAnswers[question.id]) <= 2);
+    const flaggedExtras = extras.filter((check) => {
+      const answer = extraAnswers[check.id];
+      return answer && ["partly", "not_yet", "not_sure", "not_applicable"].includes(answer);
+    });
+    const flagsFor = (classification: Classification) => [
+      ...flaggedCore.filter((question) => classificationFor(question, setup) === classification).map((question) => question.question),
+      ...flaggedExtras.filter((check) => classificationFor(check, setup) === classification).map((check) => check.question),
+    ];
+    return {
+      mustFlags: flagsFor("MUST"),
+      shouldFlags: flagsFor("SHOULD"),
+      mayFlags: flagsFor("MAY"),
+      judgementFlags: [
+        ...coreQuestions.filter((question) => classificationFor(question, setup) === "JUDGEMENT").map((question) => question.question),
+        ...extras.filter((check) => classificationFor(check, setup) === "JUDGEMENT").map((check) => check.question),
+      ],
+    };
+  }, [coreAnswers, extraAnswers, extras, setup]);
+
+  useEffect(() => {
+    if (!hydrated || mode !== "result") return;
+    window.localStorage.setItem(RESULT_KEY, JSON.stringify({
+      version: 2,
+      completedAt: new Date().toISOString(),
+      scope: "SORP 2026 impact and narrative reporting readiness",
+      setup,
+      context: { tier: tierLabel(setup), eligibility: eligibility.status },
+      coreQuestions: coreQuestions.map((question) => ({ id: question.id, answer: coreAnswers[question.id], context: coreContext[question.id] ?? "", sources: question.sources, classification: classificationFor(question, setup) })),
+      additionalChecks: extras.map((check) => ({ id: check.id, answer: extraAnswers[check.id], sources: check.sources, classification: classificationFor(check, setup) })),
+      result: { score, band, sectionScores, flags: { must: mustFlags, should: shouldFlags, may: mayFlags, judgement: judgementFlags } },
+    }));
+  }, [mode, hydrated, setup, coreAnswers, coreContext, extraAnswers, extras, score, band, sectionScores, mustFlags, shouldFlags, mayFlags, judgementFlags, eligibility.status]);
+
+  const contextLine = (question: CoreQuestion | AdditionalCheck) => {
+    if (setup.accounts === "not_sure") return "We have not yet confirmed whether the charity prepares accruals accounts, so your result remains provisional.";
+    if (setup.jurisdiction === "roi") return "In the Republic of Ireland, SORP 2026 sets out recommended good practice rather than having exactly the same status as in the UK. We are still showing how this item is classified within the SORP framework.";
+    if (setup.jurisdiction === "elsewhere") return "This assessment may not be the appropriate reporting framework for the charity’s jurisdiction, so treat this as information rather than a conclusion about what applies.";
+    if (!tier) return "Your expected income may place you close to a SORP tier boundary, so we are showing you where the interpretation may change rather than pretending certainty.";
+    const classification = classificationFor(question, setup);
+    if (classification === "MUST") return `Because you appear to be ${tierLabel(setup)}, this is a MUST reporting area for your charity.`;
+    if (tier === "tier1" && question.classification.tier2 === "MUST") return "This is not an additional Tier 2 MUST for you, but it remains useful for readiness and SORP encourages Tier 1 charities to include additional relevant information where helpful.";
+    if (classification === "JUDGEMENT") return "This depends on evidence, materiality, proportionality or the charity’s circumstances. JUDGEMENT is an MSI explanatory category, not an official fourth SORP term.";
+    if (classification === "MSI_READINESS") return "This is an MSI readiness question rather than a direct SORP disclosure requirement.";
+    return `For your current context, this is best understood as ${classLabel(classification)}.`;
+  };
+
+  const currentQuestion = coreQuestions[coreIndex];
+  const currentExtra = extras[Math.min(extraIndex, Math.max(extras.length - 1, 0))];
+
+  return (
+    <div className="sorp-tool" id="snapshot-tool">
+      <div className="sorp-tool-shell">
+        <header className="sorp-tool-header">
+          <div><span>SORP 2026 · Free snapshot</span><strong>{mode === "welcome" ? "Impact readiness" : `Stage ${stage} of 5`}</strong></div>
+          {mode !== "welcome" && <button type="button" onClick={saveForLater}>Save / continue later</button>}
+        </header>
+        {mode !== "welcome" && <StageProgress current={stage} />}
+        {saveNote && <p className="sorp-save-note" role="status">{saveNote}</p>}
+
+        {mode === "welcome" && <section className="sorp-tool-welcome">
+          <p className="sorp-tool-kicker">A useful result. No account. No email gate.</p>
+          <h3>Find out what applies — and what needs attention.</h3>
+          <p>Five short setup questions establish the charity’s likely SORP context. Everyone then answers the same 15 impact-readiness questions, followed only by clearly explained additional checks that may be relevant.</p>
+          <div className="sorp-tool-welcome-grid"><span><b>01</b> Does SORP 2026 apply?</span><span><b>02</b> What is your likely tier?</span><span><b>03</b> How ready are you?</span></div>
+          <p className="sorp-tool-disclaimer">This is a readiness snapshot focused on impact and narrative reporting. It is not a declaration of compliance with every accounting requirement in the Charities SORP.</p>
+          <Controls onNext={() => go("role")} nextLabel={Object.keys(coreAnswers).length ? "Continue my assessment" : "Start my snapshot"} />
+        </section>}
+
+        {mode === "role" && <section className="sorp-tool-panel">
+          <p className="sorp-tool-kicker">Before we begin · Not scored</p>
+          <h3>Who are you completing this for?</h3>
+          <ChoiceButtons label="Who are you completing this for?" value={setup.role} onChange={(role) => updateSetup({ role })} options={[["staff", "I work for the charity"], ["trustee", "I’m a trustee"], ["adviser", "I’m an accountant or adviser completing this for a charity"], ["other", "Other"]]} />
+          <Controls onBack={() => go("welcome")} onNext={() => go("location")} nextLabel={setup.role ? "Continue" : "Skip"} />
+        </section>}
+
+        {mode === "location" && <section className="sorp-tool-panel">
+          <p className="sorp-tool-kicker">Setup question 01 of 05</p>
+          <h3>Where is the charity registered?</h3>
+          <p className="sorp-tool-help">Charities SORP 2026 applies to UK charities preparing accruals accounts, subject to relevant law and regulation. In the Republic of Ireland it sets out recommended good practice.</p>
+          <ChoiceButtons label="Charity jurisdiction" value={setup.jurisdiction} onChange={(jurisdiction) => updateSetup({ jurisdiction })} options={[["ew", "England & Wales"], ["scotland", "Scotland"], ["ni", "Northern Ireland"], ["roi", "Republic of Ireland"], ["elsewhere", "Somewhere else"], ["not_sure", "Not sure"]]} />
+          {setup.jurisdiction === "elsewhere" && <p className="sorp-context-note">This assessment is designed around Charities SORP 2026 and may not be the appropriate reporting framework. You can still continue for information.</p>}
+          <Controls onBack={() => go("role")} onNext={() => go("period")} nextDisabled={!setup.jurisdiction} />
+        </section>}
+
+        {mode === "period" && <section className="sorp-tool-panel">
+          <p className="sorp-tool-kicker">Setup question 02 of 05</p>
+          <h3>What reporting period are you checking?</h3>
+          <p className="sorp-tool-help">SORP 2026 applies to reporting periods beginning on or after 1 January 2026. Early adoption is permitted where the relevant regulations allow it.</p>
+          <div className="sorp-date-fields"><label><span>Reporting period start date</span><input type="date" value={setup.startDate} onChange={(event) => updateSetup({ startDate: event.target.value })} /></label><label><span>End date <small>Optional</small></span><input type="date" value={setup.endDate} min={setup.startDate || undefined} onChange={(event) => updateSetup({ endDate: event.target.value })} /></label></div>
+          {setup.startDate && setup.startDate < "2026-01-01" && <p className="sorp-context-note">SORP 2026 would not normally apply to this reporting period unless it is adopted early. You can still continue to understand what will apply next.</p>}
+          <Controls onBack={() => go("location")} onNext={() => go("accounts")} nextDisabled={!setup.startDate} />
+        </section>}
+
+        {mode === "accounts" && <section className="sorp-tool-panel">
+          <p className="sorp-tool-kicker">Setup question 03 of 05</p>
+          <h3>How are your accounts prepared?</h3>
+          <div className="sorp-account-definitions"><p><strong>Accruals accounts</strong>Income and costs are recognised when they are earned or incurred, not simply when cash moves.</p><p><strong>Receipts & payments accounts</strong>A simpler approach based principally on money actually received and paid.</p></div>
+          <ChoiceButtons label="Accounts preparation" value={setup.accounts} onChange={(accounts) => updateSetup({ accounts })} options={[["accruals", "Accruals accounts"], ["receipts", "Receipts & payments accounts"], ["not_sure", "I’m not sure"]]} />
+          {setup.accounts === "receipts" && <p className="sorp-context-note">Charities SORP 2026 does not apply to receipts and payments accounts. You can still continue to understand the impact-reporting expectations you may face if you move to accruals reporting.</p>}
+          {setup.accounts === "not_sure" && <p className="sorp-context-note">That’s fine. We’ll treat the assessment as provisional.</p>}
+          <Controls onBack={() => go("period")} onNext={() => go("eligibility")} nextDisabled={!setup.accounts} />
+        </section>}
+
+        {mode === "eligibility" && <section className={`sorp-eligibility-result is-${eligibility.tone}`}>
+          <p className="sorp-tool-kicker">Your first SORP check</p>
+          <h3>{eligibility.status}</h3>
+          <ul>{eligibility.reasons.map((reason) => <li key={reason}>{reason}</li>)}</ul>
+          <p>You can continue whatever the answer. We will keep this context visible rather than silently changing the assessment.</p>
+          <Controls onBack={() => go("accounts")} onNext={() => go("income")} />
+        </section>}
+
+        {mode === "income" && <section className="sorp-tool-panel">
+          <p className="sorp-tool-kicker">Setup question 04 of 05</p>
+          <h3>What do you currently expect the charity’s gross income to be for this reporting year?</h3>
+          <p className="sorp-tool-help">Your SORP tier is based on annual gross income for the reporting period. The year may not have finished, so “Not sure yet” is a perfectly acceptable answer.</p>
+          <ChoiceButtons label="Expected gross income" value={setup.income} onChange={(income) => updateSetup({ income, nearBoundary: income === "tier1_high" || income === "tier2" ? setup.nearBoundary : false })} options={[["tier1_low", "£250,000 or less"], ["tier1_high", "More than £250,000 and up to £500,000"], ["tier2", "More than £500,000 and up to £15 million"], ["tier3", "More than £15 million"], ["unsure", "Not sure yet"]]} />
+          {(setup.income === "tier1_high" || setup.income === "tier2") && <label className="sorp-boundary-check"><input type="checkbox" checked={setup.nearBoundary} onChange={(event) => updateSetup({ nearBoundary: event.target.checked })} /><span><strong>This could land either side of £500,000.</strong> Keep my tier provisional and show the implications of both Tier 1 and Tier 2.</span></label>}
+          <Controls onBack={() => go("eligibility")} onNext={() => go("activities")} nextDisabled={!setup.income} />
+        </section>}
+
+        {mode === "activities" && <section className="sorp-tool-panel">
+          <p className="sorp-tool-kicker">Setup question 05 of 05</p>
+          <h3>Which of these are a significant part of the charity?</h3>
+          <p className="sorp-tool-help">We ask because SORP contains additional reporting requirements where particular activities are significant or material. This will not remove or replace any of the 15 core questions.</p>
+          <div className="sorp-tool-options is-multi" role="group" aria-label="Significant charity activities">{activityOptions.map(([value, label]) => <button type="button" key={value} className={setup.activities.includes(value) ? "is-selected" : ""} aria-pressed={setup.activities.includes(value)} onClick={() => toggleActivity(value)}><span>{label}</span><b aria-hidden="true">{setup.activities.includes(value) ? "■" : "□"}</b></button>)}</div>
+          <Controls onBack={() => go("income")} onNext={() => go("context")} nextDisabled={!setup.activities.length} />
+        </section>}
+
+        {mode === "context" && <section className="sorp-context-summary">
+          <p className="sorp-tool-kicker">Your current SORP picture</p>
+          <h3>We’ll keep this in mind as we go.</h3>
+          <dl><div><dt>Registered</dt><dd>{{ ew: "England & Wales", scotland: "Scotland", ni: "Northern Ireland", roi: "Republic of Ireland", elsewhere: "Somewhere else", not_sure: "Not confirmed" }[setup.jurisdiction]}</dd></div><div><dt>Reporting period begins</dt><dd>{formatDate(setup.startDate)}</dd></div><div><dt>Accounting basis</dt><dd>{{ accruals: "Accruals accounts", receipts: "Receipts & payments accounts", not_sure: "Not yet confirmed" }[setup.accounts]}</dd></div><div><dt>Likely tier</dt><dd>{tierLabel(setup)}</dd></div><div><dt>Additional areas</dt><dd>{setup.activities.includes("none") ? "None identified" : setup.activities.includes("not_sure") ? "To be checked" : setup.activities.map((value) => activityOptions.find(([id]) => id === value)?.[1]).filter(Boolean).join(" · ")}</dd></div></dl>
+          <p className="sorp-context-note">The five setup answers personalise the explanations and additional checks. They do not change or remove the 15 core readiness questions.</p>
+          <Controls onBack={() => go("activities")} onNext={() => { setCoreIndex(0); go("core"); }} nextLabel="Start my readiness questions" />
+        </section>}
+
+        {mode === "core" && currentQuestion && <section className="sorp-question-panel">
+          <header><div><span>{sectionLabels[currentQuestion.section]}</span><strong>Question {String(currentQuestion.id).padStart(2, "0")} of 15</strong></div><i aria-label={`${Math.round(currentQuestion.id / 15 * 100)}% through the core questions`}><b style={{ width: `${currentQuestion.id / 15 * 100}%` }} /></i></header>
+          <div className="sorp-question-copy"><p className={`sorp-classification is-${classificationFor(currentQuestion, setup).toLowerCase()}`}>{classLabel(classificationFor(currentQuestion, setup))}</p><h3>{currentQuestion.question}</h3>{currentQuestion.helper && <p className="sorp-question-helper">{currentQuestion.helper}</p>}</div>
+          <AnswerButtons value={coreAnswers[currentQuestion.id]} onChange={(answer) => setCoreAnswers((current) => ({ ...current, [currentQuestion.id]: answer as AnswerValue }))} />
+          <details className="sorp-question-why"><summary>Why am I seeing this?</summary><div><p>{currentQuestion.explanation}</p><p><strong>Your context:</strong> {contextLine(currentQuestion)}</p><span>Source: SORP 2026 · {currentQuestion.sources.map((source) => source.toLowerCase().includes("paragraph") || source.startsWith("MSI") ? source : `paragraph ${source}`).join(" · ")}</span></div></details>
+          <details className="sorp-question-context" open={Boolean(coreContext[currentQuestion.id])}><summary>+ Add some context <small>Optional</small></summary><label><span>Anything that would help explain your answer</span><textarea rows={4} value={coreContext[currentQuestion.id] ?? ""} onChange={(event) => setCoreContext((current) => ({ ...current, [currentQuestion.id]: event.target.value }))} /></label></details>
+          <Controls onBack={backFromCore} onNext={nextFromCore} nextDisabled={!coreAnswers[currentQuestion.id]} nextLabel={currentQuestion.id === 15 ? "Review additional checks" : "Next question"} />
+        </section>}
+
+        {mode === "extras_intro" && <section className="sorp-extras-intro">
+          <p className="sorp-tool-kicker">A few additional checks</p>
+          {extras.length ? <><h3>We found {extras.length} additional SORP {extras.length === 1 ? "area" : "areas"} that may be relevant.</h3><p>Based on what you told us about the charity, we’ll ask about {extras.map((check) => check.title).join(", ")}. We’ll explain why each one is being shown.</p></> : <><h3>No additional impact-reporting checks appear necessary.</h3><p>That is based on what you told us about the charity. Your result will still show relevant MAY opportunities and any areas where judgement is needed.</p></>}
+          <p className="sorp-context-note">These checks create separate SORP flags. They do not change the main 0–100 score, which always comes from the same 15 core questions.</p>
+          <Controls onBack={() => { setCoreIndex(14); go("core"); }} onNext={() => extras.length ? go("extra") : go("result")} nextLabel={extras.length ? "Start additional checks" : "See my result"} />
+        </section>}
+
+        {mode === "extra" && currentExtra && <section className="sorp-question-panel is-extra">
+          <header><div><span>Additional SORP checks</span><strong>Check {String(extraIndex + 1).padStart(2, "0")} of {String(extras.length).padStart(2, "0")}</strong></div><i aria-label={`${Math.round((extraIndex + 1) / extras.length * 100)}% through additional checks`}><b style={{ width: `${(extraIndex + 1) / extras.length * 100}%` }} /></i></header>
+          <div className="sorp-question-copy"><p className={`sorp-classification is-${classificationFor(currentExtra, setup).toLowerCase()}`}>{classLabel(classificationFor(currentExtra, setup))}</p><span className="sorp-extra-title">{currentExtra.title}</span><h3>{currentExtra.question}</h3></div>
+          <AnswerButtons additional value={extraAnswers[currentExtra.id]} onChange={(answer) => setExtraAnswers((current) => ({ ...current, [currentExtra.id]: answer }))} />
+          <details className="sorp-question-why"><summary>Why am I seeing this?</summary><div><p>{currentExtra.explanation}</p><p><strong>Your context:</strong> {currentExtra.id === "sustainability" ? "You appear to be a Tier 3 charity, so this check is included automatically." : setup.activities.includes("not_sure") && ["volunteers", "grant_making", "social_investment"].includes(currentExtra.id) ? "You were not sure whether this activity is significant, so we included it rather than assuming it does not apply." : `You told us ${currentExtra.title.toLowerCase()} is significant or material to the charity.`}</p><p>{contextLine(currentExtra)}</p><span>Source: SORP 2026 · {currentExtra.sources.map((source) => `paragraph ${source}`).join(" · ")}</span></div></details>
+          <Controls onBack={backFromExtra} onNext={nextFromExtra} nextDisabled={!extraAnswers[currentExtra.id]} nextLabel={extraIndex === extras.length - 1 ? "See my result" : "Next check"} />
+        </section>}
+
+        {mode === "result" && <section className="sorp-live-result">
+          <header className="sorp-live-result-hero"><div><p>Your SORP 2026</p><h3>Impact readiness</h3><span>Based on what you’ve told us, this initial snapshot suggests:</span></div><div><strong>{score}</strong><span>/ 100</span><b>{band}</b></div></header>
+          <p className="sorp-tool-disclaimer">This is an impact-readiness score, not a declaration that the charity is compliant, has passed SORP or is certified.</p>
+          <div className="sorp-result-context"><h4>Your SORP context</h4><dl><div><dt>Likely tier</dt><dd>{tierLabel(setup)}</dd></div><div><dt>Registered</dt><dd>{{ ew: "England & Wales", scotland: "Scotland", ni: "Northern Ireland", roi: "Republic of Ireland", elsewhere: "Somewhere else", not_sure: "Not confirmed" }[setup.jurisdiction]}</dd></div><div><dt>Accounts</dt><dd>{{ accruals: "Accruals", receipts: "Receipts & payments", not_sure: "Not confirmed" }[setup.accounts]}</dd></div><div><dt>Period begins</dt><dd>{formatDate(setup.startDate)}</dd></div></dl><p>{eligibility.status}</p></div>
+          <div className="sorp-live-section-scores">{sectionScores.map((section) => <div key={section.section}><span>{section.label}</span><i><b style={{ width: `${section.score}%` }} /></i><strong>{section.score}</strong></div>)}</div>
+          <div className="sorp-result-insights"><article><span>What looks strong</span><h4>{strongSections.map((section) => section.label).join(" · ")}</h4><p>Your strongest section scores are {strongSections.map((section) => `${section.label} ${section.score}`).join(" and ")}.</p></article><article><span>What needs attention</span><h4>{weakQuestions.map((question) => `Question ${question.id}`).join(" · ")}</h4><ul>{weakQuestions.map((question) => <li key={question.id}>{question.question}</li>)}</ul></article></div>
+          <div className="sorp-flag-summary"><article className="is-must"><strong>{mustFlags.length}</strong><span>MUST {mustFlags.length === 1 ? "area needs" : "areas need"} attention</span></article><article><strong>{shouldFlags.length}</strong><span>SHOULD opportunities</span></article><article><strong>{mayFlags.length + (tier !== "tier3" ? 1 : 0)}</strong><span>MAY options</span></article><article className="is-judgement"><strong>{judgementFlags.length}</strong><span>JUDGEMENT areas</span></article></div>
+          <div className="sorp-result-detail">
+            <article><h4>MUST areas</h4>{mustFlags.length ? <ul>{mustFlags.map((item) => <li key={item}>{item}</li>)}</ul> : <p>No applicable MUST areas were flagged by your answers. This does not amount to a compliance conclusion.</p>}</article>
+            <article><h4>SHOULD opportunities</h4>{shouldFlags.length ? <ul>{shouldFlags.map((item) => <li key={item}>{item}</li>)}</ul> : <p>No weaker SHOULD areas were identified in this initial snapshot.</p>}</article>
+            <article><h4>MAY options</h4><ul>{mayFlags.map((item) => <li key={item}>{item}</li>)}{tier !== "tier3" && <li>Trustees MAY choose to explain how the charity is responding to environmental, governance and social matters (paragraph 1.60).</li>}</ul></article>
+            <article><h4>JUDGEMENT areas</h4>{judgementFlags.length ? <ul>{judgementFlags.map((item) => <li key={item}>{item}</li>)}</ul> : <p>No specific judgement flags were generated. Materiality, proportionality and evidence quality may still require human judgement.</p>}</article>
+            <article><h4>Additional checks</h4>{extras.length ? <ul>{extras.map((check) => <li key={check.id}><strong>{check.title}:</strong> {answerOptions.find((option) => option.value === extraAnswers[check.id])?.label ?? (extraAnswers[check.id] === "not_applicable" ? "Not applicable" : "Not answered")}</li>)}</ul> : <p>No additional checks were triggered by the setup answers.</p>}</article>
+          </div>
+          <div className="sorp-result-handoff"><div><span>Want to explore your result?</span><h4>Talk it through with our SORP assistant.</h4><p>It can help explore weaker answers, uncertainty, relevant MUST / SHOULD / MAY requirements and areas requiring judgement.</p><small>Your structured result is saved on this device ready for a future handoff. The current assistant will not receive it automatically yet.</small></div><a href="https://sorp2026.mysocialimpact.org" target="_blank" rel="noreferrer">Talk through my result <span>↗</span></a></div>
+          <div className="sorp-tool-controls"><button type="button" className="is-back" onClick={() => extras.length ? go("extra") : go("extras_intro")}>← Back</button><button type="button" className="is-next" onClick={() => document.getElementById("review")?.scrollIntoView({ behavior: "smooth" })}>Explore the £50 review <span>↓</span></button></div>
+        </section>}
+      </div>
+    </div>
+  );
+}
