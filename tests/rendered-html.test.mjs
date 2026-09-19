@@ -230,7 +230,16 @@ test("server-renders the conversational SORP readiness workspace", async () => {
   assert.doesNotMatch(source, /where it is registered, its reporting year, approximate income/);
   assert.match(source, /readiness-organisation-card/);
   assert.match(source, /Choose an answer/);
-  assert.match(source, /Public information used/);
+  assert.match(source, /Publicly found/);
+  assert.match(source, /User confirmed/);
+  assert.match(source, /Currently uncertain/);
+  assert.match(source, /Charity register/);
+  assert.match(source, /Companies House/);
+  assert.match(source, /Website/);
+  assert.doesNotMatch(source, /Registration number<\/dt>/);
+  assert.doesNotMatch(source, /Latest reported income<\/dt>/);
+  assert.match(source, /nextMessages\.slice\(-40\)/);
+  assert.match(source, /Impact readiness mode/);
   assert.match(source, /publicly_observed/);
   assert.match(source, /sendMessage\(action\.value\)/);
 });

@@ -8,7 +8,7 @@ const CONVERSATION_KEY = "msi-sorp-readiness-conversation-v1";
 
 type Citation = { reference: string; module: string; page: number; extract: string };
 type PublicSource = { label: string; url: string; detail: string; kind: "official_register" | "organisation_website" | "annual_report" | "other_public" };
-type OrganisationCard = { name: string; registrationNumber: string; jurisdiction: string; entityType: string; legalForm: string; locality: string; latestIncome: string; financialYearEnd: string; website: string };
+type OrganisationCard = { name: string; locality: string };
 type MessageAction = { label: string; value: string };
 type FieldState = { answer: AnswerValue | null; evidence: string; confidence: number };
 type AdditionalState = { answer: AdditionalAnswerValue | null; evidence: string; relevant: boolean };
@@ -16,6 +16,8 @@ type ContextEvidence = { basis: "publicly_observed" | "user_confirmed"; detail: 
 
 type ReadinessState = {
   charityName: string;
+  assessmentMode: "sorp_readiness" | "impact_readiness";
+  sorpApplicability: "unknown" | "likely_applies" | "not_applicable" | "uncertain";
   setup: AssessmentSetup;
   organisationResearch: unknown;
   contextEvidence: Record<string, ContextEvidence>;
@@ -64,6 +66,8 @@ const emptySetup: AssessmentSetup = { role: "", jurisdiction: "", startDate: "",
 function blankState(): ReadinessState {
   return {
     charityName: "",
+    assessmentMode: "sorp_readiness",
+    sorpApplicability: "unknown",
     setup: emptySetup,
     organisationResearch: { status: "unsearched", query: "", candidates: [], selected: null, checkedAt: "", enrichedAt: "" },
     contextEvidence: {},
@@ -156,8 +160,15 @@ function sourceKindLabel(kind: PublicSource["kind"]) {
   }[kind];
 }
 
-function PublicBasis({ evidence }: { evidence?: ContextEvidence }) {
-  return evidence?.basis === "publicly_observed" ? <small className="readiness-context-basis">Public data</small> : null;
+function EvidenceBasis({ evidence }: { evidence?: ContextEvidence }) {
+  if (!evidence) return <small className="readiness-context-basis is-uncertain">Currently uncertain</small>;
+  return <small className={`readiness-context-basis is-${evidence.basis}`}>{evidence.basis === "publicly_observed" ? "Publicly found" : "User confirmed"}</small>;
+}
+
+function confirmationSourceLabel(source: PublicSource) {
+  if (source.kind === "organisation_website") return "Website";
+  if (/compan(?:y|ies)house|company-information/i.test(source.url)) return "Companies House";
+  return "Charity register";
 }
 
 function reviewPrice(setup: AssessmentSetup) {
@@ -267,7 +278,7 @@ export function SorpReadinessConversation() {
       const response = await fetch("/api/readiness", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ message: value, state, history: nextMessages.slice(-12).map(({ role, content }) => ({ role, content })) }),
+        body: JSON.stringify({ message: value, state, history: nextMessages.slice(-40).map(({ role, content }) => ({ role, content })) }),
       });
       const data = await response.json() as ReadinessResponse & { error?: string };
       if (!response.ok) throw new Error(data.error || "The readiness conversation is temporarily unavailable.");
@@ -347,6 +358,8 @@ export function SorpReadinessConversation() {
   const currentStage = Math.min(Math.max(state.currentStage || 1, 1), 6);
   const eligibility = eligibilityFor(state.setup);
   const hasEligibilityContext = Boolean(state.setup.jurisdiction && state.setup.startDate && state.setup.accounts);
+  const impactMode = state.assessmentMode === "impact_readiness";
+  const applicabilityLabel = state.sorpApplicability === "not_applicable" ? "Does not apply" : state.sorpApplicability === "likely_applies" ? "Likely applies" : state.sorpApplicability === "uncertain" ? "Currently uncertain" : hasEligibilityContext ? eligibility.status : "Currently uncertain";
 
   if (!started) return <section className="readiness-intro">
     <p className="readiness-kicker">SORP 2026<br /><strong>Impact readiness</strong></p>
@@ -358,48 +371,40 @@ export function SorpReadinessConversation() {
 
   return <div className="readiness-chat">
     <header className="readiness-progress">
-      <div><span>SORP readiness</span><strong>{readinessStages[currentStage - 1]}</strong><small>{completedCount} of 6 stages complete</small></div>
+      <div><span>{impactMode ? "Impact readiness mode" : "SORP readiness"}</span><strong>{impactMode && currentStage === 1 ? "YOUR ORGANISATION" : readinessStages[currentStage - 1]}</strong><small>{completedCount} of 6 stages complete</small></div>
       <div className="readiness-progress-track" aria-label={`${completedCount} of 6 assessment stages complete`}>{readinessStages.map((stage, index) => <span key={stage} className={state.completedStages.includes(index + 1) ? "is-complete" : index + 1 === currentStage ? "is-current" : ""}><i />{index < 5 && <b />}</span>)}</div>
     </header>
 
-    <section className="readiness-context" aria-label="Current SORP context" aria-live="polite">
+    <section className={`readiness-context${impactMode ? " is-impact-mode" : ""}`} aria-label={impactMode ? "Current impact-readiness context" : "Current SORP context"} aria-live="polite">
       {state.charityName && <p className="readiness-charity-name">Working with <strong>{state.charityName}</strong></p>}
       <dl>
-        <div><dt>SORP applicability</dt><dd>{hasEligibilityContext ? eligibility.status : "To establish"}</dd></div>
-        <div><dt>Jurisdiction</dt><dd>{{ ew: "England & Wales", scotland: "Scotland", ni: "Northern Ireland", roi: "Republic of Ireland", elsewhere: "Outside the UK / Ireland", not_sure: "Not confirmed", "": "To establish" }[state.setup.jurisdiction]}<PublicBasis evidence={state.contextEvidence.jurisdiction} /></dd></div>
-        <div><dt>Period begins</dt><dd>{dateLabel(state.setup.startDate)}</dd></div>
-        <div><dt>Accounts</dt><dd>{{ accruals: "Accruals", receipts: "Receipts & payments", not_sure: "Not confirmed", "": "To establish" }[state.setup.accounts]}</dd></div>
-        <div><dt>Likely tier</dt><dd>{state.setup.income ? tierLabel(state.setup) : "To establish"}<PublicBasis evidence={state.contextEvidence.income} /></dd></div>
+        <div><dt>SORP applicability</dt><dd>{applicabilityLabel}<EvidenceBasis evidence={state.contextEvidence.jurisdiction} /></dd></div>
+        <div><dt>Jurisdiction</dt><dd>{{ ew: "England & Wales", scotland: "Scotland", ni: "Northern Ireland", roi: "Republic of Ireland", elsewhere: "Outside the UK / Ireland", not_sure: "Currently uncertain", "": "Currently uncertain" }[state.setup.jurisdiction]}<EvidenceBasis evidence={state.contextEvidence.jurisdiction} /></dd></div>
+        {!impactMode && <><div><dt>Period begins</dt><dd>{state.setup.startDate ? dateLabel(state.setup.startDate) : "Currently uncertain"}<EvidenceBasis evidence={state.contextEvidence.startDate} /></dd></div>
+        <div><dt>Accounts</dt><dd>{{ accruals: "Accruals", receipts: "Receipts & payments", not_sure: "Currently uncertain", "": "Currently uncertain" }[state.setup.accounts]}<EvidenceBasis evidence={state.contextEvidence.accounts} /></dd></div>
+        <div><dt>Likely tier</dt><dd>{state.setup.income ? tierLabel(state.setup) : "Currently uncertain"}<EvidenceBasis evidence={state.contextEvidence.income} /></dd></div></>}
       </dl>
-      {hasEligibilityContext && eligibility.tone !== "yes" && <div className="readiness-continue-anyway"><p>{eligibility.reasons.at(-1)} The impact questions may still be useful.</p><button type="button" onClick={() => composerRef.current?.focus()}>Continue anyway <span>→</span></button></div>}
+      {!impactMode && hasEligibilityContext && eligibility.tone !== "yes" && <div className="readiness-continue-anyway"><p>{eligibility.reasons.at(-1)} The impact questions may still be useful.</p><button type="button" onClick={() => composerRef.current?.focus()}>Continue anyway <span>→</span></button></div>}
     </section>
 
     <div className="readiness-thread" aria-live="polite">
       {messages.map((message, index) => <article key={`${index}-${message.content.slice(0, 24)}`} className={`readiness-message is-${message.role}`}>
-        <span>{message.role === "user" ? "You" : "SORP 2026 · Impact readiness"}</span>
+        <span>{message.role === "user" ? "You" : impactMode ? "Impact readiness" : "SORP 2026 · Impact readiness"}</span>
         {message.label && <strong className={`readiness-label is-${message.label.toLowerCase().replace(" ", "-")}`}>{message.label}</strong>}
         <div><MessageContent text={message.content} /></div>
         {message.organisation && <section className="readiness-organisation-card" aria-label="Organisation found">
-          <p>I found what looks like your organisation</p>
           <h3>{message.organisation.name}</h3>
-          <dl>
-            {message.organisation.registrationNumber && <div><dt>Registration number</dt><dd>{message.organisation.registrationNumber}</dd></div>}
-            <div><dt>Jurisdiction</dt><dd>{message.organisation.jurisdiction}</dd></div>
-            {message.organisation.legalForm && <div><dt>Legal form</dt><dd>{message.organisation.legalForm}</dd></div>}
-            <div><dt>Latest reported income</dt><dd>{message.organisation.latestIncome}</dd></div>
-            <div><dt>Financial year end</dt><dd>{message.organisation.financialYearEnd}</dd></div>
-            {message.organisation.locality && <div><dt>Location</dt><dd>{message.organisation.locality}</dd></div>}
-          </dl>
-          {message.organisation.website && <a href={message.organisation.website}>Visit organisation website <span>→</span></a>}
+          {message.organisation.locality && <p className="readiness-organisation-location">{message.organisation.locality}</p>}
+          {message.publicSources?.length ? <nav className="readiness-organisation-links" aria-label="Organisation sources">{message.publicSources.slice(0, 2).map((source) => <a key={source.url} href={source.url} target="_blank" rel="noreferrer">{confirmationSourceLabel(source)}</a>)}</nav> : null}
         </section>}
         {message.actions?.length ? <nav className="readiness-message-actions" aria-label="Choose an answer">{message.actions.map((action) => <button key={`${action.label}-${action.value}`} type="button" disabled={busy || index !== messages.length - 1} onClick={() => void sendMessage(action.value)}>{action.label}<span>→</span></button>)}</nav> : null}
         {message.citations?.length ? <details><summary>Source</summary><div>{message.citations.map((citation) => <article key={citation.reference}><strong>SORP 2026 · paragraph {citation.reference}</strong><small>{citation.module} · PDF page {citation.page}</small><p>{citation.extract}</p></article>)}</div></details> : null}
-        {message.publicSources?.length ? <details><summary>Public information used</summary><div>{message.publicSources.map((source) => <article key={`${source.url}-${source.detail}`}><strong>{sourceKindLabel(source.kind)} · {source.label}</strong>{source.detail && <p>{source.detail}</p>}<a href={source.url}>View source <span>→</span></a></article>)}</div></details> : null}
+        {!message.organisation && message.publicSources?.length ? <details><summary>Sources</summary><div>{message.publicSources.map((source) => <article key={`${source.url}-${source.detail}`}><strong>{sourceKindLabel(source.kind)} · {source.label}</strong>{source.detail && <p>{source.detail}</p>}<a href={source.url}>View source <span>→</span></a></article>)}</div></details> : null}
       </article>)}
-      {busy && <article className="readiness-message is-assistant is-loading"><span>SORP 2026 · Impact readiness</span><div><p>Understanding what you’ve said and checking the relevant public and SORP evidence…</p></div></article>}
+      {busy && <article className="readiness-message is-assistant is-loading"><span>{impactMode ? "Impact readiness" : "SORP 2026 · Impact readiness"}</span><div><p>Understanding what you’ve said and checking the relevant public and SORP evidence…</p></div></article>}
       {error && <div className="readiness-error" role="alert"><strong>That step did not complete.</strong><p>{error}</p><button type="button" onClick={() => { setError(""); composerRef.current?.focus(); }}>Try again</button></div>}
       {result && messages.at(-1)?.role === "assistant" && state.score !== null && <section className="readiness-result">
-        <header><div><p>{state.charityName ? `${state.charityName} · Your SORP 2026` : "Your SORP 2026"}</p><h2>Impact readiness</h2><span>{result.overview}</span></div><div><strong>{result.score}</strong><span>/ 100</span><b>{result.band}</b></div></header>
+        <header><div><p>{state.charityName ? `${state.charityName} · ${impactMode ? "Impact readiness" : "Your SORP 2026"}` : impactMode ? "Impact readiness" : "Your SORP 2026"}</p><h2>Impact readiness</h2><span>{result.overview}</span></div><div><strong>{result.score}</strong><span>/ 100</span><b>{result.band}</b></div></header>
         <p className="readiness-result-note">This is an impact-readiness assessment. It does not say the charity is SORP compliant.</p>
         <div className="readiness-result-sections">{result.sectionScores.map((section) => <article key={section.section}><div><h3>{section.label}</h3><strong>{section.score}</strong></div><i><b style={{ width: `${section.score}%` }} /></i><p>{section.narrative}</p></article>)}</div>
         <div className="readiness-result-grid"><ResultList title="What looks strong" items={result.strong} empty="No clear strength has been evidenced yet." /><ResultList title="What needs attention" items={result.attention} empty="No immediate weaker area was identified." /><ResultList title="MUST areas" items={result.must} empty="No applicable MUST area was flagged by this initial assessment." /><ResultList title="SHOULD opportunities" items={result.should} empty="No weaker SHOULD opportunity was identified." /><ResultList title="MAY options" items={result.may} empty="No additional MAY option was identified." /><ResultList title="JUDGEMENT areas" items={result.judgement} empty="No specific judgement area was flagged, although context still matters." /><ResultList title="Additional SORP checks" items={result.additionalChecks} empty="No additional check was triggered by the information supplied." /><ResultList title="Three priority actions" items={result.priorities} empty="Add more context to build practical priorities." /></div>
