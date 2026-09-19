@@ -64,6 +64,17 @@ test("desktop homepage navigation clears the expanded site header", async () => 
   assert.match(css, /\.site-header\.is-scrolled \+ \.section-navigation \{ top: 94px;/);
 });
 
+test("the Ideas Shed footer is a compact concrete-backed band", async () => {
+  const css = await readFile(new URL("../app/globals.css", import.meta.url), "utf8");
+  const texture = await readFile(new URL("../public/assets/ideas-shed-concrete-wall.jpg", import.meta.url));
+  assert.ok(texture.length > 100_000, "concrete texture is missing or unexpectedly small");
+  assert.match(css, /background: #171717 url\("\/assets\/ideas-shed-concrete-wall\.jpg"\)/);
+  assert.match(css, /grid-template-columns: minmax\(135px, 180px\)/);
+  assert.match(css, /footer-ideas h2[^}]*font-family: var\(--font-sans\)[^}]*font-weight: 900/);
+  assert.match(css, /border-left: 3px solid #ff1769/);
+  assert.doesNotMatch(css, /\.site-footer \{ padding-block: clamp\(4\.5rem, 8vw, 8rem\)/);
+});
+
 test("server-renders the Are You SORP Ready product page", async () => {
   const response = await render("/are-you-sorp-ready");
   assert.equal(response.status, 200);

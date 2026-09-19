@@ -479,21 +479,22 @@ img { max-width: 100%; display: block; }
 .newsletter button, .contact-form button { border: 0; background: transparent; padding: 1.2rem 0 1.2rem 2rem; font-weight: 800; display: flex; gap: 2rem; white-space: nowrap; cursor: pointer; }
 .success { font-family: var(--font-serif); font-size: 2rem; margin-top: 3rem; }
 
-.site-footer { position: relative; padding: clamp(4rem, 7vw, 7rem) var(--pad) clamp(2rem, 3vw, 3rem); overflow: hidden; background-color: #181818; background-image: radial-gradient(circle at 15% 18%, rgba(255,255,255,.065), transparent 26%), radial-gradient(circle at 82% 72%, rgba(255,255,255,.045), transparent 24%), repeating-linear-gradient(8deg, transparent 0 7px, rgba(255,255,255,.012) 8px, transparent 9px 15px), linear-gradient(120deg, #101010 0%, #282725 48%, #141414 100%); color: var(--white); }
-.site-footer::before { content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .5; background-image: repeating-radial-gradient(circle at 30% 40%, rgba(255,255,255,.025) 0 1px, transparent 1px 5px); mix-blend-mode: screen; }
+.site-footer { position: relative; padding: clamp(1.1rem, 1.8vw, 1.8rem) var(--pad) .85rem; overflow: hidden; background: #171717 url("/assets/ideas-shed-concrete-wall.jpg") center 46% / cover no-repeat; color: var(--white); }
+.site-footer::before { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(90deg, rgba(4,7,9,.24), rgba(4,7,9,.5) 58%, rgba(4,7,9,.32)); }
+.site-footer::after { content: ""; position: absolute; inset: 0 0 auto; height: 5px; background: #ff075f; }
 .site-footer > * { position: relative; z-index: 1; }
-.footer-ideas { width: 100%; max-width: none; display: grid; grid-template-columns: minmax(250px, .38fr) minmax(0, 1fr); gap: clamp(3rem, 8vw, 9rem); align-items: center; }
-.footer-ideas-logo { width: min(100%, 410px); margin: 0; display: block; }
-.footer-ideas-logo img { width: 100%; height: auto; display: block; filter: drop-shadow(0 18px 30px rgba(0,0,0,.28)); }
-.footer-ideas-copy { min-width: 0; }
-.footer-kicker { margin: 0 0 1.2rem; color: var(--orange); font-size: .72rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
-.footer-ideas h2 { margin: 0 0 1.5rem; font-family: var(--font-serif); font-size: clamp(3rem, 7vw, 8rem); font-weight: 500; line-height: .88; letter-spacing: -.06em; }
-.footer-ideas h2 a:hover, .footer-address:hover { color: var(--orange); }
-.footer-ideas-copy > p:not(.footer-kicker) { max-width: 48rem; color: rgba(255,255,255,.72); font-size: clamp(1rem, 1.25vw, 1.2rem); line-height: 1.55; }
-.footer-ideas blockquote { max-width: 60rem; margin: clamp(2.5rem, 4vw, 4rem) 0 2rem; padding-top: 1.8rem; border-top: 1px solid rgba(255,255,255,.22); font-family: var(--font-serif); font-size: clamp(1.8rem, 3.4vw, 4rem); font-weight: 500; line-height: 1.06; letter-spacing: -.04em; }
-.footer-address { display: inline-block; padding-bottom: .35rem; border-bottom: 1px solid currentColor; font-size: .82rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; transition: color .3s ease; }
-.footer-registration { width: 100%; margin: clamp(3.5rem, 6vw, 6rem) 0 0; padding-top: 1.5rem; border-top: 1px solid rgba(255,255,255,.2); color: rgba(255,255,255,.58); font-size: .75rem; letter-spacing: .045em; line-height: 1.5; }
-.footer-registration strong { color: var(--white); letter-spacing: .07em; }
+.footer-ideas { width: 100%; max-width: none; display: grid; grid-template-columns: minmax(135px, 180px) minmax(0, 1fr); gap: clamp(1.5rem, 3.5vw, 4rem); align-items: center; }
+.footer-ideas-logo { width: min(100%, 180px); margin: 0; display: block; }
+.footer-ideas-logo img { width: 100%; height: auto; display: block; filter: drop-shadow(0 12px 22px rgba(0,0,0,.38)); }
+.footer-ideas-copy { min-width: 0; display: grid; grid-template-columns: minmax(290px, 1.05fr) minmax(260px, .95fr); grid-template-areas: "kicker quote" "title quote" "intro address"; column-gap: clamp(2rem, 5vw, 6rem); row-gap: .3rem; align-items: end; }
+.footer-kicker { grid-area: kicker; margin: 0; color: #ff1769; font-size: .62rem; font-weight: 900; letter-spacing: .16em; text-transform: uppercase; }
+.footer-ideas h2 { grid-area: title; margin: 0; font-family: var(--font-sans); font-size: clamp(2.2rem, 3.2vw, 4rem); font-weight: 900; line-height: .88; letter-spacing: -.065em; text-transform: uppercase; }
+.footer-ideas h2 a:hover, .footer-address:hover { color: #ff1769; }
+.footer-ideas-copy > p:not(.footer-kicker) { grid-area: intro; max-width: 42rem; margin: .35rem 0 0; color: rgba(255,255,255,.7); font-size: clamp(.76rem, .9vw, .9rem); line-height: 1.4; }
+.footer-ideas blockquote { grid-area: quote; max-width: 44rem; margin: 0; padding-left: 1.2rem; border-left: 3px solid #ff1769; font-family: var(--font-serif); font-size: clamp(1.18rem, 1.7vw, 1.85rem); font-weight: 500; line-height: 1.05; letter-spacing: -.025em; }
+.footer-address { grid-area: address; width: max-content; max-width: 100%; display: inline-block; padding-bottom: .22rem; border-bottom: 1px solid currentColor; font-size: .65rem; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; transition: color .3s ease; }
+.footer-registration { width: 100%; margin: .8rem 0 0; padding-top: .65rem; border-top: 1px solid rgba(255,255,255,.24); color: rgba(255,255,255,.65); font-size: .62rem; letter-spacing: .055em; line-height: 1.4; }
+.footer-registration strong { color: var(--white); letter-spacing: .09em; }
 
 .subpage { padding-top: 70px; }
 .page-hero { padding: clamp(8rem, 15vw, 14rem) var(--pad) clamp(5rem, 9vw, 8rem); border-bottom: 1px solid var(--line); position: relative; overflow: hidden; }
@@ -525,7 +526,9 @@ img { max-width: 100%; display: block; }
   .practice-grid { grid-template-columns: 1fr 1fr; }
   .practice-grid .working { grid-column: 1 / -1; border-top: 0; }
   .team-grid { grid-template-columns: 1fr 1fr; row-gap: 5rem; }
-  .footer-ideas { grid-template-columns: minmax(220px, .42fr) minmax(0, 1fr); gap: clamp(2.5rem, 6vw, 5rem); }
+  .footer-ideas { grid-template-columns: minmax(125px, 155px) minmax(0, 1fr); gap: clamp(1.25rem, 3vw, 2.5rem); }
+  .footer-ideas-logo { width: min(100%, 155px); }
+  .footer-ideas-copy { grid-template-columns: minmax(230px, 1fr) minmax(230px, .85fr); column-gap: clamp(1.5rem, 3vw, 3rem); }
 }
 
 @media (max-width: 760px) {
@@ -567,10 +570,15 @@ img { max-width: 100%; display: block; }
   .newsletter { gap: 4rem; }
   .newsletter form { flex-direction: column; }
   .newsletter button { padding-left: 0; justify-content: space-between; }
-  .footer-ideas { grid-template-columns: 1fr; gap: 2.5rem; }
-  .footer-ideas-logo { width: min(86vw, 360px); margin-inline: auto; }
-  .footer-ideas h2 { font-size: clamp(3.2rem, 15vw, 5.5rem); }
-  .footer-registration { font-size: .7rem; }
+  .site-footer { padding: 1rem var(--pad) calc(.8rem + env(safe-area-inset-bottom)); }
+  .footer-ideas { grid-template-columns: 104px minmax(0, 1fr); gap: 1rem; align-items: start; }
+  .footer-ideas-logo { width: 104px; }
+  .footer-ideas-copy { grid-template-columns: 1fr; grid-template-areas: "kicker" "title" "intro" "quote" "address"; gap: .45rem; }
+  .footer-ideas h2 { font-size: clamp(1.75rem, 8vw, 2.6rem); }
+  .footer-ideas-copy > p:not(.footer-kicker) { margin-top: 0; font-size: .75rem; }
+  .footer-ideas blockquote { margin-top: .2rem; padding-left: .75rem; font-size: 1rem; }
+  .footer-address { margin-top: .15rem; font-size: .58rem; overflow-wrap: anywhere; }
+  .footer-registration { margin-top: .7rem; font-size: .58rem; }
   .page-hero h1 { font-size: 4.4rem; }
   .blog-list .articles-grid { row-gap: 5rem; }
   .contact-page { gap: 4rem; }
@@ -706,8 +714,6 @@ body { letter-spacing: -.008em; }
 .ecosystem-mark.good img { width: min(92%, 560px); height: auto; object-fit: contain; }
 .promise { padding: clamp(7rem, 13vw, 13rem) 0; }
 .newsletter { padding-block: clamp(7rem, 12vw, 12rem); }
-.site-footer { padding-block: clamp(4.5rem, 8vw, 8rem); }
-
 .page-hero { padding-top: clamp(10rem, 18vw, 17rem); padding-bottom: clamp(7rem, 11vw, 11rem); }
 .page-hero h1 { position: relative; z-index: 1; }
 .page-hero > .eyebrow, .page-hero > p { position: relative; z-index: 1; }
