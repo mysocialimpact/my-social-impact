@@ -267,24 +267,19 @@ export function SiteHeader() {
 export function Footer() {
   return (
     <footer className="site-footer">
-      <div className="footer-brand">
-        <BrandMark small />
-        <p>Strategy for Social Impact Excellence</p>
-      </div>
       <div className="footer-ideas">
         <a className="footer-ideas-logo" href="https://www.theideasshed.com/" target="_blank" rel="noreferrer" aria-label="The Ideas Shed">
-          <Image src="/assets/ideas-shed-logo.png" alt="The Ideas Shed, from ideas to action" width={760} height={738} unoptimized />
+          <Image src="/assets/ideas-shed-logo-approved.png" alt="The Ideas Shed" width={1254} height={1254} unoptimized />
         </a>
-        <p className="footer-kicker">Website built by</p>
-        <h2><a href="https://www.theideasshed.com/" target="_blank" rel="noreferrer">The Ideas Shed ↗</a></h2>
-        <p>A creative venture studio that turns promising ideas into practical projects, tools and businesses.</p>
-        <blockquote>Imagine a world where curiosity and creativity were valued as highly as certainty.</blockquote>
-        <a className="footer-address" href="https://www.theideasshed.com/" target="_blank" rel="noreferrer">www.theideasshed.com ↗</a>
+        <div className="footer-ideas-copy">
+          <p className="footer-kicker">Website built by</p>
+          <h2><a href="https://www.theideasshed.com/" target="_blank" rel="noreferrer">The Ideas Shed ↗</a></h2>
+          <p>A creative venture studio that turns promising ideas into practical projects, tools and businesses.</p>
+          <blockquote>Imagine a world where curiosity and creativity were valued as highly as certainty.</blockquote>
+          <a className="footer-address" href="https://www.theideasshed.com/" target="_blank" rel="noreferrer">www.theideasshed.com ↗</a>
+        </div>
       </div>
-      <div className="footer-bottom">
-        <div className="footer-links"><Link href="/">Home</Link><Link href="/blog">Blog</Link><Link href="/#contact">Contact</Link><a href="https://platform.mysocialimpact.org/snapshot" target="_blank" rel="noreferrer">Start your 10–15 minute Maturity Assessment ↗</a><a href="https://www.linkedin.com/company/my-social-impact" target="_blank" rel="noreferrer">LinkedIn ↗</a></div>
-        <p className="footer-meta">© {new Date().getFullYear()} My Social Impact</p>
-      </div>
+      <p className="footer-registration"><strong>THE IDEAS SHED LIMITED.</strong> Registered in England and Wales · Company number 17380053</p>
     </footer>
   );
 }

@@ -479,23 +479,21 @@ img { max-width: 100%; display: block; }
 .newsletter button, .contact-form button { border: 0; background: transparent; padding: 1.2rem 0 1.2rem 2rem; font-weight: 800; display: flex; gap: 2rem; white-space: nowrap; cursor: pointer; }
 .success { font-family: var(--font-serif); font-size: 2rem; margin-top: 3rem; }
 
-.site-footer { padding: clamp(4rem, 7vw, 7rem) var(--pad) clamp(2.5rem, 4vw, 4rem); background: var(--ink); color: var(--white); display: grid; grid-template-columns: minmax(250px, .72fr) minmax(340px, 1fr); gap: clamp(4rem, 9vw, 10rem); align-items: start; }
-.site-footer .footer-brand .brand.brand-small { font-size: clamp(2.8rem, 4.8vw, 5.2rem); }
-.footer-brand > p { max-width: 24rem; margin: 2rem 0 0; color: rgba(255,255,255,.68); font-size: clamp(1.05rem, 1.5vw, 1.4rem); line-height: 1.35; }
-.footer-ideas { max-width: 47rem; padding-left: clamp(1.5rem, 4vw, 4.5rem); border-left: 1px solid rgba(255,255,255,.2); }
-.footer-ideas-logo { width: min(180px, 42vw); margin: 0 0 1.5rem; display: block; }
-.footer-ideas-logo img { width: 100%; height: auto; display: block; }
+.site-footer { position: relative; padding: clamp(4rem, 7vw, 7rem) var(--pad) clamp(2rem, 3vw, 3rem); overflow: hidden; background-color: #181818; background-image: radial-gradient(circle at 15% 18%, rgba(255,255,255,.065), transparent 26%), radial-gradient(circle at 82% 72%, rgba(255,255,255,.045), transparent 24%), repeating-linear-gradient(8deg, transparent 0 7px, rgba(255,255,255,.012) 8px, transparent 9px 15px), linear-gradient(120deg, #101010 0%, #282725 48%, #141414 100%); color: var(--white); }
+.site-footer::before { content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .5; background-image: repeating-radial-gradient(circle at 30% 40%, rgba(255,255,255,.025) 0 1px, transparent 1px 5px); mix-blend-mode: screen; }
+.site-footer > * { position: relative; z-index: 1; }
+.footer-ideas { width: 100%; max-width: none; display: grid; grid-template-columns: minmax(250px, .38fr) minmax(0, 1fr); gap: clamp(3rem, 8vw, 9rem); align-items: center; }
+.footer-ideas-logo { width: min(100%, 410px); margin: 0; display: block; }
+.footer-ideas-logo img { width: 100%; height: auto; display: block; filter: drop-shadow(0 18px 30px rgba(0,0,0,.28)); }
+.footer-ideas-copy { min-width: 0; }
 .footer-kicker { margin: 0 0 1.2rem; color: var(--orange); font-size: .72rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
-.footer-ideas h2 { margin: 0 0 1.5rem; font-family: var(--font-serif); font-size: clamp(2.5rem, 4.7vw, 5.2rem); font-weight: 500; line-height: .95; letter-spacing: -.05em; }
+.footer-ideas h2 { margin: 0 0 1.5rem; font-family: var(--font-serif); font-size: clamp(3rem, 7vw, 8rem); font-weight: 500; line-height: .88; letter-spacing: -.06em; }
 .footer-ideas h2 a:hover, .footer-address:hover { color: var(--orange); }
-.footer-ideas > p:not(.footer-kicker) { max-width: 39rem; color: rgba(255,255,255,.7); font-size: clamp(1rem, 1.25vw, 1.2rem); line-height: 1.55; }
-.footer-ideas blockquote { max-width: 44rem; margin: clamp(2.5rem, 4vw, 4rem) 0 2rem; padding-top: 1.8rem; border-top: 1px solid rgba(255,255,255,.2); font-family: var(--font-serif); font-size: clamp(1.65rem, 2.8vw, 3rem); font-weight: 500; line-height: 1.12; letter-spacing: -.035em; }
+.footer-ideas-copy > p:not(.footer-kicker) { max-width: 48rem; color: rgba(255,255,255,.72); font-size: clamp(1rem, 1.25vw, 1.2rem); line-height: 1.55; }
+.footer-ideas blockquote { max-width: 60rem; margin: clamp(2.5rem, 4vw, 4rem) 0 2rem; padding-top: 1.8rem; border-top: 1px solid rgba(255,255,255,.22); font-family: var(--font-serif); font-size: clamp(1.8rem, 3.4vw, 4rem); font-weight: 500; line-height: 1.06; letter-spacing: -.04em; }
 .footer-address { display: inline-block; padding-bottom: .35rem; border-bottom: 1px solid currentColor; font-size: .82rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; transition: color .3s ease; }
-.footer-bottom { grid-column: 1 / -1; display: flex; align-items: end; justify-content: space-between; gap: 3rem; padding-top: clamp(2.5rem, 5vw, 5rem); border-top: 1px solid rgba(255,255,255,.2); }
-.footer-links { display: flex; flex-wrap: wrap; gap: 1rem 3rem; font-size: .8rem; text-transform: uppercase; letter-spacing: .08em; }
-.footer-links a:hover { color: #ff6a42; }
-.footer-meta { margin: 0; color: rgba(255,255,255,.52); font-size: .8rem; white-space: nowrap; }
-.footer-meta a { color: white; }
+.footer-registration { width: 100%; margin: clamp(3.5rem, 6vw, 6rem) 0 0; padding-top: 1.5rem; border-top: 1px solid rgba(255,255,255,.2); color: rgba(255,255,255,.58); font-size: .75rem; letter-spacing: .045em; line-height: 1.5; }
+.footer-registration strong { color: var(--white); letter-spacing: .07em; }
 
 .subpage { padding-top: 70px; }
 .page-hero { padding: clamp(8rem, 15vw, 14rem) var(--pad) clamp(5rem, 9vw, 8rem); border-bottom: 1px solid var(--line); position: relative; overflow: hidden; }
@@ -527,7 +525,7 @@ img { max-width: 100%; display: block; }
   .practice-grid { grid-template-columns: 1fr 1fr; }
   .practice-grid .working { grid-column: 1 / -1; border-top: 0; }
   .team-grid { grid-template-columns: 1fr 1fr; row-gap: 5rem; }
-  .site-footer { grid-template-columns: minmax(220px, .65fr) 1fr; }
+  .footer-ideas { grid-template-columns: minmax(220px, .42fr) minmax(0, 1fr); gap: clamp(2.5rem, 6vw, 5rem); }
 }
 
 @media (max-width: 760px) {
@@ -569,11 +567,10 @@ img { max-width: 100%; display: block; }
   .newsletter { gap: 4rem; }
   .newsletter form { flex-direction: column; }
   .newsletter button { padding-left: 0; justify-content: space-between; }
-  .site-footer { grid-template-columns: 1fr; gap: 4rem; }
-  .footer-ideas { padding: 3rem 0 0; border-left: 0; border-top: 1px solid rgba(255,255,255,.2); }
-  .footer-bottom { grid-column: auto; display: grid; align-items: start; gap: 2.5rem; }
-  .footer-links { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem 2rem; }
-  .footer-meta { white-space: normal; }
+  .footer-ideas { grid-template-columns: 1fr; gap: 2.5rem; }
+  .footer-ideas-logo { width: min(86vw, 360px); margin-inline: auto; }
+  .footer-ideas h2 { font-size: clamp(3.2rem, 15vw, 5.5rem); }
+  .footer-registration { font-size: .7rem; }
   .page-hero h1 { font-size: 4.4rem; }
   .blog-list .articles-grid { row-gap: 5rem; }
   .contact-page { gap: 4rem; }

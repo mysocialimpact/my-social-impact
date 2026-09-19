@@ -43,7 +43,11 @@ test("server-renders the My Social Impact homepage", async () => {
   assert.match(html, /href="\/purpose-works"/i);
   assert.match(html, /href="\/community-mapping"/i);
   assert.match(html, /COMMUNITY MAPPING/i);
-  assert.match(html, /\/assets\/ideas-shed-logo\.png/i);
+  assert.match(html, /\/assets\/ideas-shed-logo-approved\.png/i);
+  assert.doesNotMatch(html, /footer-brand/i);
+  assert.doesNotMatch(html, /footer-bottom/i);
+  assert.match(html, /THE IDEAS SHED LIMITED\./i);
+  assert.match(html, /Registered in England and Wales · Company number 17380053/i);
   assert.match(html, /Start your Social Impact Maturity Assessment today/i);
   assert.match(html, /Start an Assessment/i);
   assert.match(html, /href="\/assessments"/i);
@@ -211,7 +215,7 @@ test("server-renders the Purpose Works page", async () => {
   assert.match(html, /\/assets\/showreel\/purpose-works-showreel-poster\.jpg/i);
   assert.match(html, /Social impact accounting asks whether impact can be substantiated/i);
   assert.match(html, /constructive critical friend/i);
-  assert.match(html, /\/assets\/ideas-shed-logo\.png/i);
+  assert.match(html, /\/assets\/ideas-shed-logo-approved\.png/i);
   assert.match(html, /href="\/social-impact-excellence"/i);
   assert.match(html, /mailto:marcus@mysocialimpact\.org/i);
   assert.match(html, /mailto:chris@mysocialimpact\.org/i);
