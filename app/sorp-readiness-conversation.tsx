@@ -11,6 +11,7 @@ type FieldState = { answer: AnswerValue | null; evidence: string; confidence: nu
 type AdditionalState = { answer: AdditionalAnswerValue | null; evidence: string; relevant: boolean };
 
 type ReadinessState = {
+  charityName: string;
   setup: AssessmentSetup;
   uncertainty: string[];
   fields: Record<string, FieldState>;
@@ -53,6 +54,7 @@ const emptySetup: AssessmentSetup = { role: "", jurisdiction: "", startDate: "",
 
 function blankState(): ReadinessState {
   return {
+    charityName: "",
     setup: emptySetup,
     uncertainty: [],
     fields: Object.fromEntries(coreQuestions.map((question) => [String(question.id), { answer: null, evidence: "", confidence: 0 }])),
@@ -106,8 +108,23 @@ function stateFromSnapshot(raw: string): { state: ReadinessState; result: Result
   }
 }
 
-function Paragraphs({ text }: { text: string }) {
-  return <>{text.split(/\n{2,}/).filter(Boolean).map((paragraph, index) => <p key={`${index}-${paragraph.slice(0, 24)}`}>{paragraph}</p>)}</>;
+function InlineText({ text }: { text: string }) {
+  return <>{text.split(/(\*\*[^*]+\*\*)/).filter(Boolean).map((part, index) => part.startsWith("**") && part.endsWith("**")
+    ? <strong key={`${index}-${part.slice(0, 18)}`}>{part.slice(2, -2)}</strong>
+    : part)}</>;
+}
+
+function MessageContent({ text }: { text: string }) {
+  const blocks = text.split(/\n{2,}/).map((block) => block.trim()).filter(Boolean);
+  return <>{blocks.map((block, index) => {
+    const heading = block.match(/^\*\*(.+)\*\*$/);
+    if (heading) return <h3 className="readiness-message-heading" key={`${index}-${heading[1]}`}>{heading[1]}</h3>;
+    const lines = block.split("\n").map((line) => line.trim()).filter(Boolean);
+    if (lines.length && lines.every((line) => line.startsWith("- "))) {
+      return <ul className="readiness-message-list" key={`${index}-${block.slice(0, 18)}`}>{lines.map((line) => <li key={line}><InlineText text={line.slice(2)} /></li>)}</ul>;
+    }
+    return <p key={`${index}-${block.slice(0, 24)}`}>{lines.map((line, lineIndex) => <span key={`${lineIndex}-${line.slice(0, 18)}`}><InlineText text={line} />{lineIndex < lines.length - 1 && <br />}</span>)}</p>;
+  })}</>;
 }
 
 function recordingTime(seconds: number) {
@@ -167,7 +184,7 @@ export function SorpReadinessConversation() {
             const parsed = JSON.parse(saved) as { started?: boolean; state?: ReadinessState; messages?: Message[]; result?: Result | null };
             if (parsed.started && parsed.state && parsed.messages?.length) {
               setStarted(true);
-              setState(parsed.state);
+              setState({ ...parsed.state, charityName: parsed.state.charityName ?? "" });
               setMessages(parsed.messages);
               setResult(parsed.result ?? null);
             }
@@ -209,7 +226,7 @@ export function SorpReadinessConversation() {
     }
     setState(blankState());
     setResult(null);
-    setMessages([{ role: "assistant", content: "Tell me about your charity in your own words—where it is registered, its reporting year, approximate income, and what it is trying to achieve.\n\nShare whatever you know. You do not need the technical language, and it is fine to be unsure." }]);
+    setMessages([{ role: "assistant", content: "Let’s work out where you stand.\n\nFirst — what’s the charity called, and in your own words, what does it actually do?\n\nDon’t worry about giving me the formal charitable objects. I’m more interested in how you’d explain it to another person." }]);
     setStarted(true);
   }
 
@@ -310,6 +327,7 @@ export function SorpReadinessConversation() {
     </header>
 
     <section className="readiness-context" aria-label="Current SORP context" aria-live="polite">
+      {state.charityName && <p className="readiness-charity-name">Working with <strong>{state.charityName}</strong></p>}
       <dl>
         <div><dt>SORP applicability</dt><dd>{hasEligibilityContext ? eligibility.status : "To establish"}</dd></div>
         <div><dt>Jurisdiction</dt><dd>{{ ew: "England & Wales", scotland: "Scotland", ni: "Northern Ireland", roi: "Republic of Ireland", elsewhere: "Outside the UK / Ireland", not_sure: "Not confirmed", "": "To establish" }[state.setup.jurisdiction]}</dd></div>
@@ -324,13 +342,13 @@ export function SorpReadinessConversation() {
       {messages.map((message, index) => <article key={`${index}-${message.content.slice(0, 24)}`} className={`readiness-message is-${message.role}`}>
         <span>{message.role === "user" ? "You" : "SORP 2026 · Impact readiness"}</span>
         {message.label && <strong className={`readiness-label is-${message.label.toLowerCase().replace(" ", "-")}`}>{message.label}</strong>}
-        <div><Paragraphs text={message.content} /></div>
+        <div><MessageContent text={message.content} /></div>
         {message.citations?.length ? <details><summary>Source</summary><div>{message.citations.map((citation) => <article key={citation.reference}><strong>SORP 2026 · paragraph {citation.reference}</strong><small>{citation.module} · PDF page {citation.page}</small><p>{citation.extract}</p></article>)}</div></details> : null}
       </article>)}
       {busy && <article className="readiness-message is-assistant is-loading"><span>SORP 2026 · Impact readiness</span><div><p>Understanding what you’ve said and checking the relevant SORP evidence…</p></div></article>}
       {error && <div className="readiness-error" role="alert"><strong>That step did not complete.</strong><p>{error}</p><button type="button" onClick={() => { setError(""); composerRef.current?.focus(); }}>Try again</button></div>}
       {result && messages.at(-1)?.role === "assistant" && state.score !== null && <section className="readiness-result">
-        <header><div><p>Your SORP 2026</p><h2>Impact readiness</h2><span>{result.overview}</span></div><div><strong>{result.score}</strong><span>/ 100</span><b>{result.band}</b></div></header>
+        <header><div><p>{state.charityName ? `${state.charityName} · Your SORP 2026` : "Your SORP 2026"}</p><h2>Impact readiness</h2><span>{result.overview}</span></div><div><strong>{result.score}</strong><span>/ 100</span><b>{result.band}</b></div></header>
         <p className="readiness-result-note">This is an impact-readiness assessment. It does not say the charity is SORP compliant.</p>
         <div className="readiness-result-sections">{result.sectionScores.map((section) => <article key={section.section}><div><h3>{section.label}</h3><strong>{section.score}</strong></div><i><b style={{ width: `${section.score}%` }} /></i><p>{section.narrative}</p></article>)}</div>
         <div className="readiness-result-grid"><ResultList title="What looks strong" items={result.strong} empty="No clear strength has been evidenced yet." /><ResultList title="What needs attention" items={result.attention} empty="No immediate weaker area was identified." /><ResultList title="MUST areas" items={result.must} empty="No applicable MUST area was flagged by this initial assessment." /><ResultList title="SHOULD opportunities" items={result.should} empty="No weaker SHOULD opportunity was identified." /><ResultList title="MAY options" items={result.may} empty="No additional MAY option was identified." /><ResultList title="JUDGEMENT areas" items={result.judgement} empty="No specific judgement area was flagged, although context still matters." /><ResultList title="Additional SORP checks" items={result.additionalChecks} empty="No additional check was triggered by the information supplied." /><ResultList title="Three priority actions" items={result.priorities} empty="Add more context to build practical priorities." /></div>

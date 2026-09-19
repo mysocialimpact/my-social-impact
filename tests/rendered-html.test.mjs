@@ -153,6 +153,15 @@ test("server-renders the conversational SORP readiness workspace", async () => {
   assert.match(html, /Start the conversation/i);
   assert.match(html, /You don’t need to know the technical language/i);
   assert.match(html, /whether SORP appears to apply/i);
+
+  const source = await readFile(new URL("../app/sorp-readiness-conversation.tsx", import.meta.url), "utf8");
+  assert.match(source, /Let’s work out where you stand\./);
+  assert.match(source, /what’s the charity called, and in your own words, what does it actually do\?/);
+  assert.match(source, /Don’t worry about giving me the formal charitable objects/);
+  assert.match(source, /charityName/);
+  assert.match(source, /readiness-message-heading/);
+  assert.match(source, /readiness-message-list/);
+  assert.doesNotMatch(source, /where it is registered, its reporting year, approximate income/);
 });
 
 test("server-renders the Community Mapping product page", async () => {
