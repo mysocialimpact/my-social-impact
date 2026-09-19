@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { Footer, RevealObserver, SiteHeader } from "./site-shell";
 import { SorpSnapshotLink } from "./sorp-snapshot-link";
 
-const conversationUrl = "https://sorp2026.mysocialimpact.org";
+const conversationUrl = "/are-you-sorp-ready/conversation";
 
 const sectionLinks = [
   ["why-now", "Why now"],
@@ -98,7 +98,7 @@ export function SorpReadyPage() {
               <p>Find out where you stand — for free — and start getting ready before year-end.</p>
               <div className="sorp-ready-actions">
                 <SorpSnapshotLink className="sorp-ready-action is-primary" arrow="→" />
-                <a className="sorp-ready-action" href={conversationUrl} target="_blank" rel="noreferrer">Talk it through <span>↗</span></a>
+                <Link className="sorp-ready-action" href={conversationUrl}>Talk it through <span>→</span></Link>
               </div>
             </div>
           </div>
@@ -138,7 +138,7 @@ export function SorpReadyPage() {
               <div className="sorp-route-top"><span>Route 02</span><strong>Have a conversation<br />instead</strong></div>
               <h3>Talk it<br />through</h3>
               <p>Prefer to explain things in your own words? Our SORP assistant covers the same areas conversationally, explains relevant requirements as you go and asks follow-up questions where useful.</p>
-              <a href={conversationUrl} target="_blank" rel="noreferrer">Start a conversation <span>↗</span></a>
+              <Link href={conversationUrl}>Start the conversation <span>→</span></Link>
             </article>
           </div>
 
@@ -204,7 +204,7 @@ export function SorpReadyPage() {
             <div className="sorp-result-findings">{["What looks strong", "What needs attention", "MUST requirements to address", "SHOULD opportunities", "MAY options", "Areas requiring judgement"].map((item, index) => <span key={item}><b>0{index + 1}</b>{item}</span>)}</div>
             <small>Illustrative front-end preview · not an assessment result</small>
           </div>
-          <div className="sorp-continue" data-reveal><div><p>Want to explore your result?</p><h3>Continue with the SORP assistant.</h3><span>Your result is saved on this device ready for a future direct handoff. For now, the assistant opens separately and can help you explore the relevant requirements and judgement areas.</span></div><a href={conversationUrl} target="_blank" rel="noreferrer">Talk through my result <span>↗</span></a></div>
+          <div className="sorp-continue" data-reveal><div><p>Want to explore your result?</p><h3>Continue with the SORP assistant.</h3><span>If you have completed the Snapshot on this device, the readiness conversation can use it immediately and focus on the areas where richer context will help.</span></div><Link href={`${conversationUrl}?from=snapshot`}>Talk through my result <span>→</span></Link></div>
         </section>
 
         <section className="sorp-review sorp-section" id="review">
@@ -231,7 +231,7 @@ export function SorpReadyPage() {
           ].map(([name, copy, href], index) => href.startsWith("/") ? <Link href={href} key={name} data-reveal><span>0{index + 1}</span><h3>{name}</h3><p>{copy}</p><strong>Explore <b>→</b></strong></Link> : <a href={href} key={name} data-reveal><span>0{index + 1}</span><h3>{name}</h3><p>{copy}</p><strong>Talk to us <b>→</b></strong></a>)}</div>
         </section>
 
-        <section className="sorp-final" data-reveal><p>SORP 2026 · Impact reporting</p><h2>This looks useful.<br /><em>I should probably deal with this now.</em></h2><div><SorpSnapshotLink arrow="→" /><a href={conversationUrl} target="_blank" rel="noreferrer">Talk it through <span>↗</span></a></div></section>
+        <section className="sorp-final" data-reveal><p>SORP 2026 · Impact reporting</p><h2>This looks useful.<br /><em>I should probably deal with this now.</em></h2><div><SorpSnapshotLink arrow="→" /><Link href={conversationUrl}>Talk it through <span>→</span></Link></div></section>
       </main>
       <Footer />
     </>

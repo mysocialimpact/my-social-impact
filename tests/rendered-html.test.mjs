@@ -63,7 +63,7 @@ test("server-renders the Are You SORP Ready product page", async () => {
   assert.match(html, /href="\/are-you-sorp-ready\/snapshot"/i);
   assert.doesNotMatch(html, /A useful result\. No account\. No email gate\./i);
   assert.doesNotMatch(html, /id="snapshot-tool"/i);
-  assert.match(html, /https:\/\/sorp2026\.mysocialimpact\.org/i);
+  assert.match(html, /href="\/are-you-sorp-ready\/conversation"/i);
   assert.match(html, /MUST \/ SHOULD \/ MAY/i);
   assert.match(html, /Judgement is an MSI explanatory category/i);
   assert.match(html, /Up to £500,000/i);
@@ -98,6 +98,18 @@ test("server-renders the dedicated SORP results workspace", async () => {
   assert.match(html, /<title>Your SORP Ready Result \| My Social Impact<\/title>/i);
   assert.match(html, /Loading your result/i);
   assert.match(html, /Your impact-readiness result/i);
+});
+
+test("server-renders the conversational SORP readiness workspace", async () => {
+  const response = await render("/are-you-sorp-ready/conversation");
+  assert.equal(response.status, 200);
+
+  const html = await response.text();
+  assert.match(html, /<title>SORP Readiness Conversation \| My Social Impact<\/title>/i);
+  assert.match(html, /Let’s work out/i);
+  assert.match(html, /how ready you are/i);
+  assert.match(html, /Start the conversation/i);
+  assert.match(html, /You don’t need to know the technical language/i);
 });
 
 test("server-renders the Community Mapping product page", async () => {

@@ -1,0 +1,323 @@
+"use client";
+
+import { FormEvent, useEffect, useRef, useState } from "react";
+import { additionalChecks, coreQuestions, readinessStages, type AdditionalAnswerValue, type AnswerValue, type AssessmentSetup } from "./sorp-questionnaire";
+
+const SNAPSHOT_RESULT_KEY = "msi-sorp-readiness-result-v2";
+const CONVERSATION_KEY = "msi-sorp-readiness-conversation-v1";
+
+type Citation = { reference: string; module: string; page: number; extract: string };
+type FieldState = { answer: AnswerValue | null; evidence: string; confidence: number };
+type AdditionalState = { answer: AdditionalAnswerValue | null; evidence: string; relevant: boolean };
+
+type ReadinessState = {
+  setup: AssessmentSetup;
+  uncertainty: string[];
+  fields: Record<string, FieldState>;
+  additional: Record<string, AdditionalState>;
+  completedStages: number[];
+  currentStage: number;
+  score: number | null;
+  inheritedSnapshot: boolean;
+};
+
+type Result = {
+  score: number;
+  band: string;
+  overview: string;
+  sectionScores: { section: string; label: string; score: number; narrative: string }[];
+  strong: string[];
+  attention: string[];
+  must: string[];
+  should: string[];
+  may: string[];
+  judgement: string[];
+  additionalChecks: string[];
+  priorities: string[];
+};
+
+type Message = {
+  role: "user" | "assistant";
+  content: string;
+  label?: "MUST" | "SHOULD" | "MAY" | "JUDGEMENT" | "MSI READINESS" | null;
+  citations?: Citation[];
+};
+
+type ReadinessResponse = {
+  state: ReadinessState;
+  assistant: { message: string; label: Message["label"]; citations: Citation[]; responseKind: "assessment" | "detour" | "result" };
+  result: Result | null;
+};
+
+const emptySetup: AssessmentSetup = { role: "", jurisdiction: "", startDate: "", endDate: "", accounts: "", income: "", nearBoundary: false, activities: [] };
+
+function blankState(): ReadinessState {
+  return {
+    setup: emptySetup,
+    uncertainty: [],
+    fields: Object.fromEntries(coreQuestions.map((question) => [String(question.id), { answer: null, evidence: "", confidence: 0 }])),
+    additional: Object.fromEntries(additionalChecks.map((check) => [check.id, { answer: null, evidence: "", relevant: false }])),
+    completedStages: [],
+    currentStage: 1,
+    score: null,
+    inheritedSnapshot: false,
+  };
+}
+
+function stateFromSnapshot(raw: string): { state: ReadinessState; result: Result | null } | null {
+  try {
+    const snapshot = JSON.parse(raw) as {
+      setup?: AssessmentSetup;
+      coreQuestions?: { id: number; answer?: AnswerValue; context?: string }[];
+      additionalChecks?: { id: string; answer?: AdditionalAnswerValue }[];
+      result?: { score?: number; band?: string; sectionScores?: { section: string; label: string; score: number }[]; flags?: { must?: string[]; should?: string[]; may?: string[]; judgement?: string[] } };
+    };
+    if (!snapshot.setup || !snapshot.coreQuestions?.length || typeof snapshot.result?.score !== "number") return null;
+    const state = blankState();
+    state.setup = { ...emptySetup, ...snapshot.setup };
+    state.inheritedSnapshot = true;
+    state.completedStages = [1, 2, 3, 4, 5, 6];
+    state.currentStage = 6;
+    state.score = snapshot.result.score;
+    for (const field of snapshot.coreQuestions) {
+      state.fields[String(field.id)] = { answer: field.answer ?? null, evidence: field.context ?? "Snapshot answer", confidence: field.context ? .95 : .8 };
+    }
+    for (const check of snapshot.additionalChecks ?? []) {
+      state.additional[check.id] = { answer: check.answer ?? null, evidence: "Snapshot answer", relevant: true };
+    }
+    const sectionScores = snapshot.result.sectionScores ?? [];
+    const result: Result = {
+      score: snapshot.result.score,
+      band: snapshot.result.band ?? "Initial readiness picture",
+      overview: "This is your Quick Snapshot result. The conversation can add context and nuance without asking all 15 questions again.",
+      sectionScores: sectionScores.map((section) => ({ ...section, narrative: "The conversation can add a more specific explanation of this area." })),
+      strong: sectionScores.filter((section) => section.score >= 70).map((section) => section.label),
+      attention: sectionScores.filter((section) => section.score < 60).map((section) => section.label),
+      must: snapshot.result.flags?.must ?? [],
+      should: snapshot.result.flags?.should ?? [],
+      may: snapshot.result.flags?.may ?? [],
+      judgement: snapshot.result.flags?.judgement ?? [],
+      additionalChecks: (snapshot.additionalChecks ?? []).map((check) => additionalChecks.find((item) => item.id === check.id)?.title ?? check.id),
+      priorities: [],
+    };
+    return { state, result };
+  } catch {
+    return null;
+  }
+}
+
+function Paragraphs({ text }: { text: string }) {
+  return <>{text.split(/\n{2,}/).filter(Boolean).map((paragraph, index) => <p key={`${index}-${paragraph.slice(0, 24)}`}>{paragraph}</p>)}</>;
+}
+
+function recordingTime(seconds: number) {
+  return `${Math.floor(seconds / 60).toString().padStart(2, "0")}:${(seconds % 60).toString().padStart(2, "0")}`;
+}
+
+function ResultList({ title, items, empty }: { title: string; items: string[]; empty: string }) {
+  return <article><h4>{title}</h4>{items.length ? <ul>{items.map((item) => <li key={item}>{item}</li>)}</ul> : <p>{empty}</p>}</article>;
+}
+
+export function SorpReadinessConversation() {
+  const [started, setStarted] = useState(false);
+  const [state, setState] = useState<ReadinessState>(() => blankState());
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [composer, setComposer] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [result, setResult] = useState<Result | null>(null);
+  const [snapshotAvailable, setSnapshotAvailable] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
+  const [recordingState, setRecordingState] = useState<"idle" | "recording" | "transcribing">("idle");
+  const [recordingSeconds, setRecordingSeconds] = useState(0);
+  const composerRef = useRef<HTMLTextAreaElement>(null);
+  const threadEndRef = useRef<HTMLDivElement>(null);
+  const recorderRef = useRef<MediaRecorder | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    const restore = window.setTimeout(() => {
+      try {
+        const wantsSnapshot = new URLSearchParams(window.location.search).get("from") === "snapshot";
+        const snapshotRaw = window.localStorage.getItem(SNAPSHOT_RESULT_KEY);
+        const snapshot = snapshotRaw ? stateFromSnapshot(snapshotRaw) : null;
+        setSnapshotAvailable(Boolean(snapshot));
+        if (wantsSnapshot && snapshot) {
+          setState(snapshot.state);
+          setResult(snapshot.result);
+          setStarted(true);
+          setMessages([{ role: "assistant", content: `I’ve got your Snapshot, so we don’t need to start again.\n\nYour initial score is ${snapshot.result?.score}/100. I’ll use those answers and focus on the areas where richer context would genuinely improve the result.\n\nTell me what feels least certain—or ask me about any part of your result.` }]);
+        } else {
+          const saved = window.localStorage.getItem(CONVERSATION_KEY);
+          if (saved) {
+            const parsed = JSON.parse(saved) as { started?: boolean; state?: ReadinessState; messages?: Message[]; result?: Result | null };
+            if (parsed.started && parsed.state && parsed.messages?.length) {
+              setStarted(true);
+              setState(parsed.state);
+              setMessages(parsed.messages);
+              setResult(parsed.result ?? null);
+            }
+          }
+        }
+      } catch {
+        setError("We could not restore the local conversation, so you can start cleanly.");
+      }
+      setHydrated(true);
+    }, 0);
+    return () => window.clearTimeout(restore);
+  }, []);
+
+  useEffect(() => {
+    if (!hydrated || !started) return;
+    window.localStorage.setItem(CONVERSATION_KEY, JSON.stringify({ started, state, messages, result }));
+  }, [hydrated, started, state, messages, result]);
+
+  useEffect(() => {
+    threadEndRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }, [messages, busy, result]);
+
+  useEffect(() => () => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    streamRef.current?.getTracks().forEach((track) => track.stop());
+  }, []);
+
+  function startConversation(useSnapshot = false) {
+    if (useSnapshot) {
+      const raw = window.localStorage.getItem(SNAPSHOT_RESULT_KEY);
+      const snapshot = raw ? stateFromSnapshot(raw) : null;
+      if (snapshot) {
+        setState(snapshot.state);
+        setResult(snapshot.result);
+        setMessages([{ role: "assistant", content: `I’ve got your Snapshot, so we don’t need to start again.\n\nYour initial score is ${snapshot.result?.score}/100. I’ll focus on the weaker areas, uncertainty and any context that could change the interpretation.\n\nWhich part would you most like to talk through?` }]);
+        setStarted(true);
+        return;
+      }
+    }
+    setState(blankState());
+    setResult(null);
+    setMessages([{ role: "assistant", content: "Tell me about your charity in your own words—where it is registered, its reporting year, approximate income, and what it is trying to achieve.\n\nShare whatever you know. You do not need the technical language, and it is fine to be unsure." }]);
+    setStarted(true);
+  }
+
+  async function submit(event: FormEvent) {
+    event.preventDefault();
+    const value = composer.trim();
+    if (!value || busy || recordingState !== "idle") return;
+    const userMessage: Message = { role: "user", content: value };
+    const nextMessages = [...messages, userMessage];
+    setMessages(nextMessages);
+    setComposer("");
+    setBusy(true);
+    setError("");
+    try {
+      const response = await fetch("/api/readiness", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ message: value, state, history: nextMessages.slice(-12).map(({ role, content }) => ({ role, content })) }),
+      });
+      const data = await response.json() as ReadinessResponse & { error?: string };
+      if (!response.ok) throw new Error(data.error || "The readiness conversation is temporarily unavailable.");
+      setState(data.state);
+      setMessages((current) => [...current, { role: "assistant", content: data.assistant.message, label: data.assistant.label, citations: data.assistant.citations }]);
+      if (data.result) setResult(data.result);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "The readiness conversation is temporarily unavailable.");
+    } finally {
+      setBusy(false);
+      window.setTimeout(() => composerRef.current?.focus(), 60);
+    }
+  }
+
+  async function startRecording() {
+    setError("");
+    try {
+      if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") throw new Error("Voice recording is not available in this browser. You can still type your answer.");
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
+      const preferred = ["audio/webm;codecs=opus", "audio/mp4", "audio/webm"].find((type) => MediaRecorder.isTypeSupported(type));
+      const recorder = preferred ? new MediaRecorder(stream, { mimeType: preferred }) : new MediaRecorder(stream);
+      recorderRef.current = recorder;
+      chunksRef.current = [];
+      recorder.ondataavailable = (event) => { if (event.data.size) chunksRef.current.push(event.data); };
+      recorder.onstop = () => void transcribe(recorder.mimeType || preferred || "audio/webm");
+      recorder.start(250);
+      setRecordingSeconds(0);
+      setRecordingState("recording");
+      timerRef.current = setInterval(() => setRecordingSeconds((seconds) => seconds + 1), 1000);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "We could not start the microphone.");
+    }
+  }
+
+  function stopRecording() {
+    recorderRef.current?.stop();
+    if (timerRef.current) clearInterval(timerRef.current);
+    timerRef.current = null;
+    setRecordingState("transcribing");
+  }
+
+  async function transcribe(mimeType: string) {
+    streamRef.current?.getTracks().forEach((track) => track.stop());
+    streamRef.current = null;
+    try {
+      const audio = new Blob(chunksRef.current, { type: mimeType });
+      const form = new FormData();
+      form.append("audio", audio, mimeType.includes("mp4") ? "readiness.m4a" : "readiness.webm");
+      const response = await fetch("/api/readiness/transcribe", { method: "POST", body: form });
+      const data = await response.json() as { transcript?: string; error?: string };
+      if (!response.ok || !data.transcript) throw new Error(data.error || "We could not transcribe that recording.");
+      setComposer((current) => [current.trim(), data.transcript?.trim()].filter(Boolean).join(" "));
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "We could not transcribe that recording.");
+    } finally {
+      chunksRef.current = [];
+      setRecordingState("idle");
+      window.setTimeout(() => composerRef.current?.focus(), 60);
+    }
+  }
+
+  const completedCount = state.completedStages.length;
+  const currentStage = Math.min(Math.max(state.currentStage || 1, 1), 6);
+
+  if (!started) return <section className="readiness-intro">
+    <p className="readiness-kicker">SORP 2026<br /><strong>Impact readiness</strong></p>
+    <h1>Let’s work out<br />how ready you are.</h1>
+    <div className="readiness-intro-copy"><p>I’ll ask enough to understand your charity, explain relevant SORP requirements as we go, and build the same readiness picture as our Quick Snapshot.</p><p>You don’t need to know the technical language.</p><p>Just answer naturally.</p></div>
+    <div className="readiness-intro-actions"><button type="button" onClick={() => startConversation(false)}>Start the conversation <span>→</span></button>{snapshotAvailable && <button type="button" className="is-secondary" onClick={() => startConversation(true)}>Use my completed Snapshot <span>→</span></button>}</div>
+    <p className="readiness-intro-note">Your progress is saved only in this browser. This is an impact-readiness assessment, not a declaration of SORP compliance.</p>
+  </section>;
+
+  return <div className="readiness-chat">
+    <header className="readiness-progress">
+      <div><span>SORP readiness</span><strong>{readinessStages[currentStage - 1]}</strong><small>{completedCount} of 6 stages complete</small></div>
+      <div className="readiness-progress-track" aria-label={`${completedCount} of 6 assessment stages complete`}>{readinessStages.map((stage, index) => <span key={stage} className={state.completedStages.includes(index + 1) ? "is-complete" : index + 1 === currentStage ? "is-current" : ""}><i />{index < 5 && <b />}</span>)}</div>
+    </header>
+
+    <div className="readiness-thread" aria-live="polite">
+      {messages.map((message, index) => <article key={`${index}-${message.content.slice(0, 24)}`} className={`readiness-message is-${message.role}`}>
+        <span>{message.role === "user" ? "You" : "SORP 2026 · Impact readiness"}</span>
+        {message.label && <strong className={`readiness-label is-${message.label.toLowerCase().replace(" ", "-")}`}>{message.label}</strong>}
+        <div><Paragraphs text={message.content} /></div>
+        {message.citations?.length ? <details><summary>Source</summary><div>{message.citations.map((citation) => <article key={citation.reference}><strong>SORP 2026 · paragraph {citation.reference}</strong><small>{citation.module} · PDF page {citation.page}</small><p>{citation.extract}</p></article>)}</div></details> : null}
+      </article>)}
+      {busy && <article className="readiness-message is-assistant is-loading"><span>SORP 2026 · Impact readiness</span><div><p>Understanding what you’ve said and checking the relevant SORP evidence…</p></div></article>}
+      {error && <div className="readiness-error" role="alert"><strong>That step did not complete.</strong><p>{error}</p><button type="button" onClick={() => { setError(""); composerRef.current?.focus(); }}>Try again</button></div>}
+      {result && messages.at(-1)?.role === "assistant" && state.score !== null && <section className="readiness-result">
+        <header><div><p>Your SORP 2026</p><h2>Impact readiness</h2><span>{result.overview}</span></div><div><strong>{result.score}</strong><span>/ 100</span><b>{result.band}</b></div></header>
+        <p className="readiness-result-note">This is an impact-readiness assessment. It does not say the charity is SORP compliant.</p>
+        <div className="readiness-result-sections">{result.sectionScores.map((section) => <article key={section.section}><div><h3>{section.label}</h3><strong>{section.score}</strong></div><i><b style={{ width: `${section.score}%` }} /></i><p>{section.narrative}</p></article>)}</div>
+        <div className="readiness-result-grid"><ResultList title="What looks strong" items={result.strong} empty="No clear strength has been evidenced yet." /><ResultList title="What needs attention" items={result.attention} empty="No immediate weaker area was identified." /><ResultList title="MUST areas" items={result.must} empty="No applicable MUST area was flagged by this initial assessment." /><ResultList title="SHOULD opportunities" items={result.should} empty="No weaker SHOULD opportunity was identified." /><ResultList title="MAY options" items={result.may} empty="No additional MAY option was identified." /><ResultList title="JUDGEMENT areas" items={result.judgement} empty="No specific judgement area was flagged, although context still matters." /><ResultList title="Additional SORP checks" items={result.additionalChecks} empty="No additional check was triggered by the information supplied." /><ResultList title="Three priority actions" items={result.priorities} empty="Add more context to build practical priorities." /></div>
+        <aside className="readiness-human-review"><div><span>Want a human view?</span><h3>SORP 2026<br />Impact Readiness Review</h3><p>£50 · 60 minutes</p></div><div><p>When you arrange the review, you can share this readiness assessment and conversation beforehand, so you won’t need to repeat everything.</p><p>You can also optionally send your latest Trustees’ Annual Report and/or latest Impact Report.</p><ul><li>Your readiness</li><li>Gaps</li><li>Judgement areas</li><li>Practical next steps</li><li>Opportunities beyond minimum compliance</li></ul><strong>The £50 is credited against subsequent MSI project work.</strong><a href="/are-you-sorp-ready#review">Explore the £50 review <span>→</span></a></div></aside>
+      </section>}
+      <div ref={threadEndRef} />
+    </div>
+
+    <form className="readiness-composer" onSubmit={submit}>
+      <label htmlFor="readiness-answer">Answer naturally—or ask a SORP question at any point.</label>
+      <textarea ref={composerRef} id="readiness-answer" rows={3} value={composer} onChange={(event) => setComposer(event.target.value)} placeholder="Type or say what you know…" maxLength={4000} />
+      <div><button type="button" className="readiness-mic" onClick={recordingState === "recording" ? stopRecording : () => void startRecording()} disabled={busy || recordingState === "transcribing"}>{recordingState === "recording" ? `Stop · ${recordingTime(recordingSeconds)}` : recordingState === "transcribing" ? "Transcribing…" : "Use microphone"}</button><button type="submit" disabled={busy || composer.trim().length < 2 || recordingState !== "idle"}>{busy ? "Understanding…" : result ? "Keep talking" : "Continue"} <span>→</span></button></div>
+    </form>
+  </div>;
+}

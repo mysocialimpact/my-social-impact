@@ -8,8 +8,10 @@ import {
   coreQuestions,
   eligibilityFor,
   relevantAdditionalChecks,
+  readinessStages,
   scoreForAnswer,
   sectionLabels,
+  stageForQuestion,
   tierFromSetup,
   tierLabel,
   type AdditionalAnswerValue,
@@ -48,8 +50,6 @@ const emptySetup: Setup = {
   activities: [],
 };
 
-const stages = ["Does it apply?", "About you", "Readiness", "Extra checks", "Result"];
-
 const activityOptions = [
   ["volunteers", "Volunteers"],
   ["grant_making", "Grant-making"],
@@ -61,12 +61,11 @@ const activityOptions = [
   ["not_sure", "Not sure"],
 ] as const;
 
-function stageFor(mode: Mode) {
-  if (["welcome", "role", "location", "period", "accounts", "eligibility"].includes(mode)) return 1;
-  if (["income", "activities", "context"].includes(mode)) return 2;
-  if (mode === "core") return 3;
-  if (["extras_intro", "extra"].includes(mode)) return 4;
-  return 5;
+function stageFor(mode: Mode, coreIndex: number) {
+  if (["welcome", "role", "location", "period", "accounts", "eligibility", "income", "activities", "context"].includes(mode)) return 1;
+  if (mode === "core") return stageForQuestion(coreQuestions[coreIndex] ?? coreQuestions[0]);
+  if (["extras_intro", "extra"].includes(mode)) return 6;
+  return 7;
 }
 
 function classLabel(classification: Classification) {
@@ -80,8 +79,8 @@ function formatDate(value: string) {
 
 function StageProgress({ current }: { current: number }) {
   return (
-    <ol className="sorp-tool-progress" aria-label={`Assessment stage ${current} of 5`}>
-      {stages.map((label, index) => <li key={label} className={index + 1 === current ? "is-current" : index + 1 < current ? "is-complete" : ""} aria-current={index + 1 === current ? "step" : undefined}><span>0{index + 1}</span>{label}</li>)}
+    <ol className="sorp-tool-progress" aria-label={current > 6 ? "All six assessment stages complete" : `Assessment stage ${current} of 6`}>
+      {readinessStages.map((label, index) => <li key={label} className={index + 1 === current ? "is-current" : index + 1 < current ? "is-complete" : ""} aria-current={index + 1 === current ? "step" : undefined}><span>0{index + 1}</span>{label}</li>)}
     </ol>
   );
 }
@@ -121,7 +120,7 @@ export function SorpAssessment({ view = "snapshot" }: { view?: "snapshot" | "res
   const [saveNote, setSaveNote] = useState("");
 
   const extras = useMemo(() => relevantAdditionalChecks(setup), [setup]);
-  const stage = stageFor(mode);
+  const stage = stageFor(mode, coreIndex);
   const tier = tierFromSetup(setup);
   const eligibility = eligibilityFor(setup);
 
@@ -268,16 +267,16 @@ export function SorpAssessment({ view = "snapshot" }: { view?: "snapshot" | "res
   const currentQuestion = coreQuestions[coreIndex];
   const currentExtra = extras[Math.min(extraIndex, Math.max(extras.length - 1, 0))];
   const persistentStatus = mode === "core" && currentQuestion
-    ? `Readiness · Question ${currentQuestion.id} of 15`
+    ? `${readinessStages[stage - 1]} · Question ${currentQuestion.id} of 15`
     : mode === "extra" && currentExtra
-      ? `Extra checks · Check ${extraIndex + 1} of ${extras.length}`
-      : mode === "result" ? "Your result" : mode === "welcome" ? "Impact readiness" : `${stages[stage - 1]} · Stage ${stage} of 5`;
+      ? `${readinessStages[5]} · Check ${extraIndex + 1} of ${extras.length}`
+      : mode === "result" ? "Your result" : mode === "welcome" ? "Impact readiness" : readinessStages[Math.min(stage, 6) - 1];
 
   return (
     <div className="sorp-tool" id="snapshot-tool">
       <div className="sorp-tool-shell">
         <header className="sorp-tool-header">
-          <div><span>SORP 2026 · Free snapshot</span><strong>{persistentStatus}</strong></div>
+          <div><span>{mode === "result" ? "YOUR RESULT" : `STAGE ${Math.min(stage, 6)} OF 6`}</span><strong>{persistentStatus}</strong></div>
         </header>
         {!(["welcome", "loading", "missing_result"].includes(mode)) && <StageProgress current={stage} />}
         {saveNote && <p className="sorp-save-note" role="status">{saveNote}</p>}
@@ -401,7 +400,7 @@ export function SorpAssessment({ view = "snapshot" }: { view?: "snapshot" | "res
             <article><h4>JUDGEMENT areas</h4>{judgementFlags.length ? <ul>{judgementFlags.map((item) => <li key={item}>{item}</li>)}</ul> : <p>No specific judgement flags were generated. Materiality, proportionality and evidence quality may still require human judgement.</p>}</article>
             <article><h4>Additional checks</h4>{extras.length ? <ul>{extras.map((check) => <li key={check.id}><strong>{check.title}:</strong> {answerOptions.find((option) => option.value === extraAnswers[check.id])?.label ?? (extraAnswers[check.id] === "not_applicable" ? "Not applicable" : "Not answered")}</li>)}</ul> : <p>No additional checks were triggered by the setup answers.</p>}</article>
           </div>
-          <div className="sorp-result-handoff"><div><span>Want to explore your result?</span><h4>Talk it through with our SORP assistant.</h4><p>It can help explore weaker answers, uncertainty, relevant MUST / SHOULD / MAY requirements and areas requiring judgement.</p><small>Your structured result is saved on this device ready for a future handoff. The current assistant will not receive it automatically yet.</small></div><a href="https://sorp2026.mysocialimpact.org" target="_blank" rel="noreferrer">Talk through my result <span>↗</span></a></div>
+          <div className="sorp-result-handoff"><div><span>Want to explore your result?</span><h4>Talk it through with our SORP assistant.</h4><p>It can help explore weaker answers, uncertainty, relevant MUST / SHOULD / MAY requirements and areas requiring judgement.</p><small>Your Snapshot will be carried into the conversation on this device, so you will not need to answer all 15 questions again.</small></div><a href="/are-you-sorp-ready/conversation?from=snapshot">Talk through my result <span>→</span></a></div>
           <Controls onBack={returnToLastQuestion} onExit={saveAndExit} onNext={() => router.push("/are-you-sorp-ready#review")} nextLabel="Explore the £50 review" />
         </section>}
       </div>

@@ -4,8 +4,10 @@ import test from "node:test";
 import {
   coreQuestions,
   eligibilityFor,
+  readinessStages,
   relevantAdditionalChecks,
   scoreForAnswer,
+  stageForQuestion,
   tierFromSetup,
   tierLabel,
 } from "../app/sorp-questionnaire.ts";
@@ -67,6 +69,18 @@ test("the main score always uses the same 15 core answers", () => {
   assert.equal(coreQuestions.length, 15);
 });
 
+test("the Snapshot and conversation share the six visible readiness stages", () => {
+  assert.deepEqual([...readinessStages], [
+    "Your SORP context",
+    "Objectives & activities",
+    "Achievements & performance",
+    "Plans for future periods",
+    "Trustees’ Annual Report readiness",
+    "Additional SORP checks",
+  ]);
+  assert.deepEqual(coreQuestions.map(stageForQuestion), [2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 4, 4, 4, 5, 5]);
+});
+
 test("SORP snapshot contains exactly five setup questions and transparent conditional checks", async () => {
   const source = await readFile(experiencePath, "utf8");
 
@@ -76,6 +90,7 @@ test("SORP snapshot contains exactly five setup questions and transparent condit
   assert.match(source, /Save &amp; exit/);
   assert.match(source, /\/are-you-sorp-ready\/results/);
   assert.match(source, /window\.localStorage\.setItem\(RESULT_KEY/);
-  assert.match(source, /The current assistant will not receive it automatically yet/);
+  assert.match(source, /Snapshot will be carried into the conversation/);
+  assert.match(source, /\/are-you-sorp-ready\/conversation\?from=snapshot/);
   assert.doesNotMatch(source, /email.*required|required.*email/i);
 });

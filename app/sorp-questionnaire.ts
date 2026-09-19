@@ -48,9 +48,22 @@ export const answerOptions: { value: AnswerValue; label: string; score: number }
 export const sectionLabels = {
   objectives: "Objectives & activities",
   achievements: "Achievements & performance",
-  learning: "Learning & future plans",
-  reporting: "Reporting readiness",
+  learning: "Plans for future periods",
+  reporting: "Trustees’ Annual Report readiness",
 } as const;
+
+export const readinessStages = [
+  "Your SORP context",
+  "Objectives & activities",
+  "Achievements & performance",
+  "Plans for future periods",
+  "Trustees’ Annual Report readiness",
+  "Additional SORP checks",
+] as const;
+
+export function stageForQuestion(question: CoreQuestion) {
+  return { objectives: 2, achievements: 3, learning: 4, reporting: 5 }[question.section];
+}
 
 const tiered = (tier1: Classification, tier2: Classification, tier3: Classification): Record<Tier, Classification> => ({ tier1, tier2, tier3 });
 
