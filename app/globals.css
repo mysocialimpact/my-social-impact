@@ -497,6 +497,7 @@ img { max-width: 100%; display: block; }
 .footer-address { grid-area: address; width: max-content; max-width: 100%; display: inline-block; padding-bottom: .22rem; border-bottom: 1px solid currentColor; font-size: .65rem; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; transition: color .3s ease; }
 .footer-registration { width: 100%; margin: .8rem 0 0; padding-top: .65rem; border-top: 1px solid rgba(255,255,255,.24); color: rgba(255,255,255,.65); font-size: .62rem; letter-spacing: .055em; line-height: 1.4; }
 .footer-registration strong { color: var(--white); letter-spacing: .09em; }
+.global-build-stamp { width: 100%; padding: .62rem var(--pad) calc(.62rem + env(safe-area-inset-bottom)); border-top: 1px solid rgba(255,255,255,.14); background: #0e0e0e; color: rgba(255,255,255,.5); font-family: var(--font-sans); font-size: .58rem; font-weight: 700; letter-spacing: .1em; line-height: 1.4; text-align: right; text-transform: uppercase; }
 
 .subpage { padding-top: 70px; }
 .page-hero { padding: clamp(8rem, 15vw, 14rem) var(--pad) clamp(5rem, 9vw, 8rem); border-bottom: 1px solid var(--line); position: relative; overflow: hidden; }

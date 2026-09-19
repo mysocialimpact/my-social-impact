@@ -64,6 +64,12 @@ test("server-renders the My Social Impact homepage", async () => {
   assert.doesNotMatch(html, /codex-preview|Your site is taking shape/i);
 });
 
+test("every page inherits the global build stamp", async () => {
+  const layout = await readFile(new URL("../app/layout.tsx", import.meta.url), "utf8");
+  assert.match(layout, /global-build-stamp/);
+  assert.match(layout, /BUILD 20260919\.2117 · 19 SEPTEMBER 2026 · 21:17 BST/);
+});
+
 test("global and page navigation share one responsive header offset", async () => {
   const css = await readFile(new URL("../app/globals.css", import.meta.url), "utf8");
   const shell = await readFile(new URL("../app/site-shell.tsx", import.meta.url), "utf8");
