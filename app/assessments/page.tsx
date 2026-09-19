@@ -4,7 +4,7 @@ import { Footer, RevealObserver, SiteHeader } from "../site-shell";
 import "./assessments.css";
 
 export const metadata: Metadata = {
-  title: "Start an Assessment",
+  title: "Explore Assessments",
   description: "Choose the My Social Impact assessment that fits where your organisation is now.",
 };
 
@@ -16,8 +16,8 @@ export default function AssessmentsPage() {
       <main className="assessment-hub">
         <header className="assessment-hub-intro" data-reveal>
           <p>My Social Impact assessments</p>
-          <h1>Start with<br />where you are.</h1>
-          <span>Our assessments give you a practical picture of where you stand — and what may be worth doing next.</span>
+          <h1>Which assessment<br />is right for you?</h1>
+          <span>Understand what each assessment is for before choosing where to begin.</span>
         </header>
 
         <section className="assessment-hub-options" aria-label="Choose an assessment">
@@ -25,13 +25,11 @@ export default function AssessmentsPage() {
             <header><span>01</span><p>Social Impact Maturity Assessment</p></header>
             <h2>How strong is your approach to social impact?</h2>
             <div className="assessment-choice-copy">
-              <p>Understand your current maturity across:</p>
+              <p>A broader assessment of how well your organisation understands, manages and improves social impact across:</p>
               <ul><li>Purpose</li><li>Leadership</li><li>Data</li><li>Delivery</li><li>Communications</li></ul>
-              <p>A structured starting point for organisations that want to understand, manage and improve their impact.</p>
             </div>
             <div className="assessment-choice-actions">
-              <a className="is-primary" href="https://platform.mysocialimpact.org/snapshot" target="_blank" rel="noreferrer">Start the Maturity Assessment <span>↗</span></a>
-              <Link href="/social-impact-excellence">Learn about Social Impact Excellence <span>→</span></Link>
+              <Link className="is-primary" href="/social-impact-excellence">Explore Social Impact Excellence <span>→</span></Link>
             </div>
           </article>
 
@@ -39,12 +37,11 @@ export default function AssessmentsPage() {
             <header><span>02</span><p>SORP 2026 Impact Readiness</p></header>
             <h2>Are you SORP ready?</h2>
             <div className="assessment-choice-copy">
-              <p>For UK charities preparing for the impact and narrative-reporting requirements of SORP 2026.</p>
-              <p>Take a quick Snapshot or talk it through conversationally with our SORP assistant.</p>
+              <p>For UK charities preparing for the impact-reporting requirements of SORP 2026.</p>
+              <p>Understand whether SORP applies, where you stand, and what may need attention.</p>
             </div>
             <div className="assessment-choice-actions">
-              <Link className="is-primary" href="/are-you-sorp-ready/snapshot">Check my SORP readiness <span>→</span></Link>
-              <Link href="/are-you-sorp-ready">Learn about Are You SORP Ready? <span>→</span></Link>
+              <Link className="is-primary" href="/are-you-sorp-ready">Explore SORP Readiness <span>→</span></Link>
             </div>
           </article>
         </section>

@@ -2623,19 +2623,19 @@ main > section,
   :root { --site-header-height: 112px; }
   .home-page .product-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); }
   .home-page .product-grid .product-card { grid-column: span 2; }
-  .home-page .product-grid .product-card:nth-child(4),
-  .home-page .product-grid .product-card:nth-child(5) { grid-column: span 3; border-top: 1px solid var(--line); }
-  .home-page .product-grid .product-card:nth-child(4) { border-left: 0; }
+  .home-page .product-grid .product-card:nth-child(3n + 1) { border-left: 0; }
+  .home-page .product-grid .product-card:nth-child(n + 4) { border-top: 1px solid var(--line); }
+  .home-page .product-grid .product-card:last-child:nth-child(3n + 1) { grid-column: 1 / -1; }
+  .home-page .product-grid .product-card:nth-last-child(2):nth-child(3n + 1),
+  .home-page .product-grid .product-card:nth-last-child(2):nth-child(3n + 1) + .product-card { grid-column: span 3; }
 }
 
 @media (min-width: 761px) and (max-width: 1100px) {
   .home-page .product-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .home-page .product-grid .product-card:nth-child(3) {
-    border-top: 1px solid var(--line);
-    border-left: 0;
-  }
-  .home-page .product-grid .product-card:nth-child(4) { border-top: 1px solid var(--line); }
-  .home-page .product-grid .product-card:nth-child(5) { grid-column: 1 / -1; border-top: 1px solid var(--line); border-left: 0; }
+  .home-page .product-grid .product-card { grid-column: span 1; }
+  .home-page .product-grid .product-card:nth-child(odd) { border-left: 0; }
+  .home-page .product-grid .product-card:nth-child(n + 3) { border-top: 1px solid var(--line); }
+  .home-page .product-grid .product-card:last-child:nth-child(odd) { grid-column: 1 / -1; }
 }
 
 /* Seven primary destinations need the established full menu at laptop widths. */
@@ -3124,12 +3124,13 @@ main > section,
 }
 
 /* Are You SORP Ready? — homepage product identity. */
-.product-mark.logo-sorp {
+.home-page .product-mark.logo-sorp {
   width: 100%;
-  min-height: 250px;
-  padding: clamp(1.4rem, 2.5vw, 2.5rem);
-  align-items: flex-end;
-  background: var(--yellow);
+  min-height: 220px;
+  padding: clamp(1.4rem, 2.5vw, 2.5rem) !important;
+  align-items: flex-end !important;
+  justify-content: flex-end;
+  background: var(--yellow) !important;
   border-top: 6px solid var(--orange);
 }
 .product-text-logo { color: var(--ink); font-family: var(--font-serif), Georgia, serif; font-size: clamp(2.8rem, 4.7vw, 5.2rem); font-weight: 500; letter-spacing: -.07em; line-height: .75; }
@@ -3139,6 +3140,6 @@ main > section,
 .sorp-product:hover .product-mark.logo-sorp { background: #ffcf17; }
 
 @media (max-width: 760px) {
-  .product-mark.logo-sorp { min-height: 220px; }
+  .home-page .product-mark.logo-sorp { min-height: 210px; }
   .product-text-logo { font-size: clamp(3.2rem, 15vw, 5rem); }
 }

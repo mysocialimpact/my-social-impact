@@ -108,13 +108,25 @@ const products: Product[] = [
     href: "/social-impact-excellence",
   },
   {
+    name: "Social Impact Claims Code",
+    kicker: "Core methodology",
+    logo: "/assets/social-impact-claims-code-transparent.png",
+    logoWidth: 1078,
+    logoHeight: 1090,
+    logoClass: "logo-square",
+    className: "claims-product",
+    lead: "Because good intentions don’t automatically make an impact claim a good one.",
+    copy: "A practical framework for making social impact claims clearer, more credible and easier to trust.",
+    href: "/social-impact-claims-code",
+  },
+  {
     name: "Are You SORP Ready?",
-    kicker: "Get ready for SORP 2026 impact reporting",
+    kicker: "SORP 2026 · Impact readiness",
     textLogo: "ARE YOU\nSORP READY?",
     logoClass: "logo-sorp",
     className: "sorp-product",
-    lead: "A free readiness tool for charities.",
-    copy: "Take a quick snapshot or talk it through with our SORP assistant. Understand what you MUST, SHOULD and MAY do — and where judgement is needed.",
+    lead: "SORP 2026 impact readiness for charities.",
+    copy: "Understand what you MUST, SHOULD and MAY do — and where judgement is needed.",
     href: "/are-you-sorp-ready",
   },
   {
@@ -154,30 +166,6 @@ const products: Product[] = [
     href: "/social-impact-report",
     secondaryHref: "/are-you-sorp-ready",
     secondaryLabel: "Are you SORP ready?",
-  },
-  {
-    name: "Social Impact Claims Code",
-    kicker: "The principles behind everything we do",
-    logo: "/assets/social-impact-claims-code-transparent.png",
-    logoWidth: 1078,
-    logoHeight: 1090,
-    logoClass: "logo-square",
-    className: "claims-product",
-    lead: "Because good intentions don’t automatically make an impact claim a good one.",
-    copy: "A practical framework for making social impact claims clearer, more credible and easier to trust.",
-    href: "/social-impact-claims-code",
-  },
-  {
-    name: "Festival Impact Reports",
-    kicker: "Impact for culture and events",
-    logo: "/assets/festival-impact-reports.svg",
-    logoWidth: 2400,
-    logoHeight: 988,
-    logoClass: "logo-festival",
-    className: "festival-product",
-    lead: "Helping festivals and cultural and community events understand the difference they make.",
-    copy: "We measure their economic, social and environmental impact. We have built a portal to make the before, during and after process faster and more efficient, from planning what to measure to organising evidence and producing the final report.",
-    href: "https://www.festivalimpact.org/",
   },
 ];
 
@@ -258,7 +246,7 @@ export function SiteHeader() {
       <Link href="/" className="header-brand" aria-label="My Social Impact home">
         <Image className="header-logo" src="/assets/my-social-impact-horizontal.png" alt="" width={1088} height={124} priority unoptimized />
       </Link>
-      <Link className="header-assessment-cta" href="/assessments"><span className="header-cta-desktop">Start an Assessment</span><span className="header-cta-mobile">Start an Assessment</span></Link>
+      <Link className="header-assessment-cta" href="/assessments"><span className="header-cta-desktop">Explore Assessments</span><span className="header-cta-mobile">Explore Assessments</span></Link>
       <button className={`menu-button ${open ? "is-open" : ""}`} onClick={() => setOpen((current) => !current)} aria-expanded={open} aria-controls="site-navigation" aria-label={open ? "Close menu" : "Open menu"}><span /><span /></button>
       <nav id="site-navigation" className={open ? "nav-open" : ""} aria-label="Main navigation">
         {navigation.map((item, index) => {

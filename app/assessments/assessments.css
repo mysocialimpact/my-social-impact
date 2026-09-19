@@ -1,4 +1,4 @@
-.assessment-hub { --hub-pad: clamp(1.25rem, 4vw, 4.5rem); padding-top: 112px; background: var(--paper); }
+.assessment-hub { --hub-pad: clamp(1.25rem, 4vw, 4.5rem); padding-top: var(--site-header-height); background: var(--paper); }
 .assessment-hub-intro { min-height: 55svh; padding: clamp(5rem, 9vw, 9rem) var(--hub-pad); display: grid; grid-template-columns: minmax(160px, .35fr) minmax(420px, 1.1fr) minmax(260px, .55fr); gap: clamp(2.5rem, 5vw, 6rem); align-items: start; border-bottom: 1px solid var(--ink); }
 .assessment-hub-intro > p { margin: .65rem 0 0; color: var(--orange); font-size: .75rem; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; }
 .assessment-hub-intro h1 { margin: 0; font-family: var(--font-serif), Georgia, serif; font-size: clamp(4.2rem, 7.5vw, 9rem); font-weight: 500; letter-spacing: -.065em; line-height: .86; text-transform: uppercase; }
@@ -25,7 +25,7 @@
 .assessment-hub-guidance p { max-width: 35rem; margin: 0; font-size: 1.02rem; line-height: 1.65; }
 
 @media (max-width: 1100px) {
-  .assessment-hub { padding-top: 70px; }
+  .assessment-hub { padding-top: var(--site-header-height); }
   .assessment-hub-intro { grid-template-columns: minmax(150px, .3fr) 1fr; }
   .assessment-hub-intro h1 { grid-column: 2; }
   .assessment-hub-intro > span { grid-column: 2; }

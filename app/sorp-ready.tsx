@@ -100,8 +100,7 @@ export function SorpReadyPage() {
               <p>For many charities, it puts greater emphasis on explaining the difference their work actually makes.</p>
               <div className="sorp-ready-excitement"><strong>We’re genuinely excited by that.</strong><span>Because understanding impact should not simply be something charities scramble to explain at year-end.</span></div>
               <div className="sorp-ready-actions">
-                <SorpSnapshotLink className="sorp-ready-action is-primary" startLabel="Start my SORP readiness" arrow="→" />
-                <Link className="sorp-ready-action" href={conversationUrl}>Talk it through <span>→</span></Link>
+                <a className="sorp-ready-action is-primary" href="#assessment">Choose how to check your readiness <span>→</span></a>
               </div>
             </div>
           </div>
@@ -132,16 +131,16 @@ export function SorpReadyPage() {
           <SectionHeading number="03" eyebrow="Choose how you think" title={<>Same assessment.<br />Two ways to do it.</>} />
           <div className="sorp-route-grid">
             <article className="sorp-route is-snapshot" data-reveal>
-              <div className="sorp-route-top"><span>Route 01</span><strong>15 core questions<br />Around 8 minutes</strong></div>
+              <div className="sorp-route-top"><span>Route 01</span><strong>15 structured questions<br />Around 8 minutes</strong></div>
               <h3>Quick<br />snapshot</h3>
               <p>For people who prefer a clear structure and want a quick picture of where they stand.</p>
-              <SorpSnapshotLink startLabel="Take the snapshot" />
+              <SorpSnapshotLink startLabel="Take the quick snapshot" />
             </article>
             <article className="sorp-route is-conversation" data-reveal>
               <div className="sorp-route-top"><span>Route 02</span><strong>Have a conversation<br />instead</strong></div>
               <h3>Talk it<br />through</h3>
-              <p>Prefer to explain things in your own words? Our SORP assistant covers the same areas conversationally, explains relevant requirements as you go and asks follow-up questions where useful.</p>
-              <Link href={conversationUrl}>Start the conversation <span>→</span></Link>
+              <p>Complete the same readiness assessment conversationally, with relevant requirements explained as you go.</p>
+              <Link href={conversationUrl}>Start a readiness conversation <span>→</span></Link>
             </article>
           </div>
 
@@ -244,7 +243,7 @@ export function SorpReadyPage() {
           ].map(([name, copy, href], index) => href.startsWith("/") ? <Link href={href} key={name} data-reveal><span>0{index + 1}</span><h3>{name}</h3><p>{copy}</p><strong>Explore <b>→</b></strong></Link> : <a href={href} key={name} data-reveal><span>0{index + 1}</span><h3>{name}</h3><p>{copy}</p><strong>Talk to us <b>→</b></strong></a>)}</div>
         </section>
 
-        <section className="sorp-final" data-reveal><p>SORP 2026 · Impact reporting</p><h2>This looks useful.<br /><em>I should probably deal with this now.</em></h2><div><SorpSnapshotLink startLabel="Start my SORP readiness" arrow="→" /><Link href={conversationUrl}>Talk it through <span>→</span></Link></div></section>
+        <section className="sorp-final" data-reveal><p>SORP 2026 · Impact reporting</p><h2>This looks useful.<br /><em>I should probably deal with this now.</em></h2><div><a href="#assessment">Choose how to check your readiness <span>→</span></a></div></section>
       </main>
       <Footer />
     </>

@@ -39,7 +39,13 @@ test("server-renders the My Social Impact homepage", async () => {
   assert.match(html, /href="\/social-impact-excellence"/i);
   assert.match(html, /href="\/are-you-sorp-ready"/i);
   assert.match(html, /Are You SORP Ready/i);
-  assert.ok(html.indexOf("Are You SORP Ready") < html.indexOf("Purpose Works"));
+  const productHtml = html.slice(html.indexOf('id="products"'), html.indexOf('id="values"'));
+  assert.ok(productHtml.indexOf("Social Impact Excellence") < productHtml.indexOf("Social Impact Claims Code"));
+  assert.ok(productHtml.indexOf("Social Impact Claims Code") < productHtml.indexOf("Are You SORP Ready"));
+  assert.ok(productHtml.indexOf("Are You SORP Ready") < productHtml.indexOf("Purpose Works"));
+  assert.ok(productHtml.indexOf("Purpose Works") < productHtml.indexOf("Community Mapping"));
+  assert.ok(productHtml.indexOf("Community Mapping") < productHtml.indexOf("Charity Impact Reports"));
+  assert.doesNotMatch(productHtml, /Festival Impact Reports/i);
   assert.match(html, /href="\/purpose-works"/i);
   assert.match(html, /href="\/community-mapping"/i);
   assert.match(html, /COMMUNITY MAPPING/i);
@@ -49,7 +55,7 @@ test("server-renders the My Social Impact homepage", async () => {
   assert.match(html, /THE IDEAS SHED LIMITED\./i);
   assert.match(html, /Registered in England and Wales · Company number 17380053/i);
   assert.match(html, /Start your Social Impact Maturity Assessment today/i);
-  assert.match(html, /Start an Assessment/i);
+  assert.match(html, /Explore Assessments/i);
   assert.match(html, /href="\/assessments"/i);
   assert.match(html, /href="https:\/\/platform\.mysocialimpact\.org\/snapshot"/i);
   assert.doesNotMatch(html, /id="ecosystem"/i);
@@ -74,6 +80,15 @@ test("global and page navigation share one responsive header offset", async () =
   assert.match(css, /\.section-navigation \{[\s\S]*?inset: var\(--site-header-height\) 0 auto;/);
   assert.match(css, /\.cir-subnav \{[^}]*inset: var\(--site-header-height\) 0 auto;/);
   for (const styles of productStyles) assert.match(styles, /(?:inset|top):\s*var\(--site-header-height\)/);
+});
+
+test("product grid expands incomplete rows without leaving empty holes", async () => {
+  const css = await readFile(new URL("../app/globals.css", import.meta.url), "utf8");
+
+  assert.match(css, /\.product-card:last-child:nth-child\(3n \+ 1\) \{ grid-column: 1 \/ -1; \}/);
+  assert.match(css, /\.product-card:nth-last-child\(2\):nth-child\(3n \+ 1\)[\s\S]*?grid-column: span 3;/);
+  assert.match(css, /\.product-card:last-child:nth-child\(odd\) \{ grid-column: 1 \/ -1; \}/);
+  assert.match(css, /\.home-page \.product-mark\.logo-sorp \{[\s\S]*?background: var\(--yellow\) !important;/);
 });
 
 test("shared top navigation includes every destination and a scrollable eight-item mobile menu", async () => {
@@ -123,8 +138,11 @@ test("server-renders the Are You SORP Ready product page", async () => {
   assert.match(html, /We’re genuinely excited by that/i);
   assert.match(html, /Same assessment/i);
   assert.match(html, /Two ways to do it/i);
-  assert.match(html, /15 core questions/i);
+  assert.match(html, /15 structured questions/i);
   assert.match(html, /href="\/are-you-sorp-ready\/snapshot"/i);
+  assert.match(html, /Take the quick snapshot/i);
+  assert.match(html, /Start a readiness conversation/i);
+  assert.match(html, /Choose how to check your readiness/i);
   assert.doesNotMatch(html, /A useful result\. No account\. No email gate\./i);
   assert.doesNotMatch(html, /id="snapshot-tool"/i);
   assert.match(html, /href="\/are-you-sorp-ready\/conversation"/i);
@@ -152,14 +170,16 @@ test("server-renders the simple assessment hub", async () => {
   assert.equal(response.status, 200);
 
   const html = await response.text();
-  assert.match(html, /<title>Start an Assessment \| My Social Impact<\/title>/i);
-  assert.match(html, /Start with[\s\S]*where you are/i);
+  assert.match(html, /<title>Explore Assessments \| My Social Impact<\/title>/i);
+  assert.match(html, /Which assessment[\s\S]*is right for you/i);
   assert.match(html, /Social Impact Maturity Assessment/i);
   assert.match(html, /Are you SORP ready/i);
-  assert.match(html, /Start the Maturity Assessment/i);
-  assert.match(html, /Check my SORP readiness/i);
-  assert.match(html, /href="https:\/\/platform\.mysocialimpact\.org\/snapshot"/i);
-  assert.match(html, /href="\/are-you-sorp-ready\/snapshot"/i);
+  assert.match(html, /Explore Social Impact Excellence/i);
+  assert.match(html, /Explore SORP Readiness/i);
+  assert.match(html, /href="\/social-impact-excellence"/i);
+  assert.match(html, /href="\/are-you-sorp-ready"/i);
+  assert.doesNotMatch(html, /href="https:\/\/platform\.mysocialimpact\.org\/snapshot"/i);
+  assert.doesNotMatch(html, /href="\/are-you-sorp-ready\/snapshot"/i);
 });
 
 test("server-renders the focused SORP snapshot workspace", async () => {
