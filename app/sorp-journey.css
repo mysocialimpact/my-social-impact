@@ -61,9 +61,11 @@
 .sorp-provisional-view > header span,.sorp-answer-proposal > span { display:block; color:#b83210; font-size:11px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; }
 .sorp-provisional-view h3 { margin:6px 0 0; font-family:var(--font-serif); font-size:clamp(25px,3vw,38px); font-weight:500; line-height:1.15; }
 .sorp-provisional-view > header > strong { padding:8px 10px; background:#eeeae2; font-size:11px; letter-spacing:.05em; text-transform:uppercase; white-space:nowrap; }
+.sorp-provisional-view > header > strong small { display:block; margin-bottom:3px; font-size:8px; opacity:.72; }
 .sorp-provisional-view > header > strong.is-high { background:#e7f0e7; color:#28633f; }
 .sorp-provisional-view > header > strong.is-low { background:#f5e9e3; color:#9e3217; }
 .sorp-provisional-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:18px; padding:22px 0; }
+.sorp-provisional-definition { margin:16px 0 0; color:#625c55; font-size:13px; line-height:1.5; }
 .sorp-provisional-grid article { margin:0; padding:0; border:0; background:transparent; }
 .sorp-provisional-grid h4,.sorp-answer-proposal h4 { margin:0 0 9px; font-size:12px; letter-spacing:.04em; text-transform:uppercase; }
 .sorp-provisional-grid ul { margin:0; padding-left:18px; }
@@ -131,6 +133,7 @@
 .readiness-composer.is-reviewing { padding-top:10px; }
 .readiness-composer.is-reviewing .sorp-bottom-navigation { margin-bottom:0; }
 .readiness-composer.is-reviewing > label { margin-top:10px; }
+.readiness-sign-in-link { appearance:none; padding:0; border:0; background:none; color:inherit; font:inherit; font-weight:800; text-decoration:underline; text-underline-offset:3px; cursor:pointer; }
 .sorp-save-dialog-backdrop { position:fixed; inset:0; z-index:1000; display:grid; place-items:center; padding:24px; background:rgba(17,16,15,.68); }
 .sorp-save-dialog { position:relative; width:min(100%,620px); max-height:calc(100svh - 48px); overflow:auto; padding:clamp(24px,4vw,46px); border:2px solid #11100f; background:#faf9f6; box-shadow:14px 14px 0 #11100f; }
 .sorp-save-dialog > span { color:#bd300c; font-size:12px; font-weight:800; letter-spacing:.07em; text-transform:uppercase; }
@@ -141,6 +144,7 @@
 .sorp-save-dialog input { min-height:50px; padding:10px 12px; border:1px solid #11100f; border-radius:0; background:#fff; font:inherit; }
 .sorp-save-dialog form > button { min-height:56px; padding:14px 16px; display:flex; justify-content:space-between; border:1px solid #11100f; background:#11100f; color:#fff; cursor:pointer; font-weight:800; text-transform:uppercase; }
 .sorp-save-dialog form > button:disabled { cursor:wait; opacity:.65; }
+.sorp-save-dialog form > .sorp-account-switch { min-height:auto; justify-content:flex-start; padding:2px 0; border:0; background:transparent; color:#11100f; font-size:12px; text-align:left; text-decoration:underline; text-underline-offset:3px; text-transform:none; }
 .sorp-save-close { position:absolute; top:14px; right:14px; width:40px; height:40px; border:1px solid #11100f; background:#fff; cursor:pointer; font-size:25px; line-height:1; }
 .sorp-save-security { margin:0; padding:12px; border-left:3px solid #34764f; background:#edf3e9; color:#305741; font-size:13px; line-height:1.5; }
 .sorp-save-error { margin:0; color:#9e3217; font-size:13px; }

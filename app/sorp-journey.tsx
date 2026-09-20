@@ -4,7 +4,7 @@ import "./sorp-journey.css";
 export type SorpBasis = { classification: string; explanation: string; interpretation?: string; citations: { reference: string; module: string; page: number; extract: string }[] };
 export type PublicReadinessFinding = { fieldId: number; suggestedAnswer: "yes" | "mostly" | "partly" | "not_yet" | "not_sure"; confidence: "high" | "medium" | "low"; reason: string; trusteesReportEvidence: string; widerImpactEvidence: string; sourceUrls: string[] };
 export type PublicReadinessReview = {
-  status: "reviewed" | "limited" | "unavailable"; overallConfidence: "high" | "medium" | "low";
+  status: "reviewed" | "limited" | "unavailable"; readinessStatus?: "likely_ready" | "partly_ready" | "not_yet_ready" | "unable_to_determine"; overallConfidence: "high" | "medium" | "low";
   strong: string[]; attention: string[]; unknown: string[];
   trusteesReport: { reviewed: boolean; title: string; url: string; period: string };
   impactReport: { found: boolean; title: string; url: string };

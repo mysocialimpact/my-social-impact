@@ -44,7 +44,7 @@ export type ReadinessState = {
   score: number | null;
   inheritedSnapshot: boolean;
   publicReviewAcknowledged: boolean;
-  impactReportInput: "none" | "awaiting_link" | "skipped";
+  impactReportInput: "none" | "awaiting_link" | "skipped" | "uploaded";
   pendingStructuredAnswer: PendingStructuredAnswer | null;
 };
 
@@ -97,6 +97,9 @@ type ReadinessResponse = {
   sessionId: string;
 };
 
+type SavedProgress = { started: boolean; state: ReadinessState; messages: Message[]; result: Result | null; intelligence: IntelligenceProvenance | null; sessionId: string; workflow: ReadinessWorkflow | null; checkpoints: ConversationCheckpoint[] };
+type ReadinessAccount = { id: string; email: string; name: string; position: string; organisation: string; currentStage: number; completedStages: number[]; createdAt: string; lastSavedAt: string };
+
 const emptySetup: AssessmentSetup = { role: "", jurisdiction: "", startDate: "", endDate: "", accounts: "", accountsReview: "", income: "", nearBoundary: false, activities: [] };
 
 function blankState(): ReadinessState {
@@ -147,6 +150,10 @@ function isDeterministicSetupReply(value: string, stepId = "") {
   if (stepId === "accounts") {
     return /(?:\baccrual|\breceipts?\s*(?:and|&)\s*payments?|^skip\b|^move on\b)/i.test(answer);
   }
+  if (stepId === "publicReview") {
+    return /^(?:add a public report link|skip adding|continue to)/i.test(answer);
+  }
+  if (stepId === "impactReportLink") return /^(?:skip adding|continue without)/i.test(answer);
   return false;
 }
 
@@ -276,15 +283,19 @@ function FindingList({ title, items, empty }: { title: string; items: string[]; 
 
 function ProvisionalReadinessView({ review }: { review: PublicReadinessReview }) {
   const sources = [review.trusteesReport.reviewed && review.trusteesReport.url ? { label: review.trusteesReport.title || "Trustees’ Annual Report", url: review.trusteesReport.url } : null, review.impactReport.found && review.impactReport.url ? { label: review.impactReport.title || "Impact Report", url: review.impactReport.url } : null].filter((source): source is { label: string; url: string } => Boolean(source));
-  if (!review.trusteesReport.reviewed) return <section className="sorp-provisional-view is-evidence-gap" aria-label="Public evidence gap">
-    <header><div><span>Primary source not found</span><h3>No meaningful provisional SORP view yet</h3></div><strong className="is-low">Low confidence</strong></header>
-    <p className="sorp-evidence-gap-copy">We couldn’t find or inspect the latest Trustees’ Annual Report. That is the primary source for judging SORP narrative readiness, so we won’t pretend the website alone gives us a reliable review.</p>
+  const readinessStatus = review.trusteesReport.reviewed ? review.readinessStatus || (review.attention.length ? "partly_ready" : review.strong.length ? "likely_ready" : "unable_to_determine") : "unable_to_determine";
+  const statusLabel = { likely_ready: "Likely ready", partly_ready: "Partly ready", not_yet_ready: "Not yet ready", unable_to_determine: "Unable to determine yet" }[readinessStatus];
+  if (!review.trusteesReport.reviewed) return <section className="sorp-provisional-view is-evidence-gap" aria-label="Provisional SORP readiness">
+    <header><div><span>Provisional SORP readiness</span><h3>{statusLabel}</h3></div><strong className="is-low"><small>Confidence</small>Low</strong></header>
+    <p className="sorp-provisional-definition"><strong>Status:</strong> what the public evidence currently lets us conclude. <strong>Confidence:</strong> how certain we are. Here, the primary evidence is missing.</p>
+    <p className="sorp-evidence-gap-copy">We couldn’t find or inspect the latest Trustees’ Annual Report. That is the mandatory narrative document and the primary source for this readiness view, so we won’t pretend the website alone gives us an answer.</p>
     <div className="sorp-public-evidence-split"><p><strong>Trustees’ Annual Report</strong><span>Not found or not inspectable from the public sources checked.</span></p><p><strong>Other public evidence</strong><span>{review.impactReport.found ? `${review.impactReport.title || "A separate Impact Report"} was found, but it cannot substitute for the Trustees’ Annual Report.` : review.websiteReviewed ? "We reviewed the website, but it cannot substitute for the Trustees’ Annual Report." : "No separate public Impact Report or Annual Review was found either."}</span></p></div>
     {sources.length ? <nav aria-label="Other public reports found">{sources.map((source) => <a key={source.url} href={source.url} target="_blank" rel="noreferrer">{source.label} ↗</a>)}</nav> : null}
     <p className="sorp-impact-report-offer"><strong>What happens next?</strong><span>Add a public report link if you have one, or continue without it. The assessment will still work from your answers, and the final report will clearly flag this evidence limitation.</span></p>
   </section>;
-  return <section className="sorp-provisional-view" aria-label="Provisional SORP readiness view">
-    <header><div><span>Based on what we can see publicly</span><h3>Provisional SORP readiness view</h3></div><strong className={`is-${review.overallConfidence}`}>{review.overallConfidence} confidence</strong></header>
+  return <section className="sorp-provisional-view" aria-label="Provisional SORP readiness">
+    <header><div><span>Provisional SORP readiness</span><h3>{statusLabel}</h3></div><strong className={`is-${review.overallConfidence}`}><small>Confidence</small>{review.overallConfidence}</strong></header>
+    <p className="sorp-provisional-definition"><strong>Status:</strong> our provisional answer based on what we can see publicly. <strong>Confidence:</strong> how certain that evidence makes us.</p>
     <div className="sorp-provisional-grid"><FindingList title="Already looks strong" items={review.strong} empty="Nothing is clear enough publicly to call strong yet." /><FindingList title="May need attention" items={review.attention} empty="No obvious concern was identified in the material reviewed." /><FindingList title="Cannot establish publicly" items={review.unknown} empty="No major public-evidence gap was identified." /></div>
     <div className="sorp-public-evidence-split"><p><strong>Trustees’ Annual Report</strong><span>{review.trusteesReport.reviewed ? [review.trusteesReport.title, review.trusteesReport.period].filter(Boolean).join(" · ") : "We could not review one confidently."}</span></p><p><strong>Wider impact evidence</strong><span>{review.impactReport.found ? review.impactReport.title || "A separate public impact report was found." : "We couldn’t find a public Impact Report or Annual Review."}</span></p></div>
     {sources.length ? <nav aria-label="Public reports reviewed">{sources.map((source) => <a key={source.url} href={source.url} target="_blank" rel="noreferrer">{source.label} ↗</a>)}</nav> : null}
@@ -326,10 +337,13 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
   const [recordingState, setRecordingState] = useState<"idle" | "recording" | "transcribing">("idle");
   const [recordingSeconds, setRecordingSeconds] = useState(0);
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
-  const [saveProfile, setSaveProfile] = useState({ name: "", position: "", email: "" });
+  const [saveProfile, setSaveProfile] = useState({ name: "", position: "", email: "", password: "", confirmPassword: "" });
+  const [account, setAccount] = useState<ReadinessAccount | null>(null);
+  const [accountMode, setAccountMode] = useState<"signup" | "login">("signup");
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
   const [saveError, setSaveError] = useState("");
   const composerRef = useRef<HTMLTextAreaElement>(null);
+  const reportInputRef = useRef<HTMLInputElement>(null);
   const threadEndRef = useRef<HTMLDivElement>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -375,7 +389,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
               setWorkflow(parsed.workflow ?? null);
               setIntelligence(parsed.workflow?.version === 2 ? parsed.intelligence ?? null : null);
               setSessionId(parsed.sessionId || newSessionId());
-              if (parsed.saveProfile) setSaveProfile(parsed.saveProfile);
+              if (parsed.saveProfile) setSaveProfile((current) => ({ ...current, ...parsed.saveProfile }));
               setCheckpoints(Array.isArray(parsed.checkpoints) ? parsed.checkpoints.map((checkpoint) => ({
                 ...checkpoint,
                 answerText: checkpoint.answerText || parsed.messages?.[checkpoint.messagesLength]?.content || "Saved answer",
@@ -392,9 +406,46 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
   }, [setupOnly, storageKey]);
 
   useEffect(() => {
+    if (!hydrated || setupOnly) return;
+    const abort = new AbortController();
+    void (async () => {
+      try {
+        const response = await fetch("/api/readiness-account", { cache: "no-store", signal: abort.signal });
+        if (!response.ok) return;
+        const data = await response.json() as { signedIn?: boolean; account?: ReadinessAccount; progress?: Partial<SavedProgress> };
+        if (!data.signedIn || !data.account) return;
+        setAccount(data.account);
+        setSaveProfile((current) => ({ ...current, name: data.account!.name, position: data.account!.position, email: data.account!.email }));
+        const saved = data.progress;
+        if (saved?.started && saved.state && saved.messages?.length) {
+          setStarted(true);
+          setState({ ...blankState(), ...saved.state, charityName: saved.state.charityName ?? "", contextEvidence: saved.state.contextEvidence ?? {} });
+          setMessages(saved.messages);
+          setResult(saved.result ?? null);
+          setWorkflow(saved.workflow ?? null);
+          setIntelligence(saved.intelligence ?? null);
+          setSessionId(saved.sessionId || newSessionId());
+          setCheckpoints(Array.isArray(saved.checkpoints) ? saved.checkpoints : []);
+        }
+      } catch (caught) {
+        if (!abort.signal.aborted) console.error("Saved SORP account could not be restored", caught);
+      }
+    })();
+    return () => abort.abort();
+  }, [hydrated, setupOnly]);
+
+  useEffect(() => {
     if (!hydrated || !started) return;
-    try { window.localStorage.setItem(storageKey, JSON.stringify({ started, state, messages, result, intelligence, sessionId, workflow, checkpoints, saveProfile })); } catch { queueMicrotask(() => setError("Your browser could not save this conversation. Keep this page open to retain your progress.")); }
+    try { window.localStorage.setItem(storageKey, JSON.stringify({ started, state, messages, result, intelligence, sessionId, workflow, checkpoints, saveProfile: { name: saveProfile.name, position: saveProfile.position, email: saveProfile.email } })); } catch { queueMicrotask(() => setError("Your browser could not save this conversation. Keep this page open to retain your progress.")); }
   }, [hydrated, started, state, messages, result, intelligence, sessionId, workflow, checkpoints, saveProfile, storageKey]);
+
+  useEffect(() => {
+    if (!hydrated || !started || !account || setupOnly) return;
+    const timer = window.setTimeout(() => {
+      void fetch("/api/readiness-account", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "save", progress: { started, state, messages, result, intelligence, sessionId, workflow, checkpoints } }) });
+    }, 900);
+    return () => window.clearTimeout(timer);
+  }, [hydrated, started, account, setupOnly, state, messages, result, intelligence, sessionId, workflow, checkpoints]);
 
   useEffect(() => {
     const restoreReviewPosition = (event: PopStateEvent) => {
@@ -445,17 +496,47 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
     setStarted(true);
   }
 
-  function submitSave(event: FormEvent) {
+  async function submitSave(event: FormEvent) {
     event.preventDefault();
     setSaveStatus("saving");
     setSaveError("");
     try {
-      window.localStorage.setItem(storageKey, JSON.stringify({ started, state, messages, result, intelligence, sessionId, workflow, checkpoints, saveProfile }));
+      const progress: SavedProgress = { started, state, messages, result, intelligence, sessionId, workflow, checkpoints };
+      let action: "signup" | "login" | "save" = account ? "save" : accountMode;
+      if (!account && action === "signup" && saveProfile.password !== saveProfile.confirmPassword) throw new Error("Those passwords do not match.");
+      const response = await fetch("/api/readiness-account", {
+        method: "POST", headers: { "content-type": "application/json" },
+        body: JSON.stringify(action === "save" ? { action, progress } : action === "signup" ? { action, name: saveProfile.name, position: saveProfile.position, email: saveProfile.email, password: saveProfile.password, progress } : { action, email: saveProfile.email, password: saveProfile.password }),
+      });
+      const data = await response.json() as { account?: ReadinessAccount; progress?: Partial<SavedProgress>; error?: string };
+      if (!response.ok || !data.account) throw new Error(data.error || "Your account could not be saved.");
+      setAccount(data.account);
+      if (action === "login") {
+        const saved = data.progress;
+        if (saved?.started && saved.state && saved.messages?.length) {
+          setStarted(true);
+          setState({ ...blankState(), ...saved.state, charityName: saved.state.charityName ?? "", contextEvidence: saved.state.contextEvidence ?? {} });
+          setMessages(saved.messages);
+          setResult(saved.result ?? null);
+          setWorkflow(saved.workflow ?? null);
+          setIntelligence(saved.intelligence ?? null);
+          setSessionId(saved.sessionId || newSessionId());
+          setCheckpoints(Array.isArray(saved.checkpoints) ? saved.checkpoints : []);
+        }
+      }
+      const storedProgress = action === "login" && data.progress?.started ? data.progress : progress;
+      window.localStorage.setItem(storageKey, JSON.stringify({ ...storedProgress, saveProfile: { name: saveProfile.name, position: saveProfile.position, email: saveProfile.email } }));
+      setSaveProfile((current) => ({ ...current, password: "", confirmPassword: "" }));
       setSaveStatus("saved");
-      window.setTimeout(() => window.location.assign("/are-you-sorp-ready?progress=saved"), 900);
-    } catch {
+      if (action === "login") {
+        setCompletionNotice("✓ Signed in. Your saved assessment has been restored.");
+        window.setTimeout(() => setSaveDialogOpen(false), 700);
+      } else {
+        window.setTimeout(() => window.location.assign("/are-you-sorp-ready?progress=saved"), 900);
+      }
+    } catch (caught) {
       setSaveStatus("idle");
-      setSaveError("This browser could not save your assessment. Keep this page open so your answers are not lost.");
+      setSaveError(caught instanceof Error ? caught.message : "Your account could not be saved. Your assessment is still open on this device.");
     }
   }
 
@@ -463,6 +544,10 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
     const selectedWorkflow = reviewIndex === null ? workflow : checkpoints[reviewIndex]?.workflow;
     if (!selectedWorkflow || busy || quickAdvancing) return;
     if (reviewIndex !== null && !selectedWorkflow.next.id.match(/^(?:field:\d+|check:)/)) return;
+    if (value === "__UPLOAD_REPORT__") {
+      reportInputRef.current?.click();
+      return;
+    }
     if (selectedWorkflow.next.id === "activities") {
       setActivitySelections((current) => toggleActivityChoice(current, value));
       setError("");
@@ -477,6 +562,64 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
     setComposer("");
     setError("");
     window.setTimeout(() => composerRef.current?.focus(), 40);
+  }
+
+  async function uploadReport(file: File) {
+    if (busy || quickAdvancing || !workflow) return;
+    if (file.size > 4_000_000) {
+      setError("Please choose a PDF smaller than 4 MB.");
+      return;
+    }
+    const userMessage: Message = { role: "user", content: `Added report: ${file.name}` };
+    const nextMessages = [...messages, userMessage];
+    setMessages(nextMessages);
+    setWorkingStatus("Reading the report you added and checking what it changes…");
+    setBusy(true);
+    setError("");
+    try {
+      const form = new FormData();
+      form.set("file", file, file.name);
+      form.set("state", JSON.stringify(state));
+      form.set("sessionId", sessionId || newSessionId());
+      if (intelligence?.effectiveVersion) form.set("intelligenceVersion", intelligence.effectiveVersion);
+      const response = await fetch("/api/readiness/report", { method: "POST", body: form });
+      const data = await response.json() as ReadinessResponse & { error?: string };
+      if (!response.ok) throw new Error(data.error || "That report could not be reviewed yet.");
+      setCheckpoints((current) => [...current, {
+        state,
+        messagesLength: messages.length,
+        workflow,
+        result,
+        intelligence,
+        completionNotice,
+        activitySelections,
+        composer,
+        answerText: `Added report: ${file.name}`,
+        note: "",
+      }].slice(-30));
+      setState(data.state);
+      setWorkflow(data.workflow);
+      if (data.intelligence) setIntelligence(data.intelligence);
+      setSessionId(data.sessionId || sessionId || newSessionId());
+      setMessages([...nextMessages, {
+        role: "assistant",
+        content: data.assistant.message,
+        label: data.assistant.label,
+        citations: data.assistant.citations,
+        publicSources: data.assistant.publicSources,
+        organisation: data.assistant.organisation,
+        actions: data.assistant.actions,
+        workflow: data.workflow,
+        responseKind: data.assistant.responseKind,
+      }]);
+      setCompletionNotice("✓ Report added. The provisional view now reflects the evidence in it.");
+    } catch (caught) {
+      setMessages(messages);
+      setError(caught instanceof Error ? caught.message : "That report could not be reviewed yet.");
+    } finally {
+      setBusy(false);
+      if (reportInputRef.current) reportInputRef.current.value = "";
+    }
   }
 
   async function confirmStructuredAnswer(rawNote: string) {
@@ -744,14 +887,14 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
     <h1>{setupOnly ? <>A quick route.<br />The right context first.</> : <>Talk it through.<br />Get your free report.</>}</h1>
     <div className="readiness-intro-copy">{setupOnly && <p>We’ll find your organisation and establish what applies, then take you straight to the 15-question snapshot.</p>}<p>You’re about to talk to <strong>My Social Impact Intelligence</strong>: specialist guidance built from MSI’s SORP and social impact expertise.</p><p>First we’ll establish whether SORP 2026 applies, then gather the context and explore your readiness for its narrative and impact-reporting expectations. You’ll see what we know, why we’re asking and the SORP basis as we go.</p><p>At the end, you’ll receive your personalised SORP readiness report. <strong>There is no charge, no card and no surprise paywall.</strong></p></div>
     <div className="readiness-intro-actions"><button type="button" onClick={() => startConversation(false)}>{setupOnly ? "Find my organisation" : "Start my free conversation"} <span>→</span></button>{!setupOnly && (snapshotAvailable ? <button type="button" className="is-secondary" onClick={() => startConversation(true)}>Use my completed Snapshot <span>→</span></button> : <SorpSnapshotLink className="is-secondary" startLabel="Take the 15-question shortcut" />)}</div>
-    {!setupOnly && <p className="readiness-intro-note"><strong>Prefer to whiz through?</strong> The Quick Snapshot takes around eight minutes. Both routes produce the same free initial report, and you can return to the conversation afterwards. Your progress is saved in this browser.</p>}
+    {!setupOnly && <p className="readiness-intro-note"><strong>Prefer to whiz through?</strong> The Quick Snapshot takes around eight minutes. Both routes produce the same free initial report, and you can return to the conversation afterwards. Create an account at any point to save and resume across devices. <button type="button" className="readiness-sign-in-link" onClick={() => { startConversation(false); setAccountMode("login"); setSaveStatus("idle"); setSaveError(""); setSaveDialogOpen(true); }}>Already have an account? Sign in.</button></p>}
   </section>;
 
   return <div className="readiness-chat">
     <SorpJourneyProgress current={currentStage} completed={activeWorkflow?.completedStages || []} result={Boolean(result && reviewIndex === null)} />
 
     <div className="sorp-journey-body">
-    <aside className="sorp-journey-aside">{activeWorkflow && <SorpKnownContext workflow={activeWorkflow} />}<p className="sorp-journey-assurance">Your free SORP readiness report<br /><span>Narrative and impact reporting · saved on this device</span></p></aside>
+    <aside className="sorp-journey-aside">{activeWorkflow && <SorpKnownContext workflow={activeWorkflow} />}<p className="sorp-journey-assurance">Your free SORP readiness report<br /><span>{account ? `Account: ${account.email} · saved securely` : "Narrative and impact reporting · saved on this device until you create an account"}</span></p></aside>
 
     <div className="readiness-thread" aria-live="polite">
       {setupOnly && workflow?.completedStages.includes(2) && <button type="button" className="sorp-setup-continue" onClick={() => onSetupComplete?.(state, workflow)}>✓ Context established — continue to the 15 questions →</button>}
@@ -805,9 +948,10 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
 
     </div>
     <form className={`readiness-composer${activityQuestion ? " is-activity-composer" : ""}${activitySelectionCount ? " has-activity-selections" : ""}${reviewIndex !== null ? " is-reviewing" : ""}`} onSubmit={submit}>
+      <input ref={reportInputRef} type="file" accept="application/pdf,.pdf" hidden onChange={(event) => { const file = event.target.files?.[0]; if (file) void uploadReport(file); }} />
       <nav className="sorp-bottom-navigation" aria-label="Assessment navigation">
-        <button type="button" className="is-back" onClick={goBack} disabled={!checkpoints.length || busy || quickAdvancing || recordingState !== "idle"}>← Back</button>
-        <button type="button" className="is-save" onClick={() => setSaveDialogOpen(true)}>Finish another time</button>
+        <button type="button" className="is-back" onClick={goBack} disabled={!checkpoints.length || busy || quickAdvancing || recordingState !== "idle"}>← Back to previous question</button>
+        <button type="button" className="is-save" onClick={() => { setSaveStatus("idle"); setSaveError(""); setSaveDialogOpen(true); }}>Finish another time</button>
         {reviewIndex !== null && <button type="button" className="is-next" onClick={goNext}>{reviewIndex < checkpoints.length - 1 ? "Next →" : result ? "Return to my report →" : "Return to current question →"}</button>}
       </nav>
       {(reviewIndex === null || pendingStructuredAnswer) && <>
@@ -818,14 +962,19 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
     </form>
     {saveDialogOpen && <div className="sorp-save-dialog-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && saveStatus !== "saving") setSaveDialogOpen(false); }}><section className="sorp-save-dialog" role="dialog" aria-modal="true" aria-labelledby="sorp-save-title">
       <button type="button" className="sorp-save-close" onClick={() => setSaveDialogOpen(false)} disabled={saveStatus === "saving"} aria-label="Close finish another time form">×</button>
-      <span>Finish another time</span><h2 id="sorp-save-title">Save your assessment</h2><p>We’ll keep your answers and conversation together in this browser so you can return and carry on.</p>
+      <span>Finish another time</span><h2 id="sorp-save-title">{account ? "Save your assessment" : accountMode === "signup" ? "Create your account" : "Sign in to your account"}</h2><p>{account ? `You’re signed in as ${account.email}. Save now and your assessment will be available when you return.` : accountMode === "signup" ? "Create an account so your answers and conversation are saved securely and you can continue on this or another device." : "Sign in to reopen the assessment already saved to your account."}</p>
       <form onSubmit={submitSave}>
-        <label htmlFor="save-name">Your name<input id="save-name" name="name" autoComplete="name" required maxLength={120} value={saveProfile.name} onChange={(event) => setSaveProfile((current) => ({ ...current, name: event.target.value }))} /></label>
-        <label htmlFor="save-position">Position / role<input id="save-position" name="position" autoComplete="organization-title" required maxLength={120} value={saveProfile.position} onChange={(event) => setSaveProfile((current) => ({ ...current, position: event.target.value }))} /></label>
+        {!account && accountMode === "signup" && <><label htmlFor="save-name">Your name<input id="save-name" name="name" autoComplete="name" required maxLength={120} value={saveProfile.name} onChange={(event) => setSaveProfile((current) => ({ ...current, name: event.target.value }))} /></label>
+        <label htmlFor="save-position">Position / role<input id="save-position" name="position" autoComplete="organization-title" required maxLength={120} value={saveProfile.position} onChange={(event) => setSaveProfile((current) => ({ ...current, position: event.target.value }))} /></label></>}
+        {!account && <>
         <label htmlFor="save-email">Email address<input id="save-email" name="email" type="email" autoComplete="email" required maxLength={254} value={saveProfile.email} onChange={(event) => setSaveProfile((current) => ({ ...current, email: event.target.value }))} /></label>
-        <p className="sorp-save-security">No password is needed because this saved copy stays on this device. Return in this browser and your assessment will reopen where you left it.</p>
+        <label htmlFor="save-password">Password<input id="save-password" name="password" type="password" autoComplete={accountMode === "signup" ? "new-password" : "current-password"} required minLength={10} maxLength={200} value={saveProfile.password} onChange={(event) => setSaveProfile((current) => ({ ...current, password: event.target.value }))} /></label>
+        {accountMode === "signup" && <label htmlFor="save-confirm-password">Confirm password<input id="save-confirm-password" name="confirm-password" type="password" autoComplete="new-password" required minLength={10} maxLength={200} value={saveProfile.confirmPassword} onChange={(event) => setSaveProfile((current) => ({ ...current, confirmPassword: event.target.value }))} /></label>}
+        <p className="sorp-save-security">Your password is protected server-side. Your account lets you return to this assessment without relying on this browser.</p>
+        <button type="button" className="sorp-account-switch" onClick={() => { setAccountMode((current) => current === "signup" ? "login" : "signup"); setSaveError(""); }}>{accountMode === "signup" ? "Already have an account? Sign in" : "Need an account? Create one"}</button>
+        </>}
         {saveError && <p className="sorp-save-error" role="alert">{saveError}</p>}
-        {saveStatus === "saved" ? <p className="sorp-save-success" role="status">✓ Saved. You can finish another time.</p> : <button type="submit" disabled={saveStatus === "saving"}>{saveStatus === "saving" ? "Saving…" : "Save and finish another time"} <span>→</span></button>}
+        {saveStatus === "saved" ? <p className="sorp-save-success" role="status">✓ {accountMode === "login" && !account ? "Signed in." : "Saved to your account. You can finish another time."}</p> : <button type="submit" disabled={saveStatus === "saving"}>{saveStatus === "saving" ? "Saving…" : account ? "Save and finish another time" : accountMode === "signup" ? "Create account and save" : "Sign in and continue"} <span>→</span></button>}
       </form>
     </section></div>}
   </div>;

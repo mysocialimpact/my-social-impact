@@ -67,7 +67,7 @@ test("server-renders the My Social Impact homepage", async () => {
 test("every page inherits the global build stamp", async () => {
   const layout = await readFile(new URL("../app/layout.tsx", import.meta.url), "utf8");
   assert.match(layout, /global-build-stamp/);
-  assert.match(layout, /BUILD 64 · 20 SEPTEMBER 2026 · 22:33 BST/);
+  assert.match(layout, /BUILD 66 · 20 SEPTEMBER 2026 · 23:37 BST/);
 });
 
 test("explicit setup confirmations save directly without an intelligence thinking state", async () => {
@@ -313,10 +313,10 @@ test("server-renders the conversational SORP readiness workspace", async () => {
   assert.match(source, /Choose a quick answer/);
   assert.match(source, /Or tell us in your own words/);
   assert.match(source, /is-assessment-scale/);
-  assert.match(source, /Provisional SORP readiness view/);
-  assert.match(source, /Primary source not found/);
-  assert.match(source, /No meaningful provisional SORP view yet/);
-  assert.match(source, /we won’t pretend the website alone gives us a reliable review/);
+  assert.match(source, /Provisional SORP readiness/);
+  assert.match(source, /Unable to determine yet/);
+  assert.match(source, /the mandatory narrative document and the primary source/);
+  assert.match(source, /Status:<\/strong> what the public evidence currently lets us conclude/);
   assert.match(source, /Trustees’ Annual Report/);
   assert.match(source, /Wider impact evidence/);
   assert.match(source, /Your answers remain in control of the score/);
@@ -325,7 +325,7 @@ test("server-renders the conversational SORP readiness workspace", async () => {
   assert.match(source, /interaction: "confirm_structured_answer"/);
   assert.match(source, /structuredAnswerFromAction/);
   assert.match(source, /looksLikeQuestion/);
-  assert.doesNotMatch(source.slice(source.indexOf("function selectStructuredAnswer"), source.indexOf("async function confirmStructuredAnswer")), /fetch\(/);
+  assert.doesNotMatch(source.slice(source.indexOf("function selectStructuredAnswer"), source.indexOf("async function uploadReport")), /fetch\(/);
   assert.match(source, /Use microphone/);
   assert.match(source, /SorpKnownContext/);
   assert.match(source, /completedStages/);
@@ -352,7 +352,14 @@ test("server-renders the conversational SORP readiness workspace", async () => {
   assert.match(source, /preserveActivitySelections/);
   assert.match(source, /aria-pressed/);
   assert.match(source, /is-multi-select/);
-  assert.match(source, /Back to previous question/);
+  assert.match(source, /← Back to previous question/);
+  assert.match(source, /Create account and save/);
+  assert.match(source, /Sign in and continue/);
+  assert.match(source, /\/api\/readiness-account/);
+  assert.match(source, /\/api\/readiness\/report/);
+  assert.match(source, /UPLOAD_REPORT/);
+  assert.match(source, /Already have an account\? Sign in\./);
+  assert.match(source, /saved securely/);
   assert.match(source, /ConversationCheckpoint/);
   assert.match(source, /checkpoints/);
   assert.match(source, /Looking for the right organisation…/);
@@ -364,6 +371,11 @@ test("server-renders the conversational SORP readiness workspace", async () => {
   const proxy = await readFile(new URL("../app/api/readiness/route.ts", import.meta.url), "utf8");
   assert.match(proxy, /runtime = "nodejs"/);
   assert.match(proxy, /maxDuration = 60/);
+  const accountProxy = await readFile(new URL("../app/api/readiness-account/route.ts", import.meta.url), "utf8");
+  assert.match(accountProxy, /HttpOnly; Secure; SameSite=Lax/);
+  assert.match(accountProxy, /Too many sign-in attempts/);
+  const reportProxy = await readFile(new URL("../app/api/readiness/report/route.ts", import.meta.url), "utf8");
+  assert.match(reportProxy, /\/api\/readiness\/report/);
   assert.doesNotMatch(proxy, /OPENAI_API_KEY|authorization.*Bearer/i);
 });
 
