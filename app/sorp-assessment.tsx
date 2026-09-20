@@ -75,7 +75,7 @@ function stageFor(mode: Mode, coreIndex: number) {
 }
 
 function classLabel(classification: Classification) {
-  return classification === "MSI_READINESS" ? "MSI readiness" : classification;
+  return classification === "MSI_READINESS" || classification === "JUDGEMENT" ? "MSI JUDGEMENT" : classification;
 }
 
 function formatDate(value: string) {
@@ -306,7 +306,7 @@ export function SorpAssessment({ view = "snapshot" }: { view?: "snapshot" | "res
 
         {mode === "missing_result" && <section className="sorp-tool-panel"><p className="sorp-tool-kicker">No completed snapshot found</p><h3>Complete the snapshot to see your result.</h3><p className="sorp-tool-help">Your answers are saved only in this browser. If you completed the snapshot on another device, it will not be available here.</p><Controls onBack={saveAndExit} onExit={saveAndExit} onNext={() => router.push("/are-you-sorp-ready/snapshot")} nextLabel="Go to snapshot" /></section>}
 
-        {setupWorkflow && mode !== "result" && <div className="sorp-snapshot-known"><SorpKnownContext workflow={setupWorkflow} /></div>}
+        {setupWorkflow && mode !== "result" && <div className="sorp-snapshot-known"><SorpKnownContext workflow={setupWorkflow} defaultOpen={false} /></div>}
 
         {mode === "core" && currentQuestion && <section className="sorp-question-panel">
           <header><div><span>{sectionLabels[currentQuestion.section]}</span><strong>Question {String(currentQuestion.id).padStart(2, "0")} of 15</strong></div><i aria-label={`${Math.round(currentQuestion.id / 15 * 100)}% through the core questions`}><b style={{ width: `${currentQuestion.id / 15 * 100}%` }} /></i></header>
