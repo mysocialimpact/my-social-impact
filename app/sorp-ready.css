@@ -425,6 +425,7 @@
 .sorp-review-credit { max-width: 75rem; margin: clamp(5rem, 8vw, 9rem) 0 3rem; font-family: var(--font-serif); font-size: clamp(2rem, 3.7vw, 4.5rem); letter-spacing: -.045em; line-height: 1.05; }
 .sorp-book-button { width: 100%; min-height: 80px; padding: 1rem 0; display: flex; align-items: center; justify-content: space-between; border: 0; border-block: 2px solid var(--white); background: transparent; color: var(--white); font-size: .78rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; cursor: pointer; }
 .sorp-book-button:hover { color: var(--sorp-yellow); }
+.sorp-review-after-result { margin: 1rem 0 0; color: rgba(255,255,255,.72); font-size: .76rem; line-height: 1.55; }
 .sorp-booking-state { margin-top: 2rem; padding: clamp(2rem, 4vw, 4rem); display: grid; grid-template-columns: 1fr .4fr; gap: clamp(3rem, 7vw, 8rem); align-items: end; background: var(--white); color: var(--ink); }
 .sorp-booking-state > div:first-child > span { color: var(--sorp-orange); font-size: .72rem; font-weight: 800; text-transform: uppercase; }
 .sorp-booking-state h3 { margin: 1rem 0; font-size: clamp(2.5rem, 4vw, 4.8rem); line-height: 1; }
@@ -764,6 +765,52 @@
 .readiness-review-barrier { color: rgba(255,255,255,.78); font-size: .76rem; }
 .readiness-review-barrier a { min-height: 0; padding: 0; display: inline; border: 0; text-decoration: underline; text-transform: none; }
 
+.readiness-paid-next { background: var(--ink); color: var(--white); }
+.readiness-paid-next > header { padding: clamp(1.5rem,4vw,3.5rem); border-bottom: 1px solid rgba(255,255,255,.3); }
+.readiness-paid-next > header span,.readiness-checkout-panel > div:first-child > span { color: var(--sorp-yellow); font-size: .7rem; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; }
+.readiness-paid-next > header h3 { margin: .65rem 0; font-size: clamp(2rem,4vw,4rem); line-height: .95; text-transform: uppercase; }
+.readiness-paid-next > header p { margin: 0; color: rgba(255,255,255,.7); }
+.readiness-next-choices { display: grid; grid-template-columns: 1fr 1fr; }
+.readiness-next-choices button { min-height: 126px; padding: 1.3rem clamp(1.5rem,4vw,3.5rem); display: grid; gap: .55rem; text-align: left; border: 0; border-right: 1px solid rgba(255,255,255,.3); border-bottom: 1px solid rgba(255,255,255,.3); background: transparent; color: var(--white); cursor: pointer; }
+.readiness-next-choices button:last-child { border-right: 0; }
+.readiness-next-choices button.is-active { background: var(--sorp-orange); }
+.readiness-next-choices button strong { font-size: .82rem; letter-spacing: .04em; text-transform: uppercase; }
+.readiness-next-choices button span { color: rgba(255,255,255,.72); font-size: .75rem; }
+.readiness-checkout-panel { padding: clamp(1.5rem,4vw,3.5rem); display: grid; grid-template-columns: minmax(0,.9fr) minmax(320px,1.1fr); gap: 1.5rem clamp(2rem,5vw,5rem); background: var(--sorp-orange); }
+.readiness-checkout-panel.is-support { background: #252321; }
+.readiness-checkout-panel h4 { margin: .7rem 0 1.2rem; font-size: clamp(2rem,4vw,4rem); line-height: .95; text-transform: uppercase; }
+.readiness-checkout-panel p { line-height: 1.6; }
+.readiness-checkout-panel fieldset { margin: 0; padding: 0; border: 0; }
+.readiness-checkout-panel legend { margin-bottom: .7rem; font-size: .7rem; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; }
+.readiness-checkout-panel fieldset label { min-height: 72px; padding: .75rem .9rem; display: grid; grid-template-columns: auto 1fr auto; gap: .8rem; align-items: center; border: 1px solid rgba(255,255,255,.55); border-bottom: 0; cursor: pointer; }
+.readiness-checkout-panel fieldset label:last-child { border-bottom: 1px solid rgba(255,255,255,.55); }
+.readiness-checkout-panel fieldset label.is-selected { background: var(--white); color: var(--ink); }
+.readiness-checkout-panel fieldset input { width: 20px; height: 20px; accent-color: var(--sorp-orange); }
+.readiness-checkout-panel fieldset span { display: grid; gap: .15rem; }
+.readiness-checkout-panel fieldset b { font-size: .72rem; text-transform: uppercase; }
+.readiness-checkout-panel fieldset small { color: inherit; opacity: .72; }
+.readiness-checkout-panel fieldset strong { font-family: var(--font-serif); font-size: 2rem; font-weight: 500; }
+.readiness-review-credit { grid-column: 1 / -1; margin: 0; padding-top: 1.2rem; border-top: 1px solid rgba(255,255,255,.45); font-size: .78rem; }
+.readiness-pay-button { grid-column: 1 / -1; min-height: 60px; padding: 1rem 1.2rem; display: flex; align-items: center; justify-content: space-between; border: 2px solid var(--white); background: var(--white); color: var(--ink); cursor: pointer; font-size: .78rem; font-weight: 900; letter-spacing: .05em; text-align: left; }
+.readiness-pay-button:disabled { cursor: wait; opacity: .62; }
+.readiness-payment-note { grid-column: 1 / -1; margin: 0; color: rgba(255,255,255,.75); font-size: .72rem; }
+.readiness-payment-note a { text-decoration: underline; }
+.readiness-support-amounts { align-self: start; display: grid; grid-template-columns: repeat(4,1fr); gap: .55rem; }
+.readiness-support-amounts button,.readiness-support-amounts label { min-height: 62px; border: 1px solid rgba(255,255,255,.55); background: transparent; color: var(--white); display: grid; place-items: center; cursor: pointer; font-weight: 800; }
+.readiness-support-amounts button.is-selected { background: var(--sorp-yellow); color: var(--ink); border-color: var(--sorp-yellow); }
+.readiness-support-amounts label { grid-column: 1 / -1; grid-template-columns: auto 1fr; padding: .7rem 1rem; gap: .8rem; }
+.readiness-support-amounts input { width: 100%; min-height: 42px; padding: .55rem; border: 0; background: var(--white); color: var(--ink); font-size: 1rem; }
+.readiness-no-thanks { grid-column: 1 / -1; justify-self: start; border: 0; background: transparent; color: rgba(255,255,255,.78); cursor: pointer; text-decoration: underline; }
+.readiness-payment-error { margin: 0; padding: 1rem clamp(1.5rem,4vw,3.5rem); border-top: 2px solid var(--sorp-yellow); background: #381108; color: var(--white); font-weight: 700; }
+
+.sorp-payment-return { min-height: 100svh; padding: max(1.25rem,env(safe-area-inset-top)) 1.25rem max(1.25rem,env(safe-area-inset-bottom)); display: grid; place-items: center; background: var(--sorp-yellow); color: var(--ink); }
+.sorp-payment-return section { width: min(760px,100%); padding: clamp(2rem,6vw,5rem); border: 2px solid var(--ink); background: var(--paper); box-shadow: 16px 16px 0 var(--ink); }
+.sorp-payment-return span { color: var(--sorp-orange); font-size: .72rem; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; }
+.sorp-payment-return h1 { margin: 1rem 0; font-size: clamp(3rem,8vw,6.5rem); line-height: .88; text-transform: uppercase; }
+.sorp-payment-return p { max-width: 570px; color: var(--muted); font-size: 1.08rem; line-height: 1.6; }
+.sorp-payment-return a,.sorp-payment-return button { width: 100%; min-height: 58px; margin-top: .8rem; padding: 1rem; display: flex; align-items: center; justify-content: space-between; border: 1px solid var(--ink); background: var(--ink); color: var(--white); cursor: pointer; font-size: .72rem; font-weight: 900; text-transform: uppercase; }
+.sorp-payment-return a + a { background: transparent; color: var(--ink); }
+
 @media (max-width: 760px) {
   .sorp-conversation-page { --chat-header: 52px; }
   .readiness-intro { min-height: calc(100svh - var(--chat-header)); padding: 2.5rem 1rem calc(2rem + env(safe-area-inset-bottom)); grid-template-columns: 1fr; gap: 1.6rem; align-content: start; }
@@ -807,6 +854,13 @@
   .readiness-result-sections { padding-inline: 1rem; }
   .readiness-result-grid { padding-inline: 1rem; }
   .readiness-result-grid article,.readiness-result-grid article:nth-child(even) { padding: 1.2rem 0; border-left: 0; }
+  .readiness-next-choices,.readiness-checkout-panel { grid-template-columns: 1fr; }
+  .readiness-next-choices button { min-height: 104px; border-right: 0; }
+  .readiness-checkout-panel fieldset { min-width: 0; }
+  .readiness-review-credit,.readiness-pay-button,.readiness-payment-note,.readiness-no-thanks { grid-column: 1; }
+  .readiness-support-amounts { grid-template-columns: repeat(2,1fr); }
+  .readiness-support-amounts label { grid-column: 1 / -1; }
+  .sorp-payment-return section { box-shadow: 8px 8px 0 var(--ink); }
 }
 
 @media (prefers-reduced-motion: reduce) {

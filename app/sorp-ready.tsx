@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Footer, RevealObserver, SiteHeader } from "./site-shell";
 
 const conversationUrl = "/are-you-sorp-ready/conversation";
@@ -70,14 +70,6 @@ function SectionHeading({ number, eyebrow, title, copy }: { number: string; eyeb
 }
 
 export function SorpReadyPage() {
-  const [bookingOpen, setBookingOpen] = useState(false);
-  const bookingRef = useRef<HTMLDivElement>(null);
-
-  const openBooking = () => {
-    setBookingOpen(true);
-    window.setTimeout(() => bookingRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }), 80);
-  };
-
   return (
     <>
       <RevealObserver />
@@ -221,8 +213,8 @@ export function SorpReadyPage() {
             <div className="sorp-review-output" data-reveal><h3>After the meeting, you receive a short written summary covering:</h3>{["What looks strong", "What needs attention", "Areas requiring judgement", "Your three priority actions", "Opportunities beyond compliance"].map((item) => <span key={item}>{item}</span>)}</div>
           </div>
           <div className="sorp-review-credit" data-reveal>If we subsequently work together on a My Social Impact project, we’ll credit the cost of your review against that work.</div>
-          <button className="sorp-book-button" type="button" onClick={openBooking}>Book my Impact Readiness Review <span>→</span></button>
-          {bookingOpen && <div className="sorp-booking-state" ref={bookingRef} aria-live="polite"><div><span>Booking</span><h3>Let’s arrange your review.</h3><p>Online checkout is not connected yet. Email Marcus and we’ll confirm your tier, a suitable time and the simple next steps.</p></div><div><a href="mailto:marcus@mysocialimpact.org?subject=SORP%202026%20Impact%20Readiness%20Review">Email Marcus to book <span>↗</span></a><button type="button" onClick={() => setBookingOpen(false)}>Close</button></div></div>}
+          <Link className="sorp-book-button" href={conversationUrl}>Get my free result first <span>→</span></Link>
+          <p className="sorp-review-after-result" data-reveal>Secure payment for the optional review appears only after your free assessment and personalised report are complete.</p>
           <p className="sorp-review-barrier" data-reveal><strong>Cost genuinely a barrier?</strong> Email <a href="mailto:marcus@mysocialimpact.org">marcus@mysocialimpact.org</a>. We don’t want cost to prevent a smaller charity getting useful help.</p>
           <div className="sorp-review-scope" data-reveal><strong>This is an impact-reporting readiness review.</strong><p>It is focused on the impact and narrative aspects of SORP 2026. It is not a statutory audit, an audit opinion on the financial statements, a complete assessment of every accounting requirement in SORP, or certification by the Charity Commission or SORP-making body.</p></div>
         </section>

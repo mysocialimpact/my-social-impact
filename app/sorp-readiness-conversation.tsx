@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { SorpSnapshotLink } from "./sorp-snapshot-link";
+import { SorpResultActions } from "./sorp-result-actions";
 import { additionalChecks, coreQuestions, eligibilityFor, readinessStages, tierLabel, type AdditionalAnswerValue, type AnswerValue, type AssessmentSetup } from "./sorp-questionnaire";
 
 const SNAPSHOT_RESULT_KEY = "msi-sorp-readiness-result-v2";
@@ -229,6 +230,7 @@ export function SorpReadinessConversation() {
         const snapshot = snapshotRaw ? stateFromSnapshot(snapshotRaw) : null;
         setSnapshotAvailable(Boolean(snapshot));
         if (wantsSnapshot && snapshot) {
+          setSessionId(newSessionId());
           setState(snapshot.state);
           setResult(snapshot.result);
           setStarted(true);
@@ -441,7 +443,7 @@ export function SorpReadinessConversation() {
         <p className="readiness-result-note">This is an impact-readiness assessment. It does not say the charity is SORP compliant.</p>
         <div className="readiness-result-sections">{result.sectionScores.map((section) => <article key={section.section}><div><h3>{section.label}</h3><strong>{section.score}</strong></div><i><b style={{ width: `${section.score}%` }} /></i><p>{section.narrative}</p></article>)}</div>
         <div className="readiness-result-grid"><ResultList title="What looks strong" items={result.strong} empty="No clear strength has been evidenced yet." /><ResultList title="What needs attention" items={result.attention} empty="No immediate weaker area was identified." /><ResultList title="MUST areas" items={result.must} empty="No applicable MUST area was flagged by this initial assessment." /><ResultList title="SHOULD opportunities" items={result.should} empty="No weaker SHOULD opportunity was identified." /><ResultList title="MAY options" items={result.may} empty="No additional MAY option was identified." /><ResultList title="JUDGEMENT areas" items={result.judgement} empty="No specific judgement area was flagged, although context still matters." /><ResultList title="Additional SORP checks" items={result.additionalChecks} empty="No additional check was triggered by the information supplied." /><ResultList title="Three priority actions" items={result.priorities} empty="Add more context to build practical priorities." /></div>
-        <aside className="readiness-human-review"><div><span>Optional paid human review</span><h3>SORP 2026<br />Impact Readiness Review</h3><p>60 minutes · My Social Impact</p></div><div><p>Your guided assessment and personalised readiness report are complete and remain entirely free. If you want a human view, you can choose a 60-minute review with Marcus and the MSI team.</p><div className="readiness-review-pricing">{[["Small charity", "Up to £500,000 income", "£50"], ["Medium charity", "£500,000–£15 million income", "£100"], ["Large charity", "Over £15 million income", "£200"]].map(([size, income, price]) => <p key={size}><span><b>{size}</b>{income}</span><strong>{price}</strong></p>)}</div><small>If we subsequently work together on a My Social Impact project, we’ll credit the cost of your review against that work.</small><p className="readiness-review-barrier">Cost genuinely a barrier? Email <a href="mailto:marcus@mysocialimpact.org">marcus@mysocialimpact.org</a>.</p><a href="/are-you-sorp-ready#review">Explore the optional human review <span>→</span></a></div></aside>
+        {sessionId && <SorpResultActions sessionId={sessionId} organisation={state.charityName} income={state.setup.income} />}
       </section>}
       {intelligence && <details className="readiness-intelligence" aria-label="Effective intelligence provenance">
         <summary>{intelligence.layers.filter((layer) => layer.id === "msi-core" || layer.id === "sorp-readiness-intelligence").map((layer) => `${intelligenceLayerLabel(layer)} · ${layer.label}`).join(" · ")}</summary>
