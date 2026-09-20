@@ -1,6 +1,14 @@
 export const runtime = "nodejs";
 
-const allowed = new Set(["free_assessment_completed", "result_viewed", "review_cta_clicked", "review_payment_started", "voluntary_support_shown", "contribution_started", "voluntary_support_no_thanks"]);
+const allowed = new Set([
+  "assessment_completed", "result_preview_viewed",
+  "usefulness_very", "usefulness_somewhat", "usefulness_not_really",
+  "human_review_selected", "support_5_selected", "support_custom_selected", "free_report_selected",
+  "report_opened", "email_report_requested",
+  "review_payment_started", "contribution_started",
+  // Retained for older live sessions while the new completion journey rolls out.
+  "free_assessment_completed", "result_viewed", "review_cta_clicked", "voluntary_support_shown", "voluntary_support_no_thanks",
+]);
 
 export async function POST(request: Request) {
   if (!process.env.COW_GROWTH_EVENT_URL || !process.env.COW_GROWTH_EVENT_KEY) return Response.json({ accepted: false }, { status: 503 });

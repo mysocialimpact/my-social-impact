@@ -67,7 +67,7 @@ test("server-renders the My Social Impact homepage", async () => {
 test("every page inherits the global build stamp", async () => {
   const layout = await readFile(new URL("../app/layout.tsx", import.meta.url), "utf8");
   assert.match(layout, /global-build-stamp/);
-  assert.match(layout, /BUILD 56 · 20 SEPTEMBER 2026 · 19:10 BST/);
+  assert.match(layout, /BUILD 57 · 20 SEPTEMBER 2026 · 19:44 BST/);
 });
 
 test("global and page navigation share one responsive header offset", async () => {
@@ -252,11 +252,27 @@ test("server-renders the conversational SORP readiness workspace", async () => {
   assert.match(source, /readiness-message-list/);
   assert.match(source, /SorpResultActions/);
   const paymentSource = await readFile(new URL("../app/sorp-result-actions.tsx", import.meta.url), "utf8");
-  assert.match(paymentSource, /Your free report is complete/);
-  assert.match(paymentSource, /Optional human review/);
+  assert.match(source, /is-result-mode/);
+  assert.match(paymentSource, /7 of 7 complete/);
+  assert.match(paymentSource, /You’ve finished your SORP readiness check/);
+  assert.match(paymentSource, /Your personalised report is ready/);
+  assert.match(paymentSource, /Has this been useful\?/);
+  assert.match(paymentSource, /Yes — very useful/);
+  assert.match(paymentSource, /Yes — somewhat useful/);
+  assert.match(paymentSource, /Not really/);
+  assert.match(paymentSource, /No thanks — show my free report/);
+  assert.match(paymentSource, /Print \/ save PDF/);
+  assert.match(paymentSource, /Support the free tool/);
+  assert.match(paymentSource, /not a charitable donation/i);
+  assert.match(paymentSource, /Want a copy in your inbox\?/);
+  assert.match(paymentSource, /report-email/);
+  assert.match(paymentSource, /assessment_completed/);
+  assert.match(paymentSource, /result_preview_viewed/);
+  assert.match(paymentSource, /report_opened/);
+  assert.match(paymentSource, /email_report_requested/);
+  assert.match(paymentSource, /Optional human help/);
   assert.match(paymentSource, /credit the cost of your review against that work/);
   assert.match(paymentSource, /Cost genuinely a barrier/);
-  assert.match(paymentSource, /not presented as a charitable donation/i);
   assert.doesNotMatch(source, /where it is registered, its reporting year, approximate income/);
   assert.match(source, /readiness-organisation-card/);
   assert.match(source, /Choose an answer/);

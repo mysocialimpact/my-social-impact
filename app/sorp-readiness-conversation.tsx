@@ -327,7 +327,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
 
   useEffect(() => {
     if (!hydrated || !started) return;
-    try { window.localStorage.setItem(storageKey, JSON.stringify({ started, state, messages, result, intelligence, sessionId, workflow })); } catch { setError("Your browser could not save this conversation. Keep this page open to retain your progress."); }
+    try { window.localStorage.setItem(storageKey, JSON.stringify({ started, state, messages, result, intelligence, sessionId, workflow })); } catch { queueMicrotask(() => setError("Your browser could not save this conversation. Keep this page open to retain your progress.")); }
   }, [hydrated, started, state, messages, result, intelligence, sessionId, workflow, storageKey]);
 
   useEffect(() => {
@@ -540,6 +540,20 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
   const pendingStructuredAnswer = state.pendingStructuredAnswer;
   const structuredAnswerQuestion = Boolean(pendingStructuredAnswer || workflow?.next.id.match(/^(?:field:\d+|check:)/));
 
+  if (!setupOnly && result && state.score !== null && sessionId) return <div className="readiness-chat is-result-mode">
+    <SorpResultActions sessionId={sessionId} organisation={state.charityName} income={state.setup.income} result={result}>
+      <section className="readiness-report-detail">
+        <p className="readiness-result-note">{impactMode ? "SORP does not apply in the circumstances established. This report offers wider narrative and impact-reporting guidance." : "This assesses readiness for the narrative and impact-reporting aspects of SORP 2026. It is not a declaration of full SORP compliance."}</p>
+        <div className="readiness-result-sections">{result.sectionScores.map((section) => <article key={section.section}><div><h3>{section.label}</h3><strong>{section.score}</strong></div><i><b style={{ width: `${section.score}%` }} /></i><p>{section.narrative}</p></article>)}</div>
+        <div className="readiness-result-grid"><ResultList title="What looks strong" items={result.strong} empty="No clear strength has been evidenced yet." /><ResultList title="What needs attention" items={result.attention} empty="No immediate weaker area was identified." /><ResultList title="MUST areas" items={result.must} empty="No applicable MUST area was flagged by this initial assessment." /><ResultList title="SHOULD opportunities" items={result.should} empty="No weaker SHOULD opportunity was identified." /><ResultList title="MAY options" items={result.may} empty="No additional MAY option was identified." /><ResultList title="MSI JUDGEMENT areas" items={result.judgement} empty="No specific judgement area was flagged, although context still matters." /><ResultList title="Additional SORP checks" items={result.additionalChecks} empty="No additional check was triggered by the information supplied." /><ResultList title="Three priority actions" items={result.priorities} empty="Add more context to build practical priorities." /></div>
+      </section>
+      {intelligence && <details className="readiness-intelligence" aria-label="Effective intelligence provenance">
+        <summary>{intelligence.layers.filter((layer) => layer.id === "msi-core" || layer.id === "sorp-readiness-intelligence").map((layer) => `${intelligenceLayerLabel(layer)} · ${layer.label}`).join(" · ")}</summary>
+        <div><p><strong>{intelligence.registry} · {intelligence.effectiveVersion}</strong><span>Published intelligence only · {intelligence.mode === "CURRENT" ? "latest for this new session" : intelligence.mode === "PINNED" ? "pinned for this conversation" : "last known published — Cow Console was temporarily unavailable"}</span></p>{intelligence.layers.map((layer) => <p key={`${layer.id}-${layer.version}`}><strong>{intelligenceLayerLabel(layer)} · {layer.label}</strong><span>{layer.relationship.toLowerCase()} · {layer.status.toLowerCase()} · published {layer.publishedAt ? new Intl.DateTimeFormat("en-GB", { dateStyle: "medium", timeStyle: "short" }).format(new Date(layer.publishedAt)) : "date unavailable"}</span></p>)}{intelligence.runtimeControls.map((control) => <p key={`${control.name}-${control.type}`}><strong>{control.name} · {control.type}</strong><span>Represented by {control.representedBy}</span></p>)}</div>
+      </details>}
+    </SorpResultActions>
+  </div>;
+
   if (!started) return <section className="readiness-intro">
     <p className="readiness-kicker">SORP 2026<br /><strong>Completely free</strong></p>
     <h1>{setupOnly ? <>A quick route.<br />The right context first.</> : <>Talk it through.<br />Get your free report.</>}</h1>
@@ -587,13 +601,6 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
       </section>}
       {busy && <article className="readiness-message is-assistant is-loading"><span>My Social Impact Intelligence</span><div><p>{!state.charityName && state.currentStage === 1 ? "Looking for the right organisation…" : "Understanding what you’ve said and checking the relevant public and SORP evidence…"}</p></div></article>}
       {error && <div className="readiness-error" role="alert"><strong>That step did not complete.</strong><p>{error}</p><button type="button" onClick={() => { setError(""); composerRef.current?.focus(); }}>Try again</button></div>}
-      {result && messages.at(-1)?.role === "assistant" && state.score !== null && <section className="readiness-result">
-        <header><div><p>{state.charityName || "Are You SORP Ready?"}</p><h2>Your SORP readiness result</h2><span>{result.overview}</span></div><div><strong>{result.score}</strong><span>/ 100</span><b>{result.band}</b></div></header>
-        <p className="readiness-result-note">{impactMode ? "SORP does not apply in the circumstances established. This report offers wider narrative and impact-reporting guidance." : "This assesses readiness for the narrative and impact-reporting aspects of SORP 2026. It is not a declaration of full SORP compliance."}</p>
-        <div className="readiness-result-sections">{result.sectionScores.map((section) => <article key={section.section}><div><h3>{section.label}</h3><strong>{section.score}</strong></div><i><b style={{ width: `${section.score}%` }} /></i><p>{section.narrative}</p></article>)}</div>
-        <div className="readiness-result-grid"><ResultList title="What looks strong" items={result.strong} empty="No clear strength has been evidenced yet." /><ResultList title="What needs attention" items={result.attention} empty="No immediate weaker area was identified." /><ResultList title="MUST areas" items={result.must} empty="No applicable MUST area was flagged by this initial assessment." /><ResultList title="SHOULD opportunities" items={result.should} empty="No weaker SHOULD opportunity was identified." /><ResultList title="MAY options" items={result.may} empty="No additional MAY option was identified." /><ResultList title="JUDGEMENT areas" items={result.judgement} empty="No specific judgement area was flagged, although context still matters." /><ResultList title="Additional SORP checks" items={result.additionalChecks} empty="No additional check was triggered by the information supplied." /><ResultList title="Three priority actions" items={result.priorities} empty="Add more context to build practical priorities." /></div>
-        {sessionId && <SorpResultActions sessionId={sessionId} organisation={state.charityName} income={state.setup.income} />}
-      </section>}
       {intelligence && <details className="readiness-intelligence" aria-label="Effective intelligence provenance">
         <summary>{intelligence.layers.filter((layer) => layer.id === "msi-core" || layer.id === "sorp-readiness-intelligence").map((layer) => `${intelligenceLayerLabel(layer)} · ${layer.label}`).join(" · ")}</summary>
         <div>
