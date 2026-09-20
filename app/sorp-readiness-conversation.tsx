@@ -137,6 +137,17 @@ function looksLikeQuestion(value: string) {
   return /\?$/.test(value.trim()) || /^(?:why|what|how|when|where|who|can|could|would|should|does|do|is|are)\b/i.test(value.trim());
 }
 
+function isDeterministicSetupReply(value: string, stepId = "") {
+  const answer = value.trim();
+  if (["accountsConfirmation", "startDateConfirmation"].includes(stepId)) {
+    return /^(?:yes|yep|yeah|correct|right|no|nope|i\s+(?:don[’']?t|do not)\s+know|not sure|skip|move on)\b/i.test(answer);
+  }
+  if (stepId === "accounts") {
+    return /(?:\baccrual|\breceipts?\s*(?:and|&)\s*payments?|^skip\b|^move on\b)/i.test(answer);
+  }
+  return false;
+}
+
 function organisationResearchStatus(value: unknown) {
   if (!value || typeof value !== "object" || !("status" in value)) return "";
   return typeof value.status === "string" ? value.status : "";
@@ -493,12 +504,16 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
   async function sendMessage(rawValue: string, displayValue = rawValue, preserveActivitySelections = false, interaction?: "conversation_first") {
     const value = rawValue.trim();
     if (!value || busy || quickAdvancing || recordingState !== "idle") return;
+    const deterministicSetupReply = !interaction && isDeterministicSetupReply(value, workflow?.next.id);
     const userMessage: Message = { role: "user", content: displayValue.trim() || value };
     const nextMessages = [...messages, userMessage];
     setMessages(nextMessages);
     setComposer("");
-    setWorkingStatus(interaction === "conversation_first" ? "Listening to what you mean and answering before we move on…" : workingStatusFor(value, state, workflow));
-    setBusy(true);
+    if (deterministicSetupReply) setQuickAdvancing(true);
+    else {
+      setWorkingStatus(interaction === "conversation_first" ? "Listening to what you mean and answering before we move on…" : workingStatusFor(value, state, workflow));
+      setBusy(true);
+    }
     setError("");
     try {
       const response = await fetch("/api/readiness", {
@@ -552,7 +567,8 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
       setComposer(value);
       setError(caught instanceof Error ? caught.message : "The readiness conversation is temporarily unavailable.");
     } finally {
-      setBusy(false);
+      if (deterministicSetupReply) setQuickAdvancing(false);
+      else setBusy(false);
     }
   }
 
@@ -724,7 +740,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
     <form className={`readiness-composer${activityQuestion ? " is-activity-composer" : ""}${activitySelectionCount ? " has-activity-selections" : ""}`} onSubmit={submit}>
       <label htmlFor="readiness-answer" aria-live="polite">{activityQuestion ? activitySelectionCount ? `✓ ${activitySelectionCount} ${activitySelectionCount === 1 ? "choice" : "choices"} selected. Want to add any more detail, or chat about why we’re asking this?` : "Choose all that apply. You can add more detail or ask why we’re asking this." : pendingStructuredAnswer ? "Want to explain why? Add a note if useful — completely optional." : structuredAnswerQuestion ? "Or tell us in your own words — or ask about the requirement." : impactMode ? "Answer naturally—or ask an impact question at any point." : "Answer naturally—or ask a SORP question at any point."}</label>
       <textarea ref={composerRef} id="readiness-answer" rows={2} value={composer} onChange={(event) => setComposer(event.target.value)} placeholder={activityQuestion ? "Add detail—or ask us why this matters…" : pendingStructuredAnswer ? "Add an optional note…" : "Type or say what you know…"} maxLength={4000} />
-      <div><button type="button" className="readiness-mic" onClick={recordingState === "recording" ? stopRecording : () => void startRecording()} disabled={busy || quickAdvancing || recordingState === "transcribing"}>{recordingState === "recording" ? `Stop · ${recordingTime(recordingSeconds)}` : recordingState === "transcribing" ? "Transcribing…" : "Use microphone"}</button><button type="submit" className={busy || quickAdvancing ? "is-working" : undefined} disabled={busy || quickAdvancing || (!pendingStructuredAnswer && !(activityQuestion && activitySelections.length) && composer.trim().length < 2) || recordingState !== "idle"}>{busy || quickAdvancing ? "Understanding…" : conversationFirstMessage ? "Send message" : activityQuestion && activitySelections.length ? "Continue with choices" : result ? "Keep talking" : "Continue"} <span>→</span></button></div>
+      <div><button type="button" className="readiness-mic" onClick={recordingState === "recording" ? stopRecording : () => void startRecording()} disabled={busy || quickAdvancing || recordingState === "transcribing"}>{recordingState === "recording" ? `Stop · ${recordingTime(recordingSeconds)}` : recordingState === "transcribing" ? "Transcribing…" : "Use microphone"}</button><button type="submit" className={busy || quickAdvancing ? "is-working" : undefined} disabled={busy || quickAdvancing || (!pendingStructuredAnswer && !(activityQuestion && activitySelections.length) && composer.trim().length < 2) || recordingState !== "idle"}>{busy ? "Understanding…" : quickAdvancing ? "Saving…" : conversationFirstMessage ? "Send message" : activityQuestion && activitySelections.length ? "Continue with choices" : result ? "Keep talking" : "Continue"} <span>→</span></button></div>
     </form>
   </div>;
 }

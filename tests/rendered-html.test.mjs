@@ -67,7 +67,15 @@ test("server-renders the My Social Impact homepage", async () => {
 test("every page inherits the global build stamp", async () => {
   const layout = await readFile(new URL("../app/layout.tsx", import.meta.url), "utf8");
   assert.match(layout, /global-build-stamp/);
-  assert.match(layout, /BUILD 63 · 20 SEPTEMBER 2026 · 22:26 BST/);
+  assert.match(layout, /BUILD 64 · 20 SEPTEMBER 2026 · 22:33 BST/);
+});
+
+test("explicit setup confirmations save directly without an intelligence thinking state", async () => {
+  const conversation = await readFile(new URL("../app/sorp-readiness-conversation.tsx", import.meta.url), "utf8");
+  assert.match(conversation, /function isDeterministicSetupReply/);
+  assert.match(conversation, /\["accountsConfirmation", "startDateConfirmation"\]/);
+  assert.match(conversation, /quickAdvancing \? "Saving…"/);
+  assert.doesNotMatch(conversation, /quickAdvancing \? "Understanding…"/);
 });
 
 test("SORP completion uses an opaque sticky header and document-flow build footer", async () => {
