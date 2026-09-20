@@ -500,6 +500,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
         body: JSON.stringify({
           message: value,
           interaction,
+          draftActivitySelections: interaction === "conversation_first" && workflow?.next.id === "activities" ? activitySelections : undefined,
           state,
           history: nextMessages.slice(-40).map(({ role, content }) => ({ role, content })),
           sessionId: sessionId || newSessionId(),
@@ -556,7 +557,9 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
       const actions = messages.at(-1)?.actions ?? [];
       const submission = buildActivitySubmission(activitySelections, actions, "");
       void sendMessage(submission.value, submission.display);
-    } else if (state.pendingStructuredAnswer && !looksLikeQuestion(composer)) void confirmStructuredAnswer(composer);
+    } else if (state.pendingStructuredAnswer && composer.trim()) {
+      void sendMessage(composer, composer, false, "conversation_first");
+    } else if (state.pendingStructuredAnswer) void confirmStructuredAnswer("");
     else void sendMessage(composer);
   }
 
@@ -631,7 +634,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
   const structuredAnswerQuestion = Boolean(pendingStructuredAnswer || workflow?.next.id.match(/^(?:field:\d+|check:)/));
   const activityQuestion = workflow?.next.id === "activities";
   const activitySelectionCount = activitySelections.length;
-  const activityChatMessage = activityQuestion && composer.trim().length > 0;
+  const conversationFirstMessage = Boolean((activityQuestion || pendingStructuredAnswer) && composer.trim().length > 0);
 
   if (!setupOnly && result && state.score !== null && sessionId) return <div className="readiness-chat is-result-mode">
     <SorpResultActions sessionId={sessionId} organisation={state.charityName} income={state.setup.income} result={result}>
@@ -714,7 +717,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
     <form className={`readiness-composer${activityQuestion ? " is-activity-composer" : ""}${activitySelectionCount ? " has-activity-selections" : ""}`} onSubmit={submit}>
       <label htmlFor="readiness-answer" aria-live="polite">{activityQuestion ? activitySelectionCount ? `✓ ${activitySelectionCount} ${activitySelectionCount === 1 ? "choice" : "choices"} selected. Want to add any more detail, or chat about why we’re asking this?` : "Choose all that apply. You can add more detail or ask why we’re asking this." : pendingStructuredAnswer ? "Want to explain why? Add a note if useful — completely optional." : structuredAnswerQuestion ? "Or tell us in your own words — or ask about the requirement." : impactMode ? "Answer naturally—or ask an impact question at any point." : "Answer naturally—or ask a SORP question at any point."}</label>
       <textarea ref={composerRef} id="readiness-answer" rows={2} value={composer} onChange={(event) => setComposer(event.target.value)} placeholder={activityQuestion ? "Add detail—or ask us why this matters…" : pendingStructuredAnswer ? "Add an optional note…" : "Type or say what you know…"} maxLength={4000} />
-      <div><button type="button" className="readiness-mic" onClick={recordingState === "recording" ? stopRecording : () => void startRecording()} disabled={busy || quickAdvancing || recordingState === "transcribing"}>{recordingState === "recording" ? `Stop · ${recordingTime(recordingSeconds)}` : recordingState === "transcribing" ? "Transcribing…" : "Use microphone"}</button><button type="submit" className={busy || quickAdvancing ? "is-working" : undefined} disabled={busy || quickAdvancing || (!pendingStructuredAnswer && !(activityQuestion && activitySelections.length) && composer.trim().length < 2) || recordingState !== "idle"}>{busy || quickAdvancing ? "Understanding…" : activityChatMessage ? "Send message" : activityQuestion && activitySelections.length ? "Continue with choices" : result ? "Keep talking" : "Continue"} <span>→</span></button></div>
+      <div><button type="button" className="readiness-mic" onClick={recordingState === "recording" ? stopRecording : () => void startRecording()} disabled={busy || quickAdvancing || recordingState === "transcribing"}>{recordingState === "recording" ? `Stop · ${recordingTime(recordingSeconds)}` : recordingState === "transcribing" ? "Transcribing…" : "Use microphone"}</button><button type="submit" className={busy || quickAdvancing ? "is-working" : undefined} disabled={busy || quickAdvancing || (!pendingStructuredAnswer && !(activityQuestion && activitySelections.length) && composer.trim().length < 2) || recordingState !== "idle"}>{busy || quickAdvancing ? "Understanding…" : conversationFirstMessage ? "Send message" : activityQuestion && activitySelections.length ? "Continue with choices" : result ? "Keep talking" : "Continue"} <span>→</span></button></div>
     </form>
   </div>;
 }
