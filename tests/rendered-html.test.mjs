@@ -67,7 +67,7 @@ test("server-renders the My Social Impact homepage", async () => {
 test("every page inherits the global build stamp", async () => {
   const layout = await readFile(new URL("../app/layout.tsx", import.meta.url), "utf8");
   assert.match(layout, /global-build-stamp/);
-  assert.match(layout, /BUILD 48 · 20 SEPTEMBER 2026 · 16:47 BST/);
+  assert.match(layout, /BUILD 49 · 20 SEPTEMBER 2026 · 16:51 BST/);
 });
 
 test("global and page navigation share one responsive header offset", async () => {

@@ -43,6 +43,9 @@
 .sorp-journey-body .readiness-message > span { font-size:11px; color:#79736c; }
 .sorp-journey-body .readiness-message > div { padding:20px 0; border:0; font-size:clamp(21px,2vw,29px); line-height:1.4; font-family:var(--font-serif); background:transparent; }
 .sorp-journey-body .readiness-message.is-user > div { font-family:inherit; padding:16px; background:#f4f1eb; color:#11100f; font-size:17px; }
+.sorp-journey-body .readiness-message.is-detour > div { font-family:inherit; font-size:18px; line-height:1.6; }
+.sorp-journey-body .readiness-label { background:#11100f; color:#fff; }
+.sorp-journey-body .readiness-label.is-should { background:#f5ce00; color:#11100f; }
 .sorp-question-purpose { padding:18px 0; border-block:1px solid #ddd8d0; }
 .sorp-question-purpose > strong { display:block; margin-bottom:8px; color:#6e655a; font-family:var(--font-sans); font-size:11px; font-weight:800; letter-spacing:.05em; text-transform:uppercase; }
 .sorp-question-purpose p { margin:0; max-width:70ch; color:#59534b; font-size:16px; line-height:1.6; }
