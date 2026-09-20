@@ -416,6 +416,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
 
   const currentStage = workflow?.currentStage || 1;
   const impactMode = state.assessmentMode === "impact_readiness";
+  const structuredAnswerQuestion = Boolean(workflow?.next.id.match(/^(?:field:\d+|check:)/));
 
   if (!started) return <section className="readiness-intro">
     <p className="readiness-kicker">SORP 2026<br /><strong>Completely free</strong></p>
@@ -449,8 +450,8 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
           {message.publicSources?.length ? <nav className="readiness-organisation-links" aria-label="Organisation sources">{message.publicSources.slice(0, 2).map((source) => <a key={source.url} href={source.url} target="_blank" rel="noreferrer">{confirmationSourceLabel(source)}</a>)}</nav> : null}
         </section>}
         {message.organisation && <p className="sorp-confirm-question">Is this the right organisation?</p>}
-        {message.actions?.length ? <nav className="readiness-message-actions" aria-label="Choose an answer">{message.actions.map((action) => <button key={`${action.label}-${action.value}`} type="button" disabled={busy || index !== messages.length - 1} onClick={() => void sendMessage(action.value)}>{action.label}<span>→</span></button>)}</nav> : null}
         {message.workflow && !message.organisation && message.responseKind !== "detour" && <SorpBasisDrawer basis={message.workflow.next.basis} />}
+        {message.actions?.length ? <nav className={`readiness-message-actions${message.workflow?.next.id.match(/^(?:field:\d+|check:)/) ? " is-assessment-scale" : ""}`} aria-label={message.workflow?.next.id.match(/^(?:field:\d+|check:)/) ? "Choose a quick answer" : "Choose an answer"}>{message.actions.map((action) => <button className={action.label === "SKIP FOR NOW" ? "is-skip" : undefined} key={`${action.label}-${action.value}`} type="button" disabled={busy || index !== messages.length - 1} onClick={() => void sendMessage(action.value)}>{action.label}<span>→</span></button>)}</nav> : null}
         {message.responseKind === "detour" && message.citations?.length ? <SorpBasisDrawer basis={{classification: message.label || "MSI JUDGEMENT", explanation: "The SORP passages relevant to your question.", citations: message.citations}} /> : null}
         {!message.organisation && message.publicSources?.length ? <details><summary>Sources</summary><div>{message.publicSources.map((source) => <article key={`${source.url}-${source.detail}`}><strong>{sourceKindLabel(source.kind)} · {source.label}</strong>{source.detail && <p>{source.detail}</p>}<a href={source.url}>View source <span>→</span></a></article>)}</div></details> : null}
       </article>)}
@@ -476,7 +477,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
 
     </div>
     <form className="readiness-composer" onSubmit={submit}>
-      <label htmlFor="readiness-answer">{impactMode ? "Answer naturally—or ask an impact question at any point." : "Answer naturally—or ask a SORP question at any point."}</label>
+      <label htmlFor="readiness-answer">{structuredAnswerQuestion ? "Or tell us in your own words — or ask about the requirement." : impactMode ? "Answer naturally—or ask an impact question at any point." : "Answer naturally—or ask a SORP question at any point."}</label>
       <textarea ref={composerRef} id="readiness-answer" rows={2} value={composer} onChange={(event) => setComposer(event.target.value)} placeholder="Type or say what you know…" maxLength={4000} />
       <div><button type="button" className="readiness-mic" onClick={recordingState === "recording" ? stopRecording : () => void startRecording()} disabled={busy || recordingState === "transcribing"}>{recordingState === "recording" ? `Stop · ${recordingTime(recordingSeconds)}` : recordingState === "transcribing" ? "Transcribing…" : "Use microphone"}</button><button type="submit" disabled={busy || composer.trim().length < 2 || recordingState !== "idle"}>{busy ? "Understanding…" : result ? "Keep talking" : "Continue"} <span>→</span></button></div>
     </form>

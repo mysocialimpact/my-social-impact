@@ -50,6 +50,12 @@
 .sorp-question-purpose { padding:18px 0; border-block:1px solid #ddd8d0; }
 .sorp-question-purpose > strong { display:block; margin-bottom:8px; color:#6e655a; font-family:var(--font-sans); font-size:11px; font-weight:800; letter-spacing:.05em; text-transform:uppercase; }
 .sorp-question-purpose p { margin:0; max-width:70ch; color:#59534b; font-size:16px; line-height:1.6; }
+.sorp-journey-body .readiness-message-actions.is-assessment-scale { grid-template-columns:repeat(5,minmax(0,1fr)); margin:18px 0 8px; border:1px solid #11100f; }
+.sorp-journey-body .readiness-message-actions.is-assessment-scale button { min-height:58px; padding:12px; border-right:1px solid #11100f; background:#fff; }
+.sorp-journey-body .readiness-message-actions.is-assessment-scale button:nth-child(5) { border-right:0; }
+.sorp-journey-body .readiness-message-actions.is-assessment-scale button:not(.is-skip):hover,.sorp-journey-body .readiness-message-actions.is-assessment-scale button:not(.is-skip):focus-visible { background:#f5ce00; }
+.sorp-journey-body .readiness-message-actions.is-assessment-scale .is-skip { grid-column:1/-1; min-height:42px; justify-content:flex-start; border-top:1px solid #11100f; border-right:0; background:#faf9f6; color:#69635b; }
+.sorp-journey-body .readiness-message-actions.is-assessment-scale .is-skip span { margin-left:auto; }
 .sorp-basis-drawer,.readiness-message .sorp-basis-drawer { margin:14px 0 22px; border:0; border-bottom:1px solid #d4d0c9; background:transparent; }
 .sorp-basis-drawer summary,.readiness-message .sorp-basis-drawer summary { display:flex; align-items:center; justify-content:space-between; cursor:pointer; min-height:48px; padding:10px 0; font-size:12px; text-transform:uppercase; font-weight:800; }
 .sorp-basis-drawer summary::after { display:none; }
@@ -115,6 +121,11 @@
   .sorp-journey-body .readiness-message > div { padding:12px 0 20px; font-size:24px; }
   .sorp-question-purpose { padding:14px 0; }
   .sorp-question-purpose p { font-size:15px; }
+  .sorp-journey-body .readiness-message-actions.is-assessment-scale { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .sorp-journey-body .readiness-message-actions.is-assessment-scale button { min-height:56px; border-right:1px solid #11100f; border-bottom:1px solid #11100f; }
+  .sorp-journey-body .readiness-message-actions.is-assessment-scale button:nth-child(2n) { border-right:0; }
+  .sorp-journey-body .readiness-message-actions.is-assessment-scale button:nth-child(5) { grid-column:1/-1; border-right:0; }
+  .sorp-journey-body .readiness-message-actions.is-assessment-scale .is-skip { border-bottom:0; }
   .sorp-conversation-page .readiness-composer { padding:10px 16px calc(10px + env(safe-area-inset-bottom)); }
   .sorp-conversation-page .readiness-composer textarea { min-height:60px; max-height:25svh; }
   .sorp-conversation-page .readiness-composer > div { margin-top:8px; }

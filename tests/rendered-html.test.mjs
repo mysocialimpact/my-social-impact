@@ -67,7 +67,7 @@ test("server-renders the My Social Impact homepage", async () => {
 test("every page inherits the global build stamp", async () => {
   const layout = await readFile(new URL("../app/layout.tsx", import.meta.url), "utf8");
   assert.match(layout, /global-build-stamp/);
-  assert.match(layout, /BUILD 53 · 20 SEPTEMBER 2026 · 17:26 BST/);
+  assert.match(layout, /BUILD 54 · 20 SEPTEMBER 2026 · 18:13 BST/);
 });
 
 test("global and page navigation share one responsive header offset", async () => {
@@ -260,6 +260,10 @@ test("server-renders the conversational SORP readiness workspace", async () => {
   assert.doesNotMatch(source, /where it is registered, its reporting year, approximate income/);
   assert.match(source, /readiness-organisation-card/);
   assert.match(source, /Choose an answer/);
+  assert.match(source, /Choose a quick answer/);
+  assert.match(source, /Or tell us in your own words/);
+  assert.match(source, /is-assessment-scale/);
+  assert.match(source, /Use microphone/);
   assert.match(source, /SorpKnownContext/);
   assert.match(source, /completedStages/);
   assert.match(source, /SorpJourneyProgress/);
