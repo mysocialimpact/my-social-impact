@@ -121,13 +121,15 @@ const products: Product[] = [
   },
   {
     name: "Are You SORP Ready?",
-    kicker: "SORP 2026 · Impact readiness",
+    kicker: "Free SORP 2026 · Impact readiness",
     textLogo: "ARE YOU\nSORP READY?",
     logoClass: "logo-sorp",
     className: "sorp-product",
-    lead: "SORP 2026 impact readiness for charities.",
-    copy: "Understand what you MUST, SHOULD and MAY do — and where judgement is needed.",
+    lead: "A completely free way for charities and advisers to understand SORP 2026 impact readiness.",
+    copy: "Ask questions, explore what applies to your situation and receive a practical readiness report at the end.",
     href: "/are-you-sorp-ready",
+    secondaryHref: "/are-you-sorp-ready/conversation",
+    secondaryLabel: "Start your free SORP conversation",
   },
   {
     name: "Purpose Works",

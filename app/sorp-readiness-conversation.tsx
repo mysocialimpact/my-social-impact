@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useRef, useState } from "react";
+import { SorpSnapshotLink } from "./sorp-snapshot-link";
 import { additionalChecks, coreQuestions, eligibilityFor, readinessStages, tierLabel, type AdditionalAnswerValue, type AnswerValue, type AssessmentSetup } from "./sorp-questionnaire";
 
 const SNAPSHOT_RESULT_KEY = "msi-sorp-readiness-result-v2";
@@ -401,11 +402,11 @@ export function SorpReadinessConversation() {
   const applicabilityLabel = state.sorpApplicability === "not_applicable" ? "Does not apply" : state.sorpApplicability === "likely_applies" ? "Likely applies" : state.sorpApplicability === "uncertain" ? "Currently uncertain" : hasEligibilityContext ? eligibility.status : "Currently uncertain";
 
   if (!started) return <section className="readiness-intro">
-    <p className="readiness-kicker">SORP 2026<br /><strong>Impact readiness</strong></p>
-    <h1>Let’s work out<br />how ready you are.</h1>
-    <div className="readiness-intro-copy"><p>I’ll begin by establishing whether SORP appears to apply, your jurisdiction and reporting period, whether the accounts are accruals or receipts &amp; payments, and your likely tier.</p><p>If SORP may not apply, you can still continue—the impact questions may still be useful.</p><p>You don’t need to know the technical language. Just answer naturally.</p></div>
-    <div className="readiness-intro-actions"><button type="button" onClick={() => startConversation(false)}>Start the conversation <span>→</span></button>{snapshotAvailable && <button type="button" className="is-secondary" onClick={() => startConversation(true)}>Use my completed Snapshot <span>→</span></button>}</div>
-    <p className="readiness-intro-note">Your progress is saved only in this browser. This is an impact-readiness assessment, not a declaration of SORP compliance.</p>
+    <p className="readiness-kicker">SORP 2026<br /><strong>Completely free</strong></p>
+    <h1>Talk it through.<br />Get your free report.</h1>
+    <div className="readiness-intro-copy"><p>You’re about to talk to <strong>My Social Impact Intelligence</strong>: specialist guidance built from MSI’s SORP and social impact expertise.</p><p>Ask whatever you need. It will explore your organisation, answer SORP questions in plain English and make the guidance relevant to your situation.</p><p>At the end, you’ll receive a practical SORP impact-readiness report. <strong>There is no charge, no card and no surprise paywall.</strong></p></div>
+    <div className="readiness-intro-actions"><button type="button" onClick={() => startConversation(false)}>Start my free conversation <span>→</span></button>{snapshotAvailable ? <button type="button" className="is-secondary" onClick={() => startConversation(true)}>Use my completed Snapshot <span>→</span></button> : <SorpSnapshotLink className="is-secondary" startLabel="Take the 15-question shortcut" />}</div>
+    <p className="readiness-intro-note"><strong>Prefer to whiz through?</strong> The Quick Snapshot takes around eight minutes. Both routes produce the same free initial report, and you can return to the conversation afterwards. Your progress is saved only in this browser.</p>
   </section>;
 
   return <div className="readiness-chat">
@@ -428,7 +429,7 @@ export function SorpReadinessConversation() {
 
     <div className="readiness-thread" aria-live="polite">
       {messages.map((message, index) => <article key={`${index}-${message.content.slice(0, 24)}`} className={`readiness-message is-${message.role}`}>
-        <span>{message.role === "user" ? "You" : impactMode ? "Impact readiness" : "SORP 2026 · Impact readiness"}</span>
+        <span>{message.role === "user" ? "You" : "My Social Impact Intelligence"}</span>
         {message.label && <strong className={`readiness-label is-${message.label.toLowerCase().replace(" ", "-")}`}>{message.label}</strong>}
         <div><MessageContent text={message.content} /></div>
         {message.organisation && <section className="readiness-organisation-card" aria-label="Organisation found">
@@ -440,7 +441,7 @@ export function SorpReadinessConversation() {
         {message.citations?.length ? <details><summary>Source</summary><div>{message.citations.map((citation) => <article key={citation.reference}><strong>SORP 2026 · paragraph {citation.reference}</strong><small>{citation.module} · PDF page {citation.page}</small><p>{citation.extract}</p></article>)}</div></details> : null}
         {!message.organisation && message.publicSources?.length ? <details><summary>Sources</summary><div>{message.publicSources.map((source) => <article key={`${source.url}-${source.detail}`}><strong>{sourceKindLabel(source.kind)} · {source.label}</strong>{source.detail && <p>{source.detail}</p>}<a href={source.url}>View source <span>→</span></a></article>)}</div></details> : null}
       </article>)}
-      {busy && <article className="readiness-message is-assistant is-loading"><span>{impactMode ? "Impact readiness" : "SORP 2026 · Impact readiness"}</span><div><p>{!state.charityName && state.currentStage === 1 ? "Looking for the right organisation…" : "Understanding what you’ve said and checking the relevant public and SORP evidence…"}</p></div></article>}
+      {busy && <article className="readiness-message is-assistant is-loading"><span>My Social Impact Intelligence</span><div><p>{!state.charityName && state.currentStage === 1 ? "Looking for the right organisation…" : "Understanding what you’ve said and checking the relevant public and SORP evidence…"}</p></div></article>}
       {error && <div className="readiness-error" role="alert"><strong>That step did not complete.</strong><p>{error}</p><button type="button" onClick={() => { setError(""); composerRef.current?.focus(); }}>Try again</button></div>}
       {result && messages.at(-1)?.role === "assistant" && state.score !== null && <section className="readiness-result">
         <header><div><p>{state.charityName ? `${state.charityName} · ${impactMode ? "Impact readiness" : "Your SORP 2026"}` : impactMode ? "Impact readiness" : "Your SORP 2026"}</p><h2>Impact readiness</h2><span>{result.overview}</span></div><div><strong>{result.score}</strong><span>/ 100</span><b>{result.band}</b></div></header>

@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { Footer, RevealObserver, SiteHeader } from "./site-shell";
-import { SorpSnapshotLink } from "./sorp-snapshot-link";
 
 const conversationUrl = "/are-you-sorp-ready/conversation";
 
@@ -95,12 +94,12 @@ export function SorpReadyPage() {
               <h1>Are you<br />SORP ready?</h1>
             </div>
             <div className="sorp-ready-intro" data-reveal>
-              <p className="sorp-ready-position">Built for UK charities.<br />Useful beyond the UK.</p>
-              <p className="sorp-ready-lead">SORP 2026 applies to UK charities preparing accruals accounts for reporting periods beginning on or after 1 January 2026.</p>
-              <p>For many charities, it puts greater emphasis on explaining the difference their work actually makes.</p>
-              <div className="sorp-ready-excitement"><strong>We’re genuinely excited by that.</strong><span>Because understanding impact should not simply be something charities scramble to explain at year-end.</span></div>
+              <p className="sorp-ready-position">A completely free SORP 2026 readiness tool.</p>
+              <p className="sorp-ready-lead">Talk through what SORP 2026 means for your charity—and receive a practical readiness report at the end.</p>
+              <p>Ask questions in your own words. My Social Impact Intelligence will help make the requirements relevant to your situation, whether you work for a charity or advise one.</p>
+              <div className="sorp-ready-excitement"><strong>No payment. No surprise paywall.</strong><span>The guided conversation and your readiness report are completely free. You only pay if you later choose an optional human review.</span></div>
               <div className="sorp-ready-actions">
-                <a className="sorp-ready-action is-primary" href="#assessment">Choose how to check your readiness <span>→</span></a>
+                <Link className="sorp-ready-action is-primary" href={conversationUrl}>Start your free readiness conversation <span>→</span></Link>
               </div>
             </div>
           </div>
@@ -124,30 +123,24 @@ export function SorpReadyPage() {
         </section>
 
         <section className="sorp-free sorp-section">
-          <SectionHeading number="02" eyebrow="Useful technology. Human judgement." title={<>This isn’t a chatbot designed<br />to keep you away from a human.</>} copy={<><p>We’re using AI because we think it can make specialist SORP guidance genuinely useful and accessible — particularly for smaller charities — without charging you every time you have a question.</p><p><strong>If there’s a clear answer, we’ll give it.</strong></p><p>Where judgement genuinely matters, we’ll explain why.</p></>} />
+          <SectionHeading number="02" eyebrow="Specialist guidance. Relevant answers." title={<>A conversation shaped<br />around your organisation.</>} copy={<><p>You’ll talk to My Social Impact Intelligence: specialist guidance built from MSI’s SORP and social impact expertise.</p><p>Ask whatever you need. It can explain requirements in plain English, explore what they mean for your situation and help identify what looks strong, missing or uncertain.</p><p><strong>Where there is a clear answer, it will give one. Where human judgement matters, it will say so.</strong></p></>} />
         </section>
 
         <section className="sorp-assessment sorp-section" id="assessment">
-          <SectionHeading number="03" eyebrow="Choose how you think" title={<>Same assessment.<br />Two ways to do it.</>} />
-          <div className="sorp-route-grid">
-            <article className="sorp-route is-snapshot" data-reveal>
-              <div className="sorp-route-top"><span>Route 01</span><strong>15 structured questions<br />Around 8 minutes</strong></div>
-              <h3>Quick<br />snapshot</h3>
-              <p>For people who prefer a clear structure and want a quick picture of where they stand.</p>
-              <SorpSnapshotLink startLabel="Take the quick snapshot" />
-            </article>
-            <article className="sorp-route is-conversation" data-reveal>
-              <div className="sorp-route-top"><span>Route 02</span><strong>Have a conversation<br />instead</strong></div>
+          <SectionHeading number="03" eyebrow="One place to begin" title={<>Start with a conversation.<br />Choose the shortcut inside.</>} />
+          <div className="sorp-route-grid is-single">
+            <article className="sorp-route is-conversation is-primary-route" data-reveal>
+              <div className="sorp-route-top"><span>Free guided assessment</span><strong>Ask questions<br />as you go</strong></div>
               <h3>Talk it<br />through</h3>
-              <p>Complete the same readiness assessment conversationally, with relevant requirements explained as you go.</p>
-              <Link href={conversationUrl}>Start a readiness conversation <span>→</span></Link>
+              <p>Explore what SORP means for your organisation, ask whatever you need and receive a free readiness report at the end.</p>
+              <Link href={conversationUrl}>Start your free conversation <span>→</span></Link>
             </article>
           </div>
 
           <div className="sorp-route-note" data-reveal>
-            <h3>We’re not particularly fond of forms either.</h3>
-            <p>Some people prefer a structured questionnaire. Others find it easier to explain where they are conversationally.</p>
-            <p>There’s no right way to do it — so we offer both.</p>
+            <h3>Rather whiz through it?</h3>
+            <p>Once you enter, you can switch to a 15-question Quick Snapshot. It takes around eight minutes and gives you the same free initial readiness report.</p>
+            <p>You can return to the conversation afterwards if you want to ask questions or add context.</p>
           </div>
         </section>
 
@@ -207,7 +200,7 @@ export function SorpReadyPage() {
         </section>
 
         <section className="sorp-result sorp-section" id="result">
-          <SectionHeading number="08" eyebrow="What the free result shows" title={<>A clear picture.<br />Useful next steps.</>} copy={<p>This is an illustrative example of the free result. Your own result is calculated only after you complete the snapshot.</p>} />
+          <SectionHeading number="08" eyebrow="What your free report shows" title={<>A clear picture.<br />Useful next steps.</>} copy={<p>This is an illustrative example. Your own free report is created at the end of the guided conversation—or after the 15-question Quick Snapshot.</p>} />
           <div className="sorp-result-card" data-reveal>
             <header><div><p>Your SORP 2026</p><h3>Impact readiness</h3></div><strong>68 <span>/ 100</span></strong></header>
             <div className="sorp-result-bars">{readinessAreas.map(([name, score]) => <div key={name}><span>{name}</span><i><b style={{ width: `${score}%` }} /></i><strong>{score}</strong></div>)}</div>
@@ -218,7 +211,8 @@ export function SorpReadyPage() {
         </section>
 
         <section className="sorp-review sorp-section" id="review">
-          <div className="sorp-review-heading" data-reveal><p><span>09</span>Want a human view?</p><h2>SORP 2026<br />Impact Readiness Review</h2><div><strong>60</strong><span>minutes</span></div></div>
+          <div className="sorp-review-heading" data-reveal><p><span>09</span>Optional paid human review</p><h2>SORP 2026<br />Impact Readiness Review</h2><div><strong>60</strong><span>minutes</span></div></div>
+          <p className="sorp-review-free-line" data-reveal><strong>Your guided assessment and readiness report are completely free.</strong> You pay only if you choose to have Marcus and the MSI team review the result with you afterwards.</p>
           <div className="sorp-review-pricing" data-reveal>{[["Tier 1", "Up to £500,000 income", "£50"], ["Tier 2", "Over £500,000 and up to £15 million", "£100"], ["Tier 3", "Over £15 million", "£200"]].map(([tierName, income, price]) => <article key={tierName}><span>{tierName}</span><p>{income}</p><strong>{price}</strong></article>)}</div>
           <div className="sorp-review-grid">
             <div className="sorp-review-intro" data-reveal><p>We review your readiness result, discuss areas requiring judgement and consider your existing reporting where supplied.</p><p>You can optionally send your latest Trustees’ Annual Report and/or latest Impact Report. If you do not have either yet, that is completely fine.</p></div>
@@ -243,7 +237,7 @@ export function SorpReadyPage() {
           ].map(([name, copy, href], index) => href.startsWith("/") ? <Link href={href} key={name} data-reveal><span>0{index + 1}</span><h3>{name}</h3><p>{copy}</p><strong>Explore <b>→</b></strong></Link> : <a href={href} key={name} data-reveal><span>0{index + 1}</span><h3>{name}</h3><p>{copy}</p><strong>Talk to us <b>→</b></strong></a>)}</div>
         </section>
 
-        <section className="sorp-final" data-reveal><p>SORP 2026 · Impact reporting</p><h2>This looks useful.<br /><em>I should probably deal with this now.</em></h2><div><a href="#assessment">Choose how to check your readiness <span>→</span></a></div></section>
+        <section className="sorp-final" data-reveal><p>SORP 2026 · Free impact-readiness report</p><h2>This looks useful.<br /><em>I should probably deal with this now.</em></h2><div><Link href={conversationUrl}>Start my free readiness conversation <span>→</span></Link></div></section>
       </main>
       <Footer />
     </>

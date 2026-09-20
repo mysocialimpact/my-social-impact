@@ -37,11 +37,13 @@ export default function AssessmentsPage() {
             <header><span>02</span><p>SORP 2026 Impact Readiness</p></header>
             <h2>Are you SORP ready?</h2>
             <div className="assessment-choice-copy">
-              <p>For UK charities preparing for the impact-reporting requirements of SORP 2026.</p>
-              <p>Understand whether SORP applies, where you stand, and what may need attention.</p>
+              <p>A completely free guided conversation for charities and the accountants and advisers who support them.</p>
+              <p>Ask SORP questions, understand what applies to your situation and receive a practical readiness report at the end. No card and no surprise paywall.</p>
+              <p>If you prefer to move quickly, a 15-question shortcut is available once you enter.</p>
             </div>
             <div className="assessment-choice-actions">
-              <Link className="is-primary" href="/are-you-sorp-ready">Explore SORP Readiness <span>→</span></Link>
+              <Link className="is-primary" href="/are-you-sorp-ready/conversation">Start your free SORP conversation <span>→</span></Link>
+              <Link href="/are-you-sorp-ready">Explore SORP Readiness <span>→</span></Link>
             </div>
           </article>
         </section>

@@ -4,7 +4,7 @@ import "../../sorp-ready.css";
 
 export const metadata: Metadata = {
   title: "SORP Readiness Conversation",
-  description: "Talk through your charity’s SORP 2026 impact readiness with the My Social Impact SORP assistant.",
+  description: "Talk to My Social Impact Intelligence, ask SORP 2026 questions and receive a free impact-readiness report.",
 };
 
 export default function Page() {

@@ -67,7 +67,7 @@ test("server-renders the My Social Impact homepage", async () => {
 test("every page inherits the global build stamp", async () => {
   const layout = await readFile(new URL("../app/layout.tsx", import.meta.url), "utf8");
   assert.match(layout, /global-build-stamp/);
-  assert.match(layout, /BUILD 43 · 20 SEPTEMBER 2026 · 10:42 BST/);
+  assert.match(layout, /BUILD 44 · 20 SEPTEMBER 2026 · 11:18 BST/);
 });
 
 test("global and page navigation share one responsive header offset", async () => {
@@ -153,17 +153,14 @@ test("server-renders the Are You SORP Ready product page", async () => {
 
   const html = await response.text();
   assert.match(html, /<title>Are You SORP Ready\? \| My Social Impact<\/title>/i);
-  assert.match(html, /Built for UK charities/i);
-  assert.match(html, /Useful beyond the UK/i);
-  assert.match(html, /preparing accruals accounts for reporting periods beginning on or after 1 January 2026/i);
-  assert.match(html, /We’re genuinely excited by that/i);
-  assert.match(html, /Same assessment/i);
-  assert.match(html, /Two ways to do it/i);
-  assert.match(html, /15 structured questions/i);
-  assert.match(html, /href="\/are-you-sorp-ready\/snapshot"/i);
-  assert.match(html, /Take the quick snapshot/i);
-  assert.match(html, /Start a readiness conversation/i);
-  assert.match(html, /Choose how to check your readiness/i);
+  assert.match(html, /completely free SORP 2026 readiness tool/i);
+  assert.match(html, /practical readiness report at the end/i);
+  assert.match(html, /No payment\. No surprise paywall/i);
+  assert.match(html, /Start your free readiness conversation/i);
+  assert.match(html, /Start with a conversation/i);
+  assert.match(html, /15-question Quick Snapshot/i);
+  assert.doesNotMatch(html, /href="\/are-you-sorp-ready\/snapshot"/i);
+  assert.match(html, /Start your free conversation/i);
   assert.doesNotMatch(html, /A useful result\. No account\. No email gate\./i);
   assert.doesNotMatch(html, /id="snapshot-tool"/i);
   assert.match(html, /href="\/are-you-sorp-ready\/conversation"/i);
@@ -175,12 +172,14 @@ test("server-renders the Are You SORP Ready product page", async () => {
   assert.match(html, /Does SORP 2026/i);
   assert.match(html, /Charitable company ≠ CIC/i);
   assert.match(html, /Outside the UK/i);
-  assert.match(html, /This isn’t a chatbot designed/i);
+  assert.match(html, /A conversation shaped/i);
+  assert.match(html, /My Social Impact Intelligence/i);
   assert.match(html, /Illustrative front-end preview/i);
   assert.match(html, /£50/i);
   assert.match(html, /£100/i);
   assert.match(html, /£200/i);
   assert.match(html, /Impact Readiness Review/i);
+  assert.match(html, /Optional paid human review/i);
   assert.match(html, /Cost genuinely a barrier/i);
   assert.match(html, /not a statutory audit/i);
   assert.doesNotMatch(html, /final 15-question method and scoring are still being developed/i);
@@ -196,6 +195,7 @@ test("server-renders the simple assessment hub", async () => {
   assert.match(html, /Social Impact Maturity Assessment/i);
   assert.match(html, /Are you SORP ready/i);
   assert.match(html, /Explore Social Impact Excellence/i);
+  assert.match(html, /Start your free SORP conversation/i);
   assert.match(html, /Explore SORP Readiness/i);
   assert.match(html, /href="\/social-impact-excellence"/i);
   assert.match(html, /href="\/are-you-sorp-ready"/i);
@@ -235,11 +235,11 @@ test("server-renders the conversational SORP readiness workspace", async () => {
 
   const html = await response.text();
   assert.match(html, /<title>SORP Readiness Conversation \| My Social Impact<\/title>/i);
-  assert.match(html, /Let’s work out/i);
-  assert.match(html, /how ready you are/i);
-  assert.match(html, /Start the conversation/i);
-  assert.match(html, /You don’t need to know the technical language/i);
-  assert.match(html, /whether SORP appears to apply/i);
+  assert.match(html, /Talk it through/i);
+  assert.match(html, /Get your free report/i);
+  assert.match(html, /Start my free conversation/i);
+  assert.match(html, /My Social Impact Intelligence/i);
+  assert.match(html, /15-question shortcut/i);
 
   const source = await readFile(new URL("../app/sorp-readiness-conversation.tsx", import.meta.url), "utf8");
   assert.match(source, /Let’s work out where you stand\./);
