@@ -222,10 +222,16 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
 
   useEffect(() => {
     const viewport = window.visualViewport;
-    const resize = () => document.documentElement.style.setProperty("--sorp-viewport-height", `${viewport?.height || window.innerHeight}px`);
+    const stamp = document.querySelector<HTMLElement>(".global-build-stamp");
+    const resize = () => {
+      document.documentElement.style.setProperty("--sorp-viewport-height", `${viewport?.height || window.innerHeight}px`);
+      document.documentElement.style.setProperty("--sorp-stamp-height", `${stamp?.getBoundingClientRect().height || 34}px`);
+    };
     resize();
+    const observer = new ResizeObserver(resize);
+    if (stamp) observer.observe(stamp);
     viewport?.addEventListener("resize", resize);
-    return () => { viewport?.removeEventListener("resize", resize); document.documentElement.style.removeProperty("--sorp-viewport-height"); };
+    return () => { observer.disconnect(); viewport?.removeEventListener("resize", resize); document.documentElement.style.removeProperty("--sorp-viewport-height"); document.documentElement.style.removeProperty("--sorp-stamp-height"); };
   }, []);
 
   useEffect(() => {
@@ -272,7 +278,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
   useEffect(() => {
     const body = document.querySelector<HTMLElement>(".sorp-journey-body");
     const target = document.querySelector<HTMLElement>(completionNotice ? ".sorp-completion-notice" : "#readiness-current-question");
-    if (body && target) body.scrollTo({ top: completionNotice.includes("Organisation confirmed") ? 0 : body.scrollTop + target.getBoundingClientRect().top - body.getBoundingClientRect().top - 20, behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" });
+    if (body && target) body.scrollTo({ top: window.innerWidth > 900 || completionNotice.includes("Organisation confirmed") ? 0 : body.scrollTop + target.getBoundingClientRect().top - body.getBoundingClientRect().top - 20, behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" });
   }, [messages, busy, result, completionNotice]);
 
   useEffect(() => () => {
