@@ -731,6 +731,7 @@
 
 .readiness-composer { position: sticky; bottom: 0; z-index: 35; width: min(100%, 1000px); margin: 0 auto; padding: .8rem var(--sorp-pad) calc(.8rem + env(safe-area-inset-bottom)); border-top: 1px solid var(--ink); background: var(--white); box-shadow: 0 -12px 30px rgba(17,16,15,.08); }
 .readiness-composer label { display: block; margin-bottom: .45rem; font-size: .7rem; font-weight: 800; text-transform: uppercase; }
+.readiness-composer.is-activity-composer.has-activity-selections label { margin-bottom: .65rem; padding: .7rem .8rem; border-left: 4px solid #347a50; background: #e8f3e9; color: #245f3a; font-size: .76rem; line-height: 1.45; }
 .readiness-composer textarea { width: 100%; min-height: 76px; max-height: 180px; padding: .8rem; display: block; resize: vertical; border: 1px solid var(--ink); border-radius: 0; background: var(--paper); font-size: 1rem; line-height: 1.45; }
 .readiness-composer > div { margin-top: .55rem; display: grid; grid-template-columns: auto minmax(180px,.35fr); gap: .55rem; justify-content: end; }
 .readiness-composer button { min-height: 48px; padding: .7rem 1rem; border: 1px solid var(--ink); background: var(--ink); color: var(--white); cursor: pointer; font-size: .7rem; font-weight: 800; text-transform: uppercase; }

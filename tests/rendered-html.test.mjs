@@ -67,7 +67,7 @@ test("server-renders the My Social Impact homepage", async () => {
 test("every page inherits the global build stamp", async () => {
   const layout = await readFile(new URL("../app/layout.tsx", import.meta.url), "utf8");
   assert.match(layout, /global-build-stamp/);
-  assert.match(layout, /BUILD 59 · 20 SEPTEMBER 2026 · 21:41 BST/);
+  assert.match(layout, /BUILD 60 · 20 SEPTEMBER 2026 · 22:02 BST/);
 });
 
 test("SORP working states describe the actual task and show restrained motion", async () => {
@@ -321,6 +321,9 @@ test("server-renders the conversational SORP readiness workspace", async () => {
   assert.match(source, /selectStructuredAnswer\(action\.value\)/);
   assert.match(source, /Choose all that apply\./);
   assert.match(source, /Continue with choices/);
+  assert.match(source, /Want to add any more detail, or chat about why we’re asking this\?/);
+  assert.match(source, /Ask this question/);
+  assert.match(source, /preserveActivitySelections/);
   assert.match(source, /aria-pressed/);
   assert.match(source, /is-multi-select/);
   assert.match(source, /Back to previous question/);
