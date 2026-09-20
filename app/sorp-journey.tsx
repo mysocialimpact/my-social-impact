@@ -2,10 +2,18 @@ import { readinessStages } from "./sorp-questionnaire";
 import "./sorp-journey.css";
 
 export type SorpBasis = { classification: string; explanation: string; interpretation?: string; citations: { reference: string; module: string; page: number; extract: string }[] };
+export type PublicReadinessFinding = { fieldId: number; suggestedAnswer: "yes" | "mostly" | "partly" | "not_yet" | "not_sure"; confidence: "high" | "medium" | "low"; reason: string; trusteesReportEvidence: string; widerImpactEvidence: string; sourceUrls: string[] };
+export type PublicReadinessReview = {
+  status: "reviewed" | "limited" | "unavailable"; overallConfidence: "high" | "medium" | "low";
+  strong: string[]; attention: string[]; unknown: string[];
+  trusteesReport: { reviewed: boolean; title: string; url: string; period: string };
+  impactReport: { found: boolean; title: string; url: string };
+  websiteReviewed: boolean; findings: PublicReadinessFinding[];
+};
 export type ReadinessWorkflow = {
   version: number; currentStage: number; completedStages: number[]; stageTitle: string; stageCount: number;
   known: { id: string; label: string; value: string; established: boolean; source: string; sourceUrl?: string }[];
-  next: { id: string; question: string; why: string; basis: SorpBasis; actions: { label: string; value: string }[] };
+  next: { id: string; question: string; why: string; basis: SorpBasis; actions: { label: string; value: string }[]; provisional?: PublicReadinessReview; proposal?: PublicReadinessFinding };
 };
 
 export function SorpJourneyProgress({ current, completed, result = false }: { current: number; completed: number[]; result?: boolean }) {

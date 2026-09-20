@@ -3,7 +3,7 @@
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { SorpSnapshotLink } from "./sorp-snapshot-link";
 import { SorpResultActions } from "./sorp-result-actions";
-import { SorpJourneyProgress, SorpKnownContext, SorpBasisDrawer, type ReadinessWorkflow } from "./sorp-journey";
+import { SorpJourneyProgress, SorpKnownContext, SorpBasisDrawer, type PublicReadinessFinding, type PublicReadinessReview, type ReadinessWorkflow } from "./sorp-journey";
 import { additionalChecks, coreQuestions, readinessStages, type AdditionalAnswerValue, type AnswerValue, type AssessmentSetup } from "./sorp-questionnaire";
 
 const SNAPSHOT_RESULT_KEY = "msi-sorp-readiness-result-v2";
@@ -41,6 +41,8 @@ export type ReadinessState = {
   currentStage: number;
   score: number | null;
   inheritedSnapshot: boolean;
+  publicReviewAcknowledged: boolean;
+  impactReportInput: "none" | "awaiting_link" | "skipped";
 };
 
 type Result = {
@@ -96,6 +98,8 @@ function blankState(): ReadinessState {
     currentStage: 1,
     score: null,
     inheritedSnapshot: false,
+    publicReviewAcknowledged: false,
+    impactReportInput: "none",
   };
 }
 
@@ -194,6 +198,34 @@ function intelligenceLayerLabel(layer: IntelligenceProvenance["layers"][number])
 
 function ResultList({ title, items, empty }: { title: string; items: string[]; empty: string }) {
   return <article><h4>{title}</h4>{items.length ? <ul>{items.map((item) => <li key={item}>{item}</li>)}</ul> : <p>{empty}</p>}</article>;
+}
+
+const answerLabels: Record<PublicReadinessFinding["suggestedAnswer"], string> = { yes: "YES, CLEARLY", mostly: "MOSTLY", partly: "PARTLY", not_yet: "NOT YET", not_sure: "NOT SURE" };
+
+function FindingList({ title, items, empty }: { title: string; items: string[]; empty: string }) {
+  return <article><h4>{title}</h4>{items.length ? <ul>{items.map((item) => <li key={item}>{item}</li>)}</ul> : <p>{empty}</p>}</article>;
+}
+
+function ProvisionalReadinessView({ review }: { review: PublicReadinessReview }) {
+  const sources = [review.trusteesReport.reviewed && review.trusteesReport.url ? { label: review.trusteesReport.title || "Trustees’ Annual Report", url: review.trusteesReport.url } : null, review.impactReport.found && review.impactReport.url ? { label: review.impactReport.title || "Impact Report", url: review.impactReport.url } : null].filter((source): source is { label: string; url: string } => Boolean(source));
+  return <section className="sorp-provisional-view" aria-label="Provisional SORP readiness view">
+    <header><div><span>Based on what we can see publicly</span><h3>Provisional SORP readiness view</h3></div><strong className={`is-${review.overallConfidence}`}>{review.overallConfidence} confidence</strong></header>
+    <div className="sorp-provisional-grid"><FindingList title="Already looks strong" items={review.strong} empty="Nothing is clear enough publicly to call strong yet." /><FindingList title="May need attention" items={review.attention} empty="No obvious concern was identified in the material reviewed." /><FindingList title="Cannot establish publicly" items={review.unknown} empty="No major public-evidence gap was identified." /></div>
+    <div className="sorp-public-evidence-split"><p><strong>Trustees’ Annual Report</strong><span>{review.trusteesReport.reviewed ? [review.trusteesReport.title, review.trusteesReport.period].filter(Boolean).join(" · ") : "We could not review one confidently."}</span></p><p><strong>Wider impact evidence</strong><span>{review.impactReport.found ? review.impactReport.title || "A separate public impact report was found." : "We couldn’t find a public Impact Report or Annual Review."}</span></p></div>
+    {sources.length ? <nav aria-label="Public reports reviewed">{sources.map((source) => <a key={source.url} href={source.url} target="_blank" rel="noreferrer">{source.label} ↗</a>)}</nav> : null}
+    {!review.impactReport.found && <p className="sorp-impact-report-offer"><strong>Have an Impact Report or Annual Review?</strong><span>We couldn’t find one publicly. Add it if you’d like us to take it into account.</span></p>}
+    <p className="sorp-provisional-note">This is an evidence-based starting point, not your final result. Your answers remain in control of the score.</p>
+  </section>;
+}
+
+function PublicAnswerProposal({ proposal }: { proposal: PublicReadinessFinding }) {
+  return <section className="sorp-answer-proposal" aria-label="Public-evidence suggested answer">
+    <span>{proposal.trusteesReportEvidence ? "Based on your latest Trustees’ Annual Report, we think:" : "Based on the wider public evidence, we think:"}</span>
+    <strong>{answerLabels[proposal.suggestedAnswer]}</strong>
+    <h4>Why</h4><p>{proposal.reason}</p>
+    <div className="sorp-public-evidence-split"><p><b>Trustees’ Annual Report</b><span>{proposal.trusteesReportEvidence || "We could not establish this from the Trustees’ Annual Report."}</span></p><p><b>Wider impact evidence</b><span>{proposal.widerImpactEvidence || "No separate wider evidence changes this view."}</span></p></div>
+    <p className="sorp-proposal-confirm">Does that seem right?<span>Keep it, change it below, or tell us in your own words.</span></p>
+  </section>;
 }
 
 export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }: { setupOnly?: boolean; onSetupComplete?: (state: ReadinessState, workflow: ReadinessWorkflow) => void }) {
@@ -443,14 +475,16 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
         <span>{message.role === "user" ? "You" : "My Social Impact Intelligence"}</span>
         {message.label && message.responseKind === "detour" && <strong className={`readiness-label is-${message.label.toLowerCase().replace(" ", "-")}`}>{message.label === "JUDGEMENT" ? "MSI JUDGEMENT" : message.label}</strong>}
         <div><MessageContent text={message.organisation ? "I think I’ve found you." : message.content} /></div>
-        {message.role === "assistant" && !message.organisation && message.responseKind !== "result" && <section className="sorp-question-purpose"><strong>{message.responseKind === "detour" ? "What we need next" : "Why we’re asking"}</strong><p>{message.responseKind === "detour" ? message.workflow?.next.question : message.workflow?.next.why || "Finding the right organisation lets us use public information and establish whether SORP 2026 applies to you."}</p></section>}
+        {message.workflow?.next.provisional && <ProvisionalReadinessView review={message.workflow.next.provisional} />}
+        {message.workflow?.next.proposal && <PublicAnswerProposal proposal={message.workflow.next.proposal} />}
+        {message.role === "assistant" && !message.organisation && message.responseKind !== "result" && message.workflow?.next.id !== "publicReview" && <section className="sorp-question-purpose"><strong>{message.responseKind === "detour" ? "What we need next" : "Why we’re asking"}</strong><p>{message.responseKind === "detour" ? message.workflow?.next.question : message.workflow?.next.why || "Finding the right organisation lets us use public information and establish whether SORP 2026 applies to you."}</p></section>}
         {message.organisation && <section className="readiness-organisation-card" aria-label="Organisation found">
           <h3>{message.organisation.name}</h3>
           {message.organisation.locality && <p className="readiness-organisation-location">{message.organisation.locality}</p>}
           {message.publicSources?.length ? <nav className="readiness-organisation-links" aria-label="Organisation sources">{message.publicSources.slice(0, 2).map((source) => <a key={source.url} href={source.url} target="_blank" rel="noreferrer">{confirmationSourceLabel(source)}</a>)}</nav> : null}
         </section>}
         {message.organisation && <p className="sorp-confirm-question">Is this the right organisation?</p>}
-        {message.workflow && !message.organisation && message.responseKind !== "detour" && <SorpBasisDrawer basis={message.workflow.next.basis} />}
+        {message.workflow && !message.organisation && message.responseKind !== "detour" && message.workflow.next.id !== "publicReview" && <SorpBasisDrawer basis={message.workflow.next.basis} />}
         {message.actions?.length ? <nav className={`readiness-message-actions${message.workflow?.next.id.match(/^(?:field:\d+|check:)/) ? " is-assessment-scale" : ""}`} aria-label={message.workflow?.next.id.match(/^(?:field:\d+|check:)/) ? "Choose a quick answer" : "Choose an answer"}>{message.actions.map((action) => <button className={action.label === "SKIP FOR NOW" ? "is-skip" : undefined} key={`${action.label}-${action.value}`} type="button" disabled={busy || index !== messages.length - 1} onClick={() => void sendMessage(action.value)}>{action.label}<span>→</span></button>)}</nav> : null}
         {message.responseKind === "detour" && message.citations?.length ? <SorpBasisDrawer basis={{classification: message.label || "MSI JUDGEMENT", explanation: "The SORP passages relevant to your question.", citations: message.citations}} /> : null}
         {!message.organisation && message.publicSources?.length ? <details><summary>Sources</summary><div>{message.publicSources.map((source) => <article key={`${source.url}-${source.detail}`}><strong>{sourceKindLabel(source.kind)} · {source.label}</strong>{source.detail && <p>{source.detail}</p>}<a href={source.url}>View source <span>→</span></a></article>)}</div></details> : null}
