@@ -125,6 +125,26 @@ function looksLikeQuestion(value: string) {
   return /\?$/.test(value.trim()) || /^(?:why|what|how|when|where|who|can|could|would|should|does|do|is|are)\b/i.test(value.trim());
 }
 
+function organisationResearchStatus(value: unknown) {
+  if (!value || typeof value !== "object" || !("status" in value)) return "";
+  return typeof value.status === "string" ? value.status : "";
+}
+
+function workingStatusFor(value: string, state: ReadinessState, workflow: ReadinessWorkflow | null) {
+  const answer = value.trim();
+  const researchStatus = organisationResearchStatus(state.organisationResearch);
+  if (researchStatus === "needs_confirmation") {
+    if (/^(?:no|nope|not us|try again|different|wrong)\b/i.test(answer)) return "Looking again for the right organisation…";
+    return "Confirming the organisation and checking its public information…";
+  }
+  const step = workflow?.next.id || "";
+  if (step === "organisation" || (!state.charityName && state.currentStage === 1)) return "Looking for the right organisation…";
+  if (["accounts", "accountsConfirmation", "startDate", "startDateConfirmation", "income", "activities", "publicReview", "impactReportLink"].includes(step)) return "Checking the organisation’s public information and what applies…";
+  if (/^(?:field:|check:)/.test(step)) return "Understanding your answer and checking the relevant SORP guidance…";
+  if (step === "result") return "Bringing your readiness report together…";
+  return "Understanding what you’ve said and checking what matters next…";
+}
+
 function newSessionId() {
   return typeof crypto !== "undefined" && "randomUUID" in crypto
     ? crypto.randomUUID()
@@ -257,6 +277,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
   const [messages, setMessages] = useState<Message[]>([]);
   const [composer, setComposer] = useState("");
   const [busy, setBusy] = useState(false);
+  const [workingStatus, setWorkingStatus] = useState("Understanding what you’ve said and checking what matters next…");
   const [quickAdvancing, setQuickAdvancing] = useState(false);
   const [error, setError] = useState("");
   const [result, setResult] = useState<Result | null>(null);
@@ -436,6 +457,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
     const nextMessages = [...messages, userMessage];
     setMessages(nextMessages);
     setComposer("");
+    setWorkingStatus(workingStatusFor(value, state, workflow));
     setBusy(true);
     setError("");
     try {
@@ -599,7 +621,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
         <button type="button" onClick={() => void confirmStructuredAnswer(composer)} disabled={quickAdvancing || recordingState !== "idle"}>Continue <span>→</span></button>
         <p><b>Want to explain why?</b><span>Add a note in your own words — completely optional.</span></p>
       </section>}
-      {busy && <article className="readiness-message is-assistant is-loading"><span>My Social Impact Intelligence</span><div><p>{!state.charityName && state.currentStage === 1 ? "Looking for the right organisation…" : "Understanding what you’ve said and checking the relevant public and SORP evidence…"}</p></div></article>}
+      {busy && <article className="readiness-message is-assistant is-loading" role="status" aria-live="polite"><span>My Social Impact Intelligence</span><div><p>{workingStatus}</p></div></article>}
       {error && <div className="readiness-error" role="alert"><strong>That step did not complete.</strong><p>{error}</p><button type="button" onClick={() => { setError(""); composerRef.current?.focus(); }}>Try again</button></div>}
       {intelligence && <details className="readiness-intelligence" aria-label="Effective intelligence provenance">
         <summary>{intelligence.layers.filter((layer) => layer.id === "msi-core" || layer.id === "sorp-readiness-intelligence").map((layer) => `${intelligenceLayerLabel(layer)} · ${layer.label}`).join(" · ")}</summary>
@@ -616,7 +638,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
     <form className="readiness-composer" onSubmit={submit}>
       <label htmlFor="readiness-answer">{pendingStructuredAnswer ? "Want to explain why? Add a note if useful — completely optional." : structuredAnswerQuestion ? "Or tell us in your own words — or ask about the requirement." : impactMode ? "Answer naturally—or ask an impact question at any point." : "Answer naturally—or ask a SORP question at any point."}</label>
       <textarea ref={composerRef} id="readiness-answer" rows={2} value={composer} onChange={(event) => setComposer(event.target.value)} placeholder={pendingStructuredAnswer ? "Add an optional note…" : "Type or say what you know…"} maxLength={4000} />
-      <div><button type="button" className="readiness-mic" onClick={recordingState === "recording" ? stopRecording : () => void startRecording()} disabled={busy || quickAdvancing || recordingState === "transcribing"}>{recordingState === "recording" ? `Stop · ${recordingTime(recordingSeconds)}` : recordingState === "transcribing" ? "Transcribing…" : "Use microphone"}</button><button type="submit" disabled={busy || quickAdvancing || (!pendingStructuredAnswer && composer.trim().length < 2) || recordingState !== "idle"}>{busy ? "Understanding…" : result ? "Keep talking" : "Continue"} <span>→</span></button></div>
+      <div><button type="button" className="readiness-mic" onClick={recordingState === "recording" ? stopRecording : () => void startRecording()} disabled={busy || quickAdvancing || recordingState === "transcribing"}>{recordingState === "recording" ? `Stop · ${recordingTime(recordingSeconds)}` : recordingState === "transcribing" ? "Transcribing…" : "Use microphone"}</button><button type="submit" className={busy || quickAdvancing ? "is-working" : undefined} disabled={busy || quickAdvancing || (!pendingStructuredAnswer && composer.trim().length < 2) || recordingState !== "idle"}>{busy || quickAdvancing ? "Understanding…" : result ? "Keep talking" : "Continue"} <span>→</span></button></div>
     </form>
   </div>;
 }

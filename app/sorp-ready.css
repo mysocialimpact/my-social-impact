@@ -684,7 +684,8 @@
 .readiness-message.is-user > div { background: var(--ink); color: var(--white); }
 .readiness-message.is-assistant { width: min(92%, 820px); }
 .readiness-message.is-assistant > div { border-left: 7px solid var(--sorp-yellow); }
-.readiness-message.is-loading > div { color: var(--muted); }
+.readiness-message.is-loading > div { border-left-color: #3d7650; background: #f1f7ee; color: #3d7650; }
+.readiness-message.is-loading > div p { animation: readiness-working-text 1.45s ease-in-out infinite; }
 .readiness-label { width: max-content; margin: 0 0 .5rem; padding: .32rem .52rem; display: block; background: var(--ink); color: var(--white); font-size: .62rem; letter-spacing: .07em; text-transform: uppercase; }
 .readiness-label.is-must { background: var(--sorp-orange); }
 .readiness-label.is-judgement { background: var(--sorp-pink); }
@@ -725,6 +726,16 @@
 .readiness-composer button { min-height: 48px; padding: .7rem 1rem; border: 1px solid var(--ink); background: var(--ink); color: var(--white); cursor: pointer; font-size: .7rem; font-weight: 800; text-transform: uppercase; }
 .readiness-composer button:disabled { cursor: wait; opacity: .55; }
 .readiness-composer .readiness-mic { background: var(--white); color: var(--ink); }
+.readiness-composer button.is-working,.readiness-composer button.is-working:disabled { border-color: #2f7048; background: #347a50; color: #fff; opacity: 1; }
+.readiness-composer button.is-working { animation: readiness-working-button 1.45s ease-in-out infinite; }
+.readiness-composer button.is-working span { display: inline-block; animation: readiness-working-arrow .85s ease-in-out infinite alternate; }
+
+@keyframes readiness-working-text { 0%,100% { opacity:.68; } 50% { opacity:1; } }
+@keyframes readiness-working-button { 0%,100% { box-shadow:0 0 0 0 rgba(52,122,80,.08); } 50% { box-shadow:0 0 0 5px rgba(52,122,80,.16); } }
+@keyframes readiness-working-arrow { from { transform:translateX(0); } to { transform:translateX(5px); } }
+@media (prefers-reduced-motion: reduce) {
+  .readiness-message.is-loading > div p,.readiness-composer button.is-working,.readiness-composer button.is-working span { animation:none; }
+}
 
 .readiness-result { margin: 3rem calc(var(--sorp-pad) * -1) 0; border: 1px solid var(--ink); background: var(--white); }
 .readiness-result > header { padding: clamp(1.5rem,4vw,3.5rem); display: grid; grid-template-columns: 1fr auto; gap: 2rem; align-items: end; border-bottom: 2px solid var(--ink); background: var(--paper); }

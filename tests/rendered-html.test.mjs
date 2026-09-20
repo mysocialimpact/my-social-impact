@@ -67,7 +67,23 @@ test("server-renders the My Social Impact homepage", async () => {
 test("every page inherits the global build stamp", async () => {
   const layout = await readFile(new URL("../app/layout.tsx", import.meta.url), "utf8");
   assert.match(layout, /global-build-stamp/);
-  assert.match(layout, /BUILD 57 · 20 SEPTEMBER 2026 · 19:44 BST/);
+  assert.match(layout, /BUILD 58 · 20 SEPTEMBER 2026 · 21:27 BST/);
+});
+
+test("SORP working states describe the actual task and show restrained motion", async () => {
+  const conversation = await readFile(new URL("../app/sorp-readiness-conversation.tsx", import.meta.url), "utf8");
+  const styles = await readFile(new URL("../app/sorp-ready.css", import.meta.url), "utf8");
+  assert.match(conversation, /Confirming the organisation and checking its public information/);
+  assert.match(conversation, /Looking again for the right organisation/);
+  assert.match(conversation, /Checking the organisation’s public information and what applies/);
+  assert.match(conversation, /Understanding your answer and checking the relevant SORP guidance/);
+  assert.match(conversation, /Bringing your readiness report together/);
+  assert.match(conversation, /role="status" aria-live="polite"/);
+  assert.match(conversation, /className=\{busy \|\| quickAdvancing \? "is-working"/);
+  assert.match(styles, /\.readiness-message\.is-loading > div \{[^}]*background: #f1f7ee;[^}]*color: #3d7650;/);
+  assert.match(styles, /@keyframes readiness-working-button/);
+  assert.match(styles, /@keyframes readiness-working-arrow/);
+  assert.match(styles, /prefers-reduced-motion: reduce/);
 });
 
 test("global and page navigation share one responsive header offset", async () => {
