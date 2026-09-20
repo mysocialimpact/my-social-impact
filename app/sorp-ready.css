@@ -792,6 +792,9 @@
 .sorp-completion-event { position: relative; min-height: 66svh; padding: clamp(3rem,8vw,8rem) var(--sorp-pad); display: grid; align-content: center; overflow: hidden; border-bottom: 1px solid var(--ink); background: var(--ink); color: var(--white); }
 .sorp-completion-sweep { position: absolute; inset: 0; background: linear-gradient(105deg,transparent 15%,rgba(255,209,0,.13) 43%,rgba(59,145,82,.22) 54%,transparent 76%); transform: translateX(-110%); animation: sorp-completion-sweep 1.15s ease-out .2s forwards; pointer-events: none; }
 .sorp-completion-event > p,.sorp-completion-event > h1,.sorp-completion-event > strong,.sorp-completion-event > ol { position: relative; z-index: 1; }
+.sorp-back-to-assessment { position:relative; z-index:2; width:max-content; margin:0 0 2rem; padding:.8rem 1rem; border:1px solid currentColor; background:transparent; color:#fff; cursor:pointer; font-size:.72rem; font-weight:900; text-transform:uppercase; }
+.sorp-back-to-assessment:hover,.sorp-back-to-assessment:focus-visible { background:#34764f; color:#fff; }
+.sorp-back-to-assessment.is-on-report { margin:0 0 2rem; color:var(--ink); }
 .sorp-completion-event > p { margin: 0 0 1.2rem; color: #79d59a; font-size: .78rem; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
 .sorp-completion-event > h1 { max-width: 1050px; margin: 0; font-size: clamp(3.2rem,7.6vw,8.5rem); line-height: .87; text-transform: uppercase; }
 .sorp-completion-event > strong { margin-top: 1.6rem; color: var(--sorp-yellow); font-family: var(--font-serif); font-size: clamp(1.55rem,2.8vw,3rem); font-weight: 500; }
@@ -991,7 +994,7 @@
 }
 
 @media print {
-  .sorp-chat-header,.global-build-stamp,.readiness-checkout-panel,.sorp-report-email,.sorp-report-review-cta,.readiness-intelligence,.sorp-report-mode-header button { display: none !important; }
+  .sorp-chat-header,.global-build-stamp,.readiness-checkout-panel,.sorp-report-email,.sorp-report-review-cta,.readiness-intelligence,.sorp-report-mode-header button,.sorp-back-to-assessment { display: none !important; }
   .readiness-chat.is-result-mode,.sorp-completion-flow,.sorp-report-mode { min-height: 0; background: #fff; }
   .sorp-report-mode { width: 100%; padding: 0; }
   .sorp-report-mode-header { break-after: avoid; }
