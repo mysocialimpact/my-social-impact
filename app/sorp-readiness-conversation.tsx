@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { SorpSnapshotLink } from "./sorp-snapshot-link";
 import { SorpResultActions } from "./sorp-result-actions";
+import { buildActivitySubmission, toggleActivityChoice } from "./sorp-activity-selection";
 import { SorpJourneyProgress, SorpKnownContext, SorpBasisDrawer, type PublicReadinessFinding, type PublicReadinessReview, type ReadinessWorkflow } from "./sorp-journey";
 import { additionalChecks, coreQuestions, readinessStages, type AdditionalAnswerValue, type AnswerValue, type AssessmentSetup } from "./sorp-questionnaire";
 
@@ -72,6 +73,17 @@ type Message = {
   publicSources?: PublicSource[];
   organisation?: OrganisationCard | null;
   actions?: MessageAction[];
+};
+
+type ConversationCheckpoint = {
+  state: ReadinessState;
+  messagesLength: number;
+  workflow: ReadinessWorkflow | null;
+  result: Result | null;
+  intelligence: IntelligenceProvenance | null;
+  completionNotice: string;
+  activitySelections: string[];
+  composer: string;
 };
 
 type ReadinessResponse = {
@@ -285,6 +297,8 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
   const [sessionId, setSessionId] = useState("");
   const [workflow, setWorkflow] = useState<ReadinessWorkflow | null>(null);
   const [completionNotice, setCompletionNotice] = useState("");
+  const [checkpoints, setCheckpoints] = useState<ConversationCheckpoint[]>([]);
+  const [activitySelections, setActivitySelections] = useState<string[]>([]);
   const [snapshotAvailable, setSnapshotAvailable] = useState(false);
   const [hydrated, setHydrated] = useState(false);
   const [recordingState, setRecordingState] = useState<"idle" | "recording" | "transcribing">("idle");
@@ -326,7 +340,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
         } else {
           const saved = window.localStorage.getItem(storageKey);
           if (saved) {
-            const parsed = JSON.parse(saved) as { started?: boolean; state?: ReadinessState; messages?: Message[]; result?: Result | null; intelligence?: IntelligenceProvenance | null; sessionId?: string; workflow?: ReadinessWorkflow };
+            const parsed = JSON.parse(saved) as { started?: boolean; state?: ReadinessState; messages?: Message[]; result?: Result | null; intelligence?: IntelligenceProvenance | null; sessionId?: string; workflow?: ReadinessWorkflow; checkpoints?: ConversationCheckpoint[] };
             if (parsed.started && parsed.state && parsed.messages?.length) {
               setStarted(true);
               setState({ ...blankState(), ...parsed.state, charityName: parsed.state.charityName ?? "", contextEvidence: parsed.state.contextEvidence ?? {} });
@@ -335,6 +349,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
               setWorkflow(parsed.workflow ?? null);
               setIntelligence(parsed.workflow?.version === 2 ? parsed.intelligence ?? null : null);
               setSessionId(parsed.sessionId || newSessionId());
+              setCheckpoints(Array.isArray(parsed.checkpoints) ? parsed.checkpoints : []);
             }
           }
         }
@@ -348,8 +363,8 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
 
   useEffect(() => {
     if (!hydrated || !started) return;
-    try { window.localStorage.setItem(storageKey, JSON.stringify({ started, state, messages, result, intelligence, sessionId, workflow })); } catch { queueMicrotask(() => setError("Your browser could not save this conversation. Keep this page open to retain your progress.")); }
-  }, [hydrated, started, state, messages, result, intelligence, sessionId, workflow, storageKey]);
+    try { window.localStorage.setItem(storageKey, JSON.stringify({ started, state, messages, result, intelligence, sessionId, workflow, checkpoints })); } catch { queueMicrotask(() => setError("Your browser could not save this conversation. Keep this page open to retain your progress.")); }
+  }, [hydrated, started, state, messages, result, intelligence, sessionId, workflow, checkpoints, storageKey]);
 
   useEffect(() => {
     const body = document.querySelector<HTMLElement>(".sorp-journey-body");
@@ -365,6 +380,8 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
   function startConversation(useSnapshot = false) {
     setWorkflow(null);
     setCompletionNotice("");
+    setCheckpoints([]);
+    setActivitySelections([]);
     setSessionId(newSessionId());
     if (useSnapshot) {
       const raw = window.localStorage.getItem(SNAPSHOT_RESULT_KEY);
@@ -387,6 +404,11 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
 
   function selectStructuredAnswer(value: string) {
     if (!workflow || busy || quickAdvancing) return;
+    if (workflow.next.id === "activities") {
+      setActivitySelections((current) => toggleActivityChoice(current, value));
+      setError("");
+      return;
+    }
     const pending = structuredAnswerFromAction(value, workflow.next.id);
     if (!pending) {
       void sendMessage(value);
@@ -423,6 +445,16 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
       });
       const data = await response.json() as ReadinessResponse & { error?: string };
       if (!response.ok) throw new Error(data.error || "That answer could not be saved yet.");
+      setCheckpoints((current) => [...current, {
+        state: { ...state, pendingStructuredAnswer: null },
+        messagesLength: messages.length,
+        workflow,
+        result,
+        intelligence,
+        completionNotice,
+        activitySelections: [],
+        composer: "",
+      }].slice(-20));
       setState(data.state);
       setWorkflow(data.workflow);
       const newlyCompleted = data.workflow.completedStages.filter(stage => !workflow?.completedStages.includes(stage));
@@ -450,10 +482,10 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
     }
   }
 
-  async function sendMessage(rawValue: string) {
+  async function sendMessage(rawValue: string, displayValue = rawValue) {
     const value = rawValue.trim();
     if (!value || busy || quickAdvancing || recordingState !== "idle") return;
-    const userMessage: Message = { role: "user", content: value };
+    const userMessage: Message = { role: "user", content: displayValue.trim() || value };
     const nextMessages = [...messages, userMessage];
     setMessages(nextMessages);
     setComposer("");
@@ -474,6 +506,17 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
       });
       const data = await response.json() as ReadinessResponse & { error?: string };
       if (!response.ok) throw new Error(data.error || "The readiness conversation is temporarily unavailable.");
+      setCheckpoints((current) => [...current, {
+        state,
+        messagesLength: messages.length,
+        workflow,
+        result,
+        intelligence,
+        completionNotice,
+        activitySelections,
+        composer,
+      }].slice(-20));
+      if (workflow?.next.id === "activities") setActivitySelections([]);
       setState(data.state);
       setWorkflow(data.workflow);
       if (setupOnly && data.workflow.completedStages.includes(2)) onSetupComplete?.(data.state, data.workflow);
@@ -505,8 +548,29 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
 
   function submit(event: FormEvent) {
     event.preventDefault();
-    if (state.pendingStructuredAnswer && !looksLikeQuestion(composer)) void confirmStructuredAnswer(composer);
+    if (workflow?.next.id === "activities" && activitySelections.length) {
+      const actions = messages.at(-1)?.actions ?? [];
+      const submission = buildActivitySubmission(activitySelections, actions, composer);
+      void sendMessage(submission.value, submission.display);
+    } else if (state.pendingStructuredAnswer && !looksLikeQuestion(composer)) void confirmStructuredAnswer(composer);
     else void sendMessage(composer);
+  }
+
+  function goBack() {
+    if (busy || quickAdvancing || recordingState !== "idle") return;
+    const checkpoint = checkpoints.at(-1);
+    if (!checkpoint) return;
+    setState(checkpoint.state);
+    setMessages((current) => current.slice(0, checkpoint.messagesLength));
+    setWorkflow(checkpoint.workflow);
+    setResult(checkpoint.result);
+    setIntelligence(checkpoint.intelligence);
+    setCompletionNotice("Previous question restored. You can change your answer.");
+    setActivitySelections(checkpoint.activitySelections);
+    setComposer(checkpoint.composer);
+    setCheckpoints((current) => current.slice(0, -1));
+    setError("");
+    window.setTimeout(() => composerRef.current?.focus(), 60);
   }
 
   async function startRecording() {
@@ -561,6 +625,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
   const impactMode = state.assessmentMode === "impact_readiness";
   const pendingStructuredAnswer = state.pendingStructuredAnswer;
   const structuredAnswerQuestion = Boolean(pendingStructuredAnswer || workflow?.next.id.match(/^(?:field:\d+|check:)/));
+  const activityQuestion = workflow?.next.id === "activities";
 
   if (!setupOnly && result && state.score !== null && sessionId) return <div className="readiness-chat is-result-mode">
     <SorpResultActions sessionId={sessionId} organisation={state.charityName} income={state.setup.income} result={result}>
@@ -591,6 +656,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
     <aside className="sorp-journey-aside">{workflow && <SorpKnownContext workflow={workflow} />}<p className="sorp-journey-assurance">Your free SORP readiness report<br /><span>Narrative and impact reporting · saved on this device</span></p><a className="sorp-save-exit" href="/are-you-sorp-ready">Save &amp; exit ↗</a></aside>
 
     <div className="readiness-thread" aria-live="polite">
+      {checkpoints.length > 0 && <button type="button" className="sorp-question-back" onClick={goBack} disabled={busy || quickAdvancing || recordingState !== "idle"}>← Back to previous question</button>}
       {setupOnly && workflow?.completedStages.includes(2) && <button type="button" className="sorp-setup-continue" onClick={() => onSetupComplete?.(state, workflow)}>✓ Context established — continue to the 15 questions →</button>}
       {messages.length > 1 && <details className="sorp-conversation-history"><summary>Our conversation so far <span>{messages.filter(message => message.role === "user").length} replies</span></summary>{messages.slice(0, -1).map((message, index) => <article key={index}><small>{message.role === "user" ? "You" : "My Social Impact Intelligence"}</small><MessageContent text={message.content} />{message.organisation && <strong>{message.organisation.name} · {message.organisation.locality}</strong>}</article>)}</details>}
       {completionNotice && <p className="sorp-completion-notice" role="status">{completionNotice}</p>}
@@ -611,7 +677,11 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
         </section>}
         {message.organisation && <p className="sorp-confirm-question">Is this the right organisation?</p>}
         {message.workflow && !message.organisation && message.responseKind !== "detour" && !["publicReview", "answerConfirmation"].includes(message.workflow.next.id) && <SorpBasisDrawer basis={message.workflow.next.basis} />}
-        {message.actions?.length && !pendingStructuredAnswer ? <nav className={`readiness-message-actions${message.workflow?.next.id.match(/^(?:field:\d+|check:)/) ? " is-assessment-scale" : ""}`} aria-label={message.workflow?.next.id.match(/^(?:field:\d+|check:)/) ? "Choose a quick answer" : "Choose an answer"}>{message.actions.map((action) => <button className={action.label === "SKIP FOR NOW" ? "is-skip" : undefined} key={`${action.label}-${action.value}`} type="button" disabled={busy || quickAdvancing || index !== messages.length - 1} onClick={() => selectStructuredAnswer(action.value)}>{action.label}<span>→</span></button>)}</nav> : null}
+        {message.actions?.length && !pendingStructuredAnswer ? <nav className={`readiness-message-actions${message.workflow?.next.id.match(/^(?:field:\d+|check:)/) ? " is-assessment-scale" : ""}${message.workflow?.next.id === "activities" ? " is-multi-select" : ""}`} aria-label={message.workflow?.next.id === "activities" ? "Choose all activities that apply" : message.workflow?.next.id.match(/^(?:field:\d+|check:)/) ? "Choose a quick answer" : "Choose an answer"}>{message.actions.map((action) => {
+          const selected = message.workflow?.next.id === "activities" && activitySelections.includes(action.value);
+          return <button aria-pressed={message.workflow?.next.id === "activities" ? selected : undefined} className={[action.label === "SKIP FOR NOW" ? "is-skip" : "", selected ? "is-selected" : ""].filter(Boolean).join(" ") || undefined} key={`${action.label}-${action.value}`} type="button" disabled={busy || quickAdvancing || index !== messages.length - 1} onClick={() => selectStructuredAnswer(action.value)}>{action.label}<span>{selected ? "✓" : "→"}</span></button>;
+        })}</nav> : null}
+        {message.workflow?.next.id === "activities" && index === messages.length - 1 && <p className="sorp-multi-select-help"><strong>Choose all that apply.</strong><span>Select more than one if needed, then add a little detail below if it would help.</span></p>}
         {message.responseKind === "detour" && message.citations?.length ? <SorpBasisDrawer basis={{classification: message.label || "MSI JUDGEMENT", explanation: "The SORP passages relevant to your question.", citations: message.citations}} /> : null}
         {!message.organisation && message.publicSources?.length ? <details><summary>Sources</summary><div>{message.publicSources.map((source) => <article key={`${source.url}-${source.detail}`}><strong>{sourceKindLabel(source.kind)} · {source.label}</strong>{source.detail && <p>{source.detail}</p>}<a href={source.url}>View source <span>→</span></a></article>)}</div></details> : null}
       </article>)}
@@ -636,9 +706,9 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
 
     </div>
     <form className="readiness-composer" onSubmit={submit}>
-      <label htmlFor="readiness-answer">{pendingStructuredAnswer ? "Want to explain why? Add a note if useful — completely optional." : structuredAnswerQuestion ? "Or tell us in your own words — or ask about the requirement." : impactMode ? "Answer naturally—or ask an impact question at any point." : "Answer naturally—or ask a SORP question at any point."}</label>
-      <textarea ref={composerRef} id="readiness-answer" rows={2} value={composer} onChange={(event) => setComposer(event.target.value)} placeholder={pendingStructuredAnswer ? "Add an optional note…" : "Type or say what you know…"} maxLength={4000} />
-      <div><button type="button" className="readiness-mic" onClick={recordingState === "recording" ? stopRecording : () => void startRecording()} disabled={busy || quickAdvancing || recordingState === "transcribing"}>{recordingState === "recording" ? `Stop · ${recordingTime(recordingSeconds)}` : recordingState === "transcribing" ? "Transcribing…" : "Use microphone"}</button><button type="submit" className={busy || quickAdvancing ? "is-working" : undefined} disabled={busy || quickAdvancing || (!pendingStructuredAnswer && composer.trim().length < 2) || recordingState !== "idle"}>{busy || quickAdvancing ? "Understanding…" : result ? "Keep talking" : "Continue"} <span>→</span></button></div>
+      <label htmlFor="readiness-answer">{activityQuestion ? "Anything useful to add? Optional — for example, how volunteers or grants feature in your work." : pendingStructuredAnswer ? "Want to explain why? Add a note if useful — completely optional." : structuredAnswerQuestion ? "Or tell us in your own words — or ask about the requirement." : impactMode ? "Answer naturally—or ask an impact question at any point." : "Answer naturally—or ask a SORP question at any point."}</label>
+      <textarea ref={composerRef} id="readiness-answer" rows={2} value={composer} onChange={(event) => setComposer(event.target.value)} placeholder={activityQuestion ? "Add optional detail…" : pendingStructuredAnswer ? "Add an optional note…" : "Type or say what you know…"} maxLength={4000} />
+      <div><button type="button" className="readiness-mic" onClick={recordingState === "recording" ? stopRecording : () => void startRecording()} disabled={busy || quickAdvancing || recordingState === "transcribing"}>{recordingState === "recording" ? `Stop · ${recordingTime(recordingSeconds)}` : recordingState === "transcribing" ? "Transcribing…" : "Use microphone"}</button><button type="submit" className={busy || quickAdvancing ? "is-working" : undefined} disabled={busy || quickAdvancing || (!pendingStructuredAnswer && !(activityQuestion && activitySelections.length) && composer.trim().length < 2) || recordingState !== "idle"}>{busy || quickAdvancing ? "Understanding…" : activityQuestion && activitySelections.length ? "Continue with choices" : result ? "Keep talking" : "Continue"} <span>→</span></button></div>
     </form>
   </div>;
 }
