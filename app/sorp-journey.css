@@ -15,6 +15,7 @@
 .sorp-journey-body { width:min(1320px,calc(100% - 48px)); margin:0 auto; display:grid; grid-template-columns:minmax(230px,320px) minmax(0,1fr); gap:clamp(32px,5vw,80px); flex:1; padding:32px 0; align-items:start; }
 .sorp-conversation-page:has(.readiness-chat),.sorp-workspace-page:has(.readiness-chat) { min-height:0; }
 .sorp-conversation-page .readiness-chat { height:calc(var(--sorp-viewport-height,100dvh) - 64px - var(--sorp-stamp-height,34px)); min-height:0; }
+.sorp-conversation-page .readiness-chat.is-result-mode { height:auto; min-height:calc(100svh - 64px); overflow:visible; }
 .readiness-chat > .sorp-journey-progress { position:relative; top:0!important; flex-shrink:0; }
 .readiness-chat > .sorp-journey-body { overflow-y:auto; min-height:0; overscroll-behavior-y:contain; padding-bottom:32px; scrollbar-gutter:stable; }
 .sorp-conversation-page .readiness-chat > .readiness-composer { position:relative; bottom:auto; flex-shrink:0; }
@@ -120,7 +121,7 @@
 .sorp-snapshot-position { margin:0; padding:16px var(--sorp-pad); background:#f6f3ec; font-size:13px; }
 .sorp-workspace-page .sorp-workspace-brand { position:sticky; top:0; z-index:40; height:64px; }
 .sorp-workspace-page .sorp-journey-progress,.sorp-conversation-page .sorp-journey-progress { top:64px; }
-.sorp-conversation-page > .sorp-workspace-brand { height:64px; }
+.sorp-conversation-page > .sorp-workspace-brand { height:64px; background:#fbfaf7; isolation:isolate; }
 .sorp-snapshot-known { width:min(1180px,calc(100% - 48px)); margin:24px auto; }
 .sorp-snapshot-known .sorp-known-context dl { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:0 24px; }
 .sorp-setup-continue { padding:16px; margin:16px 0; border:1px solid #34764f; background:#edf3e9; color:#28633f; cursor:pointer; }
@@ -139,6 +140,7 @@
 }
 @media(max-width:600px) {
   .sorp-conversation-page .readiness-chat { height:calc(var(--sorp-viewport-height,100dvh) - 52px - var(--sorp-stamp-height,34px)); }
+  .sorp-conversation-page .readiness-chat.is-result-mode { height:auto; min-height:calc(100svh - 52px); overflow:visible; }
   .sorp-workspace-page .sorp-workspace-brand,.sorp-conversation-page > .sorp-workspace-brand { height:52px; }
   .sorp-workspace-page .sorp-journey-progress,.sorp-conversation-page .sorp-journey-progress { top:52px; }
   .sorp-snapshot-known .sorp-known-context dl { grid-template-columns:repeat(2,minmax(0,1fr)); }

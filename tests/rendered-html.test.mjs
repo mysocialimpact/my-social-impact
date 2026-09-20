@@ -67,7 +67,17 @@ test("server-renders the My Social Impact homepage", async () => {
 test("every page inherits the global build stamp", async () => {
   const layout = await readFile(new URL("../app/layout.tsx", import.meta.url), "utf8");
   assert.match(layout, /global-build-stamp/);
-  assert.match(layout, /BUILD 63 · 20 SEPTEMBER 2026 · 22:23 BST/);
+  assert.match(layout, /BUILD 63 · 20 SEPTEMBER 2026 · 22:26 BST/);
+});
+
+test("SORP completion uses an opaque sticky header and document-flow build footer", async () => {
+  const journeyStyles = await readFile(new URL("../app/sorp-journey.css", import.meta.url), "utf8");
+  const globalStyles = await readFile(new URL("../app/globals.css", import.meta.url), "utf8");
+
+  assert.match(journeyStyles, /\.sorp-conversation-page > \.sorp-workspace-brand \{[^}]*background:#fbfaf7;[^}]*isolation:isolate;/);
+  assert.match(journeyStyles, /\.sorp-conversation-page \.readiness-chat\.is-result-mode \{[^}]*height:auto;[^}]*overflow:visible;/);
+  const buildStampRule = globalStyles.match(/\.global-build-stamp \{([^}]*)\}/)?.[1] ?? "";
+  assert.doesNotMatch(buildStampRule, /position\s*:\s*(?:fixed|sticky)/);
 });
 
 test("SORP working states describe the actual task and show restrained motion", async () => {
