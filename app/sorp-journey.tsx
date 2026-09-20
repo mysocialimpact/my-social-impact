@@ -4,7 +4,7 @@ import "./sorp-journey.css";
 export type SorpBasis = { classification: string; explanation: string; interpretation?: string; citations: { reference: string; module: string; page: number; extract: string }[] };
 export type ReadinessWorkflow = {
   version: number; currentStage: number; completedStages: number[]; stageTitle: string; stageCount: number;
-  known: { id: string; label: string; value: string; established: boolean; source: string }[];
+  known: { id: string; label: string; value: string; established: boolean; source: string; sourceUrl?: string }[];
   next: { id: string; question: string; why: string; basis: SorpBasis; actions: { label: string; value: string }[] };
 };
 
@@ -22,5 +22,5 @@ export function SorpBasisDrawer({ basis }: { basis: SorpBasis }) {
 export function SorpKnownContext({ workflow, defaultOpen = true }: { workflow: ReadinessWorkflow; defaultOpen?: boolean }) {
   const count = workflow.known.filter(item => item.established).length;
   if (!count) return null;
-  return <details className="sorp-known-context" open={defaultOpen}><summary><span>What we know so far</span><small>{count} of {workflow.known.length} established</small></summary><dl>{workflow.known.map(item => <div key={item.id} className={item.established ? "is-known" : "is-unresolved"}><span aria-hidden="true">{item.established ? "✓" : "○"}</span><div><dt>{item.label}</dt><dd>{item.value}</dd>{item.established && <small>{item.source === "publicly_observed" ? "Public record · correct us if this has changed" : "Confirmed with you"}</small>}</div></div>)}</dl></details>;
+  return <details className="sorp-known-context" open={defaultOpen}><summary><span>What we know so far</span><small>{count} of {workflow.known.length} established</small></summary><dl>{workflow.known.map(item => <div key={item.id} className={item.established ? "is-known" : "is-unresolved"}><span aria-hidden="true">{item.established ? "✓" : "○"}</span><div><dt>{item.label}</dt><dd>{item.value}</dd>{item.source && <small>{item.source === "publicly_observed" ? "Public record · correct us if this has changed" : item.source === "user_confirmed" ? "Confirmed with you" : item.source}{item.sourceUrl && <> · <a href={item.sourceUrl}>View source ↗</a></>}</small>}</div></div>)}</dl></details>;
 }

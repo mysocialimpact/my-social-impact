@@ -10,6 +10,7 @@ export type AssessmentSetup = {
   startDate: string;
   endDate: string;
   accounts: string;
+  accountsReview?: "" | "pending" | "accepted" | "unconfirmed" | "skipped";
   income: string;
   nearBoundary: boolean;
   activities: string[];
