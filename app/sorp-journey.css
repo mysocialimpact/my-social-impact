@@ -73,6 +73,8 @@
 .sorp-impact-report-offer strong { font-size:12px; text-transform:uppercase; }
 .sorp-impact-report-offer span { margin-top:5px; color:#5d5750; font-size:14px; }
 .sorp-provisional-note { margin:16px 0 0; color:#6d675f; font-size:12px; line-height:1.5; }
+.sorp-provisional-view.is-evidence-gap { border-color:#b83210; background:#fffaf7; }
+.sorp-evidence-gap-copy { margin:20px 0 0; max-width:720px; color:#302c27; font-size:16px; line-height:1.55; }
 .sorp-answer-proposal { margin:0 0 18px; padding:20px; border-left:4px solid #f5ce00; background:#f6f3ec; }
 .sorp-answer-proposal > strong { display:block; margin:8px 0 20px; font-size:clamp(24px,3vw,36px); }
 .sorp-answer-proposal > p { margin:0 0 16px; color:#4e4942; font-size:15px; line-height:1.55; }
