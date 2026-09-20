@@ -3,7 +3,8 @@
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { SorpSnapshotLink } from "./sorp-snapshot-link";
 import { SorpResultActions } from "./sorp-result-actions";
-import { additionalChecks, coreQuestions, eligibilityFor, readinessStages, tierLabel, type AdditionalAnswerValue, type AnswerValue, type AssessmentSetup } from "./sorp-questionnaire";
+import { SorpJourneyProgress, SorpKnownContext, SorpBasisDrawer, type ReadinessWorkflow } from "./sorp-journey";
+import { additionalChecks, coreQuestions, readinessStages, type AdditionalAnswerValue, type AnswerValue, type AssessmentSetup } from "./sorp-questionnaire";
 
 const SNAPSHOT_RESULT_KEY = "msi-sorp-readiness-result-v2";
 const CONVERSATION_KEY = "msi-sorp-readiness-conversation-v1";
@@ -26,7 +27,7 @@ type IntelligenceProvenance = {
   runtimeControls: { name: string; type: string; representedBy: string }[];
 };
 
-type ReadinessState = {
+export type ReadinessState = {
   charityName: string;
   assessmentMode: "sorp_readiness" | "impact_readiness";
   sorpApplicability: "unknown" | "likely_applies" | "not_applicable" | "uncertain";
@@ -58,6 +59,8 @@ type Result = {
 };
 
 type Message = {
+  workflow?: ReadinessWorkflow;
+  responseKind?: "assessment" | "detour" | "result";
   role: "user" | "assistant";
   content: string;
   label?: "MUST" | "SHOULD" | "MAY" | "JUDGEMENT" | "MSI READINESS" | null;
@@ -68,6 +71,7 @@ type Message = {
 };
 
 type ReadinessResponse = {
+  workflow: ReadinessWorkflow;
   state: ReadinessState;
   assistant: { message: string; label: Message["label"]; citations: Citation[]; publicSources?: PublicSource[]; organisation?: OrganisationCard | null; actions?: MessageAction[]; responseKind: "assessment" | "detour" | "result" };
   result: Result | null;
@@ -105,16 +109,17 @@ function stateFromSnapshot(raw: string): { state: ReadinessState; result: Result
   try {
     const snapshot = JSON.parse(raw) as {
       setup?: AssessmentSetup;
+      setupState?: ReadinessState;
       coreQuestions?: { id: number; answer?: AnswerValue; context?: string }[];
       additionalChecks?: { id: string; answer?: AdditionalAnswerValue }[];
       result?: { score?: number; band?: string; sectionScores?: { section: string; label: string; score: number }[]; flags?: { must?: string[]; should?: string[]; may?: string[]; judgement?: string[] } };
     };
     if (!snapshot.setup || !snapshot.coreQuestions?.length || typeof snapshot.result?.score !== "number") return null;
-    const state = blankState();
+    const state = { ...blankState(), ...snapshot.setupState };
     state.setup = { ...emptySetup, ...snapshot.setup };
     state.inheritedSnapshot = true;
-    state.completedStages = [1, 2, 3, 4, 5, 6];
-    state.currentStage = 6;
+    state.completedStages = [1, 2, 3, 4, 5, 6, 7];
+    state.currentStage = 7;
     state.score = snapshot.result.score;
     for (const field of snapshot.coreQuestions) {
       state.fields[String(field.id)] = { answer: field.answer ?? null, evidence: field.context ?? "Snapshot answer", confidence: field.context ? .95 : .8 };
@@ -166,11 +171,6 @@ function recordingTime(seconds: number) {
   return `${Math.floor(seconds / 60).toString().padStart(2, "0")}:${(seconds % 60).toString().padStart(2, "0")}`;
 }
 
-function dateLabel(value: string) {
-  if (!value) return "To establish";
-  return new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric" }).format(new Date(`${value}T12:00:00`));
-}
-
 function sourceKindLabel(kind: PublicSource["kind"]) {
   return {
     official_register: "Official register",
@@ -178,11 +178,6 @@ function sourceKindLabel(kind: PublicSource["kind"]) {
     annual_report: "Annual report",
     other_public: "Public source",
   }[kind];
-}
-
-function EvidenceBasis({ evidence }: { evidence?: ContextEvidence }) {
-  if (!evidence) return <small className="readiness-context-basis is-uncertain">Currently uncertain</small>;
-  return <small className={`readiness-context-basis is-${evidence.basis}`}>{evidence.basis === "publicly_observed" ? "Publicly found" : "User confirmed"}</small>;
 }
 
 function confirmationSourceLabel(source: PublicSource) {
@@ -201,7 +196,8 @@ function ResultList({ title, items, empty }: { title: string; items: string[]; e
   return <article><h4>{title}</h4>{items.length ? <ul>{items.map((item) => <li key={item}>{item}</li>)}</ul> : <p>{empty}</p>}</article>;
 }
 
-export function SorpReadinessConversation() {
+export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }: { setupOnly?: boolean; onSetupComplete?: (state: ReadinessState, workflow: ReadinessWorkflow) => void }) {
+  const storageKey = setupOnly ? "msi-sorp-snapshot-setup-v1" : CONVERSATION_KEY;
   const [started, setStarted] = useState(false);
   const [state, setState] = useState<ReadinessState>(() => blankState());
   const [messages, setMessages] = useState<Message[]>([]);
@@ -211,6 +207,8 @@ export function SorpReadinessConversation() {
   const [result, setResult] = useState<Result | null>(null);
   const [intelligence, setIntelligence] = useState<IntelligenceProvenance | null>(null);
   const [sessionId, setSessionId] = useState("");
+  const [workflow, setWorkflow] = useState<ReadinessWorkflow | null>(null);
+  const [completionNotice, setCompletionNotice] = useState("");
   const [snapshotAvailable, setSnapshotAvailable] = useState(false);
   const [hydrated, setHydrated] = useState(false);
   const [recordingState, setRecordingState] = useState<"idle" | "recording" | "transcribing">("idle");
@@ -223,9 +221,17 @@ export function SorpReadinessConversation() {
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
+    const viewport = window.visualViewport;
+    const resize = () => document.documentElement.style.setProperty("--sorp-viewport-height", `${viewport?.height || window.innerHeight}px`);
+    resize();
+    viewport?.addEventListener("resize", resize);
+    return () => { viewport?.removeEventListener("resize", resize); document.documentElement.style.removeProperty("--sorp-viewport-height"); };
+  }, []);
+
+  useEffect(() => {
     const restore = window.setTimeout(() => {
       try {
-        const wantsSnapshot = new URLSearchParams(window.location.search).get("from") === "snapshot";
+        const wantsSnapshot = !setupOnly && new URLSearchParams(window.location.search).get("from") === "snapshot";
         const snapshotRaw = window.localStorage.getItem(SNAPSHOT_RESULT_KEY);
         const snapshot = snapshotRaw ? stateFromSnapshot(snapshotRaw) : null;
         setSnapshotAvailable(Boolean(snapshot));
@@ -236,15 +242,16 @@ export function SorpReadinessConversation() {
           setStarted(true);
           setMessages([{ role: "assistant", content: `I’ve got your Snapshot, so we don’t need to start again.\n\nYour initial score is ${snapshot.result?.score}/100. I’ll use those answers and focus on the areas where richer context would genuinely improve the result.\n\nTell me what feels least certain—or ask me about any part of your result.` }]);
         } else {
-          const saved = window.localStorage.getItem(CONVERSATION_KEY);
+          const saved = window.localStorage.getItem(storageKey);
           if (saved) {
-            const parsed = JSON.parse(saved) as { started?: boolean; state?: ReadinessState; messages?: Message[]; result?: Result | null; intelligence?: IntelligenceProvenance | null; sessionId?: string };
+            const parsed = JSON.parse(saved) as { started?: boolean; state?: ReadinessState; messages?: Message[]; result?: Result | null; intelligence?: IntelligenceProvenance | null; sessionId?: string; workflow?: ReadinessWorkflow };
             if (parsed.started && parsed.state && parsed.messages?.length) {
               setStarted(true);
               setState({ ...blankState(), ...parsed.state, charityName: parsed.state.charityName ?? "", contextEvidence: parsed.state.contextEvidence ?? {} });
               setMessages(parsed.messages);
               setResult(parsed.result ?? null);
-              setIntelligence(parsed.intelligence ?? null);
+              setWorkflow(parsed.workflow ?? null);
+              setIntelligence(parsed.workflow?.version === 2 ? parsed.intelligence ?? null : null);
               setSessionId(parsed.sessionId || newSessionId());
             }
           }
@@ -255,16 +262,18 @@ export function SorpReadinessConversation() {
       setHydrated(true);
     }, 0);
     return () => window.clearTimeout(restore);
-  }, []);
+  }, [setupOnly, storageKey]);
 
   useEffect(() => {
     if (!hydrated || !started) return;
-    window.localStorage.setItem(CONVERSATION_KEY, JSON.stringify({ started, state, messages, result, intelligence, sessionId }));
-  }, [hydrated, started, state, messages, result, intelligence, sessionId]);
+    try { window.localStorage.setItem(storageKey, JSON.stringify({ started, state, messages, result, intelligence, sessionId, workflow })); } catch { setError("Your browser could not save this conversation. Keep this page open to retain your progress."); }
+  }, [hydrated, started, state, messages, result, intelligence, sessionId, workflow, storageKey]);
 
   useEffect(() => {
-    threadEndRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
-  }, [messages, busy, result]);
+    const body = document.querySelector<HTMLElement>(".sorp-journey-body");
+    const target = document.querySelector<HTMLElement>(completionNotice ? ".sorp-completion-notice" : "#readiness-current-question");
+    if (body && target) body.scrollTo({ top: completionNotice.includes("Organisation confirmed") ? 0 : body.scrollTop + target.getBoundingClientRect().top - body.getBoundingClientRect().top - 20, behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" });
+  }, [messages, busy, result, completionNotice]);
 
   useEffect(() => () => {
     if (timerRef.current) clearInterval(timerRef.current);
@@ -272,6 +281,8 @@ export function SorpReadinessConversation() {
   }, []);
 
   function startConversation(useSnapshot = false) {
+    setWorkflow(null);
+    setCompletionNotice("");
     setSessionId(newSessionId());
     if (useSnapshot) {
       const raw = window.localStorage.getItem(SNAPSHOT_RESULT_KEY);
@@ -288,7 +299,7 @@ export function SorpReadinessConversation() {
     setState(blankState());
     setResult(null);
     setIntelligence(null);
-    setMessages([{ role: "assistant", content: "Let’s work out where you stand.\n\nFirst — what’s the charity called, and in your own words, what does it actually do?\n\nDon’t worry about giving me the formal charitable objects. I’m more interested in how you’d explain it to another person." }]);
+    setMessages([{ role: "assistant", content: "Let’s find your charity.\n\nWhat is the charity called? A location or a few words about its work can help us find the right one." }]);
     setStarted(true);
   }
 
@@ -316,6 +327,11 @@ export function SorpReadinessConversation() {
       const data = await response.json() as ReadinessResponse & { error?: string };
       if (!response.ok) throw new Error(data.error || "The readiness conversation is temporarily unavailable.");
       setState(data.state);
+      setWorkflow(data.workflow);
+      if (setupOnly && data.workflow.completedStages.includes(2)) onSetupComplete?.(data.state, data.workflow);
+      const newlyKnown = data.workflow.known.filter(item => item.established && !workflow?.known.find(previous => previous.id === item.id)?.established);
+      const newlyCompleted = data.workflow.completedStages.filter(stage => !workflow?.completedStages.includes(stage));
+      setCompletionNotice(newlyCompleted.length ? `✓ ${newlyCompleted.map(stage => `Stage ${stage}`).join(" & ")} complete. ${data.workflow.currentStage === 2 ? "Good — that’s the first thing sorted." : data.workflow.currentStage === 3 ? "We’ve got the context we need." : "One more part of your readiness picture established."}` : !workflow?.known.find(item => item.id === "charityName")?.established && data.workflow.known.find(item => item.id === "charityName")?.established ? "✓ Organisation confirmed. Here’s what we’ve found so far." : newlyKnown.length ? `✓ ${newlyKnown.map(item => item.label).join(" · ")} confirmed. Good — that’s one more thing sorted.` : "");
       setIntelligence(data.intelligence);
       setSessionId(data.sessionId || sessionId || newSessionId());
       setMessages((current) => [...current, {
@@ -326,13 +342,16 @@ export function SorpReadinessConversation() {
         publicSources: data.assistant.publicSources,
         organisation: data.assistant.organisation,
         actions: data.assistant.actions,
+        workflow: data.workflow,
+        responseKind: data.assistant.responseKind,
       }]);
       if (data.result) setResult(data.result);
     } catch (caught) {
+      setMessages(messages);
+      setComposer(value);
       setError(caught instanceof Error ? caught.message : "The readiness conversation is temporarily unavailable.");
     } finally {
       setBusy(false);
-      window.setTimeout(() => composerRef.current?.focus(), 60);
     }
   }
 
@@ -389,58 +408,50 @@ export function SorpReadinessConversation() {
     }
   }
 
-  const completedCount = state.completedStages.length;
-  const currentStage = Math.min(Math.max(state.currentStage || 1, 1), 6);
-  const eligibility = eligibilityFor(state.setup);
-  const hasEligibilityContext = Boolean(state.setup.jurisdiction && state.setup.startDate && state.setup.accounts);
+  const currentStage = workflow?.currentStage || 1;
   const impactMode = state.assessmentMode === "impact_readiness";
-  const applicabilityLabel = state.sorpApplicability === "not_applicable" ? "Does not apply" : state.sorpApplicability === "likely_applies" ? "Likely applies" : state.sorpApplicability === "uncertain" ? "Currently uncertain" : hasEligibilityContext ? eligibility.status : "Currently uncertain";
 
   if (!started) return <section className="readiness-intro">
     <p className="readiness-kicker">SORP 2026<br /><strong>Completely free</strong></p>
-    <h1>Talk it through.<br />Get your free report.</h1>
-    <div className="readiness-intro-copy"><p>You’re about to talk to <strong>My Social Impact Intelligence</strong>: specialist guidance built from MSI’s SORP and social impact expertise.</p><p>Ask whatever you need. It will explore your organisation, answer SORP questions in plain English and make the guidance relevant to your situation.</p><p>At the end, you’ll receive a practical SORP impact-readiness report. <strong>There is no charge, no card and no surprise paywall.</strong></p></div>
-    <div className="readiness-intro-actions"><button type="button" onClick={() => startConversation(false)}>Start my free conversation <span>→</span></button>{snapshotAvailable ? <button type="button" className="is-secondary" onClick={() => startConversation(true)}>Use my completed Snapshot <span>→</span></button> : <SorpSnapshotLink className="is-secondary" startLabel="Take the 15-question shortcut" />}</div>
-    <p className="readiness-intro-note"><strong>Prefer to whiz through?</strong> The Quick Snapshot takes around eight minutes. Both routes produce the same free initial report, and you can return to the conversation afterwards. Your progress is saved only in this browser.</p>
+    <h1>{setupOnly ? <>A quick route.<br />The right context first.</> : <>Talk it through.<br />Get your free report.</>}</h1>
+    <div className="readiness-intro-copy">{setupOnly && <p>We’ll find your organisation and establish what applies, then take you straight to the 15-question snapshot.</p>}<p>You’re about to talk to <strong>My Social Impact Intelligence</strong>: specialist guidance built from MSI’s SORP and social impact expertise.</p><p>First we’ll establish whether SORP 2026 applies, then gather the context and explore your readiness for its narrative and impact-reporting expectations. You’ll see what we know, why we’re asking and the SORP basis as we go.</p><p>At the end, you’ll receive your personalised SORP readiness report. <strong>There is no charge, no card and no surprise paywall.</strong></p></div>
+    <div className="readiness-intro-actions"><button type="button" onClick={() => startConversation(false)}>{setupOnly ? "Find my organisation" : "Start my free conversation"} <span>→</span></button>{!setupOnly && (snapshotAvailable ? <button type="button" className="is-secondary" onClick={() => startConversation(true)}>Use my completed Snapshot <span>→</span></button> : <SorpSnapshotLink className="is-secondary" startLabel="Take the 15-question shortcut" />)}</div>
+    {!setupOnly && <p className="readiness-intro-note"><strong>Prefer to whiz through?</strong> The Quick Snapshot takes around eight minutes. Both routes produce the same free initial report, and you can return to the conversation afterwards. Your progress is saved only in this browser.</p>}
   </section>;
 
   return <div className="readiness-chat">
-    <header className="readiness-progress">
-      <div><span>{impactMode ? "Impact readiness mode" : "SORP readiness"}</span><strong>{impactMode && currentStage === 1 ? "YOUR ORGANISATION" : readinessStages[currentStage - 1]}</strong><small>{completedCount} of 6 stages complete</small></div>
-      <div className="readiness-progress-track" aria-label={`${completedCount} of 6 assessment stages complete`}>{readinessStages.map((stage, index) => <span key={stage} className={state.completedStages.includes(index + 1) ? "is-complete" : index + 1 === currentStage ? "is-current" : ""}><i />{index < 5 && <b />}</span>)}</div>
-    </header>
+    <SorpJourneyProgress current={currentStage} completed={workflow?.completedStages || []} result={Boolean(result)} />
 
-    <section className={`readiness-context${impactMode ? " is-impact-mode" : ""}`} aria-label={impactMode ? "Current impact-readiness context" : "Current SORP context"} aria-live="polite">
-      {state.charityName && <p className="readiness-charity-name">Working with <strong>{state.charityName}</strong></p>}
-      <dl>
-        <div><dt>SORP applicability</dt><dd>{applicabilityLabel}<EvidenceBasis evidence={state.contextEvidence.jurisdiction} /></dd></div>
-        <div><dt>Jurisdiction</dt><dd>{{ ew: "England & Wales", scotland: "Scotland", ni: "Northern Ireland", roi: "Republic of Ireland", elsewhere: "Outside the UK / Ireland", not_sure: "Currently uncertain", "": "Currently uncertain" }[state.setup.jurisdiction]}<EvidenceBasis evidence={state.contextEvidence.jurisdiction} /></dd></div>
-        {!impactMode && <><div><dt>Period begins</dt><dd>{state.setup.startDate ? dateLabel(state.setup.startDate) : "Currently uncertain"}<EvidenceBasis evidence={state.contextEvidence.startDate} /></dd></div>
-        <div><dt>Accounts</dt><dd>{{ accruals: "Accruals", receipts: "Receipts & payments", not_sure: "Currently uncertain", "": "Currently uncertain" }[state.setup.accounts]}<EvidenceBasis evidence={state.contextEvidence.accounts} /></dd></div>
-        <div><dt>Likely tier</dt><dd>{state.setup.income ? tierLabel(state.setup) : "Currently uncertain"}<EvidenceBasis evidence={state.contextEvidence.income} /></dd></div></>}
-      </dl>
-      {!impactMode && hasEligibilityContext && eligibility.tone !== "yes" && <div className="readiness-continue-anyway"><p>{eligibility.reasons.at(-1)} The impact questions may still be useful.</p><button type="button" onClick={() => composerRef.current?.focus()}>Continue anyway <span>→</span></button></div>}
-    </section>
+    <div className="sorp-journey-body">
+    <aside className="sorp-journey-aside">{workflow && <SorpKnownContext workflow={workflow} />}<p className="sorp-journey-assurance">Your free SORP readiness report<br /><span>Narrative and impact reporting · saved on this device</span></p><a className="sorp-save-exit" href="/are-you-sorp-ready">Save &amp; exit ↗</a></aside>
 
     <div className="readiness-thread" aria-live="polite">
-      {messages.map((message, index) => <article key={`${index}-${message.content.slice(0, 24)}`} className={`readiness-message is-${message.role}`}>
+      {setupOnly && workflow?.completedStages.includes(2) && <button type="button" className="sorp-setup-continue" onClick={() => onSetupComplete?.(state, workflow)}>✓ Context established — continue to the 15 questions →</button>}
+      {messages.length > 1 && <details className="sorp-conversation-history"><summary>Our conversation so far <span>{messages.filter(message => message.role === "user").length} replies</span></summary>{messages.slice(0, -1).map((message, index) => <article key={index}><small>{message.role === "user" ? "You" : "My Social Impact Intelligence"}</small><MessageContent text={message.content} />{message.organisation && <strong>{message.organisation.name} · {message.organisation.locality}</strong>}</article>)}</details>}
+      {completionNotice && <p className="sorp-completion-notice" role="status">{completionNotice}</p>}
+      {workflow?.completedStages.includes(1) && currentStage === 2 && state.sorpApplicability === "likely_applies" && <p className="sorp-applicability-confirmed">✓ SORP 2026 applies to you <span>For the charity and reporting context established here.</span></p>}
+      {messages.map((message, index) => index === messages.length - 1 && <article id="readiness-current-question" key={`${index}-${message.content.slice(0, 24)}`} className={`readiness-message is-${message.role}`}>
+        {message.role === "assistant" && <p className="sorp-current-stage">Stage {currentStage} · {readinessStages[currentStage - 1]}</p>}
         <span>{message.role === "user" ? "You" : "My Social Impact Intelligence"}</span>
-        {message.label && <strong className={`readiness-label is-${message.label.toLowerCase().replace(" ", "-")}`}>{message.label}</strong>}
-        <div><MessageContent text={message.content} /></div>
+        {message.label && message.responseKind === "detour" && <strong className={`readiness-label is-${message.label.toLowerCase().replace(" ", "-")}`}>{message.label}</strong>}
+        <div><MessageContent text={message.organisation ? "I think I’ve found you." : message.content} /></div>
+        {message.role === "assistant" && !message.organisation && message.responseKind !== "result" && <section className="sorp-question-purpose"><strong>{message.responseKind === "detour" ? "What we need next" : "Why we’re asking"}</strong><p>{message.responseKind === "detour" ? message.workflow?.next.question : message.workflow?.next.why || "Finding the right organisation lets us use public information and establish whether SORP 2026 applies to you."}</p></section>}
         {message.organisation && <section className="readiness-organisation-card" aria-label="Organisation found">
           <h3>{message.organisation.name}</h3>
           {message.organisation.locality && <p className="readiness-organisation-location">{message.organisation.locality}</p>}
           {message.publicSources?.length ? <nav className="readiness-organisation-links" aria-label="Organisation sources">{message.publicSources.slice(0, 2).map((source) => <a key={source.url} href={source.url} target="_blank" rel="noreferrer">{confirmationSourceLabel(source)}</a>)}</nav> : null}
         </section>}
+        {message.organisation && <p className="sorp-confirm-question">Is this the right organisation?</p>}
         {message.actions?.length ? <nav className="readiness-message-actions" aria-label="Choose an answer">{message.actions.map((action) => <button key={`${action.label}-${action.value}`} type="button" disabled={busy || index !== messages.length - 1} onClick={() => void sendMessage(action.value)}>{action.label}<span>→</span></button>)}</nav> : null}
-        {message.citations?.length ? <details><summary>Source</summary><div>{message.citations.map((citation) => <article key={citation.reference}><strong>SORP 2026 · paragraph {citation.reference}</strong><small>{citation.module} · PDF page {citation.page}</small><p>{citation.extract}</p></article>)}</div></details> : null}
+        {message.workflow && !message.organisation && message.responseKind !== "detour" && <SorpBasisDrawer basis={message.workflow.next.basis} />}
+        {message.responseKind === "detour" && message.citations?.length ? <SorpBasisDrawer basis={{classification: message.label || "MSI JUDGEMENT", explanation: "The SORP passages relevant to your question.", citations: message.citations}} /> : null}
         {!message.organisation && message.publicSources?.length ? <details><summary>Sources</summary><div>{message.publicSources.map((source) => <article key={`${source.url}-${source.detail}`}><strong>{sourceKindLabel(source.kind)} · {source.label}</strong>{source.detail && <p>{source.detail}</p>}<a href={source.url}>View source <span>→</span></a></article>)}</div></details> : null}
       </article>)}
       {busy && <article className="readiness-message is-assistant is-loading"><span>My Social Impact Intelligence</span><div><p>{!state.charityName && state.currentStage === 1 ? "Looking for the right organisation…" : "Understanding what you’ve said and checking the relevant public and SORP evidence…"}</p></div></article>}
       {error && <div className="readiness-error" role="alert"><strong>That step did not complete.</strong><p>{error}</p><button type="button" onClick={() => { setError(""); composerRef.current?.focus(); }}>Try again</button></div>}
       {result && messages.at(-1)?.role === "assistant" && state.score !== null && <section className="readiness-result">
-        <header><div><p>{state.charityName ? `${state.charityName} · ${impactMode ? "Impact readiness" : "Your SORP 2026"}` : impactMode ? "Impact readiness" : "Your SORP 2026"}</p><h2>Impact readiness</h2><span>{result.overview}</span></div><div><strong>{result.score}</strong><span>/ 100</span><b>{result.band}</b></div></header>
-        <p className="readiness-result-note">This is an impact-readiness assessment. It does not say the charity is SORP compliant.</p>
+        <header><div><p>{state.charityName || "Are You SORP Ready?"}</p><h2>Your SORP readiness result</h2><span>{result.overview}</span></div><div><strong>{result.score}</strong><span>/ 100</span><b>{result.band}</b></div></header>
+        <p className="readiness-result-note">{impactMode ? "SORP does not apply in the circumstances established. This report offers wider narrative and impact-reporting guidance." : "This assesses readiness for the narrative and impact-reporting aspects of SORP 2026. It is not a declaration of full SORP compliance."}</p>
         <div className="readiness-result-sections">{result.sectionScores.map((section) => <article key={section.section}><div><h3>{section.label}</h3><strong>{section.score}</strong></div><i><b style={{ width: `${section.score}%` }} /></i><p>{section.narrative}</p></article>)}</div>
         <div className="readiness-result-grid"><ResultList title="What looks strong" items={result.strong} empty="No clear strength has been evidenced yet." /><ResultList title="What needs attention" items={result.attention} empty="No immediate weaker area was identified." /><ResultList title="MUST areas" items={result.must} empty="No applicable MUST area was flagged by this initial assessment." /><ResultList title="SHOULD opportunities" items={result.should} empty="No weaker SHOULD opportunity was identified." /><ResultList title="MAY options" items={result.may} empty="No additional MAY option was identified." /><ResultList title="JUDGEMENT areas" items={result.judgement} empty="No specific judgement area was flagged, although context still matters." /><ResultList title="Additional SORP checks" items={result.additionalChecks} empty="No additional check was triggered by the information supplied." /><ResultList title="Three priority actions" items={result.priorities} empty="Add more context to build practical priorities." /></div>
         {sessionId && <SorpResultActions sessionId={sessionId} organisation={state.charityName} income={state.setup.income} />}
@@ -456,9 +467,10 @@ export function SorpReadinessConversation() {
       <div ref={threadEndRef} />
     </div>
 
+    </div>
     <form className="readiness-composer" onSubmit={submit}>
       <label htmlFor="readiness-answer">{impactMode ? "Answer naturally—or ask an impact question at any point." : "Answer naturally—or ask a SORP question at any point."}</label>
-      <textarea ref={composerRef} id="readiness-answer" rows={3} value={composer} onChange={(event) => setComposer(event.target.value)} placeholder="Type or say what you know…" maxLength={4000} />
+      <textarea ref={composerRef} id="readiness-answer" rows={2} value={composer} onChange={(event) => setComposer(event.target.value)} placeholder="Type or say what you know…" maxLength={4000} />
       <div><button type="button" className="readiness-mic" onClick={recordingState === "recording" ? stopRecording : () => void startRecording()} disabled={busy || recordingState === "transcribing"}>{recordingState === "recording" ? `Stop · ${recordingTime(recordingSeconds)}` : recordingState === "transcribing" ? "Transcribing…" : "Use microphone"}</button><button type="submit" disabled={busy || composer.trim().length < 2 || recordingState !== "idle"}>{busy ? "Understanding…" : result ? "Keep talking" : "Continue"} <span>→</span></button></div>
     </form>
   </div>;

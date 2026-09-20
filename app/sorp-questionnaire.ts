@@ -4,6 +4,7 @@ export type Classification = "MUST" | "SHOULD" | "MAY" | "JUDGEMENT" | "MSI_READ
 export type Tier = "tier1" | "tier2" | "tier3";
 
 export type AssessmentSetup = {
+  legalStatus?: string;
   role: string;
   jurisdiction: string;
   startDate: string;
@@ -53,7 +54,8 @@ export const sectionLabels = {
 } as const;
 
 export const readinessStages = [
-  "Your SORP context",
+  "Does SORP 2026 apply to you?",
+  "Gather the key information",
   "Objectives & activities",
   "Achievements & performance",
   "Plans for future periods",
@@ -62,7 +64,7 @@ export const readinessStages = [
 ] as const;
 
 export function stageForQuestion(question: CoreQuestion) {
-  return { objectives: 2, achievements: 3, learning: 4, reporting: 5 }[question.section];
+  return { objectives: 3, achievements: 4, learning: 5, reporting: 6 }[question.section];
 }
 
 const tiered = (tier1: Classification, tier2: Classification, tier3: Classification): Record<Tier, Classification> => ({ tier1, tier2, tier3 });

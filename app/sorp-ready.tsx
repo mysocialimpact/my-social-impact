@@ -230,7 +230,7 @@ export function SorpReadyPage() {
           ].map(([name, copy, href], index) => href.startsWith("/") ? <Link href={href} key={name} data-reveal><span>0{index + 1}</span><h3>{name}</h3><p>{copy}</p><strong>Explore <b>→</b></strong></Link> : <a href={href} key={name} data-reveal><span>0{index + 1}</span><h3>{name}</h3><p>{copy}</p><strong>Talk to us <b>→</b></strong></a>)}</div>
         </section>
 
-        <section className="sorp-final" data-reveal><p>SORP 2026 · Free impact-readiness report</p><h2>This looks useful.<br /><em>I should probably deal with this now.</em></h2><div><Link href={conversationUrl}>Start my free readiness conversation <span>→</span></Link></div></section>
+        <section className="sorp-final" data-reveal><p>SORP 2026 · Free SORP readiness report</p><h2>This looks useful.<br /><em>I should probably deal with this now.</em></h2><div><Link href={conversationUrl}>Start my free readiness conversation <span>→</span></Link></div></section>
       </main>
       <Footer />
     </>

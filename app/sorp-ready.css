@@ -639,7 +639,7 @@
 .readiness-intro-note strong { color: var(--ink); }
 .readiness-intro-note { grid-column: 2; max-width: 760px; margin: 0; color: rgba(17,16,15,.67); font-size: .76rem; line-height: 1.55; }
 
-.readiness-chat { min-height: calc(100svh - var(--chat-header)); display: grid; grid-template-rows: auto auto 1fr auto; }
+.readiness-chat { min-height: calc(100svh - var(--chat-header)); display: flex; flex-direction: column; }
 .readiness-progress { position: sticky; top: var(--chat-header); z-index: 35; padding: .9rem var(--sorp-pad); display: grid; grid-template-columns: minmax(240px,.45fr) 1fr; gap: 2rem; align-items: center; border-bottom: 1px solid var(--ink); background: var(--white); }
 .readiness-progress > div:first-child { display: grid; grid-template-columns: auto 1fr; gap: .2rem 1rem; align-items: baseline; }
 .readiness-progress > div:first-child span { grid-row: 1 / 3; align-self: center; color: var(--sorp-orange); font-size: .66rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }

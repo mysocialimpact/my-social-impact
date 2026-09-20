@@ -67,7 +67,7 @@ test("server-renders the My Social Impact homepage", async () => {
 test("every page inherits the global build stamp", async () => {
   const layout = await readFile(new URL("../app/layout.tsx", import.meta.url), "utf8");
   assert.match(layout, /global-build-stamp/);
-  assert.match(layout, /BUILD 46 · 20 SEPTEMBER 2026 · 13:51 BST/);
+  assert.match(layout, /BUILD 47 · 20 SEPTEMBER 2026 · 16:35 BST/);
 });
 
 test("global and page navigation share one responsive header offset", async () => {
@@ -214,14 +214,11 @@ test("server-renders the focused SORP snapshot workspace", async () => {
 
   const html = await response.text();
   assert.match(html, /<title>SORP Ready Snapshot \| My Social Impact<\/title>/i);
-  assert.match(html, /A useful result\. No account\. No email gate\./i);
-  assert.match(html, /Five short setup questions/i);
-  assert.match(html, /whether SORP appears to apply/i);
-  assert.match(html, /Accruals or receipts &amp; payments/i);
-  assert.match(html, /same 15 impact-readiness questions/i);
-  assert.match(html, /Start my snapshot/i);
-  assert.match(html, /Save &amp; exit/i);
-  assert.match(html, /id="snapshot-tool"/i);
+  assert.match(html, /A quick route/i);
+  assert.match(html, /The right context first/i);
+  assert.match(html, /15-question snapshot/i);
+  assert.match(html, /Find my organisation/i);
+  assert.match(html, /no surprise paywall/i);
 });
 
 test("server-renders the dedicated SORP results workspace", async () => {
@@ -231,7 +228,7 @@ test("server-renders the dedicated SORP results workspace", async () => {
   const html = await response.text();
   assert.match(html, /<title>Your SORP Ready Result \| My Social Impact<\/title>/i);
   assert.match(html, /Loading your result/i);
-  assert.match(html, /Your impact-readiness result/i);
+  assert.match(html, /Your SORP readiness result/i);
 });
 
 test("server-renders the conversational SORP readiness workspace", async () => {
@@ -247,9 +244,9 @@ test("server-renders the conversational SORP readiness workspace", async () => {
   assert.match(html, /15-question shortcut/i);
 
   const source = await readFile(new URL("../app/sorp-readiness-conversation.tsx", import.meta.url), "utf8");
-  assert.match(source, /Let’s work out where you stand\./);
-  assert.match(source, /what’s the charity called, and in your own words, what does it actually do\?/);
-  assert.match(source, /Don’t worry about giving me the formal charitable objects/);
+  assert.match(source, /Let’s find your charity\./);
+  assert.match(source, /What is the charity called\?/);
+  assert.match(source, /why we’re asking and the SORP basis/);
   assert.match(source, /charityName/);
   assert.match(source, /readiness-message-heading/);
   assert.match(source, /readiness-message-list/);
@@ -263,16 +260,16 @@ test("server-renders the conversational SORP readiness workspace", async () => {
   assert.doesNotMatch(source, /where it is registered, its reporting year, approximate income/);
   assert.match(source, /readiness-organisation-card/);
   assert.match(source, /Choose an answer/);
-  assert.match(source, /Publicly found/);
-  assert.match(source, /User confirmed/);
-  assert.match(source, /Currently uncertain/);
+  assert.match(source, /SorpKnownContext/);
+  assert.match(source, /completedStages/);
+  assert.match(source, /SorpJourneyProgress/);
   assert.match(source, /Charity register/);
   assert.match(source, /Companies House/);
   assert.match(source, /Website/);
   assert.doesNotMatch(source, /Registration number<\/dt>/);
   assert.doesNotMatch(source, /Latest reported income<\/dt>/);
   assert.match(source, /nextMessages\.slice\(-40\)/);
-  assert.match(source, /Impact readiness mode/);
+  assert.match(source, /SORP does not apply in the circumstances established/);
   assert.match(source, /Answer naturally—or ask an impact question at any point\./);
   assert.match(source, /publicly_observed/);
   assert.match(source, /sendMessage\(action\.value\)/);

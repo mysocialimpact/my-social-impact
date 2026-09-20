@@ -69,22 +69,24 @@ test("the main score always uses the same 15 core answers", () => {
   assert.equal(coreQuestions.length, 15);
 });
 
-test("the Snapshot and conversation share the six visible readiness stages", () => {
+test("the Snapshot and conversation share the seven visible readiness stages", () => {
   assert.deepEqual([...readinessStages], [
-    "Your SORP context",
+    "Does SORP 2026 apply to you?",
+    "Gather the key information",
     "Objectives & activities",
     "Achievements & performance",
     "Plans for future periods",
     "Trustees’ Annual Report readiness",
     "Additional SORP checks",
   ]);
-  assert.deepEqual(coreQuestions.map(stageForQuestion), [2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 4, 4, 4, 5, 5]);
+  assert.deepEqual(coreQuestions.map(stageForQuestion), [3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 5, 5, 5, 6, 6]);
 });
 
-test("SORP snapshot contains exactly five setup questions and transparent conditional checks", async () => {
+test("SORP snapshot reuses canonical conversational setup and transparent conditional checks", async () => {
   const source = await readFile(experiencePath, "utf8");
 
-  assert.deepEqual([...source.matchAll(/Setup question (\d{2}) of 05/g)].map((match) => match[1]), ["01", "02", "03", "04", "05"]);
+  assert.match(source, /SorpReadinessConversation setupOnly/);
+  assert.match(source, /setSetupWorkflow\(nextWorkflow\)/);
   assert.match(source, /These checks create separate SORP flags\. They do not change the main 0–100 score/);
   assert.match(source, /Why am I seeing this\?/);
   assert.match(source, /Save &amp; exit/);
@@ -99,7 +101,7 @@ test("every snapshot question must be answered before continuing", async () => {
   const source = await readFile(experiencePath, "utf8");
 
   assert.doesNotMatch(source, /nextLabel=\{setup\.role \? "Continue" : "Skip"\}/);
-  assert.match(source, /nextDisabled=\{!setup\.role\} nextLabel="Continue"/);
+  assert.match(source, /onSetupComplete/);
   assert.match(source, /if \(!currentQuestion \|\| !coreAnswers\[currentQuestion\.id\]\) return;/);
   assert.match(source, /if \(!currentExtra \|\| !extraAnswers\[currentExtra\.id\]\) return;/);
   assert.match(source, /nextDisabled=\{!coreAnswers\[currentQuestion\.id\]\}/);
