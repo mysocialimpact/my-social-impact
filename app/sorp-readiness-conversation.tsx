@@ -455,7 +455,7 @@ export function SorpReadinessConversation() {
     </div>
 
     <form className="readiness-composer" onSubmit={submit}>
-      <label htmlFor="readiness-answer">Answer naturally—or ask a SORP question at any point.</label>
+      <label htmlFor="readiness-answer">{impactMode ? "Answer naturally—or ask an impact question at any point." : "Answer naturally—or ask a SORP question at any point."}</label>
       <textarea ref={composerRef} id="readiness-answer" rows={3} value={composer} onChange={(event) => setComposer(event.target.value)} placeholder="Type or say what you know…" maxLength={4000} />
       <div><button type="button" className="readiness-mic" onClick={recordingState === "recording" ? stopRecording : () => void startRecording()} disabled={busy || recordingState === "transcribing"}>{recordingState === "recording" ? `Stop · ${recordingTime(recordingSeconds)}` : recordingState === "transcribing" ? "Transcribing…" : "Use microphone"}</button><button type="submit" disabled={busy || composer.trim().length < 2 || recordingState !== "idle"}>{busy ? "Understanding…" : result ? "Keep talking" : "Continue"} <span>→</span></button></div>
     </form>
