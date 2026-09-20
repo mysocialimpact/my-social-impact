@@ -16,9 +16,12 @@ type ContextEvidence = { basis: "publicly_observed" | "user_confirmed"; detail: 
 type IntelligenceProvenance = {
   registry: string;
   assistantId: string;
+  effectiveVersion: string;
   resolvedAt: string;
-  layers: { id: string; name: string; kind: string; relationship: "INHERITED" | "EXTENDED" | "OVERRIDDEN"; version: number; label: string; publishedAt: string | null }[];
-  runtimeOverrides: { name: string; label: string }[];
+  mode: "CURRENT" | "PINNED" | "LAST_KNOWN_PUBLISHED";
+  usedFallback: boolean;
+  layers: { id: string; name: string; kind: string; relationship: "INHERITED" | "EXTENDED" | "OVERRIDDEN"; version: number; label: string; status: "ACTIVE" | "ARCHIVED"; publishedAt: string | null }[];
+  runtimeControls: { name: string; type: string; representedBy: string }[];
 };
 
 type ReadinessState = {
@@ -67,6 +70,7 @@ type ReadinessResponse = {
   assistant: { message: string; label: Message["label"]; citations: Citation[]; publicSources?: PublicSource[]; organisation?: OrganisationCard | null; actions?: MessageAction[]; responseKind: "assessment" | "detour" | "result" };
   result: Result | null;
   intelligence: IntelligenceProvenance;
+  sessionId: string;
 };
 
 const emptySetup: AssessmentSetup = { role: "", jurisdiction: "", startDate: "", endDate: "", accounts: "", income: "", nearBoundary: false, activities: [] };
@@ -87,6 +91,12 @@ function blankState(): ReadinessState {
     score: null,
     inheritedSnapshot: false,
   };
+}
+
+function newSessionId() {
+  return typeof crypto !== "undefined" && "randomUUID" in crypto
+    ? crypto.randomUUID()
+    : `sorp-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
 
 function stateFromSnapshot(raw: string): { state: ReadinessState; result: Result | null } | null {
@@ -205,6 +215,7 @@ export function SorpReadinessConversation() {
   const [error, setError] = useState("");
   const [result, setResult] = useState<Result | null>(null);
   const [intelligence, setIntelligence] = useState<IntelligenceProvenance | null>(null);
+  const [sessionId, setSessionId] = useState("");
   const [snapshotAvailable, setSnapshotAvailable] = useState(false);
   const [hydrated, setHydrated] = useState(false);
   const [recordingState, setRecordingState] = useState<"idle" | "recording" | "transcribing">("idle");
@@ -231,13 +242,14 @@ export function SorpReadinessConversation() {
         } else {
           const saved = window.localStorage.getItem(CONVERSATION_KEY);
           if (saved) {
-            const parsed = JSON.parse(saved) as { started?: boolean; state?: ReadinessState; messages?: Message[]; result?: Result | null; intelligence?: IntelligenceProvenance | null };
+            const parsed = JSON.parse(saved) as { started?: boolean; state?: ReadinessState; messages?: Message[]; result?: Result | null; intelligence?: IntelligenceProvenance | null; sessionId?: string };
             if (parsed.started && parsed.state && parsed.messages?.length) {
               setStarted(true);
               setState({ ...blankState(), ...parsed.state, charityName: parsed.state.charityName ?? "", contextEvidence: parsed.state.contextEvidence ?? {} });
               setMessages(parsed.messages);
               setResult(parsed.result ?? null);
               setIntelligence(parsed.intelligence ?? null);
+              setSessionId(parsed.sessionId || newSessionId());
             }
           }
         }
@@ -251,8 +263,8 @@ export function SorpReadinessConversation() {
 
   useEffect(() => {
     if (!hydrated || !started) return;
-    window.localStorage.setItem(CONVERSATION_KEY, JSON.stringify({ started, state, messages, result, intelligence }));
-  }, [hydrated, started, state, messages, result, intelligence]);
+    window.localStorage.setItem(CONVERSATION_KEY, JSON.stringify({ started, state, messages, result, intelligence, sessionId }));
+  }, [hydrated, started, state, messages, result, intelligence, sessionId]);
 
   useEffect(() => {
     threadEndRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
@@ -264,6 +276,7 @@ export function SorpReadinessConversation() {
   }, []);
 
   function startConversation(useSnapshot = false) {
+    setSessionId(newSessionId());
     if (useSnapshot) {
       const raw = window.localStorage.getItem(SNAPSHOT_RESULT_KEY);
       const snapshot = raw ? stateFromSnapshot(raw) : null;
@@ -296,12 +309,19 @@ export function SorpReadinessConversation() {
       const response = await fetch("/api/readiness", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ message: value, state, history: nextMessages.slice(-40).map(({ role, content }) => ({ role, content })) }),
+        body: JSON.stringify({
+          message: value,
+          state,
+          history: nextMessages.slice(-40).map(({ role, content }) => ({ role, content })),
+          sessionId: sessionId || newSessionId(),
+          intelligencePin: intelligence?.effectiveVersion ? { effectiveVersion: intelligence.effectiveVersion } : null,
+        }),
       });
       const data = await response.json() as ReadinessResponse & { error?: string };
       if (!response.ok) throw new Error(data.error || "The readiness conversation is temporarily unavailable.");
       setState(data.state);
       setIntelligence(data.intelligence);
+      setSessionId(data.sessionId || sessionId || newSessionId());
       setMessages((current) => [...current, {
         role: "assistant",
         content: data.assistant.message,
@@ -432,9 +452,9 @@ export function SorpReadinessConversation() {
       {intelligence && <details className="readiness-intelligence" aria-label="Effective intelligence provenance">
         <summary>{intelligence.layers.filter((layer) => layer.id === "msi-core" || layer.id === "sorp-readiness-intelligence").map((layer) => `${intelligenceLayerLabel(layer)} · ${layer.label}`).join(" · ")}</summary>
         <div>
-          <p><strong>{intelligence.registry}</strong><span>Published intelligence only</span></p>
-          {intelligence.layers.map((layer) => <p key={`${layer.id}-${layer.version}`}><strong>{intelligenceLayerLabel(layer)} · {layer.label}</strong><span>{layer.relationship.toLowerCase()} · published {layer.publishedAt ? new Intl.DateTimeFormat("en-GB", { dateStyle: "medium", timeStyle: "short" }).format(new Date(layer.publishedAt)) : "date unavailable"}</span></p>)}
-          {intelligence.runtimeOverrides.map((override) => <p key={`${override.name}-${override.label}`}><strong>{override.name} · {override.label}</strong><span>Explicit runtime/product override</span></p>)}
+          <p><strong>{intelligence.registry} · {intelligence.effectiveVersion}</strong><span>Published intelligence only · {intelligence.mode === "CURRENT" ? "latest for this new session" : intelligence.mode === "PINNED" ? "pinned for this conversation" : "last known published — Cow Console was temporarily unavailable"}</span></p>
+          {intelligence.layers.map((layer) => <p key={`${layer.id}-${layer.version}`}><strong>{intelligenceLayerLabel(layer)} · {layer.label}</strong><span>{layer.relationship.toLowerCase()} · {layer.status.toLowerCase()} · published {layer.publishedAt ? new Intl.DateTimeFormat("en-GB", { dateStyle: "medium", timeStyle: "short" }).format(new Date(layer.publishedAt)) : "date unavailable"}</span></p>)}
+          {intelligence.runtimeControls.map((control) => <p key={`${control.name}-${control.type}`}><strong>{control.name} · {control.type}</strong><span>Represented by {control.representedBy}</span></p>)}
         </div>
       </details>}
       <div ref={threadEndRef} />
