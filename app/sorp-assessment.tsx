@@ -71,7 +71,7 @@ function stageFor(mode: Mode, coreIndex: number) {
   if (["income", "activities", "context"].includes(mode)) return 2;
   if (mode === "core") return stageForQuestion(coreQuestions[coreIndex] ?? coreQuestions[0]);
   if (["extras_intro", "extra"].includes(mode)) return 7;
-  return 8;
+  return mode === "result" ? 8 : 1;
 }
 
 function classLabel(classification: Classification) {
@@ -134,6 +134,10 @@ export function SorpAssessment({ view = "snapshot" }: { view?: "snapshot" | "res
   const stage = stageFor(mode, coreIndex);
   const tier = tierFromSetup(setup);
   const eligibility = eligibilityFor(setup);
+  const contextComplete = Boolean(setupWorkflow?.completedStages.includes(2) || view === "results" && mode === "result");
+  const completionConditions = [contextComplete, contextComplete, ...[3, 4, 5, 6].map(number => coreQuestions.filter(question => stageForQuestion(question) === number).every(question => Boolean(coreAnswers[question.id]))), extras.every(check => Boolean(extraAnswers[check.id]))];
+  const firstIncomplete = completionConditions.findIndex(complete => !complete);
+  const completedStages = Array.from({ length: firstIncomplete < 0 ? 7 : firstIncomplete }, (_, index) => index + 1);
 
   useEffect(() => {
     const restore = window.setTimeout(() => {
@@ -294,7 +298,7 @@ export function SorpAssessment({ view = "snapshot" }: { view?: "snapshot" | "res
   return (
     <div className="sorp-tool" id="snapshot-tool">
       <div className="sorp-tool-shell">
-        <SorpJourneyProgress current={Math.min(stage,7)} completed={Array.from({length:Math.max(0,stage-1)},(_,index)=>index+1)} result={mode === "result"} />
+        <SorpJourneyProgress current={Math.min(stage,7)} completed={completedStages} result={mode === "result"} />
         {mode === "core" && <p className="sorp-snapshot-position">{persistentStatus}</p>}
         {saveNote && <p className="sorp-save-note" role="status">{saveNote}</p>}
 
