@@ -85,6 +85,16 @@
 .sorp-journey-body .readiness-message-actions.is-assessment-scale button:not(.is-skip):hover,.sorp-journey-body .readiness-message-actions.is-assessment-scale button:not(.is-skip):focus-visible { background:#f5ce00; }
 .sorp-journey-body .readiness-message-actions.is-assessment-scale .is-skip { grid-column:1/-1; min-height:42px; justify-content:flex-start; border-top:1px solid #11100f; border-right:0; background:#faf9f6; color:#69635b; }
 .sorp-journey-body .readiness-message-actions.is-assessment-scale .is-skip span { margin-left:auto; }
+.sorp-structured-confirmation { margin:18px 0 4px; padding:20px; border:1px solid #11100f; background:#fff; }
+.sorp-structured-confirmation > strong { display:block; color:#28633f; font-size:clamp(22px,2.5vw,32px); }
+.sorp-structured-confirmation h3 { margin:9px 0 16px; font-family:var(--font-serif); font-size:clamp(25px,3vw,38px); font-weight:500; }
+.sorp-structured-confirmation > button { display:flex; align-items:center; justify-content:space-between; width:min(100%,360px); min-height:54px; padding:14px 18px; border:1px solid #11100f; background:#11100f; color:#fff; cursor:pointer; font-size:13px; font-weight:800; text-transform:uppercase; }
+.sorp-structured-confirmation > button:hover,.sorp-structured-confirmation > button:focus-visible { background:#f5ce00; color:#11100f; }
+.sorp-structured-confirmation > button:disabled { cursor:default; opacity:.58; }
+.sorp-structured-confirmation p { margin:18px 0 0; padding-top:16px; border-top:1px solid #d4d0c9; }
+.sorp-structured-confirmation p b,.sorp-structured-confirmation p span { display:block; }
+.sorp-structured-confirmation p b { font-size:13px; text-transform:uppercase; }
+.sorp-structured-confirmation p span { margin-top:5px; color:#625c54; font-size:14px; }
 .sorp-basis-drawer,.readiness-message .sorp-basis-drawer { margin:14px 0 22px; border:0; border-bottom:1px solid #d4d0c9; background:transparent; }
 .sorp-basis-drawer summary,.readiness-message .sorp-basis-drawer summary { display:flex; align-items:center; justify-content:space-between; cursor:pointer; min-height:48px; padding:10px 0; font-size:12px; text-transform:uppercase; font-weight:800; }
 .sorp-basis-drawer summary::after { display:none; }
@@ -156,6 +166,8 @@
   .sorp-provisional-grid,.sorp-public-evidence-split { grid-template-columns:1fr; }
   .sorp-provisional-grid { gap:15px; }
   .sorp-answer-proposal { padding:16px; }
+  .sorp-structured-confirmation { padding:16px; }
+  .sorp-structured-confirmation > button { width:100%; }
   .sorp-journey-body .readiness-message-actions.is-assessment-scale { grid-template-columns:repeat(2,minmax(0,1fr)); }
   .sorp-journey-body .readiness-message-actions.is-assessment-scale button { min-height:56px; border-right:1px solid #11100f; border-bottom:1px solid #11100f; }
   .sorp-journey-body .readiness-message-actions.is-assessment-scale button:nth-child(2n) { border-right:0; }

@@ -67,7 +67,7 @@ test("server-renders the My Social Impact homepage", async () => {
 test("every page inherits the global build stamp", async () => {
   const layout = await readFile(new URL("../app/layout.tsx", import.meta.url), "utf8");
   assert.match(layout, /global-build-stamp/);
-  assert.match(layout, /BUILD 55 · 20 SEPTEMBER 2026 · 18:41 BST/);
+  assert.match(layout, /BUILD 56 · 20 SEPTEMBER 2026 · 19:10 BST/);
 });
 
 test("global and page navigation share one responsive header offset", async () => {
@@ -267,6 +267,12 @@ test("server-renders the conversational SORP readiness workspace", async () => {
   assert.match(source, /Trustees’ Annual Report/);
   assert.match(source, /Wider impact evidence/);
   assert.match(source, /Your answers remain in control of the score/);
+  assert.match(source, /Happy with this answer\?/);
+  assert.match(source, /Add a note in your own words — completely optional/);
+  assert.match(source, /interaction: "confirm_structured_answer"/);
+  assert.match(source, /structuredAnswerFromAction/);
+  assert.match(source, /looksLikeQuestion/);
+  assert.doesNotMatch(source.slice(source.indexOf("function selectStructuredAnswer"), source.indexOf("async function confirmStructuredAnswer")), /fetch\(/);
   assert.match(source, /Use microphone/);
   assert.match(source, /SorpKnownContext/);
   assert.match(source, /completedStages/);
@@ -280,7 +286,7 @@ test("server-renders the conversational SORP readiness workspace", async () => {
   assert.match(source, /SORP does not apply in the circumstances established/);
   assert.match(source, /Answer naturally—or ask an impact question at any point\./);
   assert.match(source, /publicly_observed/);
-  assert.match(source, /sendMessage\(action\.value\)/);
+  assert.match(source, /selectStructuredAnswer\(action\.value\)/);
   assert.match(source, /Looking for the right organisation…/);
   assert.match(source, /MSI Intelligence/);
   assert.match(source, /SORP Intelligence/);

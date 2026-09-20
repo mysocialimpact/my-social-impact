@@ -16,6 +16,7 @@ type MessageAction = { label: string; value: string };
 type FieldState = { answer: AnswerValue | null; evidence: string; confidence: number };
 type AdditionalState = { answer: AdditionalAnswerValue | null; evidence: string; relevant: boolean };
 type ContextEvidence = { basis: "publicly_observed" | "user_confirmed"; detail: string; sources: string[] };
+type PendingStructuredAnswer = { target: `field:${number}` | `check:${string}`; answer: AnswerValue; label: string; selectedAt: string };
 type IntelligenceProvenance = {
   registry: string;
   assistantId: string;
@@ -43,6 +44,7 @@ export type ReadinessState = {
   inheritedSnapshot: boolean;
   publicReviewAcknowledged: boolean;
   impactReportInput: "none" | "awaiting_link" | "skipped";
+  pendingStructuredAnswer: PendingStructuredAnswer | null;
 };
 
 type Result = {
@@ -77,7 +79,7 @@ type ReadinessResponse = {
   state: ReadinessState;
   assistant: { message: string; label: Message["label"]; citations: Citation[]; publicSources?: PublicSource[]; organisation?: OrganisationCard | null; actions?: MessageAction[]; responseKind: "assessment" | "detour" | "result" };
   result: Result | null;
-  intelligence: IntelligenceProvenance;
+  intelligence: IntelligenceProvenance | null;
   sessionId: string;
 };
 
@@ -100,7 +102,27 @@ function blankState(): ReadinessState {
     inheritedSnapshot: false,
     publicReviewAcknowledged: false,
     impactReportInput: "none",
+    pendingStructuredAnswer: null,
   };
+}
+
+const structuredAnswerValues: Record<string, AnswerValue> = {
+  "YES, CLEARLY": "yes",
+  "MOSTLY": "mostly",
+  "PARTLY": "partly",
+  "NOT YET": "not_yet",
+  "NOT SURE": "not_sure",
+};
+
+function structuredAnswerFromAction(value: string, target: string): PendingStructuredAnswer | null {
+  if (!/^(?:field:\d+|check:[a-z_]+)$/.test(target)) return null;
+  const label = value.trim().toUpperCase().replace(/^KEEP\s+/, "").replace(/[.!]+$/g, "");
+  const answer = structuredAnswerValues[label];
+  return answer ? { target: target as PendingStructuredAnswer["target"], answer, label, selectedAt: new Date().toISOString() } : null;
+}
+
+function looksLikeQuestion(value: string) {
+  return /\?$/.test(value.trim()) || /^(?:why|what|how|when|where|who|can|could|would|should|does|do|is|are)\b/i.test(value.trim());
 }
 
 function newSessionId() {
@@ -235,6 +257,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
   const [messages, setMessages] = useState<Message[]>([]);
   const [composer, setComposer] = useState("");
   const [busy, setBusy] = useState(false);
+  const [quickAdvancing, setQuickAdvancing] = useState(false);
   const [error, setError] = useState("");
   const [result, setResult] = useState<Result | null>(null);
   const [intelligence, setIntelligence] = useState<IntelligenceProvenance | null>(null);
@@ -341,9 +364,74 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
     setStarted(true);
   }
 
+  function selectStructuredAnswer(value: string) {
+    if (!workflow || busy || quickAdvancing) return;
+    const pending = structuredAnswerFromAction(value, workflow.next.id);
+    if (!pending) {
+      void sendMessage(value);
+      return;
+    }
+    setState((current) => ({ ...current, pendingStructuredAnswer: pending }));
+    setComposer("");
+    setError("");
+    window.setTimeout(() => composerRef.current?.focus(), 40);
+  }
+
+  async function confirmStructuredAnswer(rawNote: string) {
+    const pending = state.pendingStructuredAnswer;
+    if (!pending || busy || quickAdvancing || recordingState !== "idle") return;
+    const note = rawNote.trim();
+    const userMessage: Message = { role: "user", content: note ? `${pending.label}\n\n${note}` : pending.label };
+    const nextMessages = [...messages, userMessage];
+    setMessages(nextMessages);
+    setComposer("");
+    setQuickAdvancing(true);
+    setError("");
+    try {
+      const response = await fetch("/api/readiness", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          message: note || "Continue",
+          interaction: "confirm_structured_answer",
+          state,
+          history: nextMessages.slice(-40).map(({ role, content }) => ({ role, content })),
+          sessionId: sessionId || newSessionId(),
+          intelligencePin: intelligence?.effectiveVersion ? { effectiveVersion: intelligence.effectiveVersion } : null,
+        }),
+      });
+      const data = await response.json() as ReadinessResponse & { error?: string };
+      if (!response.ok) throw new Error(data.error || "That answer could not be saved yet.");
+      setState(data.state);
+      setWorkflow(data.workflow);
+      const newlyCompleted = data.workflow.completedStages.filter(stage => !workflow?.completedStages.includes(stage));
+      setCompletionNotice(newlyCompleted.length ? `✓ ${newlyCompleted.map(stage => `Stage ${stage}`).join(" & ")} complete. One more part of your readiness picture established.` : "");
+      if (data.intelligence) setIntelligence(data.intelligence);
+      setSessionId(data.sessionId || sessionId || newSessionId());
+      setMessages([...nextMessages, {
+        role: "assistant",
+        content: data.assistant.message,
+        label: data.assistant.label,
+        citations: data.assistant.citations,
+        publicSources: data.assistant.publicSources,
+        organisation: data.assistant.organisation,
+        actions: data.assistant.actions,
+        workflow: data.workflow,
+        responseKind: data.assistant.responseKind,
+      }]);
+      if (data.result) setResult(data.result);
+    } catch (caught) {
+      setMessages(messages);
+      setComposer(note);
+      setError(caught instanceof Error ? caught.message : "That answer could not be saved yet.");
+    } finally {
+      setQuickAdvancing(false);
+    }
+  }
+
   async function sendMessage(rawValue: string) {
     const value = rawValue.trim();
-    if (!value || busy || recordingState !== "idle") return;
+    if (!value || busy || quickAdvancing || recordingState !== "idle") return;
     const userMessage: Message = { role: "user", content: value };
     const nextMessages = [...messages, userMessage];
     setMessages(nextMessages);
@@ -370,7 +458,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
       const newlyKnown = data.workflow.known.filter(item => item.established && !workflow?.known.find(previous => previous.id === item.id)?.established);
       const newlyCompleted = data.workflow.completedStages.filter(stage => !workflow?.completedStages.includes(stage));
       setCompletionNotice(newlyCompleted.length ? `✓ ${newlyCompleted.map(stage => `Stage ${stage}`).join(" & ")} complete. ${data.workflow.currentStage === 2 ? "Good — that’s the first thing sorted." : data.workflow.currentStage === 3 ? "We’ve got the context we need." : "One more part of your readiness picture established."}` : !workflow?.known.find(item => item.id === "charityName")?.established && data.workflow.known.find(item => item.id === "charityName")?.established ? "✓ Organisation confirmed. Here’s what we’ve found so far." : newlyKnown.length ? `✓ ${newlyKnown.map(item => item.label).join(" · ")} confirmed. Good — that’s one more thing sorted.` : "");
-      setIntelligence(data.intelligence);
+      if (data.intelligence) setIntelligence(data.intelligence);
       setSessionId(data.sessionId || sessionId || newSessionId());
       setMessages((current) => [...current, {
         role: "assistant",
@@ -395,7 +483,8 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
 
   function submit(event: FormEvent) {
     event.preventDefault();
-    void sendMessage(composer);
+    if (state.pendingStructuredAnswer && !looksLikeQuestion(composer)) void confirmStructuredAnswer(composer);
+    else void sendMessage(composer);
   }
 
   async function startRecording() {
@@ -448,7 +537,8 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
 
   const currentStage = workflow?.currentStage || 1;
   const impactMode = state.assessmentMode === "impact_readiness";
-  const structuredAnswerQuestion = Boolean(workflow?.next.id.match(/^(?:field:\d+|check:)/));
+  const pendingStructuredAnswer = state.pendingStructuredAnswer;
+  const structuredAnswerQuestion = Boolean(pendingStructuredAnswer || workflow?.next.id.match(/^(?:field:\d+|check:)/));
 
   if (!started) return <section className="readiness-intro">
     <p className="readiness-kicker">SORP 2026<br /><strong>Completely free</strong></p>
@@ -484,11 +574,17 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
           {message.publicSources?.length ? <nav className="readiness-organisation-links" aria-label="Organisation sources">{message.publicSources.slice(0, 2).map((source) => <a key={source.url} href={source.url} target="_blank" rel="noreferrer">{confirmationSourceLabel(source)}</a>)}</nav> : null}
         </section>}
         {message.organisation && <p className="sorp-confirm-question">Is this the right organisation?</p>}
-        {message.workflow && !message.organisation && message.responseKind !== "detour" && message.workflow.next.id !== "publicReview" && <SorpBasisDrawer basis={message.workflow.next.basis} />}
-        {message.actions?.length ? <nav className={`readiness-message-actions${message.workflow?.next.id.match(/^(?:field:\d+|check:)/) ? " is-assessment-scale" : ""}`} aria-label={message.workflow?.next.id.match(/^(?:field:\d+|check:)/) ? "Choose a quick answer" : "Choose an answer"}>{message.actions.map((action) => <button className={action.label === "SKIP FOR NOW" ? "is-skip" : undefined} key={`${action.label}-${action.value}`} type="button" disabled={busy || index !== messages.length - 1} onClick={() => void sendMessage(action.value)}>{action.label}<span>→</span></button>)}</nav> : null}
+        {message.workflow && !message.organisation && message.responseKind !== "detour" && !["publicReview", "answerConfirmation"].includes(message.workflow.next.id) && <SorpBasisDrawer basis={message.workflow.next.basis} />}
+        {message.actions?.length && !pendingStructuredAnswer ? <nav className={`readiness-message-actions${message.workflow?.next.id.match(/^(?:field:\d+|check:)/) ? " is-assessment-scale" : ""}`} aria-label={message.workflow?.next.id.match(/^(?:field:\d+|check:)/) ? "Choose a quick answer" : "Choose an answer"}>{message.actions.map((action) => <button className={action.label === "SKIP FOR NOW" ? "is-skip" : undefined} key={`${action.label}-${action.value}`} type="button" disabled={busy || quickAdvancing || index !== messages.length - 1} onClick={() => selectStructuredAnswer(action.value)}>{action.label}<span>→</span></button>)}</nav> : null}
         {message.responseKind === "detour" && message.citations?.length ? <SorpBasisDrawer basis={{classification: message.label || "MSI JUDGEMENT", explanation: "The SORP passages relevant to your question.", citations: message.citations}} /> : null}
         {!message.organisation && message.publicSources?.length ? <details><summary>Sources</summary><div>{message.publicSources.map((source) => <article key={`${source.url}-${source.detail}`}><strong>{sourceKindLabel(source.kind)} · {source.label}</strong>{source.detail && <p>{source.detail}</p>}<a href={source.url}>View source <span>→</span></a></article>)}</div></details> : null}
       </article>)}
+      {pendingStructuredAnswer && <section className="sorp-structured-confirmation" aria-live="polite">
+        <strong>✓ {pendingStructuredAnswer.label}</strong>
+        <h3>Happy with this answer?</h3>
+        <button type="button" onClick={() => void confirmStructuredAnswer(composer)} disabled={quickAdvancing || recordingState !== "idle"}>Continue <span>→</span></button>
+        <p><b>Want to explain why?</b><span>Add a note in your own words — completely optional.</span></p>
+      </section>}
       {busy && <article className="readiness-message is-assistant is-loading"><span>My Social Impact Intelligence</span><div><p>{!state.charityName && state.currentStage === 1 ? "Looking for the right organisation…" : "Understanding what you’ve said and checking the relevant public and SORP evidence…"}</p></div></article>}
       {error && <div className="readiness-error" role="alert"><strong>That step did not complete.</strong><p>{error}</p><button type="button" onClick={() => { setError(""); composerRef.current?.focus(); }}>Try again</button></div>}
       {result && messages.at(-1)?.role === "assistant" && state.score !== null && <section className="readiness-result">
@@ -511,9 +607,9 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
 
     </div>
     <form className="readiness-composer" onSubmit={submit}>
-      <label htmlFor="readiness-answer">{structuredAnswerQuestion ? "Or tell us in your own words — or ask about the requirement." : impactMode ? "Answer naturally—or ask an impact question at any point." : "Answer naturally—or ask a SORP question at any point."}</label>
-      <textarea ref={composerRef} id="readiness-answer" rows={2} value={composer} onChange={(event) => setComposer(event.target.value)} placeholder="Type or say what you know…" maxLength={4000} />
-      <div><button type="button" className="readiness-mic" onClick={recordingState === "recording" ? stopRecording : () => void startRecording()} disabled={busy || recordingState === "transcribing"}>{recordingState === "recording" ? `Stop · ${recordingTime(recordingSeconds)}` : recordingState === "transcribing" ? "Transcribing…" : "Use microphone"}</button><button type="submit" disabled={busy || composer.trim().length < 2 || recordingState !== "idle"}>{busy ? "Understanding…" : result ? "Keep talking" : "Continue"} <span>→</span></button></div>
+      <label htmlFor="readiness-answer">{pendingStructuredAnswer ? "Want to explain why? Add a note if useful — completely optional." : structuredAnswerQuestion ? "Or tell us in your own words — or ask about the requirement." : impactMode ? "Answer naturally—or ask an impact question at any point." : "Answer naturally—or ask a SORP question at any point."}</label>
+      <textarea ref={composerRef} id="readiness-answer" rows={2} value={composer} onChange={(event) => setComposer(event.target.value)} placeholder={pendingStructuredAnswer ? "Add an optional note…" : "Type or say what you know…"} maxLength={4000} />
+      <div><button type="button" className="readiness-mic" onClick={recordingState === "recording" ? stopRecording : () => void startRecording()} disabled={busy || quickAdvancing || recordingState === "transcribing"}>{recordingState === "recording" ? `Stop · ${recordingTime(recordingSeconds)}` : recordingState === "transcribing" ? "Transcribing…" : "Use microphone"}</button><button type="submit" disabled={busy || quickAdvancing || (!pendingStructuredAnswer && composer.trim().length < 2) || recordingState !== "idle"}>{busy ? "Understanding…" : result ? "Keep talking" : "Continue"} <span>→</span></button></div>
     </form>
   </div>;
 }
