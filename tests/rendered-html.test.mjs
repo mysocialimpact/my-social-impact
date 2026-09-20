@@ -67,7 +67,7 @@ test("server-renders the My Social Impact homepage", async () => {
 test("every page inherits the global build stamp", async () => {
   const layout = await readFile(new URL("../app/layout.tsx", import.meta.url), "utf8");
   assert.match(layout, /global-build-stamp/);
-  assert.match(layout, /BUILD 44 · 20 SEPTEMBER 2026 · 11:18 BST/);
+  assert.match(layout, /BUILD 44 · 20 SEPTEMBER 2026 · 11:25 BST/);
 });
 
 test("global and page navigation share one responsive header offset", async () => {
@@ -178,6 +178,11 @@ test("server-renders the Are You SORP Ready product page", async () => {
   assert.match(html, /£50/i);
   assert.match(html, /£100/i);
   assert.match(html, /£200/i);
+  assert.match(html, /Small charity/i);
+  assert.match(html, /Medium charity/i);
+  assert.match(html, /Large charity/i);
+  assert.match(html, /60-minute SORP 2026 Impact Readiness Review with My Social Impact/i);
+  assert.match(html, /credit the cost of your review against that work/i);
   assert.match(html, /Impact Readiness Review/i);
   assert.match(html, /Optional paid human review/i);
   assert.match(html, /Cost genuinely a barrier/i);
@@ -248,6 +253,10 @@ test("server-renders the conversational SORP readiness workspace", async () => {
   assert.match(source, /charityName/);
   assert.match(source, /readiness-message-heading/);
   assert.match(source, /readiness-message-list/);
+  assert.match(source, /Optional paid human review/);
+  assert.match(source, /personalised readiness report are complete and remain entirely free/);
+  assert.match(source, /credit the cost of your review against that work/);
+  assert.match(source, /Cost genuinely a barrier/);
   assert.doesNotMatch(source, /where it is registered, its reporting year, approximate income/);
   assert.match(source, /readiness-organisation-card/);
   assert.match(source, /Choose an answer/);

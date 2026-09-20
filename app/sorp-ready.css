@@ -407,6 +407,7 @@
 .sorp-review-heading > div span { font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
 .sorp-review-free-line { max-width: 75rem; margin: 0 0 clamp(3rem, 5vw, 5rem); padding: 1.25rem 0; border-block: 1px solid rgba(255,255,255,.55); font-family: var(--font-serif); font-size: clamp(1.45rem, 2.3vw, 2.6rem); line-height: 1.25; }
 .sorp-review-free-line strong { color: var(--sorp-yellow); }
+.sorp-review-session { margin: 0 0 1rem; color: rgba(255,255,255,.78); font-size: .8rem; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; }
 .sorp-review-pricing { margin: 0 0 clamp(4rem, 7vw, 7rem); display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid rgba(255,255,255,.65); }
 .sorp-review-pricing article { min-height: 250px; padding: 1.5rem; display: flex; flex-direction: column; border-right: 1px solid rgba(255,255,255,.45); }
 .sorp-review-pricing article:last-child { border-right: 0; }
@@ -753,8 +754,15 @@
 .readiness-human-review h3 { margin: 1rem 0; font-size: clamp(2.5rem,4.5vw,5rem); line-height: .9; text-transform: uppercase; }
 .readiness-human-review > div:first-child p { font-size: 1.1rem; font-weight: 800; text-transform: uppercase; }
 .readiness-human-review > div:last-child { line-height: 1.55; }
-.readiness-human-review > div:last-child strong { display: block; margin: 1.2rem 0; color: var(--sorp-yellow); }
+.readiness-human-review > div:last-child > small { display: block; margin: 1.2rem 0; color: rgba(255,255,255,.78); font-size: .76rem; line-height: 1.55; }
 .readiness-human-review a { min-height: 54px; padding: .85rem 0; display: flex; align-items: center; justify-content: space-between; border-block: 1px solid var(--white); font-size: .72rem; font-weight: 800; text-transform: uppercase; }
+.readiness-review-pricing { margin: 1.5rem 0; border-top: 1px solid rgba(255,255,255,.5); }
+.readiness-review-pricing p { margin: 0; padding: .8rem 0; display: grid; grid-template-columns: 1fr auto; gap: 1rem; align-items: center; border-bottom: 1px solid rgba(255,255,255,.38); }
+.readiness-review-pricing p span { color: var(--white); text-transform: none; }
+.readiness-review-pricing p b { display: block; color: var(--sorp-yellow); font-size: .68rem; letter-spacing: .05em; text-transform: uppercase; }
+.readiness-review-pricing p strong { color: var(--white); font-family: var(--font-serif); font-size: 2rem; font-weight: 500; }
+.readiness-review-barrier { color: rgba(255,255,255,.78); font-size: .76rem; }
+.readiness-review-barrier a { min-height: 0; padding: 0; display: inline; border: 0; text-decoration: underline; text-transform: none; }
 
 @media (max-width: 760px) {
   .sorp-conversation-page { --chat-header: 52px; }
