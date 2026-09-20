@@ -1,13 +1,5 @@
 {
   "version": "7",
   "dialect": "sqlite",
-  "entries": [
-    {
-      "idx": 0,
-      "version": "6",
-      "when": 1789941425783,
-      "tag": "0000_violet_iceman",
-      "breakpoints": true
-    }
-  ]
+  "entries": []
 }

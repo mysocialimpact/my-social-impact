@@ -9,7 +9,6 @@ import { additionalChecks, coreQuestions, readinessStages, type AdditionalAnswer
 
 const SNAPSHOT_RESULT_KEY = "msi-sorp-readiness-result-v2";
 const CONVERSATION_KEY = "msi-sorp-readiness-conversation-v1";
-const PENDING_CLOUD_SAVE_KEY = "msi-sorp-pending-cloud-save-v1";
 
 type Citation = { reference: string; module: string; page: number; extract: string };
 type PublicSource = { label: string; url: string; detail: string; kind: "official_register" | "organisation_website" | "annual_report" | "other_public" };
@@ -367,7 +366,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
         } else {
           const saved = window.localStorage.getItem(storageKey);
           if (saved) {
-            const parsed = JSON.parse(saved) as { started?: boolean; state?: ReadinessState; messages?: Message[]; result?: Result | null; intelligence?: IntelligenceProvenance | null; sessionId?: string; workflow?: ReadinessWorkflow; checkpoints?: ConversationCheckpoint[] };
+            const parsed = JSON.parse(saved) as { started?: boolean; state?: ReadinessState; messages?: Message[]; result?: Result | null; intelligence?: IntelligenceProvenance | null; sessionId?: string; workflow?: ReadinessWorkflow; checkpoints?: ConversationCheckpoint[]; saveProfile?: { name: string; position: string; email: string } };
             if (parsed.started && parsed.state && parsed.messages?.length) {
               setStarted(true);
               setState({ ...blankState(), ...parsed.state, charityName: parsed.state.charityName ?? "", contextEvidence: parsed.state.contextEvidence ?? {} });
@@ -376,6 +375,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
               setWorkflow(parsed.workflow ?? null);
               setIntelligence(parsed.workflow?.version === 2 ? parsed.intelligence ?? null : null);
               setSessionId(parsed.sessionId || newSessionId());
+              if (parsed.saveProfile) setSaveProfile(parsed.saveProfile);
               setCheckpoints(Array.isArray(parsed.checkpoints) ? parsed.checkpoints.map((checkpoint) => ({
                 ...checkpoint,
                 answerText: checkpoint.answerText || parsed.messages?.[checkpoint.messagesLength]?.content || "Saved answer",
@@ -393,8 +393,8 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
 
   useEffect(() => {
     if (!hydrated || !started) return;
-    try { window.localStorage.setItem(storageKey, JSON.stringify({ started, state, messages, result, intelligence, sessionId, workflow, checkpoints })); } catch { queueMicrotask(() => setError("Your browser could not save this conversation. Keep this page open to retain your progress.")); }
-  }, [hydrated, started, state, messages, result, intelligence, sessionId, workflow, checkpoints, storageKey]);
+    try { window.localStorage.setItem(storageKey, JSON.stringify({ started, state, messages, result, intelligence, sessionId, workflow, checkpoints, saveProfile })); } catch { queueMicrotask(() => setError("Your browser could not save this conversation. Keep this page open to retain your progress.")); }
+  }, [hydrated, started, state, messages, result, intelligence, sessionId, workflow, checkpoints, saveProfile, storageKey]);
 
   useEffect(() => {
     const restoreReviewPosition = (event: PopStateEvent) => {
@@ -407,18 +407,6 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
     window.addEventListener("popstate", restoreReviewPosition);
     return () => window.removeEventListener("popstate", restoreReviewPosition);
   }, [checkpoints.length]);
-
-  useEffect(() => {
-    if (!hydrated || setupOnly) return;
-    const mode = new URLSearchParams(window.location.search).get("saved");
-    if (mode === "finish") {
-      const pending = window.localStorage.getItem(PENDING_CLOUD_SAVE_KEY);
-      if (pending) void saveCloudProgress(JSON.parse(pending) as CloudSaveRequest, true);
-    }
-    if (mode === "resume") void resumeCloudProgress();
-  // The callback intentionally runs once after local hydration.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hydrated, setupOnly]);
 
   useEffect(() => {
     const body = document.querySelector<HTMLElement>(".sorp-journey-body");
@@ -457,83 +445,18 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
     setStarted(true);
   }
 
-  type CloudSaveRequest = {
-    sessionId: string;
-    name: string;
-    position: string;
-    email: string;
-    progress: { started: boolean; state: ReadinessState; messages: Message[]; result: Result | null; intelligence: IntelligenceProvenance | null; sessionId: string; workflow: ReadinessWorkflow | null; checkpoints: ConversationCheckpoint[] };
-    currentStage: number;
-    completed: boolean;
-  };
-
-  function cloudSaveRequest(): CloudSaveRequest {
-    return {
-      sessionId: sessionId || newSessionId(),
-      ...saveProfile,
-      progress: { started, state, messages, result, intelligence, sessionId, workflow, checkpoints },
-      currentStage: workflow?.currentStage || state.currentStage || 1,
-      completed: Boolean(result),
-    };
-  }
-
-  async function saveCloudProgress(payload: CloudSaveRequest, returningFromSignIn = false) {
+  function submitSave(event: FormEvent) {
+    event.preventDefault();
     setSaveStatus("saving");
     setSaveError("");
     try {
-      const response = await fetch("/api/readiness/saved-progress", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(payload) });
-      const data = await response.json() as { ok?: boolean; error?: string; signInRequired?: boolean };
-      if (response.status === 401 || data.signInRequired) {
-        window.localStorage.setItem(PENDING_CLOUD_SAVE_KEY, JSON.stringify(payload));
-        const returnTo = "/are-you-sorp-ready/conversation?saved=finish";
-        window.location.assign(`/signin-with-chatgpt?return_to=${encodeURIComponent(returnTo)}`);
-        return;
-      }
-      if (!response.ok || !data.ok) throw new Error(data.error || "We could not securely save this just now.");
-      window.localStorage.removeItem(PENDING_CLOUD_SAVE_KEY);
-      setSaveProfile({ name: payload.name, position: payload.position, email: payload.email });
+      window.localStorage.setItem(storageKey, JSON.stringify({ started, state, messages, result, intelligence, sessionId, workflow, checkpoints, saveProfile }));
       setSaveStatus("saved");
-      if (returningFromSignIn) window.history.replaceState({}, "", "/are-you-sorp-ready/conversation");
       window.setTimeout(() => window.location.assign("/are-you-sorp-ready?progress=saved"), 900);
-    } catch (caught) {
+    } catch {
       setSaveStatus("idle");
-      setSaveDialogOpen(true);
-      setSaveError(caught instanceof Error ? caught.message : "We could not securely save this just now. Your device copy is still intact.");
+      setSaveError("This browser could not save your assessment. Keep this page open so your answers are not lost.");
     }
-  }
-
-  async function resumeCloudProgress() {
-    try {
-      const response = await fetch("/api/readiness/saved-progress", { cache: "no-store" });
-      const data = await response.json() as { signInRequired?: boolean; error?: string; progress?: { name: string; position: string; email: string; data: CloudSaveRequest["progress"] } | null };
-      if (response.status === 401 || data.signInRequired) {
-        const returnTo = "/are-you-sorp-ready/conversation?saved=resume";
-        window.location.assign(`/signin-with-chatgpt?return_to=${encodeURIComponent(returnTo)}`);
-        return;
-      }
-      if (!response.ok) throw new Error(data.error || "We could not load your saved assessment.");
-      if (!data.progress) throw new Error("We could not find a saved assessment for this account yet.");
-      const saved = data.progress.data;
-      setSaveProfile({ name: data.progress.name, position: data.progress.position, email: data.progress.email });
-      setStarted(saved.started);
-      setState({ ...blankState(), ...saved.state });
-      setMessages(saved.messages);
-      setResult(saved.result);
-      setIntelligence(saved.intelligence);
-      setSessionId(saved.sessionId);
-      setWorkflow(saved.workflow);
-      setCheckpoints(saved.checkpoints || []);
-      setReviewIndex(null);
-      window.history.replaceState({}, "", "/are-you-sorp-ready/conversation");
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "We could not load your saved assessment.");
-      window.history.replaceState({}, "", "/are-you-sorp-ready/conversation");
-    }
-  }
-
-  function submitSave(event: FormEvent) {
-    event.preventDefault();
-    void saveCloudProgress(cloudSaveRequest());
   }
 
   function selectStructuredAnswer(value: string) {
@@ -820,8 +743,8 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
     <p className="readiness-kicker">SORP 2026<br /><strong>Completely free</strong></p>
     <h1>{setupOnly ? <>A quick route.<br />The right context first.</> : <>Talk it through.<br />Get your free report.</>}</h1>
     <div className="readiness-intro-copy">{setupOnly && <p>We’ll find your organisation and establish what applies, then take you straight to the 15-question snapshot.</p>}<p>You’re about to talk to <strong>My Social Impact Intelligence</strong>: specialist guidance built from MSI’s SORP and social impact expertise.</p><p>First we’ll establish whether SORP 2026 applies, then gather the context and explore your readiness for its narrative and impact-reporting expectations. You’ll see what we know, why we’re asking and the SORP basis as we go.</p><p>At the end, you’ll receive your personalised SORP readiness report. <strong>There is no charge, no card and no surprise paywall.</strong></p></div>
-    <div className="readiness-intro-actions"><button type="button" onClick={() => startConversation(false)}>{setupOnly ? "Find my organisation" : "Start my free conversation"} <span>→</span></button>{!setupOnly && (snapshotAvailable ? <button type="button" className="is-secondary" onClick={() => startConversation(true)}>Use my completed Snapshot <span>→</span></button> : <SorpSnapshotLink className="is-secondary" startLabel="Take the 15-question shortcut" />)}{!setupOnly && <button type="button" className="is-secondary" onClick={() => window.location.assign(`/signin-with-chatgpt?return_to=${encodeURIComponent("/are-you-sorp-ready/conversation?saved=resume")}`)}>Resume a saved assessment <span>→</span></button>}</div>
-    {!setupOnly && <p className="readiness-intro-note"><strong>Prefer to whiz through?</strong> The Quick Snapshot takes around eight minutes. Both routes produce the same free initial report, and you can return to the conversation afterwards. Progress is saved in this browser, or securely to your account when you choose Finish another time.</p>}
+    <div className="readiness-intro-actions"><button type="button" onClick={() => startConversation(false)}>{setupOnly ? "Find my organisation" : "Start my free conversation"} <span>→</span></button>{!setupOnly && (snapshotAvailable ? <button type="button" className="is-secondary" onClick={() => startConversation(true)}>Use my completed Snapshot <span>→</span></button> : <SorpSnapshotLink className="is-secondary" startLabel="Take the 15-question shortcut" />)}</div>
+    {!setupOnly && <p className="readiness-intro-note"><strong>Prefer to whiz through?</strong> The Quick Snapshot takes around eight minutes. Both routes produce the same free initial report, and you can return to the conversation afterwards. Your progress is saved in this browser.</p>}
   </section>;
 
   return <div className="readiness-chat">
@@ -895,14 +818,14 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
     </form>
     {saveDialogOpen && <div className="sorp-save-dialog-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && saveStatus !== "saving") setSaveDialogOpen(false); }}><section className="sorp-save-dialog" role="dialog" aria-modal="true" aria-labelledby="sorp-save-title">
       <button type="button" className="sorp-save-close" onClick={() => setSaveDialogOpen(false)} disabled={saveStatus === "saving"} aria-label="Close finish another time form">×</button>
-      <span>Finish another time</span><h2 id="sorp-save-title">Save your assessment securely</h2><p>We’ll keep your answers and conversation together so you can return and carry on.</p>
+      <span>Finish another time</span><h2 id="sorp-save-title">Save your assessment</h2><p>We’ll keep your answers and conversation together in this browser so you can return and carry on.</p>
       <form onSubmit={submitSave}>
         <label htmlFor="save-name">Your name<input id="save-name" name="name" autoComplete="name" required maxLength={120} value={saveProfile.name} onChange={(event) => setSaveProfile((current) => ({ ...current, name: event.target.value }))} /></label>
         <label htmlFor="save-position">Position / role<input id="save-position" name="position" autoComplete="organization-title" required maxLength={120} value={saveProfile.position} onChange={(event) => setSaveProfile((current) => ({ ...current, position: event.target.value }))} /></label>
         <label htmlFor="save-email">Email address<input id="save-email" name="email" type="email" autoComplete="email" required maxLength={254} value={saveProfile.email} onChange={(event) => setSaveProfile((current) => ({ ...current, email: event.target.value }))} /></label>
-        <p className="sorp-save-security">Secure sign-in is handled by ChatGPT, so you do not need to create or remember another password for MSI.</p>
+        <p className="sorp-save-security">No password is needed because this saved copy stays on this device. Return in this browser and your assessment will reopen where you left it.</p>
         {saveError && <p className="sorp-save-error" role="alert">{saveError}</p>}
-        {saveStatus === "saved" ? <p className="sorp-save-success" role="status">✓ Saved securely. You can finish another time.</p> : <button type="submit" disabled={saveStatus === "saving"}>{saveStatus === "saving" ? "Saving securely…" : "Save and finish another time"} <span>→</span></button>}
+        {saveStatus === "saved" ? <p className="sorp-save-success" role="status">✓ Saved. You can finish another time.</p> : <button type="submit" disabled={saveStatus === "saving"}>{saveStatus === "saving" ? "Saving…" : "Save and finish another time"} <span>→</span></button>}
       </form>
     </section></div>}
   </div>;
