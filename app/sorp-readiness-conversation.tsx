@@ -13,6 +13,13 @@ type MessageAction = { label: string; value: string };
 type FieldState = { answer: AnswerValue | null; evidence: string; confidence: number };
 type AdditionalState = { answer: AdditionalAnswerValue | null; evidence: string; relevant: boolean };
 type ContextEvidence = { basis: "publicly_observed" | "user_confirmed"; detail: string; sources: string[] };
+type IntelligenceProvenance = {
+  registry: string;
+  assistantId: string;
+  resolvedAt: string;
+  layers: { id: string; name: string; kind: string; relationship: "INHERITED" | "EXTENDED" | "OVERRIDDEN"; version: number; label: string; publishedAt: string | null }[];
+  runtimeOverrides: { name: string; label: string }[];
+};
 
 type ReadinessState = {
   charityName: string;
@@ -59,6 +66,7 @@ type ReadinessResponse = {
   state: ReadinessState;
   assistant: { message: string; label: Message["label"]; citations: Citation[]; publicSources?: PublicSource[]; organisation?: OrganisationCard | null; actions?: MessageAction[]; responseKind: "assessment" | "detour" | "result" };
   result: Result | null;
+  intelligence: IntelligenceProvenance;
 };
 
 const emptySetup: AssessmentSetup = { role: "", jurisdiction: "", startDate: "", endDate: "", accounts: "", income: "", nearBoundary: false, activities: [] };
@@ -171,6 +179,12 @@ function confirmationSourceLabel(source: PublicSource) {
   return "Charity register";
 }
 
+function intelligenceLayerLabel(layer: IntelligenceProvenance["layers"][number]) {
+  if (layer.id === "msi-core") return "MSI Intelligence";
+  if (layer.id === "sorp-readiness-intelligence") return "SORP Intelligence";
+  return layer.name;
+}
+
 function reviewPrice(setup: AssessmentSetup) {
   if (setup.income === "tier2") return "Tier 2 · £100";
   if (setup.income === "tier3") return "Tier 3 · £200";
@@ -190,6 +204,7 @@ export function SorpReadinessConversation() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [result, setResult] = useState<Result | null>(null);
+  const [intelligence, setIntelligence] = useState<IntelligenceProvenance | null>(null);
   const [snapshotAvailable, setSnapshotAvailable] = useState(false);
   const [hydrated, setHydrated] = useState(false);
   const [recordingState, setRecordingState] = useState<"idle" | "recording" | "transcribing">("idle");
@@ -216,12 +231,13 @@ export function SorpReadinessConversation() {
         } else {
           const saved = window.localStorage.getItem(CONVERSATION_KEY);
           if (saved) {
-            const parsed = JSON.parse(saved) as { started?: boolean; state?: ReadinessState; messages?: Message[]; result?: Result | null };
+            const parsed = JSON.parse(saved) as { started?: boolean; state?: ReadinessState; messages?: Message[]; result?: Result | null; intelligence?: IntelligenceProvenance | null };
             if (parsed.started && parsed.state && parsed.messages?.length) {
               setStarted(true);
               setState({ ...blankState(), ...parsed.state, charityName: parsed.state.charityName ?? "", contextEvidence: parsed.state.contextEvidence ?? {} });
               setMessages(parsed.messages);
               setResult(parsed.result ?? null);
+              setIntelligence(parsed.intelligence ?? null);
             }
           }
         }
@@ -235,8 +251,8 @@ export function SorpReadinessConversation() {
 
   useEffect(() => {
     if (!hydrated || !started) return;
-    window.localStorage.setItem(CONVERSATION_KEY, JSON.stringify({ started, state, messages, result }));
-  }, [hydrated, started, state, messages, result]);
+    window.localStorage.setItem(CONVERSATION_KEY, JSON.stringify({ started, state, messages, result, intelligence }));
+  }, [hydrated, started, state, messages, result, intelligence]);
 
   useEffect(() => {
     threadEndRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
@@ -254,6 +270,7 @@ export function SorpReadinessConversation() {
       if (snapshot) {
         setState(snapshot.state);
         setResult(snapshot.result);
+        setIntelligence(null);
         setMessages([{ role: "assistant", content: `I’ve got your Snapshot, so we don’t need to start again.\n\nYour initial score is ${snapshot.result?.score}/100. I’ll focus on the weaker areas, uncertainty and any context that could change the interpretation.\n\nWhich part would you most like to talk through?` }]);
         setStarted(true);
         return;
@@ -261,6 +278,7 @@ export function SorpReadinessConversation() {
     }
     setState(blankState());
     setResult(null);
+    setIntelligence(null);
     setMessages([{ role: "assistant", content: "Let’s work out where you stand.\n\nFirst — what’s the charity called, and in your own words, what does it actually do?\n\nDon’t worry about giving me the formal charitable objects. I’m more interested in how you’d explain it to another person." }]);
     setStarted(true);
   }
@@ -283,6 +301,7 @@ export function SorpReadinessConversation() {
       const data = await response.json() as ReadinessResponse & { error?: string };
       if (!response.ok) throw new Error(data.error || "The readiness conversation is temporarily unavailable.");
       setState(data.state);
+      setIntelligence(data.intelligence);
       setMessages((current) => [...current, {
         role: "assistant",
         content: data.assistant.message,
@@ -410,6 +429,14 @@ export function SorpReadinessConversation() {
         <div className="readiness-result-grid"><ResultList title="What looks strong" items={result.strong} empty="No clear strength has been evidenced yet." /><ResultList title="What needs attention" items={result.attention} empty="No immediate weaker area was identified." /><ResultList title="MUST areas" items={result.must} empty="No applicable MUST area was flagged by this initial assessment." /><ResultList title="SHOULD opportunities" items={result.should} empty="No weaker SHOULD opportunity was identified." /><ResultList title="MAY options" items={result.may} empty="No additional MAY option was identified." /><ResultList title="JUDGEMENT areas" items={result.judgement} empty="No specific judgement area was flagged, although context still matters." /><ResultList title="Additional SORP checks" items={result.additionalChecks} empty="No additional check was triggered by the information supplied." /><ResultList title="Three priority actions" items={result.priorities} empty="Add more context to build practical priorities." /></div>
         <aside className="readiness-human-review"><div><span>Want a human view?</span><h3>SORP 2026<br />Impact Readiness Review</h3><p>{reviewPrice(state.setup)} · 60 minutes</p></div><div><p>When you arrange the review, you can share this readiness assessment and conversation beforehand, so you won’t need to repeat everything.</p><p>You can also optionally send your latest Trustees’ Annual Report and/or latest Impact Report.</p><ul><li>Your readiness</li><li>Gaps</li><li>Judgement areas</li><li>Practical next steps</li><li>Opportunities beyond minimum compliance</li></ul><strong>The review fee is credited against subsequent MSI project work.</strong><a href="/are-you-sorp-ready#review">Explore human review <span>→</span></a></div></aside>
       </section>}
+      {intelligence && <details className="readiness-intelligence" aria-label="Effective intelligence provenance">
+        <summary>{intelligence.layers.filter((layer) => layer.id === "msi-core" || layer.id === "sorp-readiness-intelligence").map((layer) => `${intelligenceLayerLabel(layer)} · ${layer.label}`).join(" · ")}</summary>
+        <div>
+          <p><strong>{intelligence.registry}</strong><span>Published intelligence only</span></p>
+          {intelligence.layers.map((layer) => <p key={`${layer.id}-${layer.version}`}><strong>{intelligenceLayerLabel(layer)} · {layer.label}</strong><span>{layer.relationship.toLowerCase()} · published {layer.publishedAt ? new Intl.DateTimeFormat("en-GB", { dateStyle: "medium", timeStyle: "short" }).format(new Date(layer.publishedAt)) : "date unavailable"}</span></p>)}
+          {intelligence.runtimeOverrides.map((override) => <p key={`${override.name}-${override.label}`}><strong>{override.name} · {override.label}</strong><span>Explicit runtime/product override</span></p>)}
+        </div>
+      </details>}
       <div ref={threadEndRef} />
     </div>
 
