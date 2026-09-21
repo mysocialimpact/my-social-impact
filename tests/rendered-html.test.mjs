@@ -67,7 +67,7 @@ test("server-renders the My Social Impact homepage", async () => {
 test("every page inherits the global build stamp", async () => {
   const layout = await readFile(new URL("../app/layout.tsx", import.meta.url), "utf8");
   assert.match(layout, /global-build-stamp/);
-  assert.match(layout, /BUILD 66 · 20 SEPTEMBER 2026 · 23:37 BST/);
+  assert.match(layout, /BUILD 67 · 21 SEPTEMBER 2026 · 06:54 BST/);
 });
 
 test("explicit setup confirmations save directly without an intelligence thinking state", async () => {
@@ -373,7 +373,10 @@ test("server-renders the conversational SORP readiness workspace", async () => {
   assert.match(proxy, /maxDuration = 60/);
   const accountProxy = await readFile(new URL("../app/api/readiness-account/route.ts", import.meta.url), "utf8");
   assert.match(accountProxy, /HttpOnly; Secure; SameSite=Lax/);
-  assert.match(accountProxy, /Too many sign-in attempts/);
+  assert.match(accountProxy, /paused sign-in attempts/);
+  assert.match(accountProxy, /retrying temporary account service failure/);
+  assert.match(accountProxy, /Your assessment is still safe on this device and nothing has been lost/);
+  assert.match(source, /Sorry — we couldn’t save your account/);
   const reportProxy = await readFile(new URL("../app/api/readiness/report/route.ts", import.meta.url), "utf8");
   assert.match(reportProxy, /\/api\/readiness\/report/);
   assert.doesNotMatch(proxy, /OPENAI_API_KEY|authorization.*Bearer/i);

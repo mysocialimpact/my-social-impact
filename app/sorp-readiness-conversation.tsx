@@ -503,13 +503,15 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
     try {
       const progress: SavedProgress = { started, state, messages, result, intelligence, sessionId, workflow, checkpoints };
       let action: "signup" | "login" | "save" = account ? "save" : accountMode;
-      if (!account && action === "signup" && saveProfile.password !== saveProfile.confirmPassword) throw new Error("Those passwords do not match.");
+      if (!account && action === "signup" && saveProfile.password !== saveProfile.confirmPassword) throw new Error("The two passwords do not match. Please re-enter them and try again.");
       const response = await fetch("/api/readiness-account", {
         method: "POST", headers: { "content-type": "application/json" },
         body: JSON.stringify(action === "save" ? { action, progress } : action === "signup" ? { action, name: saveProfile.name, position: saveProfile.position, email: saveProfile.email, password: saveProfile.password, progress } : { action, email: saveProfile.email, password: saveProfile.password }),
       });
-      const data = await response.json() as { account?: ReadinessAccount; progress?: Partial<SavedProgress>; error?: string };
-      if (!response.ok || !data.account) throw new Error(data.error || "Your account could not be saved.");
+      const raw = await response.text();
+      let data: { account?: ReadinessAccount; progress?: Partial<SavedProgress>; error?: string };
+      try { data = raw ? JSON.parse(raw) as typeof data : {}; } catch { throw new Error("The secure saving service sent an incomplete response. Your assessment is still safe on this device and nothing has been lost. Please wait a moment and try again."); }
+      if (!response.ok || !data.account) throw new Error(data.error || "The secure saving service could not complete the request. Your assessment is still safe on this device and nothing has been lost. Please wait a moment and try again.");
       setAccount(data.account);
       if (action === "login") {
         const saved = data.progress;
@@ -536,7 +538,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
       }
     } catch (caught) {
       setSaveStatus("idle");
-      setSaveError(caught instanceof Error ? caught.message : "Your account could not be saved. Your assessment is still open on this device.");
+      setSaveError(caught instanceof Error ? caught.message : "The secure saving service could not complete the request. Your assessment is still safe on this device and nothing has been lost. Please wait a moment and try again.");
     }
   }
 
@@ -973,7 +975,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
         <p className="sorp-save-security">Your password is protected server-side. Your account lets you return to this assessment without relying on this browser.</p>
         <button type="button" className="sorp-account-switch" onClick={() => { setAccountMode((current) => current === "signup" ? "login" : "signup"); setSaveError(""); }}>{accountMode === "signup" ? "Already have an account? Sign in" : "Need an account? Create one"}</button>
         </>}
-        {saveError && <p className="sorp-save-error" role="alert">{saveError}</p>}
+        {saveError && <div className="sorp-save-error" role="alert" aria-live="assertive"><strong>Sorry — we couldn’t save your account.</strong><span>{saveError}</span><span>You can correct anything above and try again without losing your place.</span></div>}
         {saveStatus === "saved" ? <p className="sorp-save-success" role="status">✓ {accountMode === "login" && !account ? "Signed in." : "Saved to your account. You can finish another time."}</p> : <button type="submit" disabled={saveStatus === "saving"}>{saveStatus === "saving" ? "Saving…" : account ? "Save and finish another time" : accountMode === "signup" ? "Create account and save" : "Sign in and continue"} <span>→</span></button>}
       </form>
     </section></div>}

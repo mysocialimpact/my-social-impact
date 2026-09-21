@@ -4,6 +4,7 @@ export const dynamic = "force-dynamic";
 const COOKIE = "msi_sorp_session";
 const MAX_AGE = 60 * 60 * 24 * 30;
 const attempts = new Map<string, { count: number; resetAt: number }>();
+const ACCOUNT_UNAVAILABLE = "The secure account-saving service did not complete the request. Your assessment is still safe on this device and nothing has been lost. Please wait a moment and try again. If it still will not save, email marcus@mysocialimpact.org and we will help.";
 
 function tooManyAttempts(request: Request, email: unknown) {
   const ip = (request.headers.get("x-forwarded-for") || "unknown").split(",")[0].trim();
@@ -38,14 +39,39 @@ function clearCookie() {
 
 async function callCow(body: Record<string, unknown>) {
   const endpoint = accountEndpoint(), key = process.env.COW_GROWTH_EVENT_KEY;
-  if (!endpoint || !key) return { response: null, payload: { error: "Account saving is temporarily unavailable." } as Record<string, unknown> };
-  try {
-    const response = await fetch(endpoint, { method: "POST", headers: { "content-type": "application/json", authorization: `Bearer ${key}` }, body: JSON.stringify(body), cache: "no-store" });
-    const payload = await response.json() as Record<string, unknown>;
-    return { response, payload };
-  } catch {
-    return { response: null, payload: { error: "Account saving is temporarily unavailable. Your assessment is still open on this device." } as Record<string, unknown> };
+  if (!endpoint || !key) {
+    console.error("[readiness-account] account service configuration is missing", { endpointConfigured: Boolean(endpoint), keyConfigured: Boolean(key) });
+    return { response: null, payload: { code: "ACCOUNT_SERVICE_UNAVAILABLE", error: ACCOUNT_UNAVAILABLE } as Record<string, unknown> };
   }
+  for (let attempt = 1; attempt <= 2; attempt += 1) {
+    try {
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: { "content-type": "application/json", authorization: `Bearer ${key}` },
+        body: JSON.stringify(body),
+        cache: "no-store",
+        signal: AbortSignal.timeout(12_000),
+      });
+      const raw = await response.text();
+      let payload: Record<string, unknown>;
+      try {
+        payload = raw ? JSON.parse(raw) as Record<string, unknown> : {};
+      } catch {
+        console.error("[readiness-account] account service returned an unreadable response", { status: response.status, contentType: response.headers.get("content-type"), attempt });
+        if (attempt === 1 && [502, 503, 504].includes(response.status)) continue;
+        return { response: null, payload: { code: "ACCOUNT_SERVICE_BAD_RESPONSE", error: ACCOUNT_UNAVAILABLE } as Record<string, unknown> };
+      }
+      if (attempt === 1 && [502, 503, 504].includes(response.status)) {
+        console.warn("[readiness-account] retrying temporary account service failure", { status: response.status });
+        continue;
+      }
+      return { response, payload };
+    } catch (error) {
+      console.error("[readiness-account] account service request failed", { attempt, error: error instanceof Error ? error.name : "unknown" });
+      if (attempt === 1) continue;
+    }
+  }
+  return { response: null, payload: { code: "ACCOUNT_SERVICE_UNAVAILABLE", error: ACCOUNT_UNAVAILABLE } as Record<string, unknown> };
 }
 
 function publicPayload(payload: Record<string, unknown>) {
@@ -64,11 +90,11 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   let input: Record<string, unknown>;
-  try { input = await request.json(); } catch { return Response.json({ error: "We could not read that account request." }, { status: 400 }); }
+  try { input = await request.json(); } catch { return Response.json({ error: "We could not read the account details sent by this browser. Please refresh the page and try again; your assessment is still safe on this device." }, { status: 400 }); }
   const action = String(input.action || "");
   if (!["signup", "login", "save", "logout"].includes(action)) return Response.json({ error: "Unsupported account action." }, { status: 400 });
   if ((action === "signup" || action === "login") && tooManyAttempts(request, input.email)) {
-    return Response.json({ error: "Too many sign-in attempts. Please wait 15 minutes and try again." }, { status: 429, headers: { "Cache-Control": "no-store" } });
+    return Response.json({ error: "We have paused sign-in attempts for 15 minutes to protect your account. Your assessment is still safe on this device. Please wait and then try again." }, { status: 429, headers: { "Cache-Control": "no-store" } });
   }
   const token = cookieValue(request);
   const { response, payload } = await callCow({ ...input, sessionToken: token });

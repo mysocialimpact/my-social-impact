@@ -147,7 +147,9 @@
 .sorp-save-dialog form > .sorp-account-switch { min-height:auto; justify-content:flex-start; padding:2px 0; border:0; background:transparent; color:#11100f; font-size:12px; text-align:left; text-decoration:underline; text-underline-offset:3px; text-transform:none; }
 .sorp-save-close { position:absolute; top:14px; right:14px; width:40px; height:40px; border:1px solid #11100f; background:#fff; cursor:pointer; font-size:25px; line-height:1; }
 .sorp-save-security { margin:0; padding:12px; border-left:3px solid #34764f; background:#edf3e9; color:#305741; font-size:13px; line-height:1.5; }
-.sorp-save-error { margin:0; color:#9e3217; font-size:13px; }
+.sorp-save-error { display:grid; gap:6px; margin:0; padding:14px 16px; border-left:4px solid #c33a1a; background:#fff2ec; color:#6f2717; font-size:13px; line-height:1.45; overflow-wrap:anywhere; }
+.sorp-save-error strong { color:#1d1714; font-size:14px; }
+.sorp-save-error span:last-child { color:#5d544f; }
 .sorp-save-success { margin:0; padding:14px; background:#34764f; color:#fff; font-weight:800; }
 .sorp-snapshot-position { margin:0; padding:16px var(--sorp-pad); background:#f6f3ec; font-size:13px; }
 .sorp-workspace-page .sorp-workspace-brand { position:sticky; top:0; z-index:40; height:64px; }
