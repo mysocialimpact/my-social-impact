@@ -283,19 +283,11 @@ function FindingList({ title, items, empty }: { title: string; items: string[]; 
 
 function ProvisionalReadinessView({ review }: { review: PublicReadinessReview }) {
   const sources = [review.trusteesReport.reviewed && review.trusteesReport.url ? { label: review.trusteesReport.title || "Trustees’ Annual Report", url: review.trusteesReport.url } : null, review.impactReport.found && review.impactReport.url ? { label: review.impactReport.title || "Impact Report", url: review.impactReport.url } : null].filter((source): source is { label: string; url: string } => Boolean(source));
-  const readinessStatus = review.trusteesReport.reviewed ? review.readinessStatus || (review.attention.length ? "partly_ready" : review.strong.length ? "likely_ready" : "unable_to_determine") : "unable_to_determine";
-  const statusLabel = { likely_ready: "Likely ready", partly_ready: "Partly ready", not_yet_ready: "Not yet ready", unable_to_determine: "Unable to determine yet" }[readinessStatus];
-  if (!review.trusteesReport.reviewed) return <section className="sorp-provisional-view is-evidence-gap" aria-label="Provisional SORP readiness">
-    <header><div><span>Provisional SORP readiness</span><h3>{statusLabel}</h3></div><strong className="is-low"><small>Confidence</small>Low</strong></header>
-    <p className="sorp-provisional-definition"><strong>Status:</strong> what the public evidence currently lets us conclude. <strong>Confidence:</strong> how certain we are. Here, the primary evidence is missing.</p>
-    <p className="sorp-evidence-gap-copy">We couldn’t find or inspect the latest Trustees’ Annual Report. That is the mandatory narrative document and the primary source for this readiness view, so we won’t pretend the website alone gives us an answer.</p>
-    <div className="sorp-public-evidence-split"><p><strong>Trustees’ Annual Report</strong><span>Not found or not inspectable from the public sources checked.</span></p><p><strong>Other public evidence</strong><span>{review.impactReport.found ? `${review.impactReport.title || "A separate Impact Report"} was found, but it cannot substitute for the Trustees’ Annual Report.` : review.websiteReviewed ? "We reviewed the website, but it cannot substitute for the Trustees’ Annual Report." : "No separate public Impact Report or Annual Review was found either."}</span></p></div>
-    {sources.length ? <nav aria-label="Other public reports found">{sources.map((source) => <a key={source.url} href={source.url} target="_blank" rel="noreferrer">{source.label} ↗</a>)}</nav> : null}
-    <p className="sorp-impact-report-offer"><strong>What happens next?</strong><span>Add a public report link if you have one, or continue without it. The assessment will still work from your answers, and the final report will clearly flag this evidence limitation.</span></p>
-  </section>;
-  return <section className="sorp-provisional-view" aria-label="Provisional SORP readiness">
-    <header><div><span>Provisional SORP readiness</span><h3>{statusLabel}</h3></div><strong className={`is-${review.overallConfidence}`}><small>Confidence</small>{review.overallConfidence}</strong></header>
-    <p className="sorp-provisional-definition"><strong>Status:</strong> our provisional answer based on what we can see publicly. <strong>Confidence:</strong> how certain that evidence makes us.</p>
+  if (!review.trusteesReport.reviewed) return null;
+  return <section className="sorp-provisional-view" aria-label="Starting point from last published reporting">
+    <p className="sorp-applicability-confirmed">✓ Latest Trustees’ Annual Report found</p>
+    <header><div><span>Based on last published reporting</span><h3>Your starting point</h3></div><strong className={`is-${review.overallConfidence}`}><small>Evidence confidence</small>{review.overallConfidence}</strong></header>
+    <p className="sorp-provisional-definition">This reflects past published reporting, not proof that you’re ready for SORP 2026. The next questions confirm what still applies and what will be ready for the reporting period we’re checking.</p>
     <div className="sorp-provisional-grid"><FindingList title="Already looks strong" items={review.strong} empty="Nothing is clear enough publicly to call strong yet." /><FindingList title="May need attention" items={review.attention} empty="No obvious concern was identified in the material reviewed." /><FindingList title="Cannot establish publicly" items={review.unknown} empty="No major public-evidence gap was identified." /></div>
     <div className="sorp-public-evidence-split"><p><strong>Trustees’ Annual Report</strong><span>{review.trusteesReport.reviewed ? [review.trusteesReport.title, review.trusteesReport.period].filter(Boolean).join(" · ") : "We could not review one confidently."}</span></p><p><strong>Wider impact evidence</strong><span>{review.impactReport.found ? review.impactReport.title || "A separate public impact report was found." : "We couldn’t find a public Impact Report or Annual Review."}</span></p></div>
     {sources.length ? <nav aria-label="Public reports reviewed">{sources.map((source) => <a key={source.url} href={source.url} target="_blank" rel="noreferrer">{source.label} ↗</a>)}</nav> : null}
@@ -952,8 +944,8 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
     <form className={`readiness-composer${activityQuestion ? " is-activity-composer" : ""}${activitySelectionCount ? " has-activity-selections" : ""}${reviewIndex !== null ? " is-reviewing" : ""}`} onSubmit={submit}>
       <input ref={reportInputRef} type="file" accept="application/pdf,.pdf" hidden onChange={(event) => { const file = event.target.files?.[0]; if (file) void uploadReport(file); }} />
       <nav className="sorp-bottom-navigation" aria-label="Assessment navigation">
-        <button type="button" className="is-back" onClick={goBack} disabled={!checkpoints.length || busy || quickAdvancing || recordingState !== "idle"}>← Back to previous question</button>
-        <button type="button" className="is-save" onClick={() => { setSaveStatus("idle"); setSaveError(""); setSaveDialogOpen(true); }}>Finish another time</button>
+        <button type="button" className="is-back" aria-label="Back to previous question" onClick={goBack} disabled={!checkpoints.length || busy || quickAdvancing || recordingState !== "idle"}>← Back</button>
+        <button type="button" className="is-save" onClick={() => { setSaveStatus("idle"); setSaveError(""); setSaveDialogOpen(true); }}>Save &amp; exit</button>
         {reviewIndex !== null && <button type="button" className="is-next" onClick={goNext}>{reviewIndex < checkpoints.length - 1 ? "Next →" : result ? "Return to my report →" : "Return to current question →"}</button>}
       </nav>
       {(reviewIndex === null || pendingStructuredAnswer) && <>

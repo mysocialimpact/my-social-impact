@@ -209,11 +209,14 @@
   .sorp-journey-body .readiness-message-actions.is-assessment-scale button:nth-child(2n) { border-right:0; }
   .sorp-journey-body .readiness-message-actions.is-assessment-scale button:nth-child(5) { grid-column:1/-1; border-right:0; }
   .sorp-journey-body .readiness-message-actions.is-assessment-scale .is-skip { border-bottom:0; }
-  .sorp-conversation-page .readiness-composer { padding:10px 16px calc(10px + env(safe-area-inset-bottom)); }
-  .sorp-conversation-page .readiness-composer textarea { min-height:60px; max-height:25svh; }
+  .sorp-conversation-page .readiness-composer { padding:4px 16px calc(8px + env(safe-area-inset-bottom)); }
+  .sorp-conversation-page .readiness-composer textarea { height:58px; min-height:58px; max-height:25svh; padding:10px 12px; }
+  .sorp-conversation-page .readiness-composer textarea:focus { height:84px; }
   .sorp-conversation-page .readiness-composer > div { margin-top:8px; }
-  .sorp-bottom-navigation { grid-template-columns:1fr 1fr; }
-  .readiness-composer .sorp-bottom-navigation button { min-height:46px; padding-inline:9px; }
+  .sorp-conversation-page .readiness-composer > div { display:grid; grid-template-columns:auto minmax(0,1fr); gap:8px; }
+  .sorp-conversation-page .readiness-composer > div button { min-height:44px; padding:8px 12px; font-size:11px; }
+  .sorp-bottom-navigation { grid-template-columns:auto auto; justify-content:start; gap:0 20px; margin-bottom:2px; }
+  .sorp-conversation-page .readiness-composer .sorp-bottom-navigation button { min-height:44px; padding:8px 0; border:0; white-space:nowrap; text-transform:none; }
   .readiness-composer .sorp-bottom-navigation button.is-next { grid-column:1/-1; width:100%; justify-self:stretch; }
   .sorp-save-dialog-backdrop { padding:12px; }
   .sorp-save-dialog { max-height:calc(100svh - 24px); padding:24px 18px; box-shadow:7px 7px 0 #11100f; }
