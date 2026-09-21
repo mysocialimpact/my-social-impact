@@ -349,6 +349,9 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
       document.documentElement.style.setProperty("--sorp-viewport-height", `${viewport?.height || window.innerHeight}px`);
       document.documentElement.style.setProperty("--sorp-stamp-height", `${stamp?.getBoundingClientRect().height || 34}px`);
       document.documentElement.classList.toggle("sorp-keyboard-open", Boolean(viewport && window.innerHeight - viewport.height > 150));
+      if ((viewport?.height || window.innerHeight) < 550 && document.activeElement === composerRef.current) {
+        requestAnimationFrame(() => composerRef.current?.scrollIntoView({ block: "nearest" }));
+      }
     };
     resize();
     const observer = new ResizeObserver(resize);
