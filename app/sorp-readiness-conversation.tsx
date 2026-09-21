@@ -348,12 +348,13 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
     const resize = () => {
       document.documentElement.style.setProperty("--sorp-viewport-height", `${viewport?.height || window.innerHeight}px`);
       document.documentElement.style.setProperty("--sorp-stamp-height", `${stamp?.getBoundingClientRect().height || 34}px`);
+      document.documentElement.classList.toggle("sorp-keyboard-open", Boolean(viewport && window.innerHeight - viewport.height > 150));
     };
     resize();
     const observer = new ResizeObserver(resize);
     if (stamp) observer.observe(stamp);
     viewport?.addEventListener("resize", resize);
-    return () => { observer.disconnect(); viewport?.removeEventListener("resize", resize); document.documentElement.style.removeProperty("--sorp-viewport-height"); document.documentElement.style.removeProperty("--sorp-stamp-height"); };
+    return () => { observer.disconnect(); viewport?.removeEventListener("resize", resize); document.documentElement.style.removeProperty("--sorp-viewport-height"); document.documentElement.style.removeProperty("--sorp-stamp-height"); document.documentElement.classList.remove("sorp-keyboard-open"); };
   }, []);
 
   useEffect(() => {

@@ -222,5 +222,14 @@
   .sorp-save-dialog { max-height:calc(100svh - 24px); padding:24px 18px; box-shadow:7px 7px 0 #11100f; }
   .sorp-basis-drawer > div,.readiness-message .sorp-basis-drawer > div { padding:16px; }
 }
-@media(max-height:550px) { .sorp-journey-progress { position:relative; top:0!important; } .sorp-conversation-page .readiness-composer { position:relative; } }
+/* With a keyboard or short viewport, let the page scroll instead of squeezing
+   the question between two fixed-height surfaces. */
+.sorp-keyboard-open .sorp-conversation-page .readiness-chat { height:auto; overflow:visible; }
+.sorp-keyboard-open .readiness-chat > .sorp-journey-body { overflow:visible; }
+@media(max-height:550px) {
+  .sorp-journey-progress { position:relative; top:0!important; }
+  .sorp-conversation-page .readiness-chat { height:auto; overflow:visible; }
+  .readiness-chat > .sorp-journey-body { overflow:visible; }
+  .sorp-conversation-page .readiness-composer { position:relative; }
+}
 @media(prefers-reduced-motion:reduce) { .sorp-completion-notice { animation:none; } }
