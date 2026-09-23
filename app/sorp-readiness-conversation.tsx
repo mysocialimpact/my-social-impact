@@ -296,8 +296,9 @@ const preliminaryAnswerScores: Record<PublicReadinessFinding["suggestedAnswer"],
 function deriveTarScore(review: PublicReadinessReview) {
   if (typeof review.tarScore === "number") return review.tarScore;
   const supported = review.findings.filter((finding) => finding.trusteesReportEvidence.trim() && finding.suggestedAnswer !== "not_sure");
-  if (!supported.length) return null;
-  return Math.round(supported.reduce((total, finding) => total + preliminaryAnswerScores[finding.suggestedAnswer], 0) / supported.length);
+  if (supported.length) return Math.round(supported.reduce((total, finding) => total + preliminaryAnswerScores[finding.suggestedAnswer], 0) / supported.length);
+  if (!review.trusteesReport.reviewed) return null;
+  return review.readinessStatus === "likely_ready" ? 80 : review.readinessStatus === "partly_ready" ? 55 : review.readinessStatus === "not_yet_ready" ? 30 : 50;
 }
 
 function readinessBand(status?: PublicReadinessReview["readinessStatus"]) {
