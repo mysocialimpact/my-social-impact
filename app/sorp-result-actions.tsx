@@ -38,11 +38,11 @@ function headline(items: string[], fallback: string) {
   return items.length ? items.slice(0, 3) : [fallback];
 }
 
-export function SorpResultActions({ sessionId, organisation, income, result, children, onBackToAssessment, startInReportMode = false }: { sessionId: string; organisation: string; income: string; result: ResultSummary; children: ReactNode; onBackToAssessment: () => void; startInReportMode?: boolean }) {
+export function SorpResultActions({ sessionId, organisation, income, result, children, onBackToAssessment, startWithChoices = false }: { sessionId: string; organisation: string; income: string; result: ResultSummary; children: ReactNode; onBackToAssessment: () => void; startWithChoices?: boolean }) {
   const storageKey = `msi-sorp-report-mode:${sessionId}`;
   const [choice, setChoice] = useState<Choice>(null);
   const [usefulness, setUsefulness] = useState<Usefulness>(null);
-  const [reportOpen, setReportOpen] = useState(startInReportMode);
+  const [reportOpen, setReportOpen] = useState(false);
   const [feedback, setFeedback] = useState("");
   const [band, setBand] = useState<ReviewBand>(() => suggestedBand(income));
   const [supportAmount, setSupportAmount] = useState(5);
@@ -57,6 +57,8 @@ export function SorpResultActions({ sessionId, organisation, income, result, chi
   const reportRef = useRef<HTMLElement>(null);
   const reviewRef = useRef<HTMLDivElement>(null);
   const chosenBand = reviewBands.find((item) => item.id === band)!;
+  const tier = band === "small" ? "Tier 1" : band === "medium" ? "Tier 2" : "Tier 3";
+  const tierIncome = band === "small" ? "up to £500k" : band === "medium" ? "£500k–£15m" : "over £15m";
   const finalSupport = useMemo(() => customSupport ? Number(customSupport) : supportAmount, [customSupport, supportAmount]);
   const strongest = headline(result.strong, "Your answers give us a useful starting point for the reporting work ahead.");
   const gaps = headline(result.attention.length ? result.attention : result.priorities, "No immediate weaker area was identified in this initial readiness check.");
@@ -155,16 +157,46 @@ export function SorpResultActions({ sessionId, organisation, income, result, chi
     <div><span>Voluntary contribution</span><h4>Support the free tool</h4><p>Help us keep improving this and building useful free tools for charities. Payment is entirely optional and your report is already open below.</p></div>
     <div className="readiness-support-amounts" aria-label="Choose a voluntary support amount">{[5,10,20].map((amount) => <button type="button" className={!customSupport && supportAmount === amount ? "is-selected" : ""} key={amount} onClick={() => { setSupportAmount(amount); setCustomSupport(""); setIdempotencyKey(""); }}>£{amount}</button>)}<label><span>Another amount £</span><input aria-label="Another support amount in pounds" type="number" min="1" max="1000" step="1" value={customSupport} onChange={(event) => { setCustomSupport(event.target.value); setIdempotencyKey(""); }} /></label></div>
     <button className="readiness-pay-button" type="button" disabled={busy || !Number.isFinite(finalSupport) || finalSupport < 1} onClick={() => void checkout("voluntary_support")}>{busy ? "OPENING SECURE CHECKOUT…" : `CONTRIBUTE £${Number.isFinite(finalSupport) ? finalSupport : 0} SECURELY`} <span>→</span></button>
-    <p className="readiness-payment-note">This is optional support for the free tool. It is not a charitable donation and no Gift Aid or tax treatment is implied.</p>
+    <p className="readiness-payment-note">This is optional support for the free tool.</p>
   </div>;
 
+  const choiceCards = <section className="sorp-value-choice" aria-labelledby="sorp-next-actions-title">
+    <header><h2 id="sorp-next-actions-title">What would you like to do next?</h2></header>
+    <div className="sorp-value-choice-grid">
+      <article>
+        <span>Optional human help</span><h3>Human review — £{chosenBand.amount}</h3>
+        <p className="sorp-choice-tier">{tier} charity · income {tierIncome}</p>
+        <p className="sorp-choice-price-note">£{chosenBand.amount} because your charity falls within SORP {tier}.</p>
+        <h4>Talk it through with a human.</h4>
+        <p>Some SORP questions involve judgement about evidence, proportionality, what belongs in the Trustees’ Annual Report and how strongly you can make an impact claim.</p>
+        <p>Marcus Warry is a Chartered Accountant and social impact consultant. In 60 minutes, he’ll review your assessment and reporting, challenge the judgement areas and help you decide what needs doing.</p>
+        <p>You’ll receive a short written summary covering:</p>
+        <ul><li>what looks strong</li><li>what needs attention</li><li>judgement areas</li><li>your three priority actions</li></ul>
+        <p className="sorp-choice-credit">If we subsequently work together on a My Social Impact project, the review fee is credited against that work.</p>
+        <p className="sorp-choice-affordability">Cost genuinely a barrier? Email <a href="mailto:marcus@mysocialimpact.org">marcus@mysocialimpact.org</a>. We don’t want cost to stop a charity getting useful help.</p>
+        <div className="sorp-choice-actions"><button type="button" onClick={showReview}>Book my human review <b>→</b></button></div>
+      </article>
+      <article>
+        <span>Voluntary contribution</span><h3>Support the free tool — £5</h3>
+        <p>If the tool has been useful, a small voluntary contribution helps us keep improving it and building more free tools for charities.</p>
+        <div className="sorp-choice-actions"><button type="button" onClick={() => showSupport(false)}>Chuck in £5 <b>→</b></button><button className="is-text" type="button" onClick={() => showSupport(true)}>Choose another amount</button></div>
+      </article>
+      <article className="is-free">
+        <span>Free report</span><h3>Take my free report — £0</h3>
+        <p>If the free tool has already told you what you need, brilliant — that means it worked.</p>
+        <div className="sorp-choice-actions"><button type="button" onClick={() => openReport("free", "free_report_selected")}>Show my free report <b>→</b></button></div>
+      </article>
+    </div>
+  </section>;
+
   return <main className={`sorp-completion-flow${reportOpen ? " is-report-open" : ""}`}>
-    {!reportOpen && <>
+    {!reportOpen && startWithChoices && <section className="sorp-next-actions"><button type="button" className="sorp-back-to-assessment" onClick={onBackToAssessment}>← Back to assessment</button>{choiceCards}</section>}
+    {!reportOpen && !startWithChoices && <>
       <section className="sorp-completion-event" aria-labelledby="completion-title"><div className="sorp-completion-sweep" aria-hidden="true" /><button type="button" className="sorp-back-to-assessment" onClick={onBackToAssessment}>← Back to assessment</button><h1 id="completion-title">Your Full Readiness Review</h1><strong>Your developed SORP readiness assessment is ready.</strong></section>
       <section className="sorp-result-preview"><header><div><span>Your SORP readiness</span><h2>{result.band}</h2><p>{result.overview}</p><p className="sorp-result-confidence"><b>Confidence</b> {result.confidence}</p></div><div><strong>{result.score}</strong><span>/ 100</span></div></header><div className="sorp-result-preview-grid"><article><h3>What already looks strong</h3><ul>{strongest.map((item) => <li key={item}>{item}</li>)}</ul></article><article><h3>Important gaps</h3><ul>{gaps.map((item) => <li key={item}>{item}</li>)}</ul></article></div><p className="sorp-report-ready">This Full Review combines the public evidence with your answers and deeper SORP checks.</p></section>
       <section className="sorp-usefulness"><span>One quick question</span><h2>Has this been useful?</h2>
         {!usefulness && <div className="sorp-usefulness-actions"><button type="button" onClick={() => answerUsefulness("very")}>Yes — very useful <b>→</b></button><button type="button" onClick={() => answerUsefulness("somewhat")}>Yes — somewhat useful <b>→</b></button><button type="button" onClick={() => answerUsefulness("not_really")}>Not really <b>→</b></button></div>}
-        {(usefulness === "very" || usefulness === "somewhat") && <div className="sorp-value-choice"><header><h3>Brilliant — that means it’s doing what we built it to do.</h3><p>If the free tool has told you everything you need, brilliant — that means it worked.</p><p>If you’d like to help us keep it free, £5 genuinely helps.</p></header><div className="sorp-value-choice-grid"><article><span>Optional human help</span><h3>Human review — £{chosenBand.amount}</h3><p>60-minute SORP 2026 Impact Readiness Review with My Social Impact.</p><button type="button" onClick={showReview}>Book my human review <b>→</b></button></article><article><span>Voluntary contribution</span><h3>Support the free tool — £5</h3><p>Help us keep improving this and building useful free tools for charities.</p><button type="button" onClick={() => showSupport(false)}>Chuck in £5 <b>→</b></button><button className="is-text" type="button" onClick={() => showSupport(true)}>Choose another amount</button></article></div><button className="sorp-free-report-choice" type="button" onClick={() => openReport("free", "free_report_selected")}>No thanks — show my free report <span>→</span></button></div>}
+        {(usefulness === "very" || usefulness === "somewhat") && choiceCards}
         {usefulness === "not_really" && <form className="sorp-missing-feedback" onSubmit={(event) => { event.preventDefault(); openReport("free", "free_report_selected"); }}><h3>Thanks — that’s useful to know.</h3><label htmlFor="sorp-missing-feedback">What was missing? <span>Optional</span></label><textarea id="sorp-missing-feedback" value={feedback} onChange={(event) => setFeedback(event.target.value)} maxLength={1000} rows={3} placeholder="A short note, if useful…" /><button type="submit">Show my free report <span>→</span></button></form>}
       </section>
     </>}

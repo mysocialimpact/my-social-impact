@@ -67,7 +67,7 @@ test("server-renders the My Social Impact homepage", async () => {
 test("every page inherits the global build stamp", async () => {
   const layout = await readFile(new URL("../app/layout.tsx", import.meta.url), "utf8");
   assert.match(layout, /global-build-stamp/);
-  assert.match(layout, /BUILD 89 · 23 SEPTEMBER 2026 · 22:07 BST/);
+  assert.match(layout, /BUILD 90 · 23 SEPTEMBER 2026 · 22:13 BST/);
 });
 
 test("explicit setup confirmations save directly without an intelligence thinking state", async () => {
@@ -101,7 +101,25 @@ test("Stage 8 stays in the assessment workspace until the user enters report mod
   assert.match(stageEight, /Save &amp; exit/);
   assert.match(stageEight, /\{saveDialog\}/);
   assert.doesNotMatch(stageEight, /sorp-usefulness|Has this been useful/);
-  assert.match(resultActions, /startInReportMode/);
+  assert.match(resultActions, /startWithChoices/);
+});
+
+test("post-review choices are three equal routes with existing prices and actions", async () => {
+  const actions = await readFile(new URL("../app/sorp-result-actions.tsx", import.meta.url), "utf8");
+  const css = await readFile(new URL("../app/sorp-ready.css", import.meta.url), "utf8");
+  assert.match(actions, /What would you like to do next\?/);
+  assert.match(actions, /Human review — £\{chosenBand\.amount\}/);
+  assert.match(actions, /Chartered Accountant and social impact consultant/);
+  assert.match(actions, /review fee is credited against that work/);
+  assert.match(actions, /mailto:marcus@mysocialimpact\.org/);
+  assert.match(actions, /Support the free tool — £5/);
+  assert.match(actions, /Choose another amount/);
+  assert.match(actions, /Take my free report — £0/);
+  assert.match(actions, /openReport\("free", "free_report_selected"\)/);
+  assert.doesNotMatch(actions, /No thanks — show my free report/);
+  assert.match(css, /\.sorp-value-choice-grid \{[^}]*grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/);
+  assert.match(css, /\.sorp-value-choice-grid article\.is-free \{ background:#fff9df; \}/);
+  assert.match(css, /\.sorp-result-preview-grid,\.sorp-value-choice-grid,\.sorp-report-email,\.sorp-report-review-cta \{ grid-template-columns: 1fr; \}/);
 });
 
 test("Quick Readiness Review keeps TAR and wider evidence separate", async () => {
@@ -379,10 +397,10 @@ test("server-renders the conversational SORP readiness workspace", async () => {
   assert.match(paymentSource, /Yes — very useful/);
   assert.match(paymentSource, /Yes — somewhat useful/);
   assert.match(paymentSource, /Not really/);
-  assert.match(paymentSource, /No thanks — show my free report/);
+  assert.match(paymentSource, /Show my free report/);
   assert.match(paymentSource, /Print \/ save PDF/);
   assert.match(paymentSource, /Support the free tool/);
-  assert.match(paymentSource, /not a charitable donation/i);
+  assert.match(paymentSource, /This is optional support for the free tool\./);
   assert.match(paymentSource, /Want a copy in your inbox\?/);
   assert.match(paymentSource, /report-email/);
   assert.match(paymentSource, /assessment_completed/);

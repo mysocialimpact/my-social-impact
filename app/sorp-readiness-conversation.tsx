@@ -1140,7 +1140,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
 
   if (!setupOnly && result && state.score !== null && sessionId && reviewIndex === null) {
     if (stageEightReportMode) return <div className="readiness-chat is-result-mode">
-      <SorpResultActions sessionId={sessionId} organisation={state.charityName} income={state.setup.income} result={result} startInReportMode onBackToAssessment={() => setStageEightReportMode(false)}>
+      <SorpResultActions sessionId={sessionId} organisation={state.charityName} income={state.setup.income} result={result} startWithChoices onBackToAssessment={() => setStageEightReportMode(false)}>
         <FullReadinessReport result={result} impactMode={impactMode} />
         {intelligence && <details className="readiness-intelligence" aria-label="Effective intelligence provenance">
           <summary>{intelligence.layers.filter((layer) => layer.id === "msi-core" || layer.id === "sorp-readiness-intelligence").map((layer) => `${intelligenceLayerLabel(layer)} · ${layer.label}`).join(" · ")}</summary>
