@@ -309,53 +309,57 @@ function quickReviewBand(status?: PublicReadinessReview["readinessStatus"]) {
   return status === "likely_ready" ? "Looking strong" : status === "not_yet_ready" ? "Needs attention" : status === "partly_ready" ? "Getting ready" : "Starting point";
 }
 
-function likelyTier(income: AssessmentSetup["income"]) {
-  if (income === "tier3") return "Likely Tier 3";
-  if (income === "tier2") return "Likely Tier 2";
-  if (income === "tier1_low" || income === "tier1_high") return "Likely Tier 1";
-  return "Income tier not yet established";
-}
-
-function ImpactReportFound({ review, confirmed }: { review: PublicReadinessReview; confirmed: boolean }) {
+function ImpactReportFound({ review, confirmed, uploaded = false }: { review: PublicReadinessReview; confirmed: boolean; uploaded?: boolean }) {
   if (!review.impactReport.found) return null;
   const title = review.impactReport.title || "Impact Report / Annual Review";
   return <section className="sorp-impact-report-found" aria-label="Impact report found">
-    <p className="sorp-impact-report-kicker">✓ Latest Impact Report found</p>
+    <p className="sorp-impact-report-kicker">{uploaded ? "Impact Report added by you" : "Latest public Impact Report used"}</p>
     <h3>{title}</h3>
     <p className="sorp-impact-report-year">{reportYear(title, review.impactReport.url)}</p>
     {review.impactReport.url && <a className="sorp-impact-report-view" href={review.impactReport.url} target="_blank" rel="noreferrer">View report ↗</a>}
-    {!confirmed && <><p className="sorp-impact-report-provenance">Publicly found</p><p className="sorp-impact-report-question">Is this your latest Impact Report?</p></>}
-    {confirmed && <p className="sorp-impact-report-confirmed">✓ Confirmed with you <span>Publicly found + user confirmed · wider impact evidence</span></p>}
+    {uploaded ? <p className="sorp-impact-report-provenance">Supplied by you · wider impact evidence</p> : confirmed ? <p className="sorp-impact-report-confirmed">✓ Confirmed with you <span>Publicly found + user confirmed · wider impact evidence</span></p> : <p className="sorp-impact-report-provenance">Publicly found · wider impact evidence</p>}
   </section>;
 }
 
 function QuickReviewFeedback({ value, comment, onSelect, onComment }: { value: number | null; comment: string; onSelect: (value: number) => void; onComment: (value: string) => void }) {
   return <section className="sorp-quick-review-feedback" aria-label="Quick Readiness Review feedback">
-    <p><strong>How’s this going?</strong><span>Your rating saves instantly and never interrupts the assessment.</span></p>
+    <p><strong>How’s this going?</strong><span>This is a free tool and we genuinely want to make it as useful as possible.</span></p>
     <div className="sorp-feedback-scale"><span>1 · Not useful yet</span><span>5 · Extremely useful</span></div>
     <div className="sorp-feedback-stars" role="group" aria-label="How useful was this Quick Readiness Review?">{[1, 2, 3, 4, 5].map((rating) => <button key={rating} type="button" className={value === rating ? "is-selected" : undefined} aria-label={`${rating} out of 5`} aria-pressed={value === rating} onClick={() => onSelect(rating)}>{value !== null && rating <= value ? "★" : "☆"}</button>)}</div>
-    <details className="sorp-feedback-comment"><summary>Add an optional comment</summary><label><strong>Anything you’d like to tell us?</strong><span>Optional</span><textarea value={comment} maxLength={800} rows={2} onChange={(event) => onComment(event.target.value)} placeholder="Add a short comment if useful…" /></label></details>
+    <label><strong>Anything you’d like to tell us?</strong><span>Optional</span><textarea value={comment} maxLength={800} rows={2} onChange={(event) => onComment(event.target.value)} placeholder="Add a short comment if useful…" /></label>
   </section>;
 }
 
-function ProvisionalReadinessView({ review, income, publicIncome, impactReportConfirmed = false }: { review: PublicReadinessReview; income: AssessmentSetup["income"]; publicIncome: string; impactReportConfirmed?: boolean }) {
-  if (!review.trusteesReport.reviewed) return <ImpactReportFound review={review} confirmed={impactReportConfirmed} />;
+function QuickReviewExplanation({ review, onReplaceImpactReport }: { review: PublicReadinessReview; onReplaceImpactReport: () => void }) {
+  if (!review.trusteesReport.reviewed) return null;
+  const widerAddsValue = typeof review.tarScore === "number" && typeof review.widerEvidenceScore === "number" && Math.abs(review.widerEvidenceScore - review.tarScore) >= 5;
+  return <div className="sorp-quick-review-explanation">
+    <p>This is a historical starting point from your latest published reporting, not a verdict on future SORP 2026 readiness.</p>
+    {widerAddsValue && <p>{review.widerEvidenceScore! > review.tarScore! ? "Encouragingly, your wider impact evidence is stronger than your Trustees’ Annual Report alone suggests." : "Your wider impact evidence adds context, but does not strengthen the picture shown by your Trustees’ Annual Report."}</p>}
+    <p>For SORP, the required narrative needs to be appropriately covered in the Trustees’ Annual Report. Make it strong enough to stand on its own; use your Impact Report and website to go deeper.</p>
+    <p>Go deeper to check whether this historical picture still reflects your current practice and where the real gaps are.</p>
+    {review.impactReport.found && <button type="button" className="sorp-replace-impact-report" onClick={onReplaceImpactReport}>Have a newer Impact Report? Replace it →</button>}
+  </div>;
+}
+
+function ProvisionalReadinessView({ review, impactReportConfirmed = false, impactReportUploaded = false }: { review: PublicReadinessReview; impactReportConfirmed?: boolean; impactReportUploaded?: boolean }) {
+  if (!review.trusteesReport.reviewed) return <ImpactReportFound review={review} confirmed={impactReportConfirmed} uploaded={impactReportUploaded} />;
   const tarScore = deriveTarScore(review);
-  const widerScore = typeof review.widerEvidenceScore === "number" && review.widerEvidenceScore !== tarScore ? review.widerEvidenceScore : null;
+  const widerScore = typeof review.widerEvidenceScore === "number" && tarScore !== null && Math.abs(review.widerEvidenceScore - tarScore) >= 5 ? review.widerEvidenceScore : null;
+  const tarFindings = review.findings.filter((finding) => finding.trusteesReportEvidence.trim());
   const findings = [
-    ...review.strong.slice(0, 2).map((text) => ({ kind: "strong", text })),
-    ...review.attention.slice(0, 1).map((text) => ({ kind: "attention", text })),
-    ...review.unknown.slice(0, 1).map((text) => ({ kind: "unknown", text })),
+    ...tarFindings.filter((finding) => finding.suggestedAnswer === "yes" || finding.suggestedAnswer === "mostly").slice(0, 2).map((finding) => ({ kind: "strong", text: finding.trusteesReportEvidence })),
+    ...tarFindings.filter((finding) => finding.suggestedAnswer === "partly" || finding.suggestedAnswer === "not_yet").slice(0, 2).map((finding) => ({ kind: "attention", text: finding.trusteesReportEvidence })),
   ].slice(0, 4);
-  const incomeAmount = publicIncome.replace(/\s*·.*$/, "");
   return <section className="sorp-provisional-view" aria-label="Provisional SORP readiness starting point">
-    <header><div><span>Quick Readiness Review</span><h3>So — how SORP ready do you look?</h3></div><strong className={`is-${review.overallConfidence}`}><small>Confidence</small>{review.overallConfidence}</strong></header>
-    <div className="sorp-quick-score"><strong>{tarScore === null ? "—" : tarScore}<small>/100</small></strong><div><b>{quickReviewBand(review.readinessStatus)}</b><span>Based primarily on your latest Trustees’ Annual Report.</span></div></div>
-    <p className="sorp-quick-tier">{likelyTier(income)}{incomeAmount ? ` · based on latest public income of ${incomeAmount}` : " · based on the public information available"}</p>
-    <ul className="sorp-quick-findings">{findings.map((finding, index) => <li className={`is-${finding.kind}`} key={`${finding.kind}-${index}`}><span aria-hidden="true">{finding.kind === "strong" ? "✓" : "△"}</span><p>{finding.text}</p></li>)}</ul>
-    <p className="sorp-provisional-note">This is a historical starting point, not proof of future SORP 2026 readiness. The next questions confirm what still applies.</p>
-    {review.impactReport.found && <details className="sorp-wider-evidence"><summary>We also found wider impact evidence <span>See wider evidence +</span></summary><div><ImpactReportFound review={review} confirmed={impactReportConfirmed} />{widerScore !== null && <p><strong>Wider evidence view: {widerScore}/100</strong><span>{review.widerEvidenceReason || "This adds useful context beyond the Trustees’ Annual Report."}</span></p>}{review.impactReport.url && <nav aria-label="Wider impact evidence reviewed"><a href={review.impactReport.url} target="_blank" rel="noreferrer">{review.impactReport.title || "Impact Report"} ↗</a></nav>}</div></details>}
-    {!review.impactReport.found && review.trusteesReport.url && <a className="sorp-trustees-report-link" href={review.trusteesReport.url} target="_blank" rel="noreferrer">View the Trustees’ Annual Report used ↗</a>}
+    <header><div><span>Based on your latest published reporting</span><h3>So — how SORP ready do you look?</h3></div></header>
+    <h4 className="sorp-tar-label">Trustees’ Annual Report readiness</h4>
+    <div className="sorp-quick-score"><strong>{tarScore === null ? "—" : tarScore}<small>/100</small></strong><div><b>{quickReviewBand(review.readinessStatus)}</b><span>How ready the existing statutory reporting looks.</span></div></div>
+    <p className="sorp-evidence-confidence">Evidence confidence: <strong>{review.overallConfidence}</strong><span>How strongly the available evidence supports this first view.</span></p>
+    {findings.length > 0 && <ul className="sorp-quick-findings">{findings.map((finding, index) => <li className={`is-${finding.kind}`} key={`${finding.kind}-${index}`}><span aria-hidden="true">{finding.kind === "strong" ? "✓" : "△"}</span><p>{finding.text}</p></li>)}</ul>}
+    {widerScore !== null && <section className="sorp-wider-score" aria-label="Wider impact evidence view"><p><strong>Wider evidence view</strong><span>{review.widerEvidenceReason || "The Impact Report and website add materially useful evidence beyond the Trustees’ Annual Report."}</span></p><strong>{widerScore}<small>/100</small></strong></section>}
+    {review.impactReport.found && <ImpactReportFound review={review} confirmed={impactReportConfirmed} uploaded={impactReportUploaded} />}
+    {review.trusteesReport.url && <a className="sorp-trustees-report-link" href={review.trusteesReport.url} target="_blank" rel="noreferrer">View the Trustees’ Annual Report used ↗</a>}
   </section>;
 }
 
@@ -400,11 +404,10 @@ function PublicAnswerProposal({ proposal }: { proposal: PublicReadinessFinding }
   </section>;
 }
 
-function SorpStageContext({ workflow, income, impactReportConfirmed, accountEmail, organisation, publicSources = [] }: { workflow: ReadinessWorkflow; income: AssessmentSetup["income"]; impactReportConfirmed: boolean; accountEmail?: string; organisation?: OrganisationCard | null; publicSources?: PublicSource[] }) {
-  const publicIncome = workflow.known.find((item) => item.id === "income")?.value || "";
+function SorpStageContext({ workflow, impactReportConfirmed, impactReportUploaded, accountEmail, organisation, publicSources = [] }: { workflow: ReadinessWorkflow; impactReportConfirmed: boolean; impactReportUploaded: boolean; accountEmail?: string; organisation?: OrganisationCard | null; publicSources?: PublicSource[] }) {
   const showKnownContext = workflow.currentStage === 1 || workflow.next.id === "publicSearchCheckpoint";
   return <>
-    {organisation ? <section className="sorp-stage-context is-organisation" aria-label="Organisation found"><span>Organisation found</span><h2>{organisation.name}</h2>{organisation.locality && <p>{organisation.locality}</p>}{publicSources.length ? <nav aria-label="Organisation sources">{publicSources.slice(0, 2).map((source) => <a key={source.url} href={source.url} target="_blank" rel="noreferrer">{confirmationSourceLabel(source)}</a>)}</nav> : null}</section> : workflow.next.provisional ? <ProvisionalReadinessView review={workflow.next.provisional} income={income} publicIncome={publicIncome} impactReportConfirmed={impactReportConfirmed} /> : showKnownContext ? <SorpKnownContext workflow={workflow} /> : <section className="sorp-stage-context" aria-label="MSI guidance and evidence">
+    {organisation ? <section className="sorp-stage-context is-organisation" aria-label="Organisation found"><span>Organisation found</span><h2>{organisation.name}</h2>{organisation.locality && <p>{organisation.locality}</p>}{publicSources.length ? <nav aria-label="Organisation sources">{publicSources.slice(0, 2).map((source) => <a key={source.url} href={source.url} target="_blank" rel="noreferrer">{confirmationSourceLabel(source)}</a>)}</nav> : null}</section> : workflow.next.provisional ? <ProvisionalReadinessView review={workflow.next.provisional} impactReportConfirmed={impactReportConfirmed} impactReportUploaded={impactReportUploaded} /> : showKnownContext ? <SorpKnownContext workflow={workflow} /> : <section className="sorp-stage-context" aria-label="MSI guidance and evidence">
       <span>MSI guidance &amp; evidence</span>
       {workflow.next.proposal ? <PublicAnswerProposal proposal={workflow.next.proposal} /> : <><h2>{workflow.stageTitle}</h2><p>{workflow.next.why}</p></>}
       <SorpBasisDrawer basis={workflow.next.basis} />
@@ -1068,7 +1071,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
 
     <div className="sorp-journey-body">
     <aside className="sorp-journey-aside">
-      {activeWorkflow && <SorpStageContext workflow={activeWorkflow} income={state.setup.income} impactReportConfirmed={state.impactReportConfirmation === "confirmed" || state.impactReportInput === "uploaded"} accountEmail={account?.email} organisation={contextMessage?.organisation} publicSources={contextMessage?.publicSources} />}
+      {activeWorkflow && <SorpStageContext workflow={activeWorkflow} impactReportConfirmed={state.impactReportConfirmation === "confirmed"} impactReportUploaded={state.impactReportInput === "uploaded"} accountEmail={account?.email} organisation={contextMessage?.organisation} publicSources={contextMessage?.publicSources} />}
       {!contextMessage?.organisation && !activeWorkflow?.known.some((item) => item.established) && currentStage === 1 && <section className="sorp-context-intro"><span>What we’re going to do</span><h2>We’ll do the public homework first.</h2><p>We’ll use public information to do as much of the work as possible for you. We’ll look for your charity record, accounts and Trustees’ Annual Report, establish the SORP context, then give you a Quick Readiness Review.</p><small>Completely free · No card required</small></section>}
     </aside>
 
@@ -1080,13 +1083,16 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
       {activeMessages.map((message, index) => index === activeMessages.length - 1 && <article id="readiness-current-question" key={`${index}-${message.content.slice(0, 24)}`} className={`readiness-message is-${message.role}${message.responseKind === "detour" ? " is-detour" : ""}`}>
         <span>{message.role === "user" ? "You" : "My Social Impact Intelligence"}</span>
         {message.label && message.responseKind === "detour" && <strong className={`readiness-label is-${message.label.toLowerCase().replace(" ", "-")}`}>{message.label === "JUDGEMENT" ? "MSI JUDGEMENT" : message.label}</strong>}
-        {message.workflow?.next.id !== "publicSearchCheckpoint" && <div><MessageContent text={message.organisation ? "I think I’ve found you." : message.content} /></div>}
+        {message.workflow?.next.id !== "publicSearchCheckpoint" && (message.workflow?.next.id === "publicReview" && message.workflow.next.provisional?.trusteesReport.reviewed
+          ? <QuickReviewExplanation review={message.workflow.next.provisional} onReplaceImpactReport={() => selectStructuredAnswer("No — I have a newer Impact Report")} />
+          : <div><MessageContent text={message.organisation ? "I think I’ve found you." : message.content} /></div>)}
         {message.workflow?.next.id === "publicSearchCheckpoint" && <PublicSearchCheckpoint workflow={message.workflow} />}
         {message.role === "assistant" && !message.organisation && message.responseKind === "detour" && <section className="sorp-question-purpose"><strong>What we need next</strong><p>{message.workflow?.next.question}</p></section>}
         {message.organisation && <p className="sorp-confirm-question">Is this the right organisation?</p>}
         {message.responseKind === "detour" && message.citations?.length ? <SorpBasisDrawer basis={{classification: message.label || "MSI JUDGEMENT", explanation: "The SORP passages relevant to your question.", citations: message.citations}} /> : null}
         {!message.organisation && message.publicSources?.length ? <details><summary>Sources</summary><div>{message.publicSources.map((source) => <article key={`${source.url}-${source.detail}`}><strong>{sourceKindLabel(source.kind)} · {source.label}</strong>{source.detail && <p>{source.detail}</p>}<a href={source.url}>View source <span>→</span></a></article>)}</div></details> : null}
       </article>)}
+      {quickReview?.trusteesReport.reviewed && <QuickReviewFeedback value={quickReviewFeedback} comment={quickReviewFeedbackComment} onSelect={recordQuickReviewFeedback} onComment={recordQuickReviewFeedbackComment} />}
       {busy && <article className="readiness-message is-assistant is-loading" role="status" aria-live="polite"><span>My Social Impact Intelligence</span><div><p>{workingStatus}</p></div></article>}
       {error && <div className="readiness-error" role="alert"><strong>That step did not complete.</strong><p>{error}</p><button type="button" onClick={() => { setError(""); composerRef.current?.focus(); }}>Try again</button></div>}
       {intelligence && <details className="readiness-intelligence" aria-label="Effective intelligence provenance">
@@ -1109,8 +1115,6 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
         <button type="button" className="is-save" onClick={() => { setSaveStatus("idle"); setSaveError(""); setSaveDialogOpen(true); }}>Save &amp; exit</button></span>
         {reviewIndex !== null && <button type="button" className="is-next" onClick={goNext}>{reviewIndex < checkpoints.length - 1 ? "Next →" : result ? "Return to my report →" : "Return to current question →"}</button>}
       </nav>
-      {quickReview && <div className="sorp-quick-review-response-tools"><button type="button" className="sorp-correct-context" onClick={() => { setComposer("Something has changed: "); window.setTimeout(() => composerRef.current?.focus(), 40); }}>Changed significantly? Correct this →</button><QuickReviewFeedback value={quickReviewFeedback} comment={quickReviewFeedbackComment} onSelect={recordQuickReviewFeedback} onComment={recordQuickReviewFeedbackComment} /></div>}
-      {quickReview && <details className="sorp-mobile-review-tools"><summary>Rate your Quick Review · optional</summary><QuickReviewFeedback value={quickReviewFeedback} comment={quickReviewFeedbackComment} onSelect={recordQuickReviewFeedback} onComment={recordQuickReviewFeedbackComment} /><button type="button" className="sorp-correct-context" onClick={() => { setComposer("Something has changed: "); window.setTimeout(() => composerRef.current?.focus(), 40); }}>Changed significantly? Correct this →</button></details>}
       </div>
       <section className="sorp-response-fields" aria-label="Respond to MSI Intelligence">
       {showResponseActions && <nav className={`readiness-message-actions${/^(?:field:\d+|check:)/.test(responseQuestionId) ? " is-assessment-scale" : ""}${responseQuestionId === "activities" ? " is-multi-select" : ""}`} aria-label={responseQuestionId === "activities" ? "Choose all activities that apply" : /^(?:field:\d+|check:)/.test(responseQuestionId) ? "Choose a quick answer" : "Choose an answer"}>{responseActions.map((action) => {
