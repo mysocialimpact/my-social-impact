@@ -38,11 +38,11 @@ function headline(items: string[], fallback: string) {
   return items.length ? items.slice(0, 3) : [fallback];
 }
 
-export function SorpResultActions({ sessionId, organisation, income, result, children, onBackToAssessment }: { sessionId: string; organisation: string; income: string; result: ResultSummary; children: ReactNode; onBackToAssessment: () => void }) {
+export function SorpResultActions({ sessionId, organisation, income, result, children, onBackToAssessment, startInReportMode = false }: { sessionId: string; organisation: string; income: string; result: ResultSummary; children: ReactNode; onBackToAssessment: () => void; startInReportMode?: boolean }) {
   const storageKey = `msi-sorp-report-mode:${sessionId}`;
   const [choice, setChoice] = useState<Choice>(null);
   const [usefulness, setUsefulness] = useState<Usefulness>(null);
-  const [reportOpen, setReportOpen] = useState(false);
+  const [reportOpen, setReportOpen] = useState(startInReportMode);
   const [feedback, setFeedback] = useState("");
   const [band, setBand] = useState<ReviewBand>(() => suggestedBand(income));
   const [supportAmount, setSupportAmount] = useState(5);

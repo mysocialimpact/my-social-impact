@@ -67,7 +67,7 @@ test("server-renders the My Social Impact homepage", async () => {
 test("every page inherits the global build stamp", async () => {
   const layout = await readFile(new URL("../app/layout.tsx", import.meta.url), "utf8");
   assert.match(layout, /global-build-stamp/);
-  assert.match(layout, /BUILD 88 · 23 SEPTEMBER 2026 · 21:49 BST/);
+  assert.match(layout, /BUILD 89 · 23 SEPTEMBER 2026 · 22:07 BST/);
 });
 
 test("explicit setup confirmations save directly without an intelligence thinking state", async () => {
@@ -87,6 +87,21 @@ test("Stage 7 keeps six checks in the coach rail and three quick answers beside 
   assert.match(css, /grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/);
   assert.match(conversation, /<textarea ref=\{composerRef\}/);
   assert.match(conversation, /Use microphone/i);
+});
+
+test("Stage 8 stays in the assessment workspace until the user enters report mode", async () => {
+  const conversation = await readFile(new URL("../app/sorp-readiness-conversation.tsx", import.meta.url), "utf8");
+  const resultActions = await readFile(new URL("../app/sorp-result-actions.tsx", import.meta.url), "utf8");
+  const stageEight = conversation.slice(conversation.indexOf('return <div className="readiness-chat is-stage-eight"'), conversation.indexOf("if (!started) return"));
+  assert.match(stageEight, /<SorpJourneyProgress/);
+  assert.match(stageEight, /<FullReviewRail result=\{result\}/);
+  assert.match(stageEight, /<FullReadinessReport result=\{result\}/);
+  assert.match(stageEight, /<QuickReviewFeedback full/);
+  assert.match(stageEight, /← Back/);
+  assert.match(stageEight, /Save &amp; exit/);
+  assert.match(stageEight, /\{saveDialog\}/);
+  assert.doesNotMatch(stageEight, /sorp-usefulness|Has this been useful/);
+  assert.match(resultActions, /startInReportMode/);
 });
 
 test("Quick Readiness Review keeps TAR and wider evidence separate", async () => {

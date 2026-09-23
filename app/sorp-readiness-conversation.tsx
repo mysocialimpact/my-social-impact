@@ -287,8 +287,29 @@ function intelligenceLayerLabel(layer: IntelligenceProvenance["layers"][number])
   return layer.name;
 }
 
-function ResultList({ title, items, empty }: { title: string; items: string[]; empty: string }) {
-  return <article><h4>{title}</h4>{items.length ? <ul>{items.map((item) => <li key={item}>{item}</li>)}</ul> : <p>{empty}</p>}</article>;
+function ResultList({ id, title, items, empty }: { id?: string; title: string; items: string[]; empty: string }) {
+  return <article id={id}><h4>{title}</h4>{items.length ? <ul>{items.map((item) => <li key={item}>{item}</li>)}</ul> : <p>{empty}</p>}</article>;
+}
+
+function FullReadinessReport({ result, impactMode }: { result: Result; impactMode: boolean }) {
+  return <section className="readiness-report-detail">
+    <p className="readiness-result-note">{impactMode ? "SORP does not apply in the circumstances established. This report offers wider narrative and impact-reporting guidance." : "This assesses readiness for the narrative and impact-reporting aspects of SORP 2026. It is not a declaration of full SORP compliance."}</p>
+    <div className="readiness-result-sections">{result.sectionScores.map((section) => <article key={section.section}><div><h3>{section.label}</h3><strong>{section.score}</strong></div><i><b style={{ width: `${section.score}%` }} /></i><p>{section.narrative}</p></article>)}</div>
+    <div className="readiness-result-grid"><ResultList id="full-review-strong" title="What looks strong" items={result.strong} empty="No clear strength has been evidenced yet." /><ResultList id="full-review-gaps" title="Important gaps" items={result.attention} empty="No immediate weaker area was identified." /><ResultList title="Trustees’ Annual Report readiness" items={result.trusteesReportReadiness} empty="The Trustees’ Annual Report view remains limited by the evidence available." /><ResultList title="Wider impact evidence" items={result.widerImpactEvidence} empty="No separate wider impact evidence materially changed this assessment." /><ResultList title="User-confirmed current practice" items={result.userConfirmedPractice} empty="No current practice was confirmed beyond the structured assessment answers." /><ResultList id="full-review-must" title="MUST areas" items={result.must} empty="No applicable MUST area was flagged by this assessment." /><ResultList id="full-review-should" title="SHOULD opportunities" items={result.should} empty="No weaker SHOULD opportunity was identified." /><ResultList title="MAY options" items={result.may} empty="No additional MAY option was identified." /><ResultList id="full-review-judgement" title="MSI JUDGEMENT areas" items={result.judgement} empty="No specific judgement area was flagged, although context still matters." /><ResultList title="Additional SORP checks" items={result.additionalChecks} empty="No additional check was triggered by the information supplied." /><ResultList id="full-review-priorities" title="Priority actions" items={result.priorities} empty="Add more context to build practical priorities." /></div>
+  </section>;
+}
+
+function FullReviewRail({ result }: { result: Result }) {
+  const links = [
+    ["full-review-strong", "✓ What looks strong"], ["full-review-gaps", "△ Important gaps"],
+    ["full-review-must", "MUST areas"], ["full-review-should", "SHOULD opportunities"],
+    ["full-review-judgement", "JUDGEMENT areas"], ["full-review-priorities", "Priority actions"],
+  ];
+  return <aside className="sorp-full-review-rail" aria-label="Full Readiness Review summary">
+    <span>Your Full Readiness Review</span><div className="sorp-full-review-score"><strong>{result.score}<small> / 100</small></strong><b>{result.band}</b></div>
+    <p>Confidence: <strong>{result.confidence}</strong></p>
+    <nav aria-label="Jump to a review section">{links.map(([id, label]) => <a key={id} href={`#${id}`}>{label} <span aria-hidden="true">↗</span></a>)}</nav>
+  </aside>;
 }
 
 const answerLabels: Record<PublicReadinessFinding["suggestedAnswer"], string> = { yes: "YES, CLEARLY", mostly: "MOSTLY", partly: "PARTLY", not_yet: "NOT YET", not_sure: "NOT SURE" };
@@ -324,12 +345,12 @@ function ImpactReportFound({ review, confirmed, uploaded = false }: { review: Pu
   </section>;
 }
 
-function QuickReviewFeedback({ value, comment, onSelect, onComment }: { value: number | null; comment: string; onSelect: (value: number) => void; onComment: (value: string) => void }) {
-  return <section className="sorp-quick-review-feedback" aria-label="Quick Readiness Review feedback">
-    <p><strong>How’s this going?</strong><span>This is a free tool and we genuinely want to make it as useful as possible.</span></p>
-    <div className="sorp-feedback-scale"><span>1 · Not useful yet</span><span>5 · Extremely useful</span></div>
-    <div className="sorp-feedback-stars" role="group" aria-label="How useful was this Quick Readiness Review?">{[1, 2, 3, 4, 5].map((rating) => <button key={rating} type="button" className={value === rating ? "is-selected" : undefined} aria-label={`${rating} out of 5`} aria-pressed={value === rating} onClick={() => onSelect(rating)}>{value !== null && rating <= value ? "★" : "☆"}</button>)}</div>
-    <label><strong>Anything you’d like to tell us?</strong><span>Optional</span><textarea value={comment} maxLength={800} rows={2} onChange={(event) => onComment(event.target.value)} placeholder="Add a short comment if useful…" /></label>
+function QuickReviewFeedback({ value, comment, onSelect, onComment, full = false }: { value: number | null; comment: string; onSelect: (value: number) => void; onComment: (value: string) => void; full?: boolean }) {
+  return <section className={`sorp-quick-review-feedback${full ? " is-full-review" : ""}`} aria-label={full ? "Full Readiness Review feedback" : "Quick Readiness Review feedback"}>
+    <p><strong>{full ? "How was this?" : "How’s this going?"}</strong><span>This is a free tool and we genuinely want to {full ? "keep improving it" : "make it as useful as possible"}.</span></p>
+    <div className="sorp-feedback-scale"><span>1 · {full ? "Not useful" : "Not useful yet"}</span><span>5 · Extremely useful</span></div>
+    <div className="sorp-feedback-stars" role="group" aria-label={`How useful was this ${full ? "Full" : "Quick"} Readiness Review?`}>{[1, 2, 3, 4, 5].map((rating) => <button key={rating} type="button" className={value === rating ? "is-selected" : undefined} aria-label={`${rating} out of 5`} aria-pressed={value === rating} onClick={() => onSelect(rating)}>{value !== null && rating <= value ? "★" : "☆"}</button>)}</div>
+    <label><strong>{full ? "Anything we could improve?" : "Anything you’d like to tell us?"}</strong><span>Optional</span><textarea value={comment} maxLength={800} rows={2} onChange={(event) => onComment(event.target.value)} placeholder="Add a short comment if useful…" /></label>
   </section>;
 }
 
@@ -485,6 +506,9 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
   const [reportDragging, setReportDragging] = useState(false);
   const [quickReviewFeedback, setQuickReviewFeedback] = useState<number | null>(null);
   const [quickReviewFeedbackComment, setQuickReviewFeedbackComment] = useState("");
+  const [fullReviewFeedback, setFullReviewFeedback] = useState<number | null>(null);
+  const [fullReviewFeedbackComment, setFullReviewFeedbackComment] = useState("");
+  const [stageEightReportMode, setStageEightReportMode] = useState(false);
   const composerRef = useRef<HTMLTextAreaElement>(null);
   const reportInputRef = useRef<HTMLInputElement>(null);
   const threadEndRef = useRef<HTMLDivElement>(null);
@@ -528,7 +552,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
         } else {
           const saved = window.localStorage.getItem(storageKey);
           if (saved) {
-            const parsed = JSON.parse(saved) as { started?: boolean; state?: ReadinessState; messages?: Message[]; result?: Result | null; intelligence?: IntelligenceProvenance | null; sessionId?: string; workflow?: ReadinessWorkflow; checkpoints?: ConversationCheckpoint[]; quickReviewFeedback?: number | null; saveProfile?: { name: string; position: string; email: string } };
+            const parsed = JSON.parse(saved) as { started?: boolean; state?: ReadinessState; messages?: Message[]; result?: Result | null; intelligence?: IntelligenceProvenance | null; sessionId?: string; workflow?: ReadinessWorkflow; checkpoints?: ConversationCheckpoint[]; quickReviewFeedback?: number | null; fullReviewFeedback?: number | null; fullReviewFeedbackComment?: string; saveProfile?: { name: string; position: string; email: string } };
             if (parsed.started && parsed.state && parsed.messages?.length) {
               setStarted(true);
               setState({ ...blankState(), ...parsed.state, charityName: parsed.state.charityName ?? "", contextEvidence: parsed.state.contextEvidence ?? {} });
@@ -538,6 +562,8 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
               setIntelligence(parsed.workflow?.version === 2 ? parsed.intelligence ?? null : null);
               setSessionId(parsed.sessionId || newSessionId());
               setQuickReviewFeedback(typeof parsed.quickReviewFeedback === "number" ? parsed.quickReviewFeedback : null);
+              setFullReviewFeedback(typeof parsed.fullReviewFeedback === "number" ? parsed.fullReviewFeedback : null);
+              setFullReviewFeedbackComment(typeof parsed.fullReviewFeedbackComment === "string" ? parsed.fullReviewFeedbackComment : "");
               if (parsed.saveProfile) setSaveProfile((current) => ({ ...current, ...parsed.saveProfile }));
               setCheckpoints(Array.isArray(parsed.checkpoints) ? parsed.checkpoints.map((checkpoint) => ({
                 ...checkpoint,
@@ -585,8 +611,8 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
 
   useEffect(() => {
     if (!hydrated || !started) return;
-    try { window.localStorage.setItem(storageKey, JSON.stringify({ started, state, messages, result, intelligence, sessionId, workflow, checkpoints, quickReviewFeedback, saveProfile: { name: saveProfile.name, position: saveProfile.position, email: saveProfile.email } })); } catch { queueMicrotask(() => setError("Your browser could not save this conversation. Keep this page open to retain your progress.")); }
-  }, [hydrated, started, state, messages, result, intelligence, sessionId, workflow, checkpoints, quickReviewFeedback, saveProfile, storageKey]);
+    try { window.localStorage.setItem(storageKey, JSON.stringify({ started, state, messages, result, intelligence, sessionId, workflow, checkpoints, quickReviewFeedback, fullReviewFeedback, fullReviewFeedbackComment, saveProfile: { name: saveProfile.name, position: saveProfile.position, email: saveProfile.email } })); } catch { queueMicrotask(() => setError("Your browser could not save this conversation. Keep this page open to retain your progress.")); }
+  }, [hydrated, started, state, messages, result, intelligence, sessionId, workflow, checkpoints, quickReviewFeedback, fullReviewFeedback, fullReviewFeedbackComment, saveProfile, storageKey]);
 
   useEffect(() => {
     if (!hydrated || !started || !account || setupOnly) return;
@@ -813,6 +839,25 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
           comment: value.trim(),
           sessionId,
         }),
+      }).catch(() => undefined);
+    }, 650);
+  }
+
+  function recordFullReviewFeedback(value: number) {
+    setFullReviewFeedback(value);
+    void fetch("/api/growth-event", {
+      method: "POST", headers: { "content-type": "application/json" },
+      body: JSON.stringify({ eventId: `${sessionId}:full-review-feedback:${crypto.randomUUID()}`, eventType: "quick_review_feedback", rating: value, sessionId }),
+    }).catch(() => undefined);
+  }
+
+  function recordFullReviewFeedbackComment(value: string) {
+    setFullReviewFeedbackComment(value);
+    if (feedbackTimerRef.current) clearTimeout(feedbackTimerRef.current);
+    feedbackTimerRef.current = setTimeout(() => {
+      void fetch("/api/growth-event", {
+        method: "POST", headers: { "content-type": "application/json" },
+        body: JSON.stringify({ eventId: `${sessionId}:full-review-comment:${crypto.randomUUID()}`, eventType: "quick_review_feedback", rating: fullReviewFeedback, comment: value.trim(), sessionId }),
       }).catch(() => undefined);
     }, 650);
   }
@@ -1075,27 +1120,47 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
     : messageResponseActions;
   const showResponseActions = responseActions.length > 0 && !pendingStructuredAnswer && (reviewIndex === null || /^(?:field:\d+|check:)/.test(responseQuestionId));
   const quickReview = activeResponseMessage?.workflow?.next.provisional || null;
+  const saveDialog = saveDialogOpen && <div className="sorp-save-dialog-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && saveStatus !== "saving") setSaveDialogOpen(false); }}><section className="sorp-save-dialog" role="dialog" aria-modal="true" aria-labelledby="sorp-save-title">
+    <button type="button" className="sorp-save-close" onClick={() => setSaveDialogOpen(false)} disabled={saveStatus === "saving"} aria-label="Close finish another time form">×</button>
+    <span>Finish another time</span><h2 id="sorp-save-title">{account ? "Save your assessment" : accountMode === "signup" ? "Create your account" : "Sign in to your account"}</h2><p>{account ? `You’re signed in as ${account.email}. Save now and your assessment will be available when you return.` : accountMode === "signup" ? "Create an account so your answers and conversation are saved securely and you can continue on this or another device." : "Sign in to reopen the assessment already saved to your account."}</p>
+    <form onSubmit={submitSave}>
+      {!account && accountMode === "signup" && <><label htmlFor="save-name">Your name<input id="save-name" name="name" autoComplete="name" required maxLength={120} value={saveProfile.name} onChange={(event) => setSaveProfile((current) => ({ ...current, name: event.target.value }))} /></label>
+      <label htmlFor="save-position">Position / role<input id="save-position" name="position" autoComplete="organization-title" required maxLength={120} value={saveProfile.position} onChange={(event) => setSaveProfile((current) => ({ ...current, position: event.target.value }))} /></label></>}
+      {!account && <>
+      <label htmlFor="save-email">Email address<input id="save-email" name="email" type="email" autoComplete="email" required maxLength={254} value={saveProfile.email} onChange={(event) => setSaveProfile((current) => ({ ...current, email: event.target.value }))} /></label>
+      <label htmlFor="save-password">Password<input id="save-password" name="password" type="password" autoComplete={accountMode === "signup" ? "new-password" : "current-password"} required minLength={10} maxLength={200} value={saveProfile.password} onChange={(event) => setSaveProfile((current) => ({ ...current, password: event.target.value }))} /></label>
+      {accountMode === "signup" && <label htmlFor="save-confirm-password">Confirm password<input id="save-confirm-password" name="confirm-password" type="password" autoComplete="new-password" required minLength={10} maxLength={200} value={saveProfile.confirmPassword} onChange={(event) => setSaveProfile((current) => ({ ...current, confirmPassword: event.target.value }))} /></label>}
+      <p className="sorp-save-security">Your password is protected server-side. Your account lets you return to this assessment without relying on this browser.</p>
+      <button type="button" className="sorp-account-switch" onClick={() => { setAccountMode((current) => current === "signup" ? "login" : "signup"); setSaveError(""); }}>{accountMode === "signup" ? "Already have an account? Sign in" : "Need an account? Create one"}</button>
+      </>}
+      {saveError && <div className="sorp-save-error" role="alert" aria-live="assertive"><strong>Sorry — we couldn’t save your account.</strong><span>{saveError}</span><span>You can correct anything above and try again without losing your place.</span></div>}
+      {saveStatus === "saved" ? <p className="sorp-save-success" role="status">✓ {accountMode === "login" && !account ? "Signed in." : "Saved to your account. You can finish another time."}</p> : <button type="submit" disabled={saveStatus === "saving"}>{saveStatus === "saving" ? "Saving…" : account ? "Save and finish another time" : accountMode === "signup" ? "Create account and save" : "Sign in and continue"} <span>→</span></button>}
+    </form>
+  </section></div>;
 
-  if (!setupOnly && result && state.score !== null && sessionId && reviewIndex === null) return <div className="readiness-chat is-result-mode">
-    <SorpJourneyProgress current={readinessStages.length} completed={Array.from({ length: readinessStages.length - 1 }, (_, index) => index + 1)} result />
-    <p className="sorp-stage-seven-complete">✓ Additional SORP checks complete</p>
-    <SorpResultActions sessionId={sessionId} organisation={state.charityName} income={state.setup.income} result={result} onBackToAssessment={() => {
-      if (!checkpoints.length) return;
-      const nextIndex = checkpoints.length - 1;
-      setReviewIndex(nextIndex);
-      window.history.pushState({ sorpReviewIndex: nextIndex }, "");
-    }}>
-      <section className="readiness-report-detail">
-        <p className="readiness-result-note">{impactMode ? "SORP does not apply in the circumstances established. This report offers wider narrative and impact-reporting guidance." : "This assesses readiness for the narrative and impact-reporting aspects of SORP 2026. It is not a declaration of full SORP compliance."}</p>
-        <div className="readiness-result-sections">{result.sectionScores.map((section) => <article key={section.section}><div><h3>{section.label}</h3><strong>{section.score}</strong></div><i><b style={{ width: `${section.score}%` }} /></i><p>{section.narrative}</p></article>)}</div>
-        <div className="readiness-result-grid"><ResultList title="What looks strong" items={result.strong} empty="No clear strength has been evidenced yet." /><ResultList title="What needs attention" items={result.attention} empty="No immediate weaker area was identified." /><ResultList title="Trustees’ Annual Report readiness" items={result.trusteesReportReadiness} empty="The Trustees’ Annual Report view remains limited by the evidence available." /><ResultList title="Wider impact evidence" items={result.widerImpactEvidence} empty="No separate wider impact evidence materially changed this assessment." /><ResultList title="User-confirmed current practice" items={result.userConfirmedPractice} empty="No current practice was confirmed beyond the structured assessment answers." /><ResultList title="MUST areas" items={result.must} empty="No applicable MUST area was flagged by this assessment." /><ResultList title="SHOULD opportunities" items={result.should} empty="No weaker SHOULD opportunity was identified." /><ResultList title="MAY options" items={result.may} empty="No additional MAY option was identified." /><ResultList title="MSI JUDGEMENT areas" items={result.judgement} empty="No specific judgement area was flagged, although context still matters." /><ResultList title="Additional SORP checks" items={result.additionalChecks} empty="No additional check was triggered by the information supplied." /><ResultList title="Three priority actions" items={result.priorities} empty="Add more context to build practical priorities." /></div>
-      </section>
-      {intelligence && <details className="readiness-intelligence" aria-label="Effective intelligence provenance">
-        <summary>{intelligence.layers.filter((layer) => layer.id === "msi-core" || layer.id === "sorp-readiness-intelligence").map((layer) => `${intelligenceLayerLabel(layer)} · ${layer.label}`).join(" · ")}</summary>
-        <div><p><strong>{intelligence.registry} · {intelligence.effectiveVersion}</strong><span>Published intelligence only · {intelligence.mode === "CURRENT" ? "latest for this new session" : intelligence.mode === "PINNED" ? "pinned for this conversation" : "last known published — Cow Console was temporarily unavailable"}</span></p>{intelligence.layers.map((layer) => <p key={`${layer.id}-${layer.version}`}><strong>{intelligenceLayerLabel(layer)} · {layer.label}</strong><span>{layer.relationship.toLowerCase()} · {layer.status.toLowerCase()} · published {layer.publishedAt ? new Intl.DateTimeFormat("en-GB", { dateStyle: "medium", timeStyle: "short" }).format(new Date(layer.publishedAt)) : "date unavailable"}</span></p>)}{intelligence.runtimeControls.map((control) => <p key={`${control.name}-${control.type}`}><strong>{control.name} · {control.type}</strong><span>Represented by {control.representedBy}</span></p>)}</div>
-      </details>}
-    </SorpResultActions>
-  </div>;
+  if (!setupOnly && result && state.score !== null && sessionId && reviewIndex === null) {
+    if (stageEightReportMode) return <div className="readiness-chat is-result-mode">
+      <SorpResultActions sessionId={sessionId} organisation={state.charityName} income={state.setup.income} result={result} startInReportMode onBackToAssessment={() => setStageEightReportMode(false)}>
+        <FullReadinessReport result={result} impactMode={impactMode} />
+        {intelligence && <details className="readiness-intelligence" aria-label="Effective intelligence provenance">
+          <summary>{intelligence.layers.filter((layer) => layer.id === "msi-core" || layer.id === "sorp-readiness-intelligence").map((layer) => `${intelligenceLayerLabel(layer)} · ${layer.label}`).join(" · ")}</summary>
+          <div><p><strong>{intelligence.registry} · {intelligence.effectiveVersion}</strong><span>Published intelligence only · {intelligence.mode === "CURRENT" ? "latest for this new session" : intelligence.mode === "PINNED" ? "pinned for this conversation" : "last known published — Cow Console was temporarily unavailable"}</span></p>{intelligence.layers.map((layer) => <p key={`${layer.id}-${layer.version}`}><strong>{intelligenceLayerLabel(layer)} · {layer.label}</strong><span>{layer.relationship.toLowerCase()} · {layer.status.toLowerCase()} · published {layer.publishedAt ? new Intl.DateTimeFormat("en-GB", { dateStyle: "medium", timeStyle: "short" }).format(new Date(layer.publishedAt)) : "date unavailable"}</span></p>)}{intelligence.runtimeControls.map((control) => <p key={`${control.name}-${control.type}`}><strong>{control.name} · {control.type}</strong><span>Represented by {control.representedBy}</span></p>)}</div>
+        </details>}
+      </SorpResultActions>
+    </div>;
+    return <div className="readiness-chat is-stage-eight">
+      <SorpJourneyProgress current={readinessStages.length} completed={Array.from({ length: readinessStages.length - 1 }, (_, index) => index + 1)} result />
+      <div className="sorp-journey-body">
+        <FullReviewRail result={result} />
+        <main className="sorp-stage-eight-main"><p className="sorp-stage-seven-complete">✓ Additional SORP checks complete</p><header className="sorp-stage-eight-heading"><span>Your Full Readiness Review</span><h1>{result.band} <strong>{result.score} <small>/ 100</small></strong></h1><p>Evidence confidence: <b>{result.confidence}</b></p><p>{result.overview}</p></header><FullReadinessReport result={result} impactMode={impactMode} /></main>
+      </div>
+      <div className="readiness-composer sorp-stage-eight-response">
+        <div className="sorp-response-utility"><nav className="sorp-bottom-navigation" aria-label="Assessment navigation"><span className="sorp-bottom-utility"><button type="button" className="is-back" onClick={goBack} disabled={!checkpoints.length}>← Back</button><button type="button" className="is-save" onClick={() => { setSaveStatus("idle"); setSaveError(""); setSaveDialogOpen(true); }}>Save &amp; exit</button></span></nav></div>
+        <section className="sorp-response-fields" aria-label="Respond to your Full Readiness Review"><QuickReviewFeedback full value={fullReviewFeedback} comment={fullReviewFeedbackComment} onSelect={recordFullReviewFeedback} onComment={recordFullReviewFeedbackComment} /><button className="sorp-stage-eight-continue" type="button" onClick={() => setStageEightReportMode(true)}>Continue to report &amp; next actions <span>→</span></button></section>
+      </div>
+      {saveDialog}
+    </div>;
+  }
 
   if (!started) return <section className="readiness-intro">
     <p className="readiness-kicker">SORP 2026<br /><strong>Completely free</strong></p>
@@ -1176,22 +1241,6 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
       <div className="readiness-submit-row"><button type="button" className="readiness-mic" onClick={recordingState === "recording" ? stopRecording : () => void startRecording()} disabled={busy || quickAdvancing || recordingState === "transcribing"}>{recordingState === "recording" ? `Stop · ${recordingTime(recordingSeconds)}` : recordingState === "transcribing" ? "Transcribing…" : "Use microphone"}</button><button type="submit" className={busy || quickAdvancing ? "is-working" : undefined} disabled={busy || quickAdvancing || (!pendingStructuredAnswer && !(activityQuestion && activitySelections.length) && composer.trim().length < 2) || recordingState !== "idle"}>{busy ? "Understanding…" : quickAdvancing ? "Saving…" : reviewIndex !== null ? "Save revised answer" : conversationFirstMessage ? "Send message" : activityQuestion && activitySelections.length ? "Continue with choices" : result ? "Keep talking" : "Continue"} <span>→</span></button></div>
       </section>
     </form>
-    {saveDialogOpen && <div className="sorp-save-dialog-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && saveStatus !== "saving") setSaveDialogOpen(false); }}><section className="sorp-save-dialog" role="dialog" aria-modal="true" aria-labelledby="sorp-save-title">
-      <button type="button" className="sorp-save-close" onClick={() => setSaveDialogOpen(false)} disabled={saveStatus === "saving"} aria-label="Close finish another time form">×</button>
-      <span>Finish another time</span><h2 id="sorp-save-title">{account ? "Save your assessment" : accountMode === "signup" ? "Create your account" : "Sign in to your account"}</h2><p>{account ? `You’re signed in as ${account.email}. Save now and your assessment will be available when you return.` : accountMode === "signup" ? "Create an account so your answers and conversation are saved securely and you can continue on this or another device." : "Sign in to reopen the assessment already saved to your account."}</p>
-      <form onSubmit={submitSave}>
-        {!account && accountMode === "signup" && <><label htmlFor="save-name">Your name<input id="save-name" name="name" autoComplete="name" required maxLength={120} value={saveProfile.name} onChange={(event) => setSaveProfile((current) => ({ ...current, name: event.target.value }))} /></label>
-        <label htmlFor="save-position">Position / role<input id="save-position" name="position" autoComplete="organization-title" required maxLength={120} value={saveProfile.position} onChange={(event) => setSaveProfile((current) => ({ ...current, position: event.target.value }))} /></label></>}
-        {!account && <>
-        <label htmlFor="save-email">Email address<input id="save-email" name="email" type="email" autoComplete="email" required maxLength={254} value={saveProfile.email} onChange={(event) => setSaveProfile((current) => ({ ...current, email: event.target.value }))} /></label>
-        <label htmlFor="save-password">Password<input id="save-password" name="password" type="password" autoComplete={accountMode === "signup" ? "new-password" : "current-password"} required minLength={10} maxLength={200} value={saveProfile.password} onChange={(event) => setSaveProfile((current) => ({ ...current, password: event.target.value }))} /></label>
-        {accountMode === "signup" && <label htmlFor="save-confirm-password">Confirm password<input id="save-confirm-password" name="confirm-password" type="password" autoComplete="new-password" required minLength={10} maxLength={200} value={saveProfile.confirmPassword} onChange={(event) => setSaveProfile((current) => ({ ...current, confirmPassword: event.target.value }))} /></label>}
-        <p className="sorp-save-security">Your password is protected server-side. Your account lets you return to this assessment without relying on this browser.</p>
-        <button type="button" className="sorp-account-switch" onClick={() => { setAccountMode((current) => current === "signup" ? "login" : "signup"); setSaveError(""); }}>{accountMode === "signup" ? "Already have an account? Sign in" : "Need an account? Create one"}</button>
-        </>}
-        {saveError && <div className="sorp-save-error" role="alert" aria-live="assertive"><strong>Sorry — we couldn’t save your account.</strong><span>{saveError}</span><span>You can correct anything above and try again without losing your place.</span></div>}
-        {saveStatus === "saved" ? <p className="sorp-save-success" role="status">✓ {accountMode === "login" && !account ? "Signed in." : "Saved to your account. You can finish another time."}</p> : <button type="submit" disabled={saveStatus === "saving"}>{saveStatus === "saving" ? "Saving…" : account ? "Save and finish another time" : accountMode === "signup" ? "Create account and save" : "Sign in and continue"} <span>→</span></button>}
-      </form>
-    </section></div>}
+    {saveDialog}
   </div>;
 }
