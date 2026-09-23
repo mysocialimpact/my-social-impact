@@ -53,6 +53,7 @@ export type ReadinessState = {
 type Result = {
   score: number;
   band: string;
+  confidence: "HIGH" | "MEDIUM" | "LOW";
   overview: string;
   sectionScores: { section: string; label: string; score: number; narrative: string }[];
   strong: string[];
@@ -62,6 +63,9 @@ type Result = {
   may: string[];
   judgement: string[];
   additionalChecks: string[];
+  trusteesReportReadiness: string[];
+  widerImpactEvidence: string[];
+  userConfirmedPractice: string[];
   priorities: string[];
 };
 
@@ -203,7 +207,7 @@ function stateFromSnapshot(raw: string): { state: ReadinessState; result: Result
     state.setup = { ...emptySetup, ...snapshot.setup };
     state.inheritedSnapshot = true;
     state.completedStages = [1, 2, 3, 4, 5, 6, 7];
-    state.currentStage = 7;
+    state.currentStage = 8;
     state.score = snapshot.result.score;
     for (const field of snapshot.coreQuestions) {
       state.fields[String(field.id)] = { answer: field.answer ?? null, evidence: field.context ?? "Snapshot answer", confidence: field.context ? .95 : .8 };
@@ -215,6 +219,7 @@ function stateFromSnapshot(raw: string): { state: ReadinessState; result: Result
     const result: Result = {
       score: snapshot.result.score,
       band: snapshot.result.band ?? "Initial readiness picture",
+      confidence: "MEDIUM",
       overview: "This is your Quick Snapshot result. The conversation can add context and nuance without asking all 15 questions again.",
       sectionScores: sectionScores.map((section) => ({ ...section, narrative: "The conversation can add a more specific explanation of this area." })),
       strong: sectionScores.filter((section) => section.score >= 70).map((section) => section.label),
@@ -224,6 +229,9 @@ function stateFromSnapshot(raw: string): { state: ReadinessState; result: Result
       may: snapshot.result.flags?.may ?? [],
       judgement: snapshot.result.flags?.judgement ?? [],
       additionalChecks: (snapshot.additionalChecks ?? []).map((check) => additionalChecks.find((item) => item.id === check.id)?.title ?? check.id),
+      trusteesReportReadiness: [],
+      widerImpactEvidence: [],
+      userConfirmedPractice: snapshot.coreQuestions.filter((question) => Boolean(question.answer)).slice(0, 6).map((question) => `Question ${question.id}: ${question.answer?.replaceAll("_", " ")}`),
       priorities: [],
     };
     return { state, result };
@@ -361,10 +369,14 @@ function ProvisionalReadinessView({ review, impactReportConfirmed = false, feedb
 function PublicSearchCheckpoint({ workflow, onAddReport }: { workflow: ReadinessWorkflow; onAddReport: () => void }) {
   const items = workflow.known.filter((item) => ["charityName", "legalStatus", "jurisdiction", "income", "accounts", "startDate", "trusteesReport", "impactReport"].includes(item.id));
   const impactReport = items.find((item) => item.id === "impactReport");
+  const trusteesReport = items.find((item) => item.id === "trusteesReport");
   return <section className="sorp-public-search-checkpoint" aria-label="Public information checkpoint">
+    <p className="sorp-impact-report-kicker">✓ Your charity &amp; SORP context complete</p>
+    <h3>SORP 2026 appears to apply to you</h3>
+    <p className="sorp-public-search-note">We’ve established the charity status, jurisdiction, accounting basis and first relevant reporting period from the available public evidence. You can see the detail on the left.</p>
     <p className="sorp-impact-report-kicker">Good — we’ve found enough to give you a useful first view.</p>
     <h3>Ready for a Quick Readiness Review?</h3>
-    <p className="sorp-public-search-note">We’ve confirmed the key information we need, including your latest Trustees’ Annual Report. You can see the detail on the left.</p>
+    <p className="sorp-public-search-note">{trusteesReport?.established ? "We found the latest Trustees’ Annual Report and will use it as the primary historical starting point." : "We couldn’t review the latest Trustees’ Annual Report confidently, but that will not stop the assessment."}</p>
     {!impactReport?.established ? <><p className="sorp-impact-report-offer"><strong>We didn’t find a separate Impact Report or Annual Review publicly.</strong><span>That doesn’t stop us giving you a Quick Readiness Review. If you have one, adding it now may give us extra supporting evidence.</span></p><div className="sorp-public-search-actions"><button type="button" onClick={onAddReport}>Add Impact Report</button><span>or continue without it</span></div></> : <p className="sorp-impact-report-offer"><strong>We found wider public evidence too.</strong><span>We’ll keep it separate from the Trustees’ Annual Report and use it only where it genuinely adds context.</span></p>}
   </section>;
 }
@@ -793,7 +805,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
       setState(data.state);
       if (!reviewing) setWorkflow(data.workflow);
       const newlyCompleted = data.workflow.completedStages.filter(stage => !workflow?.completedStages.includes(stage));
-      setCompletionNotice(reviewing ? "✓ Answer updated. Later answers have been kept." : newlyCompleted.length ? `✓ ${newlyCompleted.map(stage => `Stage ${stage}`).join(" & ")} complete. One more part of your readiness picture established.` : "");
+      setCompletionNotice(reviewing ? "✓ Answer updated. Later answers have been kept." : newlyCompleted.includes(7) && data.workflow.currentStage === 8 ? "✓ 7 STAGES COMPLETE · YOUR FULL READINESS REVIEW IS READY" : newlyCompleted.length ? `✓ ${newlyCompleted.map(stage => `Stage ${stage}`).join(" & ")} complete. One more part of your readiness picture established.` : "");
       if (data.intelligence) setIntelligence(data.intelligence);
       setSessionId(data.sessionId || sessionId || newSessionId());
       if (!reviewing) setMessages([...nextMessages, {
@@ -865,7 +877,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
       if (setupOnly && data.workflow.completedStages.includes(2)) onSetupComplete?.(data.state, data.workflow);
       const newlyKnown = data.workflow.known.filter(item => item.established && !workflow?.known.find(previous => previous.id === item.id)?.established);
       const newlyCompleted = data.workflow.completedStages.filter(stage => !workflow?.completedStages.includes(stage));
-      setCompletionNotice(newlyCompleted.length ? `✓ ${newlyCompleted.map(stage => `Stage ${stage}`).join(" & ")} complete. ${data.workflow.currentStage === 2 ? "Good — that’s the first thing sorted." : data.workflow.currentStage === 3 ? "We’ve got the context we need." : "One more part of your readiness picture established."}` : !workflow?.known.find(item => item.id === "charityName")?.established && data.workflow.known.find(item => item.id === "charityName")?.established ? "✓ Organisation confirmed. Here’s what we’ve found so far." : newlyKnown.length ? `✓ ${newlyKnown.map(item => item.label).join(" · ")} confirmed. Good — that’s one more thing sorted.` : "");
+      setCompletionNotice(newlyCompleted.includes(1) ? "✓ YOUR CHARITY & SORP CONTEXT COMPLETE · SORP 2026 APPEARS TO APPLY TO YOU" : newlyCompleted.length ? `✓ ${newlyCompleted.map(stage => `Stage ${stage}`).join(" & ")} complete. ${data.workflow.currentStage === 3 ? "Your Quick Readiness Review is complete." : data.workflow.currentStage === 8 ? "Seven stages complete. Your Full Readiness Review is ready." : "One more part of your readiness picture established."}` : !workflow?.known.find(item => item.id === "charityName")?.established && data.workflow.known.find(item => item.id === "charityName")?.established ? "✓ Organisation confirmed. Here’s what we’ve found so far." : newlyKnown.length ? `✓ ${newlyKnown.map(item => item.label).join(" · ")} established. Good — that’s one more thing sorted.` : "");
       if (data.intelligence) setIntelligence(data.intelligence);
       setSessionId(data.sessionId || sessionId || newSessionId());
       setMessages((current) => [...current, {
@@ -997,7 +1009,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
       <section className="readiness-report-detail">
         <p className="readiness-result-note">{impactMode ? "SORP does not apply in the circumstances established. This report offers wider narrative and impact-reporting guidance." : "This assesses readiness for the narrative and impact-reporting aspects of SORP 2026. It is not a declaration of full SORP compliance."}</p>
         <div className="readiness-result-sections">{result.sectionScores.map((section) => <article key={section.section}><div><h3>{section.label}</h3><strong>{section.score}</strong></div><i><b style={{ width: `${section.score}%` }} /></i><p>{section.narrative}</p></article>)}</div>
-        <div className="readiness-result-grid"><ResultList title="What looks strong" items={result.strong} empty="No clear strength has been evidenced yet." /><ResultList title="What needs attention" items={result.attention} empty="No immediate weaker area was identified." /><ResultList title="MUST areas" items={result.must} empty="No applicable MUST area was flagged by this initial assessment." /><ResultList title="SHOULD opportunities" items={result.should} empty="No weaker SHOULD opportunity was identified." /><ResultList title="MAY options" items={result.may} empty="No additional MAY option was identified." /><ResultList title="MSI JUDGEMENT areas" items={result.judgement} empty="No specific judgement area was flagged, although context still matters." /><ResultList title="Additional SORP checks" items={result.additionalChecks} empty="No additional check was triggered by the information supplied." /><ResultList title="Three priority actions" items={result.priorities} empty="Add more context to build practical priorities." /></div>
+        <div className="readiness-result-grid"><ResultList title="What looks strong" items={result.strong} empty="No clear strength has been evidenced yet." /><ResultList title="What needs attention" items={result.attention} empty="No immediate weaker area was identified." /><ResultList title="Trustees’ Annual Report readiness" items={result.trusteesReportReadiness} empty="The Trustees’ Annual Report view remains limited by the evidence available." /><ResultList title="Wider impact evidence" items={result.widerImpactEvidence} empty="No separate wider impact evidence materially changed this assessment." /><ResultList title="User-confirmed current practice" items={result.userConfirmedPractice} empty="No current practice was confirmed beyond the structured assessment answers." /><ResultList title="MUST areas" items={result.must} empty="No applicable MUST area was flagged by this assessment." /><ResultList title="SHOULD opportunities" items={result.should} empty="No weaker SHOULD opportunity was identified." /><ResultList title="MAY options" items={result.may} empty="No additional MAY option was identified." /><ResultList title="MSI JUDGEMENT areas" items={result.judgement} empty="No specific judgement area was flagged, although context still matters." /><ResultList title="Additional SORP checks" items={result.additionalChecks} empty="No additional check was triggered by the information supplied." /><ResultList title="Three priority actions" items={result.priorities} empty="Add more context to build practical priorities." /></div>
       </section>
       {intelligence && <details className="readiness-intelligence" aria-label="Effective intelligence provenance">
         <summary>{intelligence.layers.filter((layer) => layer.id === "msi-core" || layer.id === "sorp-readiness-intelligence").map((layer) => `${intelligenceLayerLabel(layer)} · ${layer.label}`).join(" · ")}</summary>
@@ -1025,7 +1037,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
       {reviewCheckpoint && <section className="sorp-reviewing-answer" aria-live="polite"><span>Reviewing saved question {reviewIndex! + 1} of {checkpoints.length}</span><strong>{reviewCheckpoint.answerText || "Saved answer"}</strong>{reviewCheckpoint.note && <p>{reviewCheckpoint.note}</p>}<small>{activeWorkflow?.next.id.match(/^(?:field:\d+|check:)/) ? "Choose another quick answer below to change this. Your later answers will be kept." : "This answer and its conversation are preserved exactly as supplied."}</small></section>}
       {activeMessages.length > 1 && <details className="sorp-conversation-history"><summary>Our conversation up to this question <span>{activeMessages.filter(message => message.role === "user").length} replies</span></summary>{activeMessages.slice(0, -1).map((message, index) => <article key={index}><small>{message.role === "user" ? "You" : "My Social Impact Intelligence"}</small><MessageContent text={message.content} />{message.organisation && <strong>{message.organisation.name} · {message.organisation.locality}</strong>}</article>)}</details>}
       {completionNotice && <p className="sorp-completion-notice" role="status">{completionNotice}</p>}
-      {activeWorkflow?.completedStages.includes(1) && currentStage === 2 && state.sorpApplicability === "likely_applies" && <p className="sorp-applicability-confirmed">✓ SORP 2026 applies to you <span>For the charity and reporting context established here.</span></p>}
+      {activeWorkflow?.completedStages.includes(1) && currentStage === 2 && state.sorpApplicability === "likely_applies" && <p className="sorp-applicability-confirmed">✓ SORP 2026 appears to apply to you <span>For the charity and reporting context established here.</span></p>}
       {activeWorkflow?.completedStages.includes(1) && currentStage === 2 && state.sorpApplicability === "uncertain" && <p className="sorp-applicability-confirmed">SORP 2026 may apply to you <span>We can’t confirm this completely yet because we haven’t established whether your accounts are prepared on an accruals basis.</span></p>}
       {activeMessages.map((message, index) => index === activeMessages.length - 1 && <article id="readiness-current-question" key={`${index}-${message.content.slice(0, 24)}`} className={`readiness-message is-${message.role}${message.responseKind === "detour" ? " is-detour" : ""}`}>
         {message.role === "assistant" && <p className="sorp-current-stage">Stage {currentStage} · {readinessStages[currentStage - 1]}</p>}

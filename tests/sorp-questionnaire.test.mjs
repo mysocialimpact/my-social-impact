@@ -69,15 +69,16 @@ test("the main score always uses the same 15 core answers", () => {
   assert.equal(coreQuestions.length, 15);
 });
 
-test("the Snapshot and conversation share the seven visible readiness stages", () => {
+test("the Snapshot and conversation share the eight visible readiness stages", () => {
   assert.deepEqual([...readinessStages], [
-    "Does SORP 2026 apply to you?",
+    "Your charity & SORP context",
     "Quick Readiness Review",
     "Objectives & activities",
     "Achievements & performance",
     "Plans for future periods",
     "Trustees’ Annual Report readiness",
     "Additional SORP checks",
+    "Your Full Readiness Review",
   ]);
   assert.deepEqual(coreQuestions.map(stageForQuestion), [3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 5, 5, 5, 6, 6]);
 });

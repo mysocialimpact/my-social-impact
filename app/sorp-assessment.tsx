@@ -290,7 +290,7 @@ export function SorpAssessment({ view = "snapshot" }: { view?: "snapshot" | "res
     ? `${readinessStages[stage - 1]} · Question ${currentQuestion.id} of 15`
     : mode === "extra" && currentExtra
       ? `${readinessStages[6]} · Check ${extraIndex + 1} of ${extras.length}`
-      : mode === "result" ? "Your result" : mode === "welcome" ? "SORP readiness" : readinessStages[Math.min(stage, 7) - 1];
+      : mode === "result" ? readinessStages[7] : mode === "welcome" ? "SORP readiness" : readinessStages[Math.min(stage, 8) - 1];
 
   const setupModes = ["welcome", "role", "location", "period", "accounts", "eligibility", "income", "activities", "context"];
   if (view !== "results" && setupModes.includes(mode)) return <div className="sorp-conversation-page sorp-snapshot-setup"><SorpReadinessConversation setupOnly onSetupComplete={(nextState, nextWorkflow) => { setSetup(nextState.setup); setSetupState(nextState); setSetupWorkflow(nextWorkflow); setCoreIndex(0); go("core"); }} /></div>;
@@ -298,7 +298,7 @@ export function SorpAssessment({ view = "snapshot" }: { view?: "snapshot" | "res
   return (
     <div className="sorp-tool" id="snapshot-tool">
       <div className="sorp-tool-shell">
-        <SorpJourneyProgress current={Math.min(stage,7)} completed={completedStages} result={mode === "result"} />
+        <SorpJourneyProgress current={Math.min(stage,8)} completed={completedStages} result={mode === "result"} />
         {mode === "core" && <p className="sorp-snapshot-position">{persistentStatus}</p>}
         {saveNote && <p className="sorp-save-note" role="status">{saveNote}</p>}
 

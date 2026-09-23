@@ -55,13 +55,14 @@ export const sectionLabels = {
 } as const;
 
 export const readinessStages = [
-  "Does SORP 2026 apply to you?",
+  "Your charity & SORP context",
   "Quick Readiness Review",
   "Objectives & activities",
   "Achievements & performance",
   "Plans for future periods",
   "Trustees’ Annual Report readiness",
   "Additional SORP checks",
+  "Your Full Readiness Review",
 ] as const;
 
 export function stageForQuestion(question: CoreQuestion) {
