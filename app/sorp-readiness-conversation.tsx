@@ -43,6 +43,7 @@ export type ReadinessState = {
   currentStage: number;
   score: number | null;
   inheritedSnapshot: boolean;
+  publicSearchCheckpointAcknowledged: boolean;
   publicReviewAcknowledged: boolean;
   impactReportInput: "none" | "awaiting_link" | "skipped" | "uploaded";
   impactReportConfirmation: "unconfirmed" | "confirmed" | "replacement_requested";
@@ -118,6 +119,7 @@ function blankState(): ReadinessState {
     currentStage: 1,
     score: null,
     inheritedSnapshot: false,
+    publicSearchCheckpointAcknowledged: false,
     publicReviewAcknowledged: false,
     impactReportInput: "none",
     impactReportConfirmation: "unconfirmed",
@@ -170,7 +172,7 @@ function workingStatusFor(value: string, state: ReadinessState, workflow: Readin
   const researchStatus = organisationResearchStatus(state.organisationResearch);
   if (researchStatus === "needs_confirmation") {
     if (/^(?:no|nope|not us|try again|different|wrong)\b/i.test(answer)) return "Looking again for the right organisation…";
-    return "Confirming the organisation and checking its public information…";
+    return "Checking the Charity Commission record and latest public documents…";
   }
   const step = workflow?.next.id || "";
   if (step === "organisation" || (!state.charityName && state.currentStage === 1)) return "Looking for the right organisation…";
@@ -316,6 +318,16 @@ function ProvisionalReadinessView({ review, impactReportConfirmed = false }: { r
     {sources.length ? <nav aria-label="Public reports reviewed">{sources.map((source) => <a key={source.url} href={source.url} target="_blank" rel="noreferrer">{source.label} ↗</a>)}</nav> : null}
     {!review.impactReport.found && <p className="sorp-impact-report-offer"><strong>We didn’t find a separate Impact Report online.</strong><span>If you have one, adding it means we can take it into account.</span></p>}
     <p className="sorp-provisional-note">This is an evidence-based starting point, not your final result. Your answers remain in control of the score.</p>
+  </section>;
+}
+
+function PublicSearchCheckpoint({ workflow }: { workflow: ReadinessWorkflow }) {
+  const items = workflow.known.filter((item) => ["charityName", "legalStatus", "jurisdiction", "income", "accounts", "startDate", "trusteesReport", "impactReport"].includes(item.id));
+  return <section className="sorp-public-search-checkpoint" aria-label="Public information checkpoint">
+    <p className="sorp-impact-report-kicker">We’ve done the first public check</p>
+    <h3>Here’s what we’ve found so far</h3>
+    <ul>{items.map((item) => <li key={item.id} className={item.established ? "is-found" : "is-pending"}><span aria-hidden="true">{item.established ? "✓" : "○"}</span><div><strong>{item.label}</strong><span>{item.value}</span>{item.id === "impactReport" && !item.established && <small>Not found publicly — optional</small>}</div></li>)}</ul>
+    <p className="sorp-public-search-note">We’ll use this research to make the next questions quicker. You can correct anything that has changed.</p>
   </section>;
 }
 
@@ -966,16 +978,17 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
         <span>{message.role === "user" ? "You" : "My Social Impact Intelligence"}</span>
         {message.label && message.responseKind === "detour" && <strong className={`readiness-label is-${message.label.toLowerCase().replace(" ", "-")}`}>{message.label === "JUDGEMENT" ? "MSI JUDGEMENT" : message.label}</strong>}
         <div><MessageContent text={message.organisation ? "I think I’ve found you." : message.content} /></div>
+        {message.workflow?.next.id === "publicSearchCheckpoint" && <PublicSearchCheckpoint workflow={message.workflow} />}
         {message.workflow?.next.provisional && <ProvisionalReadinessView review={message.workflow.next.provisional} impactReportConfirmed={state.impactReportConfirmation === "confirmed" || state.impactReportInput === "uploaded"} />}
         {message.workflow?.next.proposal && <PublicAnswerProposal proposal={message.workflow.next.proposal} />}
-        {message.role === "assistant" && !message.organisation && message.responseKind !== "result" && message.workflow?.next.id !== "publicReview" && <section className="sorp-question-purpose"><strong>{message.responseKind === "detour" ? "What we need next" : "Why we’re asking"}</strong><p>{message.responseKind === "detour" ? message.workflow?.next.question : message.workflow?.next.why || "Finding the right organisation lets us use public information and establish whether SORP 2026 applies to you."}</p></section>}
+        {message.role === "assistant" && !message.organisation && message.responseKind !== "result" && !["publicReview", "publicSearchCheckpoint"].includes(message.workflow?.next.id || "") && <section className="sorp-question-purpose"><strong>{message.responseKind === "detour" ? "What we need next" : "Why we’re asking"}</strong><p>{message.responseKind === "detour" ? message.workflow?.next.question : message.workflow?.next.why || "Finding the right organisation lets us use public information and establish whether SORP 2026 applies to you."}</p></section>}
         {message.organisation && <section className="readiness-organisation-card" aria-label="Organisation found">
           <h3>{message.organisation.name}</h3>
           {message.organisation.locality && <p className="readiness-organisation-location">{message.organisation.locality}</p>}
           {message.publicSources?.length ? <nav className="readiness-organisation-links" aria-label="Organisation sources">{message.publicSources.slice(0, 2).map((source) => <a key={source.url} href={source.url} target="_blank" rel="noreferrer">{confirmationSourceLabel(source)}</a>)}</nav> : null}
         </section>}
         {message.organisation && <p className="sorp-confirm-question">Is this the right organisation?</p>}
-        {message.workflow && !message.organisation && message.responseKind !== "detour" && !["publicReview", "answerConfirmation"].includes(message.workflow.next.id) && <SorpBasisDrawer basis={message.workflow.next.basis} />}
+        {message.workflow && !message.organisation && message.responseKind !== "detour" && !["publicReview", "publicSearchCheckpoint", "answerConfirmation"].includes(message.workflow.next.id) && <SorpBasisDrawer basis={message.workflow.next.basis} />}
         {message.actions?.length && !pendingStructuredAnswer && (reviewIndex === null || message.workflow?.next.id.match(/^(?:field:\d+|check:)/)) ? <nav className={`readiness-message-actions${message.workflow?.next.id.match(/^(?:field:\d+|check:)/) ? " is-assessment-scale" : ""}${message.workflow?.next.id === "activities" ? " is-multi-select" : ""}`} aria-label={message.workflow?.next.id === "activities" ? "Choose all activities that apply" : message.workflow?.next.id.match(/^(?:field:\d+|check:)/) ? "Choose a quick answer" : "Choose an answer"}>{message.actions.map((action) => {
           const selected = message.workflow?.next.id === "activities" && activitySelections.includes(action.value);
           const saved = reviewCheckpoint?.answerText?.toUpperCase().startsWith(action.label.toUpperCase().replace(/^KEEP\s+/, ""));

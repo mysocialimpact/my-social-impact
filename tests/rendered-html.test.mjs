@@ -67,7 +67,7 @@ test("server-renders the My Social Impact homepage", async () => {
 test("every page inherits the global build stamp", async () => {
   const layout = await readFile(new URL("../app/layout.tsx", import.meta.url), "utf8");
   assert.match(layout, /global-build-stamp/);
-  assert.match(layout, /BUILD 69 · 23 SEPTEMBER 2026 · 13:42 BST/);
+  assert.match(layout, /BUILD 70 · 23 SEPTEMBER 2026 · 14:07 BST/);
 });
 
 test("explicit setup confirmations save directly without an intelligence thinking state", async () => {
@@ -91,7 +91,7 @@ test("SORP completion uses an opaque sticky header and document-flow build foote
 test("SORP working states describe the actual task and show restrained motion", async () => {
   const conversation = await readFile(new URL("../app/sorp-readiness-conversation.tsx", import.meta.url), "utf8");
   const styles = await readFile(new URL("../app/sorp-ready.css", import.meta.url), "utf8");
-  assert.match(conversation, /Confirming the organisation and checking its public information/);
+  assert.match(conversation, /Checking the Charity Commission record and latest public documents/);
   assert.match(conversation, /Looking again for the right organisation/);
   assert.match(conversation, /Checking the organisation’s public information and what applies/);
   assert.match(conversation, /Understanding your answer and checking the relevant SORP guidance/);
@@ -314,9 +314,10 @@ test("server-renders the conversational SORP readiness workspace", async () => {
   assert.match(source, /Or tell us in your own words/);
   assert.match(source, /is-assessment-scale/);
   assert.match(source, /Provisional SORP readiness/);
-  assert.match(source, /Unable to determine yet/);
-  assert.match(source, /the mandatory narrative document and the primary source/);
-  assert.match(source, /Status:<\/strong> what the public evidence currently lets us conclude/);
+  assert.match(source, /Cannot establish publicly/);
+  assert.match(source, /publicSearchCheckpoint/);
+  assert.match(source, /We’ve done the first public check/);
+  assert.match(source, /We’ll use this research to make the next questions quicker/);
   assert.match(source, /Trustees’ Annual Report/);
   assert.match(source, /Wider impact evidence/);
   assert.match(source, /Your answers remain in control of the score/);
@@ -352,7 +353,7 @@ test("server-renders the conversational SORP readiness workspace", async () => {
   assert.match(source, /preserveActivitySelections/);
   assert.match(source, /aria-pressed/);
   assert.match(source, /is-multi-select/);
-  assert.match(source, /← Back to previous question/);
+  assert.match(source, /aria-label="Back to previous question"/);
   assert.match(source, /Create account and save/);
   assert.match(source, /Sign in and continue/);
   assert.match(source, /\/api\/readiness-account/);

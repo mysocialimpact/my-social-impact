@@ -98,6 +98,17 @@
 .sorp-impact-report-dropzone b { color:#28633f; font-size:13px; text-transform:uppercase; text-decoration:underline; text-underline-offset:3px; }
 .sorp-impact-report-uploader > small { display:block; margin-top:10px; color:#6b655e; font-size:11px; }
 .sorp-provisional-note { margin:16px 0 0; color:#6d675f; font-size:12px; line-height:1.5; }
+.sorp-public-search-checkpoint { margin:4px 0 22px; padding:22px 24px; border:1px solid #c9d9ca; border-left:4px solid #34764f; background:#f2f7f0; }
+.sorp-public-search-checkpoint h3 { margin:7px 0 16px; font-family:var(--font-serif); font-size:clamp(25px,3vw,38px); font-weight:500; line-height:1.15; }
+.sorp-public-search-checkpoint ul { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:0 24px; margin:0; padding:0; list-style:none; }
+.sorp-public-search-checkpoint li { display:flex; gap:10px; padding:10px 0; border-top:1px solid #d8e3d7; }
+.sorp-public-search-checkpoint li > span { width:20px; flex:0 0 20px; color:#7b817a; font-size:18px; }
+.sorp-public-search-checkpoint li.is-found > span { color:#287044; }
+.sorp-public-search-checkpoint li strong,.sorp-public-search-checkpoint li span,.sorp-public-search-checkpoint li small { display:block; }
+.sorp-public-search-checkpoint li strong { font-size:11px; letter-spacing:.04em; text-transform:uppercase; }
+.sorp-public-search-checkpoint li div > span { margin-top:3px; color:#4f5b51; font-size:14px; line-height:1.35; }
+.sorp-public-search-checkpoint li small { margin-top:3px; color:#6d756d; font-size:11px; }
+.sorp-public-search-note { margin:16px 0 0; color:#4f5b51; font-size:13px; line-height:1.5; }
 .sorp-provisional-view.is-evidence-gap { border-color:#b83210; background:#fffaf7; }
 .sorp-evidence-gap-copy { margin:20px 0 0; max-width:720px; color:#302c27; font-size:16px; line-height:1.55; }
 .sorp-answer-proposal { margin:0 0 18px; padding:20px; border-left:4px solid #f5ce00; background:#f6f3ec; }
@@ -221,6 +232,8 @@
   .sorp-provisional-view > header > strong { justify-self:start; }
   .sorp-provisional-grid,.sorp-public-evidence-split { grid-template-columns:1fr; }
   .sorp-provisional-grid { gap:15px; }
+  .sorp-public-search-checkpoint { padding:18px; }
+  .sorp-public-search-checkpoint ul { grid-template-columns:1fr; }
   .sorp-answer-proposal { padding:16px; }
   .sorp-structured-confirmation { padding:16px; }
   .sorp-structured-confirmation > button { width:100%; }
