@@ -162,6 +162,8 @@ test("finished report has its own editorial view, email action and print treatme
   assert.match(conversation, /Statutory report &amp; wider evidence/);
   assert.match(actions, /Your SORP Readiness Report/);
   assert.match(actions, /Email my report/);
+  assert.match(actions, /data\.attachment\?\.endsWith\("\.pdf"\)/);
+  assert.match(actions, /Your full report PDF/);
   assert.match(actions, /SORP is the requirement\.<br \/>Better impact is the opportunity\./);
   assert.match(actions, /Print \/ save PDF/);
   assert.match(css, /@media print \{[\s\S]*?\.sorp-report-email[\s\S]*?display: none !important/);
@@ -510,7 +512,7 @@ test("server-renders the conversational SORP readiness workspace", async () => {
   assert.match(paymentSource, /Print \/ save PDF/);
   assert.match(paymentSource, /Support the free tool/);
   assert.match(paymentSource, /This is optional support for the free tool\./);
-  assert.match(paymentSource, /Want a copy in your inbox\?/);
+  assert.match(paymentSource, /Want the full report as a PDF in your inbox\?/);
   assert.match(paymentSource, /report-email/);
   assert.match(paymentSource, /assessment_completed/);
   assert.match(paymentSource, /result_preview_viewed/);

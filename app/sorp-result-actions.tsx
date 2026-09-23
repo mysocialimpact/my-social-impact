@@ -6,7 +6,12 @@ type ReviewBand = "small" | "medium" | "large";
 type Choice = "review" | "support" | "free" | null;
 type Usefulness = "very" | "somewhat" | "not_really" | null;
 type Role = "" | "Trustee" | "CEO" | "Employee" | "Adviser" | "Other";
-type ResultSummary = { score: number; band: string; confidence: "HIGH" | "MEDIUM" | "LOW"; overview: string; strong: string[]; attention: string[]; priorities: string[]; judgement?: string[] };
+type ReportResult = {
+  score: number; band: string; confidence: "HIGH" | "MEDIUM" | "LOW"; overview: string;
+  sectionScores: { section: string; label: string; score: number; narrative: string }[];
+  strong: string[]; attention: string[]; must: string[]; should: string[]; may: string[]; judgement: string[];
+  additionalChecks: string[]; trusteesReportReadiness: string[]; widerImpactEvidence: string[]; userConfirmedPractice: string[]; priorities: string[];
+};
 
 const reviewBands: Array<{ id: ReviewBand; label: string; income: string; amount: number }> = [
   { id: "small", label: "Small charity", income: "Up to £500,000 income", amount: 50 },
@@ -38,7 +43,7 @@ function headline(items: string[], fallback: string) {
   return items.length ? items.slice(0, 3) : [fallback];
 }
 
-export function SorpResultActions({ sessionId, organisation, income, result, children, onBackToAssessment, startWithChoices = false }: { sessionId: string; organisation: string; income: string; result: ResultSummary; children: ReactNode; onBackToAssessment: () => void; startWithChoices?: boolean }) {
+export function SorpResultActions({ sessionId, organisation, income, result, impactMode, children, onBackToAssessment, startWithChoices = false }: { sessionId: string; organisation: string; income: string; result: ReportResult; impactMode: boolean; children: ReactNode; onBackToAssessment: () => void; startWithChoices?: boolean }) {
   const storageKey = `msi-sorp-report-mode:${sessionId}`;
   const [choice, setChoice] = useState<Choice>(null);
   const [usefulness, setUsefulness] = useState<Usefulness>(null);
@@ -54,6 +59,7 @@ export function SorpResultActions({ sessionId, organisation, income, result, chi
   const [role, setRole] = useState<Role>("");
   const [emailState, setEmailState] = useState<"idle" | "sending" | "sent">("idle");
   const [emailError, setEmailError] = useState("");
+  const [emailedFile, setEmailedFile] = useState("");
   const reportRef = useRef<HTMLElement>(null);
   const reviewRef = useRef<HTMLDivElement>(null);
   const supportRef = useRef<HTMLDivElement>(null);
@@ -135,9 +141,10 @@ export function SorpResultActions({ sessionId, organisation, income, result, chi
     event.preventDefault();
     setEmailError(""); setEmailState("sending");
     try {
-      const response = await fetch("/api/readiness/report-email", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ sessionId, email, role, organisation, result }) });
-      const data = await response.json() as { ok?: boolean; error?: string };
-      if (!response.ok || !data.ok) throw new Error(data.error || "We could not send your report just now.");
+      const response = await fetch("/api/readiness/report-email", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ sessionId, email, role, organisation, result, impactMode }) });
+      const data = await response.json() as { ok?: boolean; attachment?: string; error?: string };
+      if (!response.ok || !data.ok || !data.attachment?.endsWith(".pdf")) throw new Error(data.error || "The full PDF attachment could not be confirmed. Please try again.");
+      setEmailedFile(data.attachment);
       setEmailState("sent");
       void track(sessionId, "email_report_requested", { role: role || "not_supplied" }, true);
     } catch (caught) {
@@ -205,7 +212,7 @@ export function SorpResultActions({ sessionId, organisation, income, result, chi
         <div className="sorp-report-hero-result"><strong>{result.score}<small> / 100</small></strong><b>{result.band}</b><span>Confidence: {result.confidence}</span><button type="button" onClick={() => window.print()}>Print / save PDF ↗</button></div>
       </header>
       <div className="sorp-full-report">{children}</div>
-      <section className="sorp-report-email" aria-labelledby="sorp-report-email-title"><div><span>Keep your report</span><h2 id="sorp-report-email-title">Keep your report</h2><p>Want a copy in your inbox?</p><small>Your full report is already open and free. Email is optional.</small></div>{emailState === "sent" ? <p className="sorp-report-email-success" role="status">✓ Your report has been sent to {email}.</p> : <form onSubmit={sendReport}><label htmlFor="sorp-report-email">Email address<input id="sorp-report-email" type="email" autoComplete="email" required value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.org" /></label><label htmlFor="sorp-report-role">Your role — optional<select id="sorp-report-role" value={role} onChange={(event) => setRole(event.target.value as Role)}><option value="">Prefer not to say</option><option>Trustee</option><option>CEO</option><option>Employee</option><option>Adviser</option><option>Other</option></select></label><button type="submit" disabled={emailState === "sending"}>{emailState === "sending" ? "Sending…" : "Email my report"} <span>→</span></button>{emailError && <p role="alert"><strong>Sorry — we couldn’t email your report just now.</strong> {emailError} Your report is still available here.</p>}</form>}</section>
+      <section className="sorp-report-email" aria-labelledby="sorp-report-email-title"><div><span>Keep your report</span><h2 id="sorp-report-email-title">Keep your report</h2><p>Want the full report as a PDF in your inbox?</p><small>Your full report is already open and free. Email is optional.</small></div>{emailState === "sent" ? <p className="sorp-report-email-success" role="status">✓ Your full report PDF ({emailedFile}) has been emailed to {email}.</p> : <form onSubmit={sendReport}><label htmlFor="sorp-report-email">Email address<input id="sorp-report-email" type="email" autoComplete="email" required value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.org" /></label><label htmlFor="sorp-report-role">Your role — optional<select id="sorp-report-role" value={role} onChange={(event) => setRole(event.target.value as Role)}><option value="">Prefer not to say</option><option>Trustee</option><option>CEO</option><option>Employee</option><option>Adviser</option><option>Other</option></select></label><button type="submit" disabled={emailState === "sending"}>{emailState === "sending" ? "Sending full PDF…" : "Email my report"} <span>→</span></button>{emailError && <p role="alert"><strong>Sorry — we couldn’t email your full PDF report just now.</strong> {emailError} Your report is still available here; please try again.</p>}</form>}</section>
       <section className="sorp-report-beyond"><span>The next opportunity</span><h2>SORP is the requirement.<br />Better impact is the opportunity.</h2><div><p>My Social Impact would love to help you go beyond compliance — strengthening how impact is measured, managed, evidenced and communicated.</p><a href="mailto:marcus@mysocialimpact.org?subject=SORP%20readiness%20and%20impact%20conversation">Book a conversation <span>→</span></a><small>Opens an email to Marcus so you can arrange a time.</small></div></section>
       {choice === "review" && reviewPanel}{choice === "support" && supportPanel}
     </section>}
