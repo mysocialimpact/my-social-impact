@@ -409,11 +409,11 @@ function PublicAnswerProposal({ proposal }: { proposal: PublicReadinessFinding }
   </section>;
 }
 
-function SorpStageContext({ workflow, income, impactReportConfirmed, accountEmail }: { workflow: ReadinessWorkflow; income: AssessmentSetup["income"]; impactReportConfirmed: boolean; accountEmail?: string }) {
+function SorpStageContext({ workflow, income, impactReportConfirmed, accountEmail, organisation, publicSources = [] }: { workflow: ReadinessWorkflow; income: AssessmentSetup["income"]; impactReportConfirmed: boolean; accountEmail?: string; organisation?: OrganisationCard | null; publicSources?: PublicSource[] }) {
   const publicIncome = workflow.known.find((item) => item.id === "income")?.value || "";
   const showKnownContext = workflow.currentStage === 1 || workflow.next.id === "publicSearchCheckpoint";
   return <>
-    {workflow.next.provisional ? <ProvisionalReadinessView review={workflow.next.provisional} income={income} publicIncome={publicIncome} impactReportConfirmed={impactReportConfirmed} /> : showKnownContext ? <SorpKnownContext workflow={workflow} /> : <section className="sorp-stage-context" aria-label="MSI guidance and evidence">
+    {organisation ? <section className="sorp-stage-context is-organisation" aria-label="Organisation found"><span>Organisation found</span><h2>{organisation.name}</h2>{organisation.locality && <p>{organisation.locality}</p>}{publicSources.length ? <nav aria-label="Organisation sources">{publicSources.slice(0, 2).map((source) => <a key={source.url} href={source.url} target="_blank" rel="noreferrer">{confirmationSourceLabel(source)}</a>)}</nav> : null}</section> : workflow.next.provisional ? <ProvisionalReadinessView review={workflow.next.provisional} income={income} publicIncome={publicIncome} impactReportConfirmed={impactReportConfirmed} /> : showKnownContext ? <SorpKnownContext workflow={workflow} /> : <section className="sorp-stage-context" aria-label="MSI guidance and evidence">
       <span>MSI guidance &amp; evidence</span>
       {workflow.next.proposal ? <PublicAnswerProposal proposal={workflow.next.proposal} /> : <><h2>{workflow.stageTitle}</h2><p>{workflow.next.why}</p></>}
       <SorpBasisDrawer basis={workflow.next.basis} />
@@ -1072,7 +1072,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
     <SorpJourneyProgress current={currentStage} completed={activeWorkflow?.completedStages || []} result={Boolean(result && reviewIndex === null)} />
 
     <div className="sorp-journey-body">
-    <aside className="sorp-journey-aside">{activeWorkflow && <SorpStageContext workflow={activeWorkflow} income={state.setup.income} impactReportConfirmed={state.impactReportConfirmation === "confirmed" || state.impactReportInput === "uploaded"} accountEmail={account?.email} />}</aside>
+    <aside className="sorp-journey-aside">{activeWorkflow && <SorpStageContext workflow={activeWorkflow} income={state.setup.income} impactReportConfirmed={state.impactReportConfirmation === "confirmed" || state.impactReportInput === "uploaded"} accountEmail={account?.email} organisation={activeResponseMessage?.organisation} publicSources={activeResponseMessage?.publicSources} />}</aside>
 
     <div className="readiness-thread" aria-live="polite">
       {setupOnly && workflow?.completedStages.includes(2) && <button type="button" className="sorp-setup-continue" onClick={() => onSetupComplete?.(state, workflow)}>✓ Context established — continue to the 15 questions →</button>}
@@ -1085,11 +1085,6 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
         {message.workflow?.next.id !== "publicSearchCheckpoint" && <div><MessageContent text={message.organisation ? "I think I’ve found you." : message.content} /></div>}
         {message.workflow?.next.id === "publicSearchCheckpoint" && <PublicSearchCheckpoint workflow={message.workflow} />}
         {message.role === "assistant" && !message.organisation && message.responseKind === "detour" && <section className="sorp-question-purpose"><strong>What we need next</strong><p>{message.workflow?.next.question}</p></section>}
-        {message.organisation && <section className="readiness-organisation-card" aria-label="Organisation found">
-          <h3>{message.organisation.name}</h3>
-          {message.organisation.locality && <p className="readiness-organisation-location">{message.organisation.locality}</p>}
-          {message.publicSources?.length ? <nav className="readiness-organisation-links" aria-label="Organisation sources">{message.publicSources.slice(0, 2).map((source) => <a key={source.url} href={source.url} target="_blank" rel="noreferrer">{confirmationSourceLabel(source)}</a>)}</nav> : null}
-        </section>}
         {message.organisation && <p className="sorp-confirm-question">Is this the right organisation?</p>}
         {message.responseKind === "detour" && message.citations?.length ? <SorpBasisDrawer basis={{classification: message.label || "MSI JUDGEMENT", explanation: "The SORP passages relevant to your question.", citations: message.citations}} /> : null}
         {!message.organisation && message.publicSources?.length ? <details><summary>Sources</summary><div>{message.publicSources.map((source) => <article key={`${source.url}-${source.detail}`}><strong>{sourceKindLabel(source.kind)} · {source.label}</strong>{source.detail && <p>{source.detail}</p>}<a href={source.url}>View source <span>→</span></a></article>)}</div></details> : null}

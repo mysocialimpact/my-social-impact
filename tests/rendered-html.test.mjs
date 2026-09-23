@@ -67,7 +67,7 @@ test("server-renders the My Social Impact homepage", async () => {
 test("every page inherits the global build stamp", async () => {
   const layout = await readFile(new URL("../app/layout.tsx", import.meta.url), "utf8");
   assert.match(layout, /global-build-stamp/);
-  assert.match(layout, /BUILD 80 · 23 SEPTEMBER 2026 · 18:46 BST/);
+  assert.match(layout, /BUILD 81 · 23 SEPTEMBER 2026 · 18:52 BST/);
 });
 
 test("explicit setup confirmations save directly without an intelligence thinking state", async () => {
@@ -340,7 +340,8 @@ test("server-renders the conversational SORP readiness workspace", async () => {
   assert.match(paymentSource, /credit the cost of your review against that work/);
   assert.match(paymentSource, /Cost genuinely a barrier/);
   assert.doesNotMatch(source, /where it is registered, its reporting year, approximate income/);
-  assert.match(source, /readiness-organisation-card/);
+  assert.match(source, /sorp-stage-context is-organisation/);
+  assert.doesNotMatch(source, /readiness-organisation-card/);
   assert.match(source, /Choose an answer/);
   assert.match(source, /Choose a quick answer/);
   assert.match(source, /Or tell us in your own words/);
