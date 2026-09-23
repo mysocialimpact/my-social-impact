@@ -67,7 +67,7 @@ test("server-renders the My Social Impact homepage", async () => {
 test("every page inherits the global build stamp", async () => {
   const layout = await readFile(new URL("../app/layout.tsx", import.meta.url), "utf8");
   assert.match(layout, /global-build-stamp/);
-  assert.match(layout, /BUILD 94 · 23 SEPTEMBER 2026 · 23:06 BST/);
+  assert.match(layout, /BUILD 95 · 23 SEPTEMBER 2026 · 23:13 BST/);
 });
 
 test("explicit setup confirmations save directly without an intelligence thinking state", async () => {
@@ -165,6 +165,7 @@ test("Deep Dive introduces the next step and keeps suggested answers in scale or
   assert.match(conversation, /readinessAnswerOrder = \["YES, CLEARLY", "MOSTLY", "PARTLY", "NOT YET", "NOT SURE", "SKIP FOR NOW"\]/);
   assert.match(conversation, /orderReadinessActions\(responseActions\)/);
   assert.match(conversation, /suggested \? "is-suggested"/);
+  assert.match(conversation, /setSelectedQuickAction\(\{ questionId: selectedWorkflow\.next\.id, value, label \}\)/);
   assert.match(conversation, /confirmStructuredAnswer\(composer, pending\)/);
   assert.match(conversation, /id="readiness-answer"/);
   assert.match(conversation, /className="readiness-mic"/);
@@ -460,8 +461,8 @@ test("server-renders the conversational SORP readiness workspace", async () => {
   assert.match(source, /Trustees’ Annual Report/);
   assert.match(source, /wider impact evidence/i);
   assert.match(source, /historical starting point/);
-  assert.match(source, /Happy with this answer\?/);
-  assert.match(source, /Add a note in your own words — completely optional/);
+  assert.doesNotMatch(source, /Happy with this answer\?/);
+  assert.match(source, /WANT TO ADD ANYTHING, OR FANCY A QUICK CHAT BEFORE YOU SUBMIT THIS ANSWER\?/);
   assert.match(source, /interaction: "confirm_structured_answer"/);
   assert.match(source, /structuredAnswerFromAction/);
   assert.match(source, /looksLikeQuestion/);
@@ -479,7 +480,7 @@ test("server-renders the conversational SORP readiness workspace", async () => {
   assert.match(source, /SORP does not apply in the circumstances established/);
   assert.match(source, /Or tell us in your own words — or ask/);
   assert.match(source, /publicly_observed/);
-  assert.match(source, /selectStructuredAnswer\(action\.value\)/);
+  assert.match(source, /selectStructuredAnswer\(action\.value, action\.label\)/);
   assert.match(source, /Choose all that apply\./);
   assert.match(source, /Continue with choices/);
   assert.match(source, /Select more than one if needed, then add a little detail below if it would help\./);

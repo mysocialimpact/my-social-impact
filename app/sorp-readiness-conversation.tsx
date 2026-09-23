@@ -154,6 +154,7 @@ function looksLikeQuestion(value: string) {
 
 function isDeterministicSetupReply(value: string, stepId = "") {
   const answer = value.trim();
+  if (/^field:\d+$/.test(stepId) && /^skip for now$/i.test(answer)) return true;
   if (/^(?:screen:|check:)/.test(stepId) && /^(?:yes|no|not sure)$/i.test(answer)) return true;
   if (["accountsConfirmation", "startDateConfirmation"].includes(stepId)) {
     return /^(?:yes|yep|yeah|correct|right|no|nope|i\s+(?:don[’']?t|do not)\s+know|not sure|skip|move on)\b/i.test(answer);
@@ -540,6 +541,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
   const [fullReviewFeedbackComment, setFullReviewFeedbackComment] = useState("");
   const [stageEightReportMode, setStageEightReportMode] = useState(false);
   const [deepDiveIntroOpen, setDeepDiveIntroOpen] = useState(false);
+  const [selectedQuickAction, setSelectedQuickAction] = useState<(MessageAction & { questionId: string }) | null>(null);
   const composerRef = useRef<HTMLTextAreaElement>(null);
   const reportInputRef = useRef<HTMLInputElement>(null);
   const threadEndRef = useRef<HTMLDivElement>(null);
@@ -657,6 +659,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
     const restoreReviewPosition = (event: PopStateEvent) => {
       const candidate = event.state?.sorpReviewIndex;
       setReviewIndex(Number.isInteger(candidate) && candidate >= 0 && candidate < checkpoints.length ? candidate : null);
+      setSelectedQuickAction(null);
       setState((current) => ({ ...current, pendingStructuredAnswer: null }));
       setComposer("");
       setError("");
@@ -679,6 +682,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
 
   function startConversation(useSnapshot = false) {
     setWorkflow(null);
+    setSelectedQuickAction(null);
     setCompletionNotice("");
     setCheckpoints([]);
     setReviewIndex(null);
@@ -769,13 +773,14 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
       setError("");
       return;
     }
+    if (/^field:\d+$/.test(selectedWorkflow.next.id) || (selectedWorkflow.next.id.startsWith("check:") && selectedWorkflow.currentStage !== 7)) {
+      setSelectedQuickAction({ questionId: selectedWorkflow.next.id, value, label });
+      setError("");
+      return;
+    }
     const pending = selectedWorkflow.currentStage === 7 && selectedWorkflow.next.id.startsWith("check:") ? null : structuredAnswerFromAction(value, selectedWorkflow.next.id);
     if (!pending) {
       void sendMessage(value);
-      return;
-    }
-    if (selectedWorkflow.next.id.startsWith("field:")) {
-      void confirmStructuredAnswer(composer, pending);
       return;
     }
     setState((current) => ({ ...current, pendingStructuredAnswer: pending }));
@@ -972,6 +977,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
         responseKind: data.assistant.responseKind,
       }]);
       if (data.result) setResult(data.result);
+      setSelectedQuickAction(null);
     } catch (caught) {
       if (!reviewing) setMessages(messages);
       setComposer(note);
@@ -1045,6 +1051,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
         responseKind: data.assistant.responseKind,
       }]);
       if (data.result) setResult(data.result);
+      if (data.workflow.next.id !== workflow?.next.id) setSelectedQuickAction(null);
     } catch (caught) {
       setMessages(messages);
       setComposer(value);
@@ -1057,7 +1064,17 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
 
   function submit(event: FormEvent) {
     event.preventDefault();
-    if (reviewIndex !== null && state.pendingStructuredAnswer) {
+    if (isReadinessScale) {
+      const choice = activeQuickAction || suggestedQuickAction;
+      if (composer.trim() && (!activeQuickAction || looksLikeQuestion(composer))) {
+        void sendMessage(composer, composer, false, "conversation_first");
+      } else if (choice && displayedAnswerLabel(choice.label).toUpperCase() === "SKIP FOR NOW") {
+        void sendMessage(composer.trim() ? `${choice.value}\n\n${composer.trim()}` : choice.value, composer.trim() ? `${displayedAnswerLabel(choice.label)}\n\n${composer.trim()}` : displayedAnswerLabel(choice.label));
+      } else if (choice) {
+        const pending = structuredAnswerFromAction(choice.value, responseQuestionId);
+        if (pending) void confirmStructuredAnswer(composer, pending);
+      } else if (composer.trim()) void sendMessage(composer);
+    } else if (reviewIndex !== null && state.pendingStructuredAnswer) {
       void confirmStructuredAnswer(composer);
     } else if (workflow?.next.id === "activities" && composer.trim()) {
       void sendMessage(composer, composer, true, "conversation_first");
@@ -1080,6 +1097,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
     if (!checkpoints.length) return;
     const nextIndex = reviewIndex === null ? checkpoints.length - 1 : Math.max(0, reviewIndex - 1);
     setReviewIndex(nextIndex);
+    setSelectedQuickAction(null);
     window.history.pushState({ sorpReviewIndex: nextIndex }, "");
     setCompletionNotice("");
     setComposer("");
@@ -1090,6 +1108,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
     if (reviewIndex === null || busy || quickAdvancing || recordingState !== "idle") return;
     const nextIndex = reviewIndex < checkpoints.length - 1 ? reviewIndex + 1 : null;
     setReviewIndex(nextIndex);
+    setSelectedQuickAction(null);
     window.history.pushState({ sorpReviewIndex: nextIndex }, "");
     setCompletionNotice("");
     setComposer("");
@@ -1172,8 +1191,11 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
     : messageResponseActions;
   const orderedResponseActions = /^field:\d+$/.test(responseQuestionId) ? orderReadinessActions(responseActions) : responseActions;
   const suggestedAnswer = /^field:\d+$/.test(responseQuestionId) ? activeWorkflow?.next.proposal?.suggestedAnswer : undefined;
+  const suggestedQuickAction = suggestedAnswer && !reviewCheckpoint ? orderedResponseActions.find((action) => displayedAnswerLabel(action.label).toUpperCase() === answerLabels[suggestedAnswer]) : undefined;
+  const isReadinessScale = /^field:\d+$/.test(responseQuestionId) || responseQuestionId.startsWith("check:") && currentStage !== 7;
+  const activeQuickAction = selectedQuickAction?.questionId === responseQuestionId ? selectedQuickAction : pendingStructuredAnswer?.target === responseQuestionId ? { questionId: responseQuestionId, value: pendingStructuredAnswer.label, label: pendingStructuredAnswer.label } : null;
   const impactReportMissingAtPayoff = isStageOnePayoff && !activeWorkflow?.known.find((item) => item.id === "impactReport")?.established && state.impactReportInput !== "uploaded";
-  const showResponseActions = responseActions.length > 0 && !pendingStructuredAnswer && (reviewIndex === null || /^(?:field:\d+|check:)/.test(responseQuestionId));
+  const showResponseActions = responseActions.length > 0 && (!pendingStructuredAnswer || isReadinessScale) && (reviewIndex === null || /^(?:field:\d+|check:)/.test(responseQuestionId));
   const quickReview = activeResponseMessage?.workflow?.next.provisional || null;
   const saveDialog = saveDialogOpen && <div className="sorp-save-dialog-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && saveStatus !== "saving") setSaveDialogOpen(false); }}><section className="sorp-save-dialog" role="dialog" aria-modal="true" aria-labelledby="sorp-save-title">
     <button type="button" className="sorp-save-close" onClick={() => setSaveDialogOpen(false)} disabled={saveStatus === "saving"} aria-label="Close finish another time form">×</button>
@@ -1281,24 +1303,18 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
       </div>
       <section className="sorp-response-fields" aria-label="Respond to MSI Intelligence">
       {showResponseActions && <nav className={`readiness-message-actions${/^(?:screen:|check:)/.test(responseQuestionId) && currentStage === 7 ? " is-stage-seven-choices" : /^(?:field:\d+|check:)/.test(responseQuestionId) ? " is-assessment-scale" : ""}${responseQuestionId === "activities" ? " is-multi-select" : ""}`} aria-label={responseQuestionId === "activities" ? "Choose all activities that apply" : /^(?:screen:|field:\d+|check:)/.test(responseQuestionId) ? "Choose a quick answer" : "Choose an answer"}>{orderedResponseActions.map((action) => {
-        const selected = responseQuestionId === "activities" && activitySelections.includes(action.value);
-        const saved = reviewCheckpoint?.answerText?.toUpperCase().startsWith(action.label.toUpperCase().replace(/^KEEP\s+/, ""));
+        const selected = responseQuestionId === "activities" ? activitySelections.includes(action.value) : activeQuickAction?.value === action.value;
+        const saved = !activeQuickAction && reviewCheckpoint?.answerText?.toUpperCase().startsWith(action.label.toUpperCase().replace(/^KEEP\s+/, ""));
         const label = displayedAnswerLabel(action.label);
         const suggested = Boolean(suggestedAnswer && label.toUpperCase() === answerLabels[suggestedAnswer]);
-        return <button aria-pressed={responseQuestionId === "activities" ? selected : saved || undefined} aria-label={suggested ? `${label} — MSI suggested answer` : undefined} className={[label === "SKIP FOR NOW" ? "is-skip" : "", suggested ? "is-suggested" : "", selected || saved ? "is-selected" : ""].filter(Boolean).join(" ") || undefined} key={`${action.label}-${action.value}`} type="button" disabled={busy || quickAdvancing} onClick={() => selectStructuredAnswer(action.value, action.label)}><span className="sorp-action-label">{label}{suggested && <small>OUR VIEW</small>}</span><span aria-hidden="true">{selected || saved ? "✓" : "→"}</span></button>;
+        return <button aria-pressed={responseQuestionId === "activities" || isReadinessScale ? Boolean(selected || saved) : saved || undefined} aria-label={suggested ? `${label} — MSI suggested answer` : undefined} className={[label === "SKIP FOR NOW" ? "is-skip" : "", suggested ? "is-suggested" : "", selected || saved ? "is-selected" : ""].filter(Boolean).join(" ") || undefined} key={`${action.label}-${action.value}`} type="button" disabled={busy || quickAdvancing} onClick={() => selectStructuredAnswer(action.value, action.label)}><span className="sorp-action-label">{label}{suggested && <small>OUR VIEW</small>}</span><span aria-hidden="true">{selected || saved ? "✓" : "→"}</span></button>;
       })}</nav>}
       {responseQuestionId === "impactReportLink" && <ImpactReportUploader onChoose={chooseReportFile} dragging={reportDragging} onDragEnter={(event) => { event.preventDefault(); setReportDragging(true); }} onDragLeave={(event) => { event.preventDefault(); setReportDragging(false); }} onDragOver={(event) => { event.preventDefault(); setReportDragging(true); }} onDrop={dropReport} busy={busy} />}
       {impactReportMissingAtPayoff && <button type="button" className="sorp-skip-impact-report" disabled={busy || quickAdvancing} onClick={() => selectStructuredAnswer(quickReviewAction)}>Continue without one <span>→</span></button>}
       {responseQuestionId === "activities" && <p className="sorp-multi-select-help"><strong>Choose all that apply.</strong><span>Select more than one if needed, then add a little detail below if it would help.</span></p>}
-      {pendingStructuredAnswer && <section className="sorp-structured-confirmation" aria-live="polite">
-        <strong>✓ {pendingStructuredAnswer.label}</strong>
-        <h3>Happy with this answer?</h3>
-        <button type="button" onClick={() => void confirmStructuredAnswer(composer)} disabled={quickAdvancing || recordingState !== "idle"}>Continue <span>→</span></button>
-        <p><b>Want to explain why?</b><span>Add a note in your own words — completely optional.</span></p>
-      </section>}
-      <label htmlFor="readiness-answer" aria-live="polite">Or tell us in your own words — or ask {impactMode ? "an impact" : "a SORP"} question.</label>
+      <label htmlFor="readiness-answer" aria-live="polite">{isReadinessScale ? "WANT TO ADD ANYTHING, OR FANCY A QUICK CHAT BEFORE YOU SUBMIT THIS ANSWER?" : `Or tell us in your own words — or ask ${impactMode ? "an impact" : "a SORP"} question.`}</label>
       <textarea ref={composerRef} id="readiness-answer" rows={2} value={composer} onChange={(event) => setComposer(event.target.value)} placeholder={activityQuestion ? "Add detail—or ask us why this matters…" : pendingStructuredAnswer ? "Add an optional note…" : "Type or say what you know…"} maxLength={4000} />
-      <div className="readiness-submit-row"><button type="button" className="readiness-mic" onClick={recordingState === "recording" ? stopRecording : () => void startRecording()} disabled={busy || quickAdvancing || recordingState === "transcribing"}>{recordingState === "recording" ? `Stop · ${recordingTime(recordingSeconds)}` : recordingState === "transcribing" ? "Transcribing…" : "Use microphone"}</button><button type="submit" className={busy || quickAdvancing ? "is-working" : undefined} disabled={busy || quickAdvancing || (!pendingStructuredAnswer && !(activityQuestion && activitySelections.length) && composer.trim().length < 2) || recordingState !== "idle"}>{busy ? "Understanding…" : quickAdvancing ? "Saving…" : reviewIndex !== null ? "Save revised answer" : conversationFirstMessage ? "Send message" : activityQuestion && activitySelections.length ? "Continue with choices" : result ? "Keep talking" : "Continue"} <span>→</span></button></div>
+      <div className="readiness-submit-row"><button type="button" className="readiness-mic" onClick={recordingState === "recording" ? stopRecording : () => void startRecording()} disabled={busy || quickAdvancing || recordingState === "transcribing"}>{recordingState === "recording" ? `Stop · ${recordingTime(recordingSeconds)}` : recordingState === "transcribing" ? "Transcribing…" : "Use microphone"}</button><button type="submit" className={busy || quickAdvancing ? "is-working" : undefined} disabled={busy || quickAdvancing || (!isReadinessScale && !pendingStructuredAnswer && !(activityQuestion && activitySelections.length) && composer.trim().length < 2) || isReadinessScale && !activeQuickAction && !suggestedQuickAction && !composer.trim() || recordingState !== "idle"}>{busy ? "Understanding…" : quickAdvancing ? "Saving…" : isReadinessScale ? "Continue" : reviewIndex !== null ? "Save revised answer" : conversationFirstMessage ? "Send message" : activityQuestion && activitySelections.length ? "Continue with choices" : result ? "Keep talking" : "Continue"} <span>→</span></button></div>
       </section>
     </form>
     {saveDialog}
