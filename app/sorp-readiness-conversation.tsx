@@ -313,6 +313,19 @@ function FullReviewRail({ result }: { result: Result }) {
 }
 
 const answerLabels: Record<PublicReadinessFinding["suggestedAnswer"], string> = { yes: "YES, CLEARLY", mostly: "MOSTLY", partly: "PARTLY", not_yet: "NOT YET", not_sure: "NOT SURE" };
+const readinessAnswerOrder = ["YES, CLEARLY", "MOSTLY", "PARTLY", "NOT YET", "NOT SURE", "SKIP FOR NOW"];
+
+function displayedAnswerLabel(label: string) {
+  return label.replace(/^KEEP\s+/i, "").trim();
+}
+
+function orderReadinessActions(actions: MessageAction[]) {
+  return [...actions].sort((first, second) => {
+    const firstPosition = readinessAnswerOrder.indexOf(displayedAnswerLabel(first.label).toUpperCase());
+    const secondPosition = readinessAnswerOrder.indexOf(displayedAnswerLabel(second.label).toUpperCase());
+    return (firstPosition < 0 ? readinessAnswerOrder.length : firstPosition) - (secondPosition < 0 ? readinessAnswerOrder.length : secondPosition);
+  });
+}
 
 function reportYear(title: string, url: string) {
   const match = `${title} ${url}`.match(/(?:19|20)\d{2}(?:[\s-]+(?:19|20)?\d{2})?/);
@@ -364,6 +377,18 @@ function QuickReviewExplanation({ review, onReplaceImpactReport }: { review: Pub
     <p>Go deeper to check whether this historical picture still reflects your current practice and where the real gaps are.</p>
     {review.impactReport.found && <button type="button" className="sorp-replace-impact-report" onClick={onReplaceImpactReport}>Have a newer Impact Report? Replace it →</button>}
   </div>;
+}
+
+function DeepDiveIntroduction() {
+  return <section className="sorp-deep-dive-introduction" aria-label="Before the deeper review">
+    <h2>Go a little deeper</h2>
+    <p>Your Quick Readiness Review was based mainly on the public reporting and evidence we could find. Now we’ll work through the relevant SORP areas in more detail.</p>
+    <p>We’ve suggested answers wherever the evidence gives us a reasonable starting point, so you’re not starting from scratch.</p>
+    <p>For each question, you can:</p>
+    <ul><li>✓ Keep our suggested answer</li><li>↔ Change it</li><li>💬 Explain or qualify your answer</li><li>❓ Ask us about the requirement</li></ul>
+    <p>Use this however suits you — part questionnaire, part conversation. We’ll explain what SORP is looking for, help identify gaps and flag where judgement may be needed.</p>
+    <small>If human judgement could genuinely help, we’ll flag that too.</small>
+  </section>;
 }
 
 function ProvisionalReadinessView({ review, impactReportConfirmed = false, impactReportUploaded = false }: { review: PublicReadinessReview; impactReportConfirmed?: boolean; impactReportUploaded?: boolean }) {
@@ -514,6 +539,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
   const [fullReviewFeedback, setFullReviewFeedback] = useState<number | null>(null);
   const [fullReviewFeedbackComment, setFullReviewFeedbackComment] = useState("");
   const [stageEightReportMode, setStageEightReportMode] = useState(false);
+  const [deepDiveIntroOpen, setDeepDiveIntroOpen] = useState(false);
   const composerRef = useRef<HTMLTextAreaElement>(null);
   const reportInputRef = useRef<HTMLInputElement>(null);
   const threadEndRef = useRef<HTMLDivElement>(null);
@@ -725,10 +751,15 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
     }
   }
 
-  function selectStructuredAnswer(value: string) {
+  function selectStructuredAnswer(value: string, label = value) {
     const selectedWorkflow = reviewIndex === null ? workflow : checkpoints[reviewIndex]?.workflow;
     if (!selectedWorkflow || busy || quickAdvancing) return;
     if (reviewIndex !== null && !selectedWorkflow.next.id.match(/^(?:field:\d+|check:)/)) return;
+    if (selectedWorkflow.next.id === "publicReview" && /go deeper/i.test(label) && !deepDiveIntroOpen) {
+      setDeepDiveIntroOpen(true);
+      setError("");
+      return;
+    }
     if (value === "__UPLOAD_REPORT__") {
       reportInputRef.current?.click();
       return;
@@ -741,6 +772,10 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
     const pending = selectedWorkflow.currentStage === 7 && selectedWorkflow.next.id.startsWith("check:") ? null : structuredAnswerFromAction(value, selectedWorkflow.next.id);
     if (!pending) {
       void sendMessage(value);
+      return;
+    }
+    if (selectedWorkflow.next.id.startsWith("field:")) {
+      void confirmStructuredAnswer(composer, pending);
       return;
     }
     setState((current) => ({ ...current, pendingStructuredAnswer: pending }));
@@ -874,9 +909,10 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
     if (file) void uploadReport(file);
   }
 
-  async function confirmStructuredAnswer(rawNote: string) {
-    const pending = state.pendingStructuredAnswer;
+  async function confirmStructuredAnswer(rawNote: string, selectedAnswer?: PendingStructuredAnswer) {
+    const pending = selectedAnswer || state.pendingStructuredAnswer;
     if (!pending || busy || quickAdvancing || recordingState !== "idle") return;
+    const submissionState = selectedAnswer ? { ...state, pendingStructuredAnswer: selectedAnswer } : state;
     const note = rawNote.trim();
     const userMessage: Message = { role: "user", content: note ? `${pending.label}\n\n${note}` : pending.label };
     const reviewing = reviewIndex !== null;
@@ -894,7 +930,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
         body: JSON.stringify({
           message: note || "Continue",
           interaction: "confirm_structured_answer",
-          state,
+          state: submissionState,
           history: nextMessages.slice(-40).map(({ role, content }) => ({ role, content })),
           sessionId: sessionId || newSessionId(),
           intelligencePin: intelligence?.effectiveVersion ? { effectiveVersion: intelligence.effectiveVersion } : null,
@@ -906,7 +942,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
         setCheckpoints((current) => current.map((checkpoint, index) => index === reviewIndex ? { ...checkpoint, answerText: pending.label, note } : checkpoint));
       } else {
         setCheckpoints((current) => [...current, {
-          state: { ...state, pendingStructuredAnswer: null },
+          state: { ...submissionState, pendingStructuredAnswer: null },
           messagesLength: messages.length,
           workflow,
           result,
@@ -990,6 +1026,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
       if (workflow?.next.id === "activities" && !preserveActivitySelections) setActivitySelections([]);
       setState(data.state);
       setWorkflow(data.workflow);
+      if (deepDiveIntroOpen && data.workflow.currentStage >= 3) setDeepDiveIntroOpen(false);
       if (setupOnly && data.workflow.completedStages.includes(2)) onSetupComplete?.(data.state, data.workflow);
       const newlyKnown = data.workflow.known.filter(item => item.established && !workflow?.known.find(previous => previous.id === item.id)?.established);
       const newlyCompleted = data.workflow.completedStages.filter(stage => !workflow?.completedStages.includes(stage));
@@ -1036,6 +1073,10 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
 
   function goBack() {
     if (busy || quickAdvancing || recordingState !== "idle") return;
+    if (deepDiveIntroOpen) {
+      setDeepDiveIntroOpen(false);
+      return;
+    }
     if (!checkpoints.length) return;
     const nextIndex = reviewIndex === null ? checkpoints.length - 1 : Math.max(0, reviewIndex - 1);
     setReviewIndex(nextIndex);
@@ -1121,11 +1162,16 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
   const responseQuestionId = activeResponseMessage?.workflow?.next.id || activeWorkflow?.next.id || "";
   const messageResponseActions = activeResponseMessage?.actions || [];
   const quickReviewAction = messageResponseActions.find((action) => /quick review/i.test(`${action.label} ${action.value}`))?.value || "See my quick review";
+  const goDeeperAction = messageResponseActions.find((action) => /go deeper/i.test(`${action.label} ${action.value}`))?.value || "Go deeper";
   const responseActions = responseQuestionId === "publicSearchCheckpoint"
     ? [{ label: "SEE MY QUICK REVIEW", value: quickReviewAction }]
+    : deepDiveIntroOpen && responseQuestionId === "publicReview"
+    ? [{ label: "START THE DEEPER REVIEW", value: goDeeperAction }]
     : activeResponseMessage?.workflow?.next.provisional && responseQuestionId === "publicReview" && !messageResponseActions.some((action) => /go deeper/i.test(action.label))
-    ? [{ label: "GO DEEPER", value: "Go deeper" }, ...messageResponseActions]
+    ? [{ label: "GO DEEPER", value: goDeeperAction }, ...messageResponseActions]
     : messageResponseActions;
+  const orderedResponseActions = /^field:\d+$/.test(responseQuestionId) ? orderReadinessActions(responseActions) : responseActions;
+  const suggestedAnswer = /^field:\d+$/.test(responseQuestionId) ? activeWorkflow?.next.proposal?.suggestedAnswer : undefined;
   const impactReportMissingAtPayoff = isStageOnePayoff && !activeWorkflow?.known.find((item) => item.id === "impactReport")?.established && state.impactReportInput !== "uploaded";
   const showResponseActions = responseActions.length > 0 && !pendingStructuredAnswer && (reviewIndex === null || /^(?:field:\d+|check:)/.test(responseQuestionId));
   const quickReview = activeResponseMessage?.workflow?.next.provisional || null;
@@ -1196,7 +1242,9 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
       {activeMessages.map((message, index) => index === activeMessages.length - 1 && <article id="readiness-current-question" key={`${index}-${message.content.slice(0, 24)}`} className={`readiness-message is-${message.role}${message.responseKind === "detour" ? " is-detour" : ""}`}>
         <span>{message.role === "user" ? "You" : "My Social Impact Intelligence"}</span>
         {message.label && message.responseKind === "detour" && <strong className={`readiness-label is-${message.label.toLowerCase().replace(" ", "-")}`}>{message.label === "JUDGEMENT" ? "MSI JUDGEMENT" : message.label}</strong>}
-        {message.workflow?.next.id !== "publicSearchCheckpoint" && (message.workflow?.next.id === "publicReview" && message.workflow.next.provisional?.trusteesReport.reviewed
+        {message.workflow?.next.id !== "publicSearchCheckpoint" && (deepDiveIntroOpen && message.workflow?.next.id === "publicReview" && message.responseKind !== "detour"
+          ? <DeepDiveIntroduction />
+          : message.workflow?.next.id === "publicReview" && message.workflow.next.provisional?.trusteesReport.reviewed
           ? <QuickReviewExplanation review={message.workflow.next.provisional} onReplaceImpactReport={() => selectStructuredAnswer("No — I have a newer Impact Report")} />
           : <div><MessageContent text={message.organisation ? "I think I’ve found you." : message.content} /></div>)}
         {message.role === "assistant" && message.responseKind !== "detour" && message.workflow && (/^field:\d+/.test(message.workflow.next.id) || message.workflow.next.id.startsWith("check:") && message.workflow.currentStage !== 7) && <DeepDiveQuestionContext workflow={message.workflow} />}
@@ -1207,7 +1255,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
         {message.responseKind === "detour" && message.citations?.length ? <SorpBasisDrawer basis={{classification: message.label || "MSI JUDGEMENT", explanation: "The SORP passages relevant to your question.", citations: message.citations}} /> : null}
         {!message.organisation && message.publicSources?.length ? <details><summary>Sources</summary><div>{message.publicSources.map((source) => <article key={`${source.url}-${source.detail}`}><strong>{sourceKindLabel(source.kind)} · {source.label}</strong>{source.detail && <p>{source.detail}</p>}<a href={source.url}>View source <span>→</span></a></article>)}</div></details> : null}
       </article>)}
-      {quickReview?.trusteesReport.reviewed && <QuickReviewFeedback value={quickReviewFeedback} comment={quickReviewFeedbackComment} onSelect={recordQuickReviewFeedback} onComment={recordQuickReviewFeedbackComment} />}
+      {quickReview?.trusteesReport.reviewed && !deepDiveIntroOpen && <QuickReviewFeedback value={quickReviewFeedback} comment={quickReviewFeedbackComment} onSelect={recordQuickReviewFeedback} onComment={recordQuickReviewFeedbackComment} />}
       {busy && <article className="readiness-message is-assistant is-loading" role="status" aria-live="polite"><span>My Social Impact Intelligence</span><div><p>{workingStatus}</p></div></article>}
       {error && <div className="readiness-error" role="alert"><strong>That step did not complete.</strong><p>{error}</p><button type="button" onClick={() => { setError(""); composerRef.current?.focus(); }}>Try again</button></div>}
       {intelligence && <details className="readiness-intelligence" aria-label="Effective intelligence provenance">
@@ -1226,16 +1274,18 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
       <input ref={reportInputRef} type="file" accept="application/pdf,.pdf,.doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" hidden onChange={(event) => { const file = event.target.files?.[0]; if (file) void uploadReport(file); }} />
       <div className="sorp-response-utility">
       <nav className="sorp-bottom-navigation" aria-label="Assessment navigation">
-        <span className="sorp-bottom-utility"><button type="button" className="is-back" aria-label="Back to previous question" onClick={goBack} disabled={!checkpoints.length || busy || quickAdvancing || recordingState !== "idle"}>← Back</button>
+        <span className="sorp-bottom-utility"><button type="button" className="is-back" aria-label={deepDiveIntroOpen ? "Back to Quick Readiness Review" : "Back to previous question"} onClick={goBack} disabled={(!deepDiveIntroOpen && !checkpoints.length) || busy || quickAdvancing || recordingState !== "idle"}>← Back</button>
         <button type="button" className="is-save" onClick={() => { setSaveStatus("idle"); setSaveError(""); setSaveDialogOpen(true); }}>Save &amp; exit</button></span>
         {reviewIndex !== null && <button type="button" className="is-next" onClick={goNext}>{reviewIndex < checkpoints.length - 1 ? "Next →" : result ? "Return to my report →" : "Return to current question →"}</button>}
       </nav>
       </div>
       <section className="sorp-response-fields" aria-label="Respond to MSI Intelligence">
-      {showResponseActions && <nav className={`readiness-message-actions${/^(?:screen:|check:)/.test(responseQuestionId) && currentStage === 7 ? " is-stage-seven-choices" : /^(?:field:\d+|check:)/.test(responseQuestionId) ? " is-assessment-scale" : ""}${responseQuestionId === "activities" ? " is-multi-select" : ""}`} aria-label={responseQuestionId === "activities" ? "Choose all activities that apply" : /^(?:screen:|field:\d+|check:)/.test(responseQuestionId) ? "Choose a quick answer" : "Choose an answer"}>{responseActions.map((action) => {
+      {showResponseActions && <nav className={`readiness-message-actions${/^(?:screen:|check:)/.test(responseQuestionId) && currentStage === 7 ? " is-stage-seven-choices" : /^(?:field:\d+|check:)/.test(responseQuestionId) ? " is-assessment-scale" : ""}${responseQuestionId === "activities" ? " is-multi-select" : ""}`} aria-label={responseQuestionId === "activities" ? "Choose all activities that apply" : /^(?:screen:|field:\d+|check:)/.test(responseQuestionId) ? "Choose a quick answer" : "Choose an answer"}>{orderedResponseActions.map((action) => {
         const selected = responseQuestionId === "activities" && activitySelections.includes(action.value);
         const saved = reviewCheckpoint?.answerText?.toUpperCase().startsWith(action.label.toUpperCase().replace(/^KEEP\s+/, ""));
-        return <button aria-pressed={responseQuestionId === "activities" ? selected : saved || undefined} className={[action.label === "SKIP FOR NOW" ? "is-skip" : "", selected || saved ? "is-selected" : ""].filter(Boolean).join(" ") || undefined} key={`${action.label}-${action.value}`} type="button" disabled={busy || quickAdvancing} onClick={() => selectStructuredAnswer(action.value)}>{action.label}<span>{selected || saved ? "✓" : "→"}</span></button>;
+        const label = displayedAnswerLabel(action.label);
+        const suggested = Boolean(suggestedAnswer && label.toUpperCase() === answerLabels[suggestedAnswer]);
+        return <button aria-pressed={responseQuestionId === "activities" ? selected : saved || undefined} aria-label={suggested ? `${label} — MSI suggested answer` : undefined} className={[label === "SKIP FOR NOW" ? "is-skip" : "", suggested ? "is-suggested" : "", selected || saved ? "is-selected" : ""].filter(Boolean).join(" ") || undefined} key={`${action.label}-${action.value}`} type="button" disabled={busy || quickAdvancing} onClick={() => selectStructuredAnswer(action.value, action.label)}><span className="sorp-action-label">{label}{suggested && <small>OUR VIEW</small>}</span><span aria-hidden="true">{selected || saved ? "✓" : "→"}</span></button>;
       })}</nav>}
       {responseQuestionId === "impactReportLink" && <ImpactReportUploader onChoose={chooseReportFile} dragging={reportDragging} onDragEnter={(event) => { event.preventDefault(); setReportDragging(true); }} onDragLeave={(event) => { event.preventDefault(); setReportDragging(false); }} onDragOver={(event) => { event.preventDefault(); setReportDragging(true); }} onDrop={dropReport} busy={busy} />}
       {impactReportMissingAtPayoff && <button type="button" className="sorp-skip-impact-report" disabled={busy || quickAdvancing} onClick={() => selectStructuredAnswer(quickReviewAction)}>Continue without one <span>→</span></button>}

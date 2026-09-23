@@ -67,7 +67,7 @@ test("server-renders the My Social Impact homepage", async () => {
 test("every page inherits the global build stamp", async () => {
   const layout = await readFile(new URL("../app/layout.tsx", import.meta.url), "utf8");
   assert.match(layout, /global-build-stamp/);
-  assert.match(layout, /BUILD 93 · 23 SEPTEMBER 2026 · 22:51 BST/);
+  assert.match(layout, /BUILD 94 · 23 SEPTEMBER 2026 · 23:06 BST/);
 });
 
 test("explicit setup confirmations save directly without an intelligence thinking state", async () => {
@@ -153,6 +153,22 @@ test("Quick Readiness Review keeps TAR and wider evidence separate", async () =>
   assert.match(conversation, /How’s this going\?/);
   assert.match(conversation, /Extremely useful/);
   assert.match(conversation, /go deeper/i);
+});
+
+test("Deep Dive introduces the next step and keeps suggested answers in scale order", async () => {
+  const conversation = await readFile(new URL("../app/sorp-readiness-conversation.tsx", import.meta.url), "utf8");
+  const css = await readFile(new URL("../app/sorp-journey.css", import.meta.url), "utf8");
+  assert.match(conversation, /function DeepDiveIntroduction\(\)/);
+  assert.match(conversation, /Go a little deeper/);
+  assert.match(conversation, /setDeepDiveIntroOpen\(true\)/);
+  assert.match(conversation, /START THE DEEPER REVIEW/);
+  assert.match(conversation, /readinessAnswerOrder = \["YES, CLEARLY", "MOSTLY", "PARTLY", "NOT YET", "NOT SURE", "SKIP FOR NOW"\]/);
+  assert.match(conversation, /orderReadinessActions\(responseActions\)/);
+  assert.match(conversation, /suggested \? "is-suggested"/);
+  assert.match(conversation, /confirmStructuredAnswer\(composer, pending\)/);
+  assert.match(conversation, /id="readiness-answer"/);
+  assert.match(conversation, /className="readiness-mic"/);
+  assert.match(css, /is-assessment-scale button\.is-suggested/);
 });
 
 test("structured choices share the bottom response area with chat and voice", async () => {
