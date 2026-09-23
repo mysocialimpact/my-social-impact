@@ -67,7 +67,7 @@ test("server-renders the My Social Impact homepage", async () => {
 test("every page inherits the global build stamp", async () => {
   const layout = await readFile(new URL("../app/layout.tsx", import.meta.url), "utf8");
   assert.match(layout, /global-build-stamp/);
-  assert.match(layout, /BUILD 86 · 23 SEPTEMBER 2026 · 21:29 BST/);
+  assert.match(layout, /BUILD 87 · 23 SEPTEMBER 2026 · 21:33 BST/);
 });
 
 test("explicit setup confirmations save directly without an intelligence thinking state", async () => {
@@ -110,6 +110,18 @@ test("desktop SORP uses one compact two-column guidance and response grammar", a
   assert.match(conversation, /className="sorp-bottom-utility"/);
   assert.match(styles, /@media\(min-width:901px\)[\s\S]*\.sorp-journey-body \{ grid-template-columns:minmax\(0,\.36fr\) minmax\(0,\.64fr\)/);
   assert.match(conversation, /className="sorp-response-fields"/);
+});
+
+test("Deep Dive keeps suggested answers and evidence beside the question, with stage progress in the rail", async () => {
+  const conversation = await readFile(new URL("../app/sorp-readiness-conversation.tsx", import.meta.url), "utf8");
+  const rail = conversation.slice(conversation.indexOf("function SorpStageContext"), conversation.indexOf("export function SorpReadinessConversation"));
+  assert.match(conversation, /function DeepDiveStageRail/);
+  assert.match(conversation, /function DeepDiveQuestionContext/);
+  assert.match(conversation, /message\.workflow && \/\^\(\?:field:/);
+  assert.match(conversation, /<DeepDiveQuestionContext workflow=\{message\.workflow\}/);
+  assert.match(rail, /<DeepDiveStageRail workflow=\{workflow\} state=\{state\}/);
+  assert.doesNotMatch(rail, /<PublicAnswerProposal/);
+  assert.match(conversation, /<SorpBasisDrawer basis=\{workflow\.next\.basis\} \/>/);
 });
 
 test("SORP progress shows only completed, current and future states at the right time", async () => {

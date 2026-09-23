@@ -5,7 +5,7 @@ import { SorpSnapshotLink } from "./sorp-snapshot-link";
 import { SorpResultActions } from "./sorp-result-actions";
 import { buildActivitySubmission, toggleActivityChoice } from "./sorp-activity-selection";
 import { SorpJourneyProgress, SorpKnownContext, SorpBasisDrawer, type PublicReadinessFinding, type PublicReadinessReview, type ReadinessWorkflow } from "./sorp-journey";
-import { additionalChecks, coreQuestions, readinessStages, type AdditionalAnswerValue, type AnswerValue, type AssessmentSetup } from "./sorp-questionnaire";
+import { additionalChecks, coreQuestions, readinessStages, stageForQuestion, type AdditionalAnswerValue, type AnswerValue, type AssessmentSetup } from "./sorp-questionnaire";
 
 const SNAPSHOT_RESULT_KEY = "msi-sorp-readiness-result-v2";
 const CONVERSATION_KEY = "msi-sorp-readiness-conversation-v1";
@@ -399,17 +399,43 @@ function PublicAnswerProposal({ proposal }: { proposal: PublicReadinessFinding }
     <span>{proposal.trusteesReportEvidence ? "Based on your latest Trustees’ Annual Report, we think:" : "Based on the wider public evidence, we think:"}</span>
     <strong>{answerLabels[proposal.suggestedAnswer]}</strong>
     <h4>Why</h4><p>{proposal.reason}</p>
-    <div className="sorp-public-evidence-split"><p><b>Trustees’ Annual Report</b><span>{proposal.trusteesReportEvidence || "We could not establish this from the Trustees’ Annual Report."}</span></p><p><b>Wider impact evidence</b><span>{proposal.widerImpactEvidence || "No separate wider evidence changes this view."}</span></p></div>
+    <div className="sorp-public-evidence-split"><p><b>Trustees’ Annual Report</b><span>{proposal.trusteesReportEvidence || "We could not establish this from the Trustees’ Annual Report."}</span></p>{proposal.widerImpactEvidence && <p><b>Wider impact evidence</b><span>{proposal.widerImpactEvidence}</span></p>}</div>
+  </section>;
+}
+
+const stageCheckLabels: Record<number, string> = {
+  1: "Purpose and activities", 2: "Activities and public benefit", 3: "Period objectives", 4: "Programmes and intended change",
+  5: "Measures of success", 6: "Outputs and outcomes", 7: "Evidence of impact", 8: "Main achievements", 9: "Aims and results", 10: "Impact and longer-term effects",
+  11: "Balanced reporting", 12: "Factors affecting results", 13: "Future plans", 14: "A consistent report story", 15: "Information ready to report",
+};
+
+function DeepDiveStageRail({ workflow, state }: { workflow: ReadinessWorkflow; state: ReadinessState }) {
+  const checks = workflow.currentStage === 7
+    ? additionalChecks.filter((check) => state.additional[check.id]?.relevant || workflow.next.id === `check:${check.id}`).map((check) => ({ id: check.id, label: check.title, complete: state.additional[check.id]?.answer !== null && state.additional[check.id]?.answer !== undefined, current: workflow.next.id === `check:${check.id}` }))
+    : coreQuestions.filter((question) => stageForQuestion(question) === workflow.currentStage).map((question) => ({ id: String(question.id), label: stageCheckLabels[question.id], complete: state.fields[String(question.id)]?.answer !== null && state.fields[String(question.id)]?.answer !== undefined, current: workflow.next.id === `field:${question.id}` }));
+  const complete = checks.filter((check) => check.complete).length;
+  return <section className="sorp-stage-coach" aria-label={`${workflow.stageTitle} progress`}>
+    <span>Your progress</span><h2>{workflow.stageTitle}</h2>
+    {checks.length > 0 && <><p className="sorp-stage-coach-count">{complete} of {checks.length} checks complete</p><ol>{checks.map((check) => <li key={check.id} className={check.complete ? "is-complete" : check.current ? "is-current" : undefined}><span aria-hidden="true">{check.complete ? "✓" : "○"}</span>{check.label}</li>)}</ol></>}
+    <p className="sorp-stage-coach-note">{complete > 0 ? "Good progress — keep confirming what still reflects your current practice." : "Your published reporting gives us a starting point. You can confirm or correct it as we go."}</p>
+  </section>;
+}
+
+function DeepDiveQuestionContext({ workflow }: { workflow: ReadinessWorkflow }) {
+  return <section className="sorp-deep-dive-context" aria-label="Suggested answer and evidence">
+    {workflow.next.proposal && <PublicAnswerProposal proposal={workflow.next.proposal} />}
+    {workflow.next.why && <div className="sorp-deep-dive-meaning"><h4>{workflow.next.proposal ? "What this means" : "Why we’re asking"}</h4><p>{workflow.next.why}</p></div>}
+    <SorpBasisDrawer basis={workflow.next.basis} />
     <p className="sorp-proposal-confirm">Does that seem right?<span>Keep it, change it below, or tell us in your own words.</span></p>
   </section>;
 }
 
-function SorpStageContext({ workflow, impactReportConfirmed, impactReportUploaded, accountEmail, organisation, publicSources = [] }: { workflow: ReadinessWorkflow; impactReportConfirmed: boolean; impactReportUploaded: boolean; accountEmail?: string; organisation?: OrganisationCard | null; publicSources?: PublicSource[] }) {
+function SorpStageContext({ workflow, state, impactReportConfirmed, impactReportUploaded, accountEmail, organisation, publicSources = [] }: { workflow: ReadinessWorkflow; state: ReadinessState; impactReportConfirmed: boolean; impactReportUploaded: boolean; accountEmail?: string; organisation?: OrganisationCard | null; publicSources?: PublicSource[] }) {
   const showKnownContext = workflow.currentStage === 1 || workflow.next.id === "publicSearchCheckpoint";
   return <>
-    {organisation ? <section className="sorp-stage-context is-organisation" aria-label="Organisation found"><span>Organisation found</span><h2>{organisation.name}</h2>{organisation.locality && <p>{organisation.locality}</p>}{publicSources.length ? <nav aria-label="Organisation sources">{publicSources.slice(0, 2).map((source) => <a key={source.url} href={source.url} target="_blank" rel="noreferrer">{confirmationSourceLabel(source)}</a>)}</nav> : null}</section> : workflow.next.provisional ? <ProvisionalReadinessView review={workflow.next.provisional} impactReportConfirmed={impactReportConfirmed} impactReportUploaded={impactReportUploaded} /> : showKnownContext ? <SorpKnownContext workflow={workflow} /> : <section className="sorp-stage-context" aria-label="MSI guidance and evidence">
+    {workflow.currentStage >= 3 && workflow.currentStage <= 7 ? <DeepDiveStageRail workflow={workflow} state={state} /> : organisation ? <section className="sorp-stage-context is-organisation" aria-label="Organisation found"><span>Organisation found</span><h2>{organisation.name}</h2>{organisation.locality && <p>{organisation.locality}</p>}{publicSources.length ? <nav aria-label="Organisation sources">{publicSources.slice(0, 2).map((source) => <a key={source.url} href={source.url} target="_blank" rel="noreferrer">{confirmationSourceLabel(source)}</a>)}</nav> : null}</section> : workflow.next.provisional ? <ProvisionalReadinessView review={workflow.next.provisional} impactReportConfirmed={impactReportConfirmed} impactReportUploaded={impactReportUploaded} /> : showKnownContext ? <SorpKnownContext workflow={workflow} /> : <section className="sorp-stage-context" aria-label="MSI guidance and evidence">
       <span>MSI guidance &amp; evidence</span>
-      {workflow.next.proposal ? <PublicAnswerProposal proposal={workflow.next.proposal} /> : <><h2>{workflow.stageTitle}</h2><p>{workflow.next.why}</p></>}
+      <h2>{workflow.stageTitle}</h2><p>{workflow.next.why}</p>
       <SorpBasisDrawer basis={workflow.next.basis} />
     </section>}
     <p className="sorp-journey-assurance">Your free SORP readiness report<br /><span>{accountEmail ? `Account: ${accountEmail} · saved securely` : "Narrative and impact reporting · saved on this device until you create an account"}</span></p>
@@ -1071,7 +1097,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
 
     <div className="sorp-journey-body">
     <aside className="sorp-journey-aside">
-      {activeWorkflow && <SorpStageContext workflow={activeWorkflow} impactReportConfirmed={state.impactReportConfirmation === "confirmed"} impactReportUploaded={state.impactReportInput === "uploaded"} accountEmail={account?.email} organisation={contextMessage?.organisation} publicSources={contextMessage?.publicSources} />}
+      {activeWorkflow && <SorpStageContext workflow={activeWorkflow} state={reviewCheckpoint?.state || state} impactReportConfirmed={state.impactReportConfirmation === "confirmed"} impactReportUploaded={state.impactReportInput === "uploaded"} accountEmail={account?.email} organisation={contextMessage?.organisation} publicSources={contextMessage?.publicSources} />}
       {!contextMessage?.organisation && !activeWorkflow?.known.some((item) => item.established) && currentStage === 1 && <section className="sorp-context-intro"><span>What we’re going to do</span><h2>We’ll do the public homework first.</h2><p>We’ll use public information to do as much of the work as possible for you. We’ll look for your charity record, accounts and Trustees’ Annual Report, establish the SORP context, then give you a Quick Readiness Review.</p><small>Completely free · No card required</small></section>}
     </aside>
 
@@ -1086,6 +1112,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
         {message.workflow?.next.id !== "publicSearchCheckpoint" && (message.workflow?.next.id === "publicReview" && message.workflow.next.provisional?.trusteesReport.reviewed
           ? <QuickReviewExplanation review={message.workflow.next.provisional} onReplaceImpactReport={() => selectStructuredAnswer("No — I have a newer Impact Report")} />
           : <div><MessageContent text={message.organisation ? "I think I’ve found you." : message.content} /></div>)}
+        {message.role === "assistant" && message.responseKind !== "detour" && message.workflow && /^(?:field:\d+|check:)/.test(message.workflow.next.id) && <DeepDiveQuestionContext workflow={message.workflow} />}
         {message.workflow?.next.id === "publicSearchCheckpoint" && <PublicSearchCheckpoint workflow={message.workflow} />}
         {message.role === "assistant" && !message.organisation && message.responseKind === "detour" && <section className="sorp-question-purpose"><strong>What we need next</strong><p>{message.workflow?.next.question}</p></section>}
         {message.organisation && <p className="sorp-confirm-question">Is this the right organisation?</p>}

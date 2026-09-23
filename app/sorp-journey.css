@@ -36,6 +36,17 @@ body:has(.sorp-conversation-page) > .global-build-stamp { display:none; }
 .sorp-known-context dl small { display:block; color:#6a665f; font-size:11px; line-height:1.4; }
 .sorp-journey-assurance { color:#292722; font-size:14px; line-height:1.5; margin-top:24px; }
 .sorp-journey-assurance span { color:#777068; font-size:12px; }
+.sorp-stage-coach > span { display:block; color:#b83210; font-size:11px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; }
+.sorp-stage-coach h2 { margin:10px 0 18px; font-family:var(--font-serif); font-size:clamp(25px,2.5vw,34px); font-weight:500; line-height:1.12; }
+.sorp-stage-coach-count { margin:0; padding:13px 0; border-block:1px solid #d4d0c9; color:#28633f; font-size:13px; font-weight:800; }
+.sorp-stage-coach ol { margin:0; padding:0; list-style:none; }
+.sorp-stage-coach li { display:flex; gap:12px; align-items:baseline; padding:12px 0; border-bottom:1px solid #e5e2dc; color:#6c665e; font-size:14px; line-height:1.4; }
+.sorp-stage-coach li > span { flex:0 0 17px; color:#918c84; font-size:18px; line-height:1; }
+.sorp-stage-coach li.is-complete { color:#28633f; }
+.sorp-stage-coach li.is-complete > span { color:#28633f; }
+.sorp-stage-coach li.is-current { color:#11100f; font-weight:800; }
+.sorp-stage-coach li.is-current > span { color:#11100f; }
+.sorp-stage-coach-note { margin:18px 0 0; color:#59534b; font-size:14px; line-height:1.55; }
 .sorp-journey-body .readiness-thread { width:100%; padding:0; min-width:0; }
 .sorp-reviewing-answer { margin:0 0 20px; padding:18px; border:1px solid #34764f; background:#edf3e9; color:#245f3a; }
 .sorp-reviewing-answer > span,.sorp-reviewing-answer > strong,.sorp-reviewing-answer > small { display:block; }
@@ -179,6 +190,13 @@ body:has(.sorp-conversation-page) > .global-build-stamp { display:none; }
 .sorp-answer-proposal .sorp-public-evidence-split { padding:16px 0; }
 .sorp-answer-proposal .sorp-proposal-confirm { margin:17px 0 0; color:#11100f; font-weight:800; }
 .sorp-answer-proposal .sorp-proposal-confirm span { display:block; margin-top:4px; color:#645e56; font-size:13px; font-weight:500; }
+.sorp-deep-dive-context { margin:0 0 20px; }
+.sorp-deep-dive-context .sorp-answer-proposal { margin:4px 0 0; }
+.sorp-deep-dive-meaning { padding:15px 0; border-bottom:1px solid #d4d0c9; }
+.sorp-deep-dive-meaning h4 { margin:0 0 7px; font-size:12px; letter-spacing:.04em; text-transform:uppercase; }
+.sorp-deep-dive-meaning p { margin:0; color:#4e4942; font-size:15px; line-height:1.55; }
+.sorp-deep-dive-context > .sorp-proposal-confirm { margin:18px 0 0; color:#11100f; font-size:16px; font-weight:800; }
+.sorp-deep-dive-context > .sorp-proposal-confirm span { display:block; margin-top:4px; color:#645e56; font-size:13px; font-weight:500; }
 .readiness-composer .readiness-message-actions { margin:0 0 10px; border-top:1px solid #11100f; }
 .readiness-composer .readiness-message-actions.is-assessment-scale { grid-template-columns:repeat(5,minmax(0,1fr)); border:1px solid #11100f; }
 .readiness-composer .readiness-message-actions.is-assessment-scale button { min-height:54px; padding:11px; border-right:1px solid #11100f; background:#fff; }
@@ -310,11 +328,6 @@ body:has(.sorp-conversation-page) > .global-build-stamp { display:none; }
   .sorp-stage-context.is-organisation > h2 { font-size:36px; }
   .sorp-stage-context.is-organisation nav { display:flex; flex-wrap:wrap; gap:10px 18px; padding-top:4px; border-top:1px solid #d4d0c9; }
   .sorp-stage-context.is-organisation nav a { padding-top:12px; color:#11100f; font-size:11px; font-weight:800; text-decoration:underline; text-underline-offset:4px; text-transform:uppercase; }
-  .sorp-stage-context .sorp-answer-proposal { margin:0 0 18px; padding:0 0 18px 16px; background:transparent; }
-  .sorp-stage-context .sorp-answer-proposal strong { font-size:28px; }
-  .sorp-stage-context .sorp-public-evidence-split { grid-template-columns:1fr; gap:12px; }
-  .sorp-stage-context .sorp-proposal-confirm { display:none; }
-  .sorp-stage-context .sorp-basis-drawer { margin-top:0; }
   .sorp-journey-body .readiness-message > div { padding-top:16px; }
   .sorp-conversation-page .readiness-composer { width:min(1320px,calc(100% - 48px)); display:grid; grid-template-columns:minmax(0,.36fr) minmax(0,.64fr); gap:40px; align-items:start; padding:16px 0 calc(16px + env(safe-area-inset-bottom)); background:#faf9f6; }
   .sorp-response-fields { grid-column:2; grid-row:1; }
