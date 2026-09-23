@@ -727,7 +727,16 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
 
   function recordQuickReviewFeedback(value: number) {
     setQuickReviewFeedback(value);
-    void fetch("/api/growth-event", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ eventType: "quick_review_feedback", rating: value, sessionId }) }).catch(() => undefined);
+    void fetch("/api/growth-event", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        eventId: `${sessionId}:quick-review-feedback:${crypto.randomUUID()}`,
+        eventType: "quick_review_feedback",
+        rating: value,
+        sessionId,
+      }),
+    }).catch(() => undefined);
   }
 
   function dropReport(event: DragEvent<HTMLButtonElement>) {
