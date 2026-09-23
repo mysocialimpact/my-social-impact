@@ -6,7 +6,7 @@ export type PublicReadinessFinding = { fieldId: number; suggestedAnswer: "yes" |
 export type PublicReadinessReview = {
   status: "reviewed" | "limited" | "unavailable"; readinessStatus?: "likely_ready" | "partly_ready" | "not_yet_ready" | "unable_to_determine"; overallConfidence: "high" | "medium" | "low";
   strong: string[]; attention: string[]; unknown: string[];
-  trusteesReport: { reviewed: boolean; title: string; url: string; period: string };
+  trusteesReport: { reviewed: boolean; title: string; url: string; period: string; discovery?: "standalone" | "embedded_in_annual_accounts" | "public_filing_unidentified" | "unavailable" };
   impactReport: { found: boolean; title: string; url: string };
   websiteReviewed: boolean; findings: PublicReadinessFinding[];
 };
