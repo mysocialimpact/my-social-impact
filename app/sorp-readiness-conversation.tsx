@@ -347,7 +347,7 @@ function PublicSearchProgress({ workflow }: { workflow: ReadinessWorkflow | null
   </section>;
 }
 
-function ProvisionalReadinessView({ review, income, publicIncome, impactReportConfirmed = false, feedback, feedbackComment, onFeedback, onFeedbackComment, onCorrectContext }: { review: PublicReadinessReview; income: AssessmentSetup["income"]; publicIncome: string; impactReportConfirmed?: boolean; feedback: number | null; feedbackComment: string; onFeedback: (value: number) => void; onFeedbackComment: (value: string) => void; onCorrectContext: () => void }) {
+function ProvisionalReadinessView({ review, income, publicIncome, impactReportConfirmed = false }: { review: PublicReadinessReview; income: AssessmentSetup["income"]; publicIncome: string; impactReportConfirmed?: boolean }) {
   if (!review.trusteesReport.reviewed) return <ImpactReportFound review={review} confirmed={impactReportConfirmed} />;
   const tarScore = deriveTarScore(review);
   const widerScore = typeof review.widerEvidenceScore === "number" && review.widerEvidenceScore !== tarScore ? review.widerEvidenceScore : null;
@@ -360,12 +360,11 @@ function ProvisionalReadinessView({ review, income, publicIncome, impactReportCo
   return <section className="sorp-provisional-view" aria-label="Provisional SORP readiness starting point">
     <header><div><span>Quick Readiness Review</span><h3>So — how SORP ready do you look?</h3></div><strong className={`is-${review.overallConfidence}`}><small>Confidence</small>{review.overallConfidence}</strong></header>
     <div className="sorp-quick-score"><strong>{tarScore === null ? "—" : tarScore}<small>/100</small></strong><div><b>{quickReviewBand(review.readinessStatus)}</b><span>Based primarily on your latest Trustees’ Annual Report.</span></div></div>
-    <p className="sorp-quick-tier">{likelyTier(income)}{incomeAmount ? ` · based on latest public income of ${incomeAmount}` : " · based on the public information available"}<button type="button" onClick={onCorrectContext}>Changed significantly? Correct this →</button></p>
+    <p className="sorp-quick-tier">{likelyTier(income)}{incomeAmount ? ` · based on latest public income of ${incomeAmount}` : " · based on the public information available"}</p>
     <ul className="sorp-quick-findings">{findings.map((finding, index) => <li className={`is-${finding.kind}`} key={`${finding.kind}-${index}`}><span aria-hidden="true">{finding.kind === "strong" ? "✓" : "△"}</span><p>{finding.text}</p></li>)}</ul>
     <p className="sorp-provisional-note">This is a historical starting point, not proof of future SORP 2026 readiness. The next questions confirm what still applies.</p>
     {review.impactReport.found && <details className="sorp-wider-evidence"><summary>We also found wider impact evidence <span>See wider evidence +</span></summary><div><ImpactReportFound review={review} confirmed={impactReportConfirmed} />{widerScore !== null && <p><strong>Wider evidence view: {widerScore}/100</strong><span>{review.widerEvidenceReason || "This adds useful context beyond the Trustees’ Annual Report."}</span></p>}{review.impactReport.url && <nav aria-label="Wider impact evidence reviewed"><a href={review.impactReport.url} target="_blank" rel="noreferrer">{review.impactReport.title || "Impact Report"} ↗</a></nav>}</div></details>}
     {!review.impactReport.found && review.trusteesReport.url && <a className="sorp-trustees-report-link" href={review.trusteesReport.url} target="_blank" rel="noreferrer">View the Trustees’ Annual Report used ↗</a>}
-    <QuickReviewFeedback value={feedback} comment={feedbackComment} onSelect={onFeedback} onComment={onFeedbackComment} />
   </section>;
 }
 
@@ -1016,10 +1015,14 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
   const currentStage = activeWorkflow?.currentStage || 1;
   const impactMode = state.assessmentMode === "impact_readiness";
   const pendingStructuredAnswer = state.pendingStructuredAnswer;
-  const structuredAnswerQuestion = Boolean(pendingStructuredAnswer || activeWorkflow?.next.id.match(/^(?:field:\d+|check:)/));
   const activityQuestion = activeWorkflow?.next.id === "activities" && reviewIndex === null;
   const activitySelectionCount = activitySelections.length;
   const conversationFirstMessage = Boolean((activityQuestion || pendingStructuredAnswer) && composer.trim().length > 0);
+  const activeResponseMessage = activeMessages[activeMessages.length - 1]?.role === "assistant" ? activeMessages[activeMessages.length - 1] : null;
+  const responseQuestionId = activeResponseMessage?.workflow?.next.id || activeWorkflow?.next.id || "";
+  const responseActions = activeResponseMessage?.actions || [];
+  const showResponseActions = responseActions.length > 0 && !pendingStructuredAnswer && (reviewIndex === null || /^(?:field:\d+|check:)/.test(responseQuestionId));
+  const quickReview = activeResponseMessage?.workflow?.next.provisional || null;
 
   if (!setupOnly && result && state.score !== null && sessionId && reviewIndex === null) return <div className="readiness-chat is-result-mode">
     <SorpResultActions sessionId={sessionId} organisation={state.charityName} income={state.setup.income} result={result} onBackToAssessment={() => {
@@ -1067,7 +1070,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
         {message.label && message.responseKind === "detour" && <strong className={`readiness-label is-${message.label.toLowerCase().replace(" ", "-")}`}>{message.label === "JUDGEMENT" ? "MSI JUDGEMENT" : message.label}</strong>}
         {message.workflow?.next.id !== "publicSearchCheckpoint" && !(message.workflow?.next.id === "publicReview" && message.workflow.next.provisional) && <div><MessageContent text={message.organisation ? "I think I’ve found you." : message.content} /></div>}
         {message.workflow?.next.id === "publicSearchCheckpoint" && <PublicSearchCheckpoint workflow={message.workflow} />}
-        {message.workflow?.next.provisional && <ProvisionalReadinessView review={message.workflow.next.provisional} income={state.setup.income} publicIncome={message.workflow.known.find((item) => item.id === "income")?.value || ""} impactReportConfirmed={state.impactReportConfirmation === "confirmed" || state.impactReportInput === "uploaded"} feedback={quickReviewFeedback} feedbackComment={quickReviewFeedbackComment} onFeedback={recordQuickReviewFeedback} onFeedbackComment={recordQuickReviewFeedbackComment} onCorrectContext={() => { setComposer("Something has changed: "); window.setTimeout(() => composerRef.current?.focus(), 40); }} />}
+        {message.workflow?.next.provisional && <ProvisionalReadinessView review={message.workflow.next.provisional} income={state.setup.income} publicIncome={message.workflow.known.find((item) => item.id === "income")?.value || ""} impactReportConfirmed={state.impactReportConfirmation === "confirmed" || state.impactReportInput === "uploaded"} />}
         {message.workflow?.next.proposal && <PublicAnswerProposal proposal={message.workflow.next.proposal} />}
         {message.role === "assistant" && !message.organisation && message.responseKind !== "result" && !["publicReview", "publicSearchCheckpoint"].includes(message.workflow?.next.id || "") && <section className="sorp-question-purpose"><strong>{message.responseKind === "detour" ? "What we need next" : "Why we’re asking"}</strong><p>{message.responseKind === "detour" ? message.workflow?.next.question : message.workflow?.next.why || "Finding the right organisation lets us use public information and establish whether SORP 2026 applies to you."}</p></section>}
         {message.organisation && <section className="readiness-organisation-card" aria-label="Organisation found">
@@ -1077,22 +1080,9 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
         </section>}
         {message.organisation && <p className="sorp-confirm-question">Is this the right organisation?</p>}
         {message.workflow && !message.organisation && message.responseKind !== "detour" && !["publicReview", "publicSearchCheckpoint", "answerConfirmation"].includes(message.workflow.next.id) && <SorpBasisDrawer basis={message.workflow.next.basis} />}
-        {message.actions?.length && !pendingStructuredAnswer && (reviewIndex === null || message.workflow?.next.id.match(/^(?:field:\d+|check:)/)) ? <nav className={`readiness-message-actions${message.workflow?.next.id.match(/^(?:field:\d+|check:)/) ? " is-assessment-scale" : ""}${message.workflow?.next.id === "activities" ? " is-multi-select" : ""}`} aria-label={message.workflow?.next.id === "activities" ? "Choose all activities that apply" : message.workflow?.next.id.match(/^(?:field:\d+|check:)/) ? "Choose a quick answer" : "Choose an answer"}>{message.actions.map((action) => {
-          const selected = message.workflow?.next.id === "activities" && activitySelections.includes(action.value);
-          const saved = reviewCheckpoint?.answerText?.toUpperCase().startsWith(action.label.toUpperCase().replace(/^KEEP\s+/, ""));
-          return <button aria-pressed={message.workflow?.next.id === "activities" ? selected : saved || undefined} className={[action.label === "SKIP FOR NOW" ? "is-skip" : "", selected || saved ? "is-selected" : ""].filter(Boolean).join(" ") || undefined} key={`${action.label}-${action.value}`} type="button" disabled={busy || quickAdvancing || index !== activeMessages.length - 1} onClick={() => selectStructuredAnswer(action.value)}>{action.label}<span>{selected || saved ? "✓" : "→"}</span></button>;
-        })}</nav> : null}
-        {message.workflow?.next.id === "impactReportLink" && index === activeMessages.length - 1 && <ImpactReportUploader onChoose={chooseReportFile} dragging={reportDragging} onDragEnter={(event) => { event.preventDefault(); setReportDragging(true); }} onDragLeave={(event) => { event.preventDefault(); setReportDragging(false); }} onDragOver={(event) => { event.preventDefault(); setReportDragging(true); }} onDrop={dropReport} busy={busy} />}
-        {message.workflow?.next.id === "activities" && index === messages.length - 1 && <p className="sorp-multi-select-help"><strong>Choose all that apply.</strong><span>Select more than one if needed, then add a little detail below if it would help.</span></p>}
         {message.responseKind === "detour" && message.citations?.length ? <SorpBasisDrawer basis={{classification: message.label || "MSI JUDGEMENT", explanation: "The SORP passages relevant to your question.", citations: message.citations}} /> : null}
         {!message.organisation && message.publicSources?.length ? <details><summary>Sources</summary><div>{message.publicSources.map((source) => <article key={`${source.url}-${source.detail}`}><strong>{sourceKindLabel(source.kind)} · {source.label}</strong>{source.detail && <p>{source.detail}</p>}<a href={source.url}>View source <span>→</span></a></article>)}</div></details> : null}
       </article>)}
-      {pendingStructuredAnswer && <section className="sorp-structured-confirmation" aria-live="polite">
-        <strong>✓ {pendingStructuredAnswer.label}</strong>
-        <h3>Happy with this answer?</h3>
-        <button type="button" onClick={() => void confirmStructuredAnswer(composer)} disabled={quickAdvancing || recordingState !== "idle"}>Continue <span>→</span></button>
-        <p><b>Want to explain why?</b><span>Add a note in your own words — completely optional.</span></p>
-      </section>}
       {busy && <article className="readiness-message is-assistant is-loading" role="status" aria-live="polite"><span>My Social Impact Intelligence</span><div><p>{workingStatus}</p>{(currentStage === 1 || activeWorkflow?.next.id === "publicReview" || activeWorkflow?.next.id === "publicSearchCheckpoint") && <PublicSearchProgress workflow={activeWorkflow} />}</div></article>}
       {error && <div className="readiness-error" role="alert"><strong>That step did not complete.</strong><p>{error}</p><button type="button" onClick={() => { setError(""); composerRef.current?.focus(); }}>Try again</button></div>}
       {intelligence && <details className="readiness-intelligence" aria-label="Effective intelligence provenance">
@@ -1114,11 +1104,23 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
         <button type="button" className="is-save" onClick={() => { setSaveStatus("idle"); setSaveError(""); setSaveDialogOpen(true); }}>Save &amp; exit</button>
         {reviewIndex !== null && <button type="button" className="is-next" onClick={goNext}>{reviewIndex < checkpoints.length - 1 ? "Next →" : result ? "Return to my report →" : "Return to current question →"}</button>}
       </nav>
-      {(reviewIndex === null || pendingStructuredAnswer) && <>
-        <label htmlFor="readiness-answer" aria-live="polite">{reviewIndex !== null ? "Add or update an optional explanation." : activityQuestion ? activitySelectionCount ? `✓ ${activitySelectionCount} ${activitySelectionCount === 1 ? "choice" : "choices"} selected. Want to add any more detail, or chat about why we’re asking this?` : "Choose all that apply. You can add more detail or ask why we’re asking this." : pendingStructuredAnswer ? "Want to explain why? Add a note if useful — completely optional." : structuredAnswerQuestion ? "Or tell us in your own words — or ask about the requirement." : impactMode ? "Answer naturally—or ask an impact question at any point." : "Answer naturally—or ask a SORP question at any point."}</label>
-        <textarea ref={composerRef} id="readiness-answer" rows={2} value={composer} onChange={(event) => setComposer(event.target.value)} placeholder={activityQuestion ? "Add detail—or ask us why this matters…" : pendingStructuredAnswer ? "Add an optional note…" : "Type or say what you know…"} maxLength={4000} />
-        <div><button type="button" className="readiness-mic" onClick={recordingState === "recording" ? stopRecording : () => void startRecording()} disabled={busy || quickAdvancing || recordingState === "transcribing"}>{recordingState === "recording" ? `Stop · ${recordingTime(recordingSeconds)}` : recordingState === "transcribing" ? "Transcribing…" : "Use microphone"}</button><button type="submit" className={busy || quickAdvancing ? "is-working" : undefined} disabled={busy || quickAdvancing || (!pendingStructuredAnswer && !(activityQuestion && activitySelections.length) && composer.trim().length < 2) || recordingState !== "idle"}>{busy ? "Understanding…" : quickAdvancing ? "Saving…" : reviewIndex !== null ? "Save revised answer" : conversationFirstMessage ? "Send message" : activityQuestion && activitySelections.length ? "Continue with choices" : result ? "Keep talking" : "Continue"} <span>→</span></button></div>
-      </>}
+      {showResponseActions && <nav className={`readiness-message-actions${/^(?:field:\d+|check:)/.test(responseQuestionId) ? " is-assessment-scale" : ""}${responseQuestionId === "activities" ? " is-multi-select" : ""}`} aria-label={responseQuestionId === "activities" ? "Choose all activities that apply" : /^(?:field:\d+|check:)/.test(responseQuestionId) ? "Choose a quick answer" : "Choose an answer"}>{responseActions.map((action) => {
+        const selected = responseQuestionId === "activities" && activitySelections.includes(action.value);
+        const saved = reviewCheckpoint?.answerText?.toUpperCase().startsWith(action.label.toUpperCase().replace(/^KEEP\s+/, ""));
+        return <button aria-pressed={responseQuestionId === "activities" ? selected : saved || undefined} className={[action.label === "SKIP FOR NOW" ? "is-skip" : "", selected || saved ? "is-selected" : ""].filter(Boolean).join(" ") || undefined} key={`${action.label}-${action.value}`} type="button" disabled={busy || quickAdvancing} onClick={() => selectStructuredAnswer(action.value)}>{action.label}<span>{selected || saved ? "✓" : "→"}</span></button>;
+      })}</nav>}
+      {responseQuestionId === "impactReportLink" && <ImpactReportUploader onChoose={chooseReportFile} dragging={reportDragging} onDragEnter={(event) => { event.preventDefault(); setReportDragging(true); }} onDragLeave={(event) => { event.preventDefault(); setReportDragging(false); }} onDragOver={(event) => { event.preventDefault(); setReportDragging(true); }} onDrop={dropReport} busy={busy} />}
+      {responseQuestionId === "activities" && <p className="sorp-multi-select-help"><strong>Choose all that apply.</strong><span>Select more than one if needed, then add a little detail below if it would help.</span></p>}
+      {quickReview && <div className="sorp-quick-review-response-tools"><button type="button" className="sorp-correct-context" onClick={() => { setComposer("Something has changed: "); window.setTimeout(() => composerRef.current?.focus(), 40); }}>Changed significantly? Correct this →</button><QuickReviewFeedback value={quickReviewFeedback} comment={quickReviewFeedbackComment} onSelect={recordQuickReviewFeedback} onComment={recordQuickReviewFeedbackComment} /></div>}
+      {pendingStructuredAnswer && <section className="sorp-structured-confirmation" aria-live="polite">
+        <strong>✓ {pendingStructuredAnswer.label}</strong>
+        <h3>Happy with this answer?</h3>
+        <button type="button" onClick={() => void confirmStructuredAnswer(composer)} disabled={quickAdvancing || recordingState !== "idle"}>Continue <span>→</span></button>
+        <p><b>Want to explain why?</b><span>Add a note in your own words — completely optional.</span></p>
+      </section>}
+      <label htmlFor="readiness-answer" aria-live="polite">Or tell us in your own words — or ask {impactMode ? "an impact" : "a SORP"} question.</label>
+      <textarea ref={composerRef} id="readiness-answer" rows={2} value={composer} onChange={(event) => setComposer(event.target.value)} placeholder={activityQuestion ? "Add detail—or ask us why this matters…" : pendingStructuredAnswer ? "Add an optional note…" : "Type or say what you know…"} maxLength={4000} />
+      <div><button type="button" className="readiness-mic" onClick={recordingState === "recording" ? stopRecording : () => void startRecording()} disabled={busy || quickAdvancing || recordingState === "transcribing"}>{recordingState === "recording" ? `Stop · ${recordingTime(recordingSeconds)}` : recordingState === "transcribing" ? "Transcribing…" : "Use microphone"}</button><button type="submit" className={busy || quickAdvancing ? "is-working" : undefined} disabled={busy || quickAdvancing || (!pendingStructuredAnswer && !(activityQuestion && activitySelections.length) && composer.trim().length < 2) || recordingState !== "idle"}>{busy ? "Understanding…" : quickAdvancing ? "Saving…" : reviewIndex !== null ? "Save revised answer" : conversationFirstMessage ? "Send message" : activityQuestion && activitySelections.length ? "Continue with choices" : result ? "Keep talking" : "Continue"} <span>→</span></button></div>
     </form>
     {saveDialogOpen && <div className="sorp-save-dialog-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && saveStatus !== "saving") setSaveDialogOpen(false); }}><section className="sorp-save-dialog" role="dialog" aria-modal="true" aria-labelledby="sorp-save-title">
       <button type="button" className="sorp-save-close" onClick={() => setSaveDialogOpen(false)} disabled={saveStatus === "saving"} aria-label="Close finish another time form">×</button>

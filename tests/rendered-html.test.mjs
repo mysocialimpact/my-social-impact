@@ -67,7 +67,7 @@ test("server-renders the My Social Impact homepage", async () => {
 test("every page inherits the global build stamp", async () => {
   const layout = await readFile(new URL("../app/layout.tsx", import.meta.url), "utf8");
   assert.match(layout, /global-build-stamp/);
-  assert.match(layout, /BUILD 77 · 23 SEPTEMBER 2026 · 17:15 BST/);
+  assert.match(layout, /BUILD 78 · 23 SEPTEMBER 2026 · 17:38 BST/);
 });
 
 test("explicit setup confirmations save directly without an intelligence thinking state", async () => {
@@ -86,6 +86,17 @@ test("Quick Readiness Review keeps TAR and wider evidence separate", async () =>
   assert.match(conversation, /How’s this going\?/);
   assert.match(conversation, /Extremely useful/);
   assert.match(conversation, /go deeper/i);
+});
+
+test("structured choices share the bottom response area with chat and voice", async () => {
+  const conversation = await readFile(new URL("../app/sorp-readiness-conversation.tsx", import.meta.url), "utf8");
+  const composer = conversation.indexOf('className={`readiness-composer');
+  const actions = conversation.indexOf("{showResponseActions && <nav", composer);
+  const textarea = conversation.indexOf('id="readiness-answer"', actions);
+  const microphone = conversation.indexOf('className="readiness-mic"', textarea);
+  assert.ok(composer > -1 && actions > composer && textarea > actions && microphone > textarea);
+  assert.doesNotMatch(conversation, /message\.actions\?\.length/);
+  assert.match(conversation, /Or tell us in your own words — or ask/);
 });
 
 test("SORP completion uses an opaque sticky header and document-flow build footer", async () => {
@@ -346,12 +357,12 @@ test("server-renders the conversational SORP readiness workspace", async () => {
   assert.doesNotMatch(source, /Latest reported income<\/dt>/);
   assert.match(source, /nextMessages\.slice\(-40\)/);
   assert.match(source, /SORP does not apply in the circumstances established/);
-  assert.match(source, /Answer naturally—or ask an impact question at any point\./);
+  assert.match(source, /Or tell us in your own words — or ask/);
   assert.match(source, /publicly_observed/);
   assert.match(source, /selectStructuredAnswer\(action\.value\)/);
   assert.match(source, /Choose all that apply\./);
   assert.match(source, /Continue with choices/);
-  assert.match(source, /Want to add any more detail, or chat about why we’re asking this\?/);
+  assert.match(source, /Select more than one if needed, then add a little detail below if it would help\./);
   assert.match(source, /Send message/);
   assert.match(source, /interaction\?: "conversation_first"/);
   assert.match(source, /sendMessage\(composer, composer, true, "conversation_first"\)/);
