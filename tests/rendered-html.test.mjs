@@ -135,7 +135,8 @@ test("Stage 8 stays in the assessment workspace until the user enters report mod
   assert.match(stageEight, /Save &amp; exit/);
   assert.match(stageEight, /\{saveDialog\}/);
   assert.doesNotMatch(stageEight, /sorp-usefulness|Has this been useful/);
-  assert.match(resultActions, /startWithChoices/);
+  assert.match(resultActions, /useState\(openOnEntry\)/);
+  assert.match(conversation, /<SorpResultActions[^>]*openOnEntry/);
 });
 
 test("Stage 8 headline review limits findings and leaves detail for report mode", async () => {

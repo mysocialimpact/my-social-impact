@@ -38,11 +38,11 @@ function headline(items: string[], fallback: string) {
   return items.length ? items.slice(0, 3) : [fallback];
 }
 
-export function SorpResultActions({ sessionId, organisation, income, result, children, onBackToAssessment, startWithChoices = false }: { sessionId: string; organisation: string; income: string; result: ResultSummary; children: ReactNode; onBackToAssessment: () => void; startWithChoices?: boolean }) {
+export function SorpResultActions({ sessionId, organisation, income, result, children, onBackToAssessment, startWithChoices = false, openOnEntry = false }: { sessionId: string; organisation: string; income: string; result: ResultSummary; children: ReactNode; onBackToAssessment: () => void; startWithChoices?: boolean; openOnEntry?: boolean }) {
   const storageKey = `msi-sorp-report-mode:${sessionId}`;
   const [choice, setChoice] = useState<Choice>(null);
   const [usefulness, setUsefulness] = useState<Usefulness>(null);
-  const [reportOpen, setReportOpen] = useState(false);
+  const [reportOpen, setReportOpen] = useState(openOnEntry);
   const [feedback, setFeedback] = useState("");
   const [band, setBand] = useState<ReviewBand>(() => suggestedBand(income));
   const [supportAmount, setSupportAmount] = useState(5);
