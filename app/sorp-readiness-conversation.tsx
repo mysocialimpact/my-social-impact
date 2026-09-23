@@ -334,7 +334,7 @@ function QuickReviewFeedback({ value, comment, onSelect, onComment }: { value: n
     <p><strong>How’s this going?</strong><span>Your rating saves instantly and never interrupts the assessment.</span></p>
     <div className="sorp-feedback-scale"><span>1 · Not useful yet</span><span>5 · Extremely useful</span></div>
     <div className="sorp-feedback-stars" role="group" aria-label="How useful was this Quick Readiness Review?">{[1, 2, 3, 4, 5].map((rating) => <button key={rating} type="button" className={value === rating ? "is-selected" : undefined} aria-label={`${rating} out of 5`} aria-pressed={value === rating} onClick={() => onSelect(rating)}>{value !== null && rating <= value ? "★" : "☆"}</button>)}</div>
-    <label><strong>Anything you’d like to tell us?</strong><span>Optional</span><textarea value={comment} maxLength={800} rows={2} onChange={(event) => onComment(event.target.value)} placeholder="Add a short comment if useful…" /></label>
+    <details className="sorp-feedback-comment"><summary>Add an optional comment</summary><label><strong>Anything you’d like to tell us?</strong><span>Optional</span><textarea value={comment} maxLength={800} rows={2} onChange={(event) => onComment(event.target.value)} placeholder="Add a short comment if useful…" /></label></details>
   </section>;
 }
 
@@ -1035,6 +1035,8 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
   const activitySelectionCount = activitySelections.length;
   const conversationFirstMessage = Boolean((activityQuestion || pendingStructuredAnswer) && composer.trim().length > 0);
   const activeResponseMessage = activeMessages[activeMessages.length - 1]?.role === "assistant" ? activeMessages[activeMessages.length - 1] : null;
+  const contextMessage = activeResponseMessage || [...activeMessages].reverse().find((message) => message.role === "assistant");
+  const searchingPublicInformation = busy && (currentStage === 1 || activeWorkflow?.next.id === "publicReview" || activeWorkflow?.next.id === "publicSearchCheckpoint");
   const responseQuestionId = activeResponseMessage?.workflow?.next.id || activeWorkflow?.next.id || "";
   const messageResponseActions = activeResponseMessage?.actions || [];
   const responseActions = activeResponseMessage?.workflow?.next.provisional && responseQuestionId === "publicReview" && !messageResponseActions.some((action) => /go deeper/i.test(action.label))
@@ -1075,13 +1077,17 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
     <SorpJourneyProgress current={progressCurrentStage} completed={progressCompletedStages} result={Boolean(result && reviewIndex === null)} />
 
     <div className="sorp-journey-body">
-    <aside className="sorp-journey-aside">{activeWorkflow && <SorpStageContext workflow={activeWorkflow} income={state.setup.income} impactReportConfirmed={state.impactReportConfirmation === "confirmed" || state.impactReportInput === "uploaded"} accountEmail={account?.email} organisation={activeResponseMessage?.organisation} publicSources={activeResponseMessage?.publicSources} />}</aside>
+    <aside className="sorp-journey-aside">
+      {activeWorkflow && <SorpStageContext workflow={activeWorkflow} income={state.setup.income} impactReportConfirmed={state.impactReportConfirmation === "confirmed" || state.impactReportInput === "uploaded"} accountEmail={account?.email} organisation={contextMessage?.organisation} publicSources={contextMessage?.publicSources} />}
+      {searchingPublicInformation && <div className="sorp-desktop-search"><PublicSearchProgress workflow={activeWorkflow} /></div>}
+      {!contextMessage?.organisation && !activeWorkflow?.known.some((item) => item.established) && currentStage === 1 && <section className="sorp-context-intro"><span>Your starting point</span><h2>A little context.<br />A useful first view.</h2><p>We’ll look for your charity’s public accounts and Trustees’ Annual Report, then use what we find to build your Quick Readiness Review.</p><p>You can confirm the details, correct anything that has changed, or ask us a question as we go.</p><small>Completely free · No card required</small></section>}
+    </aside>
 
     <div className="readiness-thread" aria-live="polite">
       {setupOnly && workflow?.completedStages.includes(2) && <button type="button" className="sorp-setup-continue" onClick={() => onSetupComplete?.(state, workflow)}>✓ Context established — continue to the 15 questions →</button>}
       {reviewCheckpoint && <section className="sorp-reviewing-answer" aria-live="polite"><span>Reviewing saved question {reviewIndex! + 1} of {checkpoints.length}</span><strong>{reviewCheckpoint.answerText || "Saved answer"}</strong>{reviewCheckpoint.note && <p>{reviewCheckpoint.note}</p>}<small>{activeWorkflow?.next.id.match(/^(?:field:\d+|check:)/) ? "Choose another quick answer below to change this. Your later answers will be kept." : "This answer and its conversation are preserved exactly as supplied."}</small></section>}
       {activeMessages.length > 1 && <details className="sorp-conversation-history"><summary>Our conversation up to this question <span>{activeMessages.filter(message => message.role === "user").length} replies</span></summary>{activeMessages.slice(0, -1).map((message, index) => <article key={index}><small>{message.role === "user" ? "You" : "My Social Impact Intelligence"}</small><MessageContent text={message.content} />{message.organisation && <strong>{message.organisation.name} · {message.organisation.locality}</strong>}</article>)}</details>}
-      {completionNotice && <p className="sorp-completion-notice" role="status">{completionNotice}</p>}
+      {completionNotice && !isStageOnePayoff && <p className="sorp-completion-notice" role="status">{completionNotice}</p>}
       {activeMessages.map((message, index) => index === activeMessages.length - 1 && <article id="readiness-current-question" key={`${index}-${message.content.slice(0, 24)}`} className={`readiness-message is-${message.role}${message.responseKind === "detour" ? " is-detour" : ""}`}>
         <span>{message.role === "user" ? "You" : "My Social Impact Intelligence"}</span>
         {message.label && message.responseKind === "detour" && <strong className={`readiness-label is-${message.label.toLowerCase().replace(" ", "-")}`}>{message.label === "JUDGEMENT" ? "MSI JUDGEMENT" : message.label}</strong>}
@@ -1092,7 +1098,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
         {message.responseKind === "detour" && message.citations?.length ? <SorpBasisDrawer basis={{classification: message.label || "MSI JUDGEMENT", explanation: "The SORP passages relevant to your question.", citations: message.citations}} /> : null}
         {!message.organisation && message.publicSources?.length ? <details><summary>Sources</summary><div>{message.publicSources.map((source) => <article key={`${source.url}-${source.detail}`}><strong>{sourceKindLabel(source.kind)} · {source.label}</strong>{source.detail && <p>{source.detail}</p>}<a href={source.url}>View source <span>→</span></a></article>)}</div></details> : null}
       </article>)}
-      {busy && <article className="readiness-message is-assistant is-loading" role="status" aria-live="polite"><span>My Social Impact Intelligence</span><div><p>{workingStatus}</p>{(currentStage === 1 || activeWorkflow?.next.id === "publicReview" || activeWorkflow?.next.id === "publicSearchCheckpoint") && <PublicSearchProgress workflow={activeWorkflow} />}</div></article>}
+      {busy && <article className="readiness-message is-assistant is-loading" role="status" aria-live="polite"><span>My Social Impact Intelligence</span><div><p>{workingStatus}</p>{searchingPublicInformation && <div className="sorp-mobile-search"><PublicSearchProgress workflow={activeWorkflow} /></div>}</div></article>}
       {error && <div className="readiness-error" role="alert"><strong>That step did not complete.</strong><p>{error}</p><button type="button" onClick={() => { setError(""); composerRef.current?.focus(); }}>Try again</button></div>}
       {intelligence && <details className="readiness-intelligence" aria-label="Effective intelligence provenance">
         <summary>{intelligence.layers.filter((layer) => layer.id === "msi-core" || layer.id === "sorp-readiness-intelligence").map((layer) => `${intelligenceLayerLabel(layer)} · ${layer.label}`).join(" · ")}</summary>
@@ -1108,11 +1114,16 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
     </div>
     <form className={`readiness-composer${activityQuestion ? " is-activity-composer" : ""}${activitySelectionCount ? " has-activity-selections" : ""}${reviewIndex !== null ? " is-reviewing" : ""}`} onSubmit={submit}>
       <input ref={reportInputRef} type="file" accept="application/pdf,.pdf,.doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" hidden onChange={(event) => { const file = event.target.files?.[0]; if (file) void uploadReport(file); }} />
+      <div className="sorp-response-utility">
       <nav className="sorp-bottom-navigation" aria-label="Assessment navigation">
         <span className="sorp-bottom-utility"><button type="button" className="is-back" aria-label="Back to previous question" onClick={goBack} disabled={!checkpoints.length || busy || quickAdvancing || recordingState !== "idle"}>← Back</button>
         <button type="button" className="is-save" onClick={() => { setSaveStatus("idle"); setSaveError(""); setSaveDialogOpen(true); }}>Save &amp; exit</button></span>
         {reviewIndex !== null && <button type="button" className="is-next" onClick={goNext}>{reviewIndex < checkpoints.length - 1 ? "Next →" : result ? "Return to my report →" : "Return to current question →"}</button>}
       </nav>
+      {quickReview && <div className="sorp-quick-review-response-tools"><button type="button" className="sorp-correct-context" onClick={() => { setComposer("Something has changed: "); window.setTimeout(() => composerRef.current?.focus(), 40); }}>Changed significantly? Correct this →</button><QuickReviewFeedback value={quickReviewFeedback} comment={quickReviewFeedbackComment} onSelect={recordQuickReviewFeedback} onComment={recordQuickReviewFeedbackComment} /></div>}
+      {quickReview && <details className="sorp-mobile-review-tools"><summary>Rate your Quick Review · optional</summary><QuickReviewFeedback value={quickReviewFeedback} comment={quickReviewFeedbackComment} onSelect={recordQuickReviewFeedback} onComment={recordQuickReviewFeedbackComment} /><button type="button" className="sorp-correct-context" onClick={() => { setComposer("Something has changed: "); window.setTimeout(() => composerRef.current?.focus(), 40); }}>Changed significantly? Correct this →</button></details>}
+      </div>
+      <section className="sorp-response-fields" aria-label="Respond to MSI Intelligence">
       {showResponseActions && <nav className={`readiness-message-actions${/^(?:field:\d+|check:)/.test(responseQuestionId) ? " is-assessment-scale" : ""}${responseQuestionId === "activities" ? " is-multi-select" : ""}`} aria-label={responseQuestionId === "activities" ? "Choose all activities that apply" : /^(?:field:\d+|check:)/.test(responseQuestionId) ? "Choose a quick answer" : "Choose an answer"}>{responseActions.map((action) => {
         const selected = responseQuestionId === "activities" && activitySelections.includes(action.value);
         const saved = reviewCheckpoint?.answerText?.toUpperCase().startsWith(action.label.toUpperCase().replace(/^KEEP\s+/, ""));
@@ -1120,7 +1131,6 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
       })}</nav>}
       {responseQuestionId === "impactReportLink" && <ImpactReportUploader onChoose={chooseReportFile} dragging={reportDragging} onDragEnter={(event) => { event.preventDefault(); setReportDragging(true); }} onDragLeave={(event) => { event.preventDefault(); setReportDragging(false); }} onDragOver={(event) => { event.preventDefault(); setReportDragging(true); }} onDrop={dropReport} busy={busy} />}
       {responseQuestionId === "activities" && <p className="sorp-multi-select-help"><strong>Choose all that apply.</strong><span>Select more than one if needed, then add a little detail below if it would help.</span></p>}
-      {quickReview && <div className="sorp-quick-review-response-tools"><button type="button" className="sorp-correct-context" onClick={() => { setComposer("Something has changed: "); window.setTimeout(() => composerRef.current?.focus(), 40); }}>Changed significantly? Correct this →</button><QuickReviewFeedback value={quickReviewFeedback} comment={quickReviewFeedbackComment} onSelect={recordQuickReviewFeedback} onComment={recordQuickReviewFeedbackComment} /></div>}
       {pendingStructuredAnswer && <section className="sorp-structured-confirmation" aria-live="polite">
         <strong>✓ {pendingStructuredAnswer.label}</strong>
         <h3>Happy with this answer?</h3>
@@ -1129,7 +1139,8 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
       </section>}
       <label htmlFor="readiness-answer" aria-live="polite">Or tell us in your own words — or ask {impactMode ? "an impact" : "a SORP"} question.</label>
       <textarea ref={composerRef} id="readiness-answer" rows={2} value={composer} onChange={(event) => setComposer(event.target.value)} placeholder={activityQuestion ? "Add detail—or ask us why this matters…" : pendingStructuredAnswer ? "Add an optional note…" : "Type or say what you know…"} maxLength={4000} />
-      <div><button type="button" className="readiness-mic" onClick={recordingState === "recording" ? stopRecording : () => void startRecording()} disabled={busy || quickAdvancing || recordingState === "transcribing"}>{recordingState === "recording" ? `Stop · ${recordingTime(recordingSeconds)}` : recordingState === "transcribing" ? "Transcribing…" : "Use microphone"}</button><button type="submit" className={busy || quickAdvancing ? "is-working" : undefined} disabled={busy || quickAdvancing || (!pendingStructuredAnswer && !(activityQuestion && activitySelections.length) && composer.trim().length < 2) || recordingState !== "idle"}>{busy ? "Understanding…" : quickAdvancing ? "Saving…" : reviewIndex !== null ? "Save revised answer" : conversationFirstMessage ? "Send message" : activityQuestion && activitySelections.length ? "Continue with choices" : result ? "Keep talking" : "Continue"} <span>→</span></button></div>
+      <div className="readiness-submit-row"><button type="button" className="readiness-mic" onClick={recordingState === "recording" ? stopRecording : () => void startRecording()} disabled={busy || quickAdvancing || recordingState === "transcribing"}>{recordingState === "recording" ? `Stop · ${recordingTime(recordingSeconds)}` : recordingState === "transcribing" ? "Transcribing…" : "Use microphone"}</button><button type="submit" className={busy || quickAdvancing ? "is-working" : undefined} disabled={busy || quickAdvancing || (!pendingStructuredAnswer && !(activityQuestion && activitySelections.length) && composer.trim().length < 2) || recordingState !== "idle"}>{busy ? "Understanding…" : quickAdvancing ? "Saving…" : reviewIndex !== null ? "Save revised answer" : conversationFirstMessage ? "Send message" : activityQuestion && activitySelections.length ? "Continue with choices" : result ? "Keep talking" : "Continue"} <span>→</span></button></div>
+      </section>
     </form>
     {saveDialogOpen && <div className="sorp-save-dialog-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && saveStatus !== "saving") setSaveDialogOpen(false); }}><section className="sorp-save-dialog" role="dialog" aria-modal="true" aria-labelledby="sorp-save-title">
       <button type="button" className="sorp-save-close" onClick={() => setSaveDialogOpen(false)} disabled={saveStatus === "saving"} aria-label="Close finish another time form">×</button>

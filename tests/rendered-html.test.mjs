@@ -67,7 +67,7 @@ test("server-renders the My Social Impact homepage", async () => {
 test("every page inherits the global build stamp", async () => {
   const layout = await readFile(new URL("../app/layout.tsx", import.meta.url), "utf8");
   assert.match(layout, /global-build-stamp/);
-  assert.match(layout, /BUILD 82 · 23 SEPTEMBER 2026 · 19:12 BST/);
+  assert.match(layout, /BUILD 83 · 23 SEPTEMBER 2026 · 19:36 BST/);
 });
 
 test("explicit setup confirmations save directly without an intelligence thinking state", async () => {
@@ -106,8 +106,8 @@ test("desktop SORP uses one compact two-column guidance and response grammar", a
   assert.doesNotMatch(progress, /Stage \$\{current\} of \$\{stageCount\}/);
   assert.match(conversation, /function SorpStageContext/);
   assert.match(conversation, /className="sorp-bottom-utility"/);
-  assert.match(styles, /@media\(min-width:901px\)[\s\S]*\.sorp-journey-body \{ grid-template-columns:minmax\(330px,420px\) minmax\(0,1fr\)/);
-  assert.match(styles, /\.sorp-conversation-page \.readiness-composer \{ display:grid; grid-template-columns:minmax\(330px,420px\) minmax\(0,1fr\)/);
+  assert.match(styles, /@media\(min-width:901px\)[\s\S]*\.sorp-journey-body \{ grid-template-columns:minmax\(0,\.36fr\) minmax\(0,\.64fr\)/);
+  assert.match(conversation, /className="sorp-response-fields"/);
 });
 
 test("SORP progress shows only completed, current and future states at the right time", async () => {
