@@ -67,7 +67,7 @@ test("server-renders the My Social Impact homepage", async () => {
 test("every page inherits the global build stamp", async () => {
   const layout = await readFile(new URL("../app/layout.tsx", import.meta.url), "utf8");
   assert.match(layout, /global-build-stamp/);
-  assert.match(layout, /BUILD 83 · 23 SEPTEMBER 2026 · 19:36 BST/);
+  assert.match(layout, /BUILD 84 · 23 SEPTEMBER 2026 · 20:05 BST/);
 });
 
 test("explicit setup confirmations save directly without an intelligence thinking state", async () => {
@@ -136,7 +136,7 @@ test("SORP completion uses an opaque sticky header and document-flow build foote
 test("SORP working states describe the actual task and show restrained motion", async () => {
   const conversation = await readFile(new URL("../app/sorp-readiness-conversation.tsx", import.meta.url), "utf8");
   const styles = await readFile(new URL("../app/sorp-ready.css", import.meta.url), "utf8");
-  assert.match(conversation, /Checking the Charity Commission record and latest public documents/);
+  assert.match(conversation, /Checking the Charity Commission record, latest accounts and Trustees’ Annual Report/);
   assert.match(conversation, /Looking again for the right organisation/);
   assert.match(conversation, /Checking the organisation’s public information and what applies/);
   assert.match(conversation, /Understanding your answer and checking the relevant SORP guidance/);

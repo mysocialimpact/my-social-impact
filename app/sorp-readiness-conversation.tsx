@@ -177,7 +177,7 @@ function workingStatusFor(value: string, state: ReadinessState, workflow: Readin
   const researchStatus = organisationResearchStatus(state.organisationResearch);
   if (researchStatus === "needs_confirmation") {
     if (/^(?:no|nope|not us|try again|different|wrong)\b/i.test(answer)) return "Looking again for the right organisation…";
-    return "Checking the Charity Commission record and latest public documents…";
+    return "Checking the Charity Commission record, latest accounts and Trustees’ Annual Report…";
   }
   const step = workflow?.next.id || "";
   if (step === "organisation" || (!state.charityName && state.currentStage === 1)) return "Looking for the right organisation…";
@@ -338,15 +338,6 @@ function QuickReviewFeedback({ value, comment, onSelect, onComment }: { value: n
   </section>;
 }
 
-function PublicSearchProgress({ workflow }: { workflow: ReadinessWorkflow | null }) {
-  const items = workflow?.known.filter((item) => ["charityName", "legalStatus", "jurisdiction", "income", "accounts", "startDate", "trusteesReport", "impactReport"].includes(item.id)) || [];
-  const firstPending = items.findIndex((item) => !item.established);
-  return <section className="sorp-public-search-progress" aria-label="Public information search progress">
-    <p><strong>Checking the public information we can find…</strong><span>We’ll only show a tick when something is genuinely established.</span></p>
-    {items.length ? <ul>{items.map((item, index) => <li key={item.id} className={item.established ? "is-found" : index === firstPending ? "is-checking" : "is-waiting"}><span aria-hidden="true">{item.established ? "✓" : index === firstPending ? "…" : "○"}</span>{item.label}<small>{item.established ? item.value : index === firstPending ? "checking now" : "not checked yet"}</small></li>)}</ul> : null}
-  </section>;
-}
-
 function ProvisionalReadinessView({ review, income, publicIncome, impactReportConfirmed = false }: { review: PublicReadinessReview; income: AssessmentSetup["income"]; publicIncome: string; impactReportConfirmed?: boolean }) {
   if (!review.trusteesReport.reviewed) return <ImpactReportFound review={review} confirmed={impactReportConfirmed} />;
   const tarScore = deriveTarScore(review);
@@ -467,7 +458,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
     const stamp = document.querySelector<HTMLElement>(".global-build-stamp");
     const resize = () => {
       document.documentElement.style.setProperty("--sorp-viewport-height", `${viewport?.height || window.innerHeight}px`);
-      document.documentElement.style.setProperty("--sorp-stamp-height", `${stamp?.getBoundingClientRect().height || 34}px`);
+      document.documentElement.style.setProperty("--sorp-stamp-height", `${stamp ? stamp.getBoundingClientRect().height : 0}px`);
       document.documentElement.classList.toggle("sorp-keyboard-open", Boolean(viewport && window.innerHeight - viewport.height > 150));
       if ((viewport?.height || window.innerHeight) < 550 && document.activeElement === composerRef.current) {
         requestAnimationFrame(() => composerRef.current?.scrollIntoView({ block: "nearest" }));
@@ -1036,7 +1027,6 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
   const conversationFirstMessage = Boolean((activityQuestion || pendingStructuredAnswer) && composer.trim().length > 0);
   const activeResponseMessage = activeMessages[activeMessages.length - 1]?.role === "assistant" ? activeMessages[activeMessages.length - 1] : null;
   const contextMessage = activeResponseMessage || [...activeMessages].reverse().find((message) => message.role === "assistant");
-  const searchingPublicInformation = busy && (currentStage === 1 || activeWorkflow?.next.id === "publicReview" || activeWorkflow?.next.id === "publicSearchCheckpoint");
   const responseQuestionId = activeResponseMessage?.workflow?.next.id || activeWorkflow?.next.id || "";
   const messageResponseActions = activeResponseMessage?.actions || [];
   const responseActions = activeResponseMessage?.workflow?.next.provisional && responseQuestionId === "publicReview" && !messageResponseActions.some((action) => /go deeper/i.test(action.label))
@@ -1079,8 +1069,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
     <div className="sorp-journey-body">
     <aside className="sorp-journey-aside">
       {activeWorkflow && <SorpStageContext workflow={activeWorkflow} income={state.setup.income} impactReportConfirmed={state.impactReportConfirmation === "confirmed" || state.impactReportInput === "uploaded"} accountEmail={account?.email} organisation={contextMessage?.organisation} publicSources={contextMessage?.publicSources} />}
-      {searchingPublicInformation && <div className="sorp-desktop-search"><PublicSearchProgress workflow={activeWorkflow} /></div>}
-      {!contextMessage?.organisation && !activeWorkflow?.known.some((item) => item.established) && currentStage === 1 && <section className="sorp-context-intro"><span>Your starting point</span><h2>A little context.<br />A useful first view.</h2><p>We’ll look for your charity’s public accounts and Trustees’ Annual Report, then use what we find to build your Quick Readiness Review.</p><p>You can confirm the details, correct anything that has changed, or ask us a question as we go.</p><small>Completely free · No card required</small></section>}
+      {!contextMessage?.organisation && !activeWorkflow?.known.some((item) => item.established) && currentStage === 1 && <section className="sorp-context-intro"><span>What we’re going to do</span><h2>We’ll do the public homework first.</h2><p>We’ll use public information to do as much of the work as possible for you. We’ll look for your charity record, accounts and Trustees’ Annual Report, establish the SORP context, then give you a Quick Readiness Review.</p><small>Completely free · No card required</small></section>}
     </aside>
 
     <div className="readiness-thread" aria-live="polite">
@@ -1098,7 +1087,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
         {message.responseKind === "detour" && message.citations?.length ? <SorpBasisDrawer basis={{classification: message.label || "MSI JUDGEMENT", explanation: "The SORP passages relevant to your question.", citations: message.citations}} /> : null}
         {!message.organisation && message.publicSources?.length ? <details><summary>Sources</summary><div>{message.publicSources.map((source) => <article key={`${source.url}-${source.detail}`}><strong>{sourceKindLabel(source.kind)} · {source.label}</strong>{source.detail && <p>{source.detail}</p>}<a href={source.url}>View source <span>→</span></a></article>)}</div></details> : null}
       </article>)}
-      {busy && <article className="readiness-message is-assistant is-loading" role="status" aria-live="polite"><span>My Social Impact Intelligence</span><div><p>{workingStatus}</p>{searchingPublicInformation && <div className="sorp-mobile-search"><PublicSearchProgress workflow={activeWorkflow} /></div>}</div></article>}
+      {busy && <article className="readiness-message is-assistant is-loading" role="status" aria-live="polite"><span>My Social Impact Intelligence</span><div><p>{workingStatus}</p></div></article>}
       {error && <div className="readiness-error" role="alert"><strong>That step did not complete.</strong><p>{error}</p><button type="button" onClick={() => { setError(""); composerRef.current?.focus(); }}>Try again</button></div>}
       {intelligence && <details className="readiness-intelligence" aria-label="Effective intelligence provenance">
         <summary>{intelligence.layers.filter((layer) => layer.id === "msi-core" || layer.id === "sorp-readiness-intelligence").map((layer) => `${intelligenceLayerLabel(layer)} · ${layer.label}`).join(" · ")}</summary>
