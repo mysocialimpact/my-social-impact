@@ -67,7 +67,7 @@ test("server-renders the My Social Impact homepage", async () => {
 test("every page inherits the global build stamp", async () => {
   const layout = await readFile(new URL("../app/layout.tsx", import.meta.url), "utf8");
   assert.match(layout, /global-build-stamp/);
-  assert.match(layout, /BUILD 91 · 23 SEPTEMBER 2026 · 22:40 BST/);
+  assert.match(layout, /BUILD 92 · 23 SEPTEMBER 2026 · 22:49 BST/);
 });
 
 test("explicit setup confirmations save directly without an intelligence thinking state", async () => {
@@ -84,6 +84,7 @@ test("Stage 1 payoff leads with Quick Review and keeps Impact Report optional", 
   const payoff = conversation.slice(conversation.indexOf("function PublicSearchCheckpoint"), conversation.indexOf("function ImpactReportUploader"));
   assert.match(payoff, /Great — we found what we need/);
   assert.match(payoff, /Your Quick Readiness Review is ready/);
+  assert.match(payoff, /accountsFound && trusteesReportFound/);
   assert.match(payoff, /SORP 2026 appears to apply to you/);
   assert.match(payoff, /We couldn’t find a separate Impact Report or Annual Review online/);
   assert.match(conversation, /label: "SEE MY QUICK REVIEW"/);

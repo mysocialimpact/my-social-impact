@@ -387,11 +387,13 @@ function ProvisionalReadinessView({ review, impactReportConfirmed = false, impac
   </section>;
 }
 
-function PublicSearchCheckpoint({ impactReportMissing, uploadedReport }: { impactReportMissing: boolean; uploadedReport: string }) {
+function PublicSearchCheckpoint({ workflow, impactReportMissing, uploadedReport }: { workflow: ReadinessWorkflow; impactReportMissing: boolean; uploadedReport: string }) {
+  const accountsFound = Boolean(workflow.known.find((item) => item.id === "accounts")?.established);
+  const trusteesReportFound = Boolean(workflow.known.find((item) => item.id === "trusteesReport")?.established);
   return <section className="sorp-public-search-checkpoint" aria-label="Public information checkpoint">
-    <p className="sorp-impact-report-kicker">Great — we found what we need.</p>
+    <p className="sorp-impact-report-kicker">{accountsFound && trusteesReportFound ? "Great — we found what we need." : "Great — we found enough to get started."}</p>
     <h3>Your Quick Readiness Review is ready.</h3>
-    <p className="sorp-public-search-note">We found your latest accounts, reporting context and Trustees’ Annual Report, so we can give you a first readiness view based on your latest published reporting.</p>
+    <p className="sorp-public-search-note">{accountsFound && trusteesReportFound ? "We found your latest accounts, reporting context and Trustees’ Annual Report, so we can give you a first readiness view based on your latest published reporting." : "We can give you a first readiness view using the public information we could review. We’ll make clear where published reporting was unavailable."}</p>
     <p className="sorp-quick-review-ready">✓ SORP 2026 appears to apply to you</p>
     {uploadedReport && <p className="sorp-impact-upload-confirmation" role="status">✓ IMPACT REPORT ADDED <span>{uploadedReport}</span></p>}
     {impactReportMissing && <section className="sorp-stage-one-impact-offer" aria-label="Optional Impact Report">
@@ -1200,7 +1202,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
           : <div><MessageContent text={message.organisation ? "I think I’ve found you." : message.content} /></div>)}
         {message.role === "assistant" && message.responseKind !== "detour" && message.workflow && (/^field:\d+/.test(message.workflow.next.id) || message.workflow.next.id.startsWith("check:") && message.workflow.currentStage !== 7) && <DeepDiveQuestionContext workflow={message.workflow} />}
         {message.role === "assistant" && message.responseKind !== "detour" && message.workflow?.currentStage === 7 && /^(?:screen:|check:)/.test(message.workflow.next.id) && <section className="sorp-stage-seven-context"><p>{message.workflow.next.why}</p><SorpBasisDrawer basis={message.workflow.next.basis} /></section>}
-        {message.workflow?.next.id === "publicSearchCheckpoint" && <><PublicSearchCheckpoint impactReportMissing={impactReportMissingAtPayoff} uploadedReport={state.impactReportInput === "uploaded" ? completionNotice.match(/^✓ IMPACT REPORT ADDED · (.+)$/)?.[1] || "" : ""} />{impactReportMissingAtPayoff && <ImpactReportUploader onChoose={chooseReportFile} dragging={reportDragging} onDragEnter={(event) => { event.preventDefault(); setReportDragging(true); }} onDragLeave={(event) => { event.preventDefault(); setReportDragging(false); }} onDragOver={(event) => { event.preventDefault(); setReportDragging(true); }} onDrop={dropReport} busy={busy} />}</>}
+        {message.workflow?.next.id === "publicSearchCheckpoint" && <><PublicSearchCheckpoint workflow={message.workflow} impactReportMissing={impactReportMissingAtPayoff} uploadedReport={state.impactReportInput === "uploaded" ? completionNotice.match(/^✓ IMPACT REPORT ADDED · (.+)$/)?.[1] || "" : ""} />{impactReportMissingAtPayoff && <ImpactReportUploader onChoose={chooseReportFile} dragging={reportDragging} onDragEnter={(event) => { event.preventDefault(); setReportDragging(true); }} onDragLeave={(event) => { event.preventDefault(); setReportDragging(false); }} onDragOver={(event) => { event.preventDefault(); setReportDragging(true); }} onDrop={dropReport} busy={busy} />}</>}
         {message.role === "assistant" && !message.organisation && message.responseKind === "detour" && <section className="sorp-question-purpose"><strong>What we need next</strong><p>{message.workflow?.next.question}</p></section>}
         {message.organisation && <p className="sorp-confirm-question">Is this the right organisation?</p>}
         {message.responseKind === "detour" && message.citations?.length ? <SorpBasisDrawer basis={{classification: message.label || "MSI JUDGEMENT", explanation: "The SORP passages relevant to your question.", citations: message.citations}} /> : null}
