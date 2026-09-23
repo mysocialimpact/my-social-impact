@@ -67,7 +67,7 @@ test("server-renders the My Social Impact homepage", async () => {
 test("every page inherits the global build stamp", async () => {
   const layout = await readFile(new URL("../app/layout.tsx", import.meta.url), "utf8");
   assert.match(layout, /global-build-stamp/);
-  assert.match(layout, /BUILD 92 · 23 SEPTEMBER 2026 · 22:49 BST/);
+  assert.match(layout, /BUILD 93 · 23 SEPTEMBER 2026 · 22:51 BST/);
 });
 
 test("explicit setup confirmations save directly without an intelligence thinking state", async () => {
@@ -144,7 +144,9 @@ test("post-review choices are three equal routes with existing prices and action
 test("Quick Readiness Review keeps TAR and wider evidence separate", async () => {
   const conversation = await readFile(new URL("../app/sorp-readiness-conversation.tsx", import.meta.url), "utf8");
   assert.match(conversation, /Quick Readiness Review/);
-  assert.match(conversation, /So — how SORP ready do you look\?/);
+  assert.match(conversation, /<h3>ARE YOU SORP READY\?<\/h3><span className="sorp-quick-review-subtitle">Quick Readiness Review · based on your latest published reporting<\/span>/);
+  assert.match(conversation, /<p>\{finding\.reason\}<\/p><small>\{finding\.trusteesReportEvidence\}<\/small>/);
+  assert.match(conversation, /\.slice\(0, 4\)/);
   assert.match(conversation, /Wider evidence view/);
   assert.match(conversation, /Evidence confidence/);
   assert.doesNotMatch(conversation, /Is this your latest Impact Report\?/);

@@ -72,7 +72,8 @@ body:has(.sorp-conversation-page) > .global-build-stamp { display:none; }
 .sorp-provisional-view { margin:4px 0 22px; padding:24px; border:1px solid #11100f; background:#fff; }
 .sorp-provisional-view > header { display:flex; align-items:flex-start; justify-content:space-between; gap:24px; padding-bottom:20px; border-bottom:1px solid #d4d0c9; }
 .sorp-provisional-view > header span,.sorp-answer-proposal > span { display:block; color:#b83210; font-size:11px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; }
-.sorp-provisional-view h3 { margin:6px 0 0; font-family:var(--font-serif); font-size:clamp(25px,3vw,38px); font-weight:500; line-height:1.15; }
+.sorp-provisional-view h3 { margin:0; font-family:var(--font-serif); font-size:clamp(25px,3vw,38px); font-weight:500; line-height:1.15; }
+.sorp-provisional-view > header .sorp-quick-review-subtitle { margin-top:8px; color:#625c55; font-size:12px; font-weight:500; letter-spacing:0; line-height:1.4; text-transform:none; }
 .sorp-tar-label { margin:19px 0 0; font-size:12px; font-weight:800; letter-spacing:.05em; text-transform:uppercase; }
 .sorp-evidence-confidence { margin:0; padding:0 0 17px; border-bottom:1px solid #d4d0c9; font-size:12px; font-weight:700; text-transform:uppercase; }
 .sorp-evidence-confidence strong { color:#28633f; }
@@ -97,6 +98,7 @@ body:has(.sorp-conversation-page) > .global-build-stamp { display:none; }
 .sorp-quick-findings li > span { color:#b83210; font-size:18px; line-height:1.35; }
 .sorp-quick-findings li.is-strong > span { color:#287044; }
 .sorp-quick-findings p { margin:0; color:#403b35; font-size:15px; line-height:1.5; }
+.sorp-quick-findings small { display:block; margin-top:4px; color:#746e66; font-size:12px; line-height:1.45; }
 .sorp-wider-evidence { margin-top:18px; border-block:1px solid #d4d0c9; }
 .sorp-wider-evidence > summary { min-height:54px; display:flex; align-items:center; justify-content:space-between; gap:14px; color:#28633f; cursor:pointer; font-size:12px; font-weight:800; letter-spacing:.04em; text-transform:uppercase; }
 .sorp-wider-evidence > summary span { color:#11100f; }

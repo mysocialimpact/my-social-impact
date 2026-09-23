@@ -370,17 +370,16 @@ function ProvisionalReadinessView({ review, impactReportConfirmed = false, impac
   if (!review.trusteesReport.reviewed) return <ImpactReportFound review={review} confirmed={impactReportConfirmed} uploaded={impactReportUploaded} />;
   const tarScore = deriveTarScore(review);
   const widerScore = typeof review.widerEvidenceScore === "number" && tarScore !== null && Math.abs(review.widerEvidenceScore - tarScore) >= 5 ? review.widerEvidenceScore : null;
-  const tarFindings = review.findings.filter((finding) => finding.trusteesReportEvidence.trim());
-  const findings = [
-    ...tarFindings.filter((finding) => finding.suggestedAnswer === "yes" || finding.suggestedAnswer === "mostly").slice(0, 2).map((finding) => ({ kind: "strong", text: finding.trusteesReportEvidence })),
-    ...tarFindings.filter((finding) => finding.suggestedAnswer === "partly" || finding.suggestedAnswer === "not_yet").slice(0, 2).map((finding) => ({ kind: "attention", text: finding.trusteesReportEvidence })),
-  ].slice(0, 4);
+  const tarFindings = review.findings.filter((finding) => finding.trusteesReportEvidence.trim() && finding.reason.trim() && finding.reason.trim() !== finding.trusteesReportEvidence.trim());
+  const strongFindings = tarFindings.filter((finding) => finding.suggestedAnswer === "yes" || finding.suggestedAnswer === "mostly");
+  const attentionFindings = tarFindings.filter((finding) => finding.suggestedAnswer === "partly" || finding.suggestedAnswer === "not_yet");
+  const findings = [...strongFindings.slice(0, 2), ...attentionFindings.slice(0, 2), ...strongFindings.slice(2), ...attentionFindings.slice(2)].slice(0, 4);
   return <section className="sorp-provisional-view" aria-label="Provisional SORP readiness starting point">
-    <header><div><span>Based on your latest published reporting</span><h3>So — how SORP ready do you look?</h3></div></header>
+    <header><div><h3>ARE YOU SORP READY?</h3><span className="sorp-quick-review-subtitle">Quick Readiness Review · based on your latest published reporting</span></div></header>
     <h4 className="sorp-tar-label">Trustees’ Annual Report readiness</h4>
     <div className="sorp-quick-score"><strong>{tarScore === null ? "—" : tarScore}<small>/100</small></strong><div><b>{quickReviewBand(review.readinessStatus)}</b><span>How ready the existing statutory reporting looks.</span></div></div>
     <p className="sorp-evidence-confidence">Evidence confidence: <strong>{review.overallConfidence}</strong><span>How strongly the available evidence supports this first view.</span></p>
-    {findings.length > 0 && <ul className="sorp-quick-findings">{findings.map((finding, index) => <li className={`is-${finding.kind}`} key={`${finding.kind}-${index}`}><span aria-hidden="true">{finding.kind === "strong" ? "✓" : "△"}</span><p>{finding.text}</p></li>)}</ul>}
+    {findings.length > 0 && <ul className="sorp-quick-findings">{findings.map((finding) => <li className={`is-${finding.suggestedAnswer === "yes" || finding.suggestedAnswer === "mostly" ? "strong" : "attention"}`} key={finding.fieldId}><span aria-hidden="true">{finding.suggestedAnswer === "yes" || finding.suggestedAnswer === "mostly" ? "✓" : "△"}</span><div><p>{finding.reason}</p><small>{finding.trusteesReportEvidence}</small></div></li>)}</ul>}
     {widerScore !== null && <section className="sorp-wider-score" aria-label="Wider impact evidence view"><p><strong>Wider evidence view</strong><span>{review.widerEvidenceReason || "The Impact Report and website add materially useful evidence beyond the Trustees’ Annual Report."}</span></p><strong>{widerScore}<small>/100</small></strong></section>}
     {review.impactReport.found && <ImpactReportFound review={review} confirmed={impactReportConfirmed} uploaded={impactReportUploaded} />}
     {review.trusteesReport.url && <a className="sorp-trustees-report-link" href={review.trusteesReport.url} target="_blank" rel="noreferrer">View the Trustees’ Annual Report used ↗</a>}
