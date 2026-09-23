@@ -1020,7 +1020,10 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
   const conversationFirstMessage = Boolean((activityQuestion || pendingStructuredAnswer) && composer.trim().length > 0);
   const activeResponseMessage = activeMessages[activeMessages.length - 1]?.role === "assistant" ? activeMessages[activeMessages.length - 1] : null;
   const responseQuestionId = activeResponseMessage?.workflow?.next.id || activeWorkflow?.next.id || "";
-  const responseActions = activeResponseMessage?.actions || [];
+  const messageResponseActions = activeResponseMessage?.actions || [];
+  const responseActions = activeResponseMessage?.workflow?.next.provisional && responseQuestionId === "publicReview" && !messageResponseActions.some((action) => /go deeper/i.test(action.label))
+    ? [{ label: "GO DEEPER", value: "Go deeper" }, ...messageResponseActions]
+    : messageResponseActions;
   const showResponseActions = responseActions.length > 0 && !pendingStructuredAnswer && (reviewIndex === null || /^(?:field:\d+|check:)/.test(responseQuestionId));
   const quickReview = activeResponseMessage?.workflow?.next.provisional || null;
 
