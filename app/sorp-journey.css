@@ -8,12 +8,12 @@
 .sorp-journey-progress li { position:relative; display:flex; align-items:flex-start; gap:9px; color:#66615b; border-top:2px solid #d4d0c9; padding-top:10px; }
 .sorp-journey-progress li > span { width:25px; height:25px; flex:0 0 25px; display:grid; place-items:center; border-radius:50%; border:1px solid #c9c5bf; font-size:12px; font-weight:800; }
 .sorp-journey-progress li small { font-size:11px; font-weight:700; line-height:1.35; }
-.sorp-journey-progress li.is-review-stage { padding-inline:7px; background:#f0f4ed; color:#315d45; border-top-color:#8caf98; box-shadow:inset 1px 0 #d7e2d5,inset -1px 0 #d7e2d5,inset 0 -1px #d7e2d5; }
+.sorp-journey-progress li.is-review-stage { color:#315d45; border-top-color:#8caf98; }
 .sorp-journey-progress li.is-review-stage small { font-weight:850; }
-.sorp-journey-progress li.is-review-stage > span { border-color:#6f9d7e; background:#f7faf5; }
+.sorp-journey-progress li.is-review-stage > span { border-color:#6f9d7e; }
 .sorp-journey-progress li.is-current { border-top-color:#11100f; color:#11100f; }
 .sorp-journey-progress li.is-current > span { background:#f5ce00; border-color:#11100f; }
-.sorp-journey-progress li.is-review-stage.is-current { background:#e5efe4; border-top-color:#28633f; box-shadow:inset 1px 0 #a9c5ae,inset -1px 0 #a9c5ae,inset 0 -1px #a9c5ae; }
+.sorp-journey-progress li.is-review-stage.is-current { color:#245f3a; border-top-color:#28633f; }
 .sorp-journey-progress li.is-review-stage.is-current > span { background:#f5ce00; border-color:#28633f; box-shadow:0 0 0 3px rgba(52,118,79,.12); }
 .sorp-journey-progress li.is-complete { border-top-color:#34764f; color:#28633f; }
 .sorp-journey-progress li.is-complete > span { background:#e7f0e7; border-color:#34764f; }
@@ -80,6 +80,28 @@
 .sorp-provisional-view > header > strong small { display:block; margin-bottom:3px; font-size:8px; opacity:.72; }
 .sorp-provisional-view > header > strong.is-high { background:#e7f0e7; color:#28633f; }
 .sorp-provisional-view > header > strong.is-low { background:#f5e9e3; color:#9e3217; }
+.sorp-quick-score { display:grid; grid-template-columns:auto 1fr; gap:18px 24px; align-items:center; padding:22px 0; border-bottom:1px solid #d4d0c9; }
+.sorp-quick-score > strong { color:#11100f; font-family:var(--font-serif); font-size:clamp(62px,9vw,104px); font-weight:500; letter-spacing:-.07em; line-height:.78; }
+.sorp-quick-score > strong small { margin-left:5px; font-family:var(--font-sans); font-size:13px; font-weight:800; letter-spacing:0; }
+.sorp-quick-score > div { display:grid; gap:7px; }
+.sorp-quick-score b { color:#28633f; font-size:15px; letter-spacing:.06em; text-transform:uppercase; }
+.sorp-quick-score span { max-width:45ch; color:#625c55; font-size:14px; line-height:1.45; }
+.sorp-quick-tier { margin:0; padding:15px 0; display:flex; align-items:center; justify-content:space-between; gap:18px; border-bottom:1px solid #d4d0c9; color:#4f4942; font-size:13px; line-height:1.45; }
+.sorp-quick-tier button { flex:0 0 auto; padding:0; border:0; border-bottom:1px solid currentColor; background:transparent; color:#28633f; cursor:pointer; font:inherit; font-weight:800; }
+.sorp-quick-findings { margin:0; padding:8px 0; list-style:none; }
+.sorp-quick-findings li { display:grid; grid-template-columns:24px 1fr; gap:10px; padding:13px 0; border-bottom:1px solid #e5e2dc; }
+.sorp-quick-findings li > span { color:#b83210; font-size:18px; line-height:1.35; }
+.sorp-quick-findings li.is-strong > span { color:#287044; }
+.sorp-quick-findings p { margin:0; color:#403b35; font-size:15px; line-height:1.5; }
+.sorp-wider-evidence { margin-top:18px; border-block:1px solid #d4d0c9; }
+.sorp-wider-evidence > summary { min-height:54px; display:flex; align-items:center; justify-content:space-between; gap:14px; color:#28633f; cursor:pointer; font-size:12px; font-weight:800; letter-spacing:.04em; text-transform:uppercase; }
+.sorp-wider-evidence > summary span { color:#11100f; }
+.readiness-message .sorp-wider-evidence > summary::after { display:none; }
+.sorp-wider-evidence > div { padding:0 0 18px; }
+.sorp-wider-evidence > div > p { margin:0; display:grid; gap:5px; color:#49634f; font-size:13px; line-height:1.45; }
+.sorp-wider-evidence nav { display:flex; flex-wrap:wrap; gap:8px 18px; margin-top:14px; }
+.sorp-wider-evidence nav a,.sorp-trustees-report-link { color:#28633f; font-size:12px; font-weight:800; text-decoration:underline; text-underline-offset:3px; }
+.sorp-trustees-report-link { display:inline-block; margin-top:15px; }
 .sorp-review-band { margin:9px 0 0; color:#28633f; font-size:14px; font-weight:800; text-transform:uppercase; letter-spacing:.04em; }
 .sorp-tar-score { display:grid; grid-template-columns:1fr auto; gap:4px 18px; align-items:end; padding:20px 0; border-bottom:1px solid #d4d0c9; }
 .sorp-tar-score span { font-size:12px; font-weight:800; letter-spacing:.05em; text-transform:uppercase; }
@@ -131,9 +153,14 @@
 .sorp-quick-review-feedback p strong,.sorp-quick-review-feedback p span { display:block; }
 .sorp-quick-review-feedback p strong { font-size:13px; text-transform:uppercase; }
 .sorp-quick-review-feedback p span { margin-top:4px; color:#625c55; font-size:14px; }
-.sorp-quick-review-feedback > div { display:flex; gap:8px; }
-.sorp-quick-review-feedback button { width:42px; height:42px; border:1px solid #11100f; background:#fff; color:#11100f; cursor:pointer; font-weight:800; }
+.sorp-quick-review-feedback .sorp-feedback-scale { display:flex; justify-content:space-between; gap:12px; color:#6a645c; font-size:11px; }
+.sorp-quick-review-feedback .sorp-feedback-stars { display:flex; gap:8px; margin-top:6px; }
+.sorp-quick-review-feedback button { width:50px; height:50px; border:1px solid #11100f; background:#fff; color:#11100f; cursor:pointer; font-size:28px; line-height:1; }
 .sorp-quick-review-feedback button:hover,.sorp-quick-review-feedback button:focus-visible,.sorp-quick-review-feedback button.is-selected { background:#f5ce00; }
+.sorp-quick-review-feedback label { display:grid; grid-template-columns:1fr auto; gap:5px 12px; margin-top:16px; }
+.sorp-quick-review-feedback label strong { font-size:12px; text-transform:uppercase; }
+.sorp-quick-review-feedback label > span { color:#6a645c; font-size:11px; }
+.sorp-quick-review-feedback textarea { grid-column:1/-1; width:100%; min-height:64px; padding:10px 12px; resize:vertical; border:1px solid #aaa399; border-radius:0; background:#faf9f6; font:inherit; font-size:14px; line-height:1.45; }
 .sorp-public-search-checkpoint { margin:4px 0 22px; padding:22px 24px; border:1px solid #c9d9ca; border-left:4px solid #34764f; background:#f2f7f0; }
 .sorp-public-search-checkpoint h3 { margin:7px 0 16px; font-family:var(--font-serif); font-size:clamp(25px,3vw,38px); font-weight:500; line-height:1.15; }
 .sorp-public-search-checkpoint ul { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:0 24px; margin:0; padding:0; list-style:none; }
@@ -145,6 +172,7 @@
 .sorp-public-search-checkpoint li div > span { margin-top:3px; color:#4f5b51; font-size:14px; line-height:1.35; }
 .sorp-public-search-checkpoint li small { margin-top:3px; color:#6d756d; font-size:11px; }
 .sorp-public-search-note { margin:16px 0 0; color:#4f5b51; font-size:13px; line-height:1.5; }
+.sorp-quick-review-ready { margin:20px 0 0; padding-top:16px; border-top:1px solid #c9d9ca; color:#28633f; font-size:14px; font-weight:850; letter-spacing:.04em; text-transform:uppercase; }
 .sorp-public-search-actions { display:flex; align-items:center; gap:12px; margin-top:14px; color:#5a625a; font-size:12px; }
 .sorp-public-search-actions button { border:1px solid #11100f; padding:10px 14px; background:#fff; font-size:11px; font-weight:800; letter-spacing:.04em; text-transform:uppercase; cursor:pointer; }
 .sorp-provisional-view.is-evidence-gap { border-color:#b83210; background:#fffaf7; }
@@ -269,6 +297,11 @@
   .sorp-impact-report-dropzone { min-height:128px; padding:18px 12px; }
   .sorp-provisional-view > header { display:grid; gap:12px; }
   .sorp-provisional-view > header > strong { justify-self:start; }
+  .sorp-quick-score { grid-template-columns:1fr; gap:12px; }
+  .sorp-quick-score > strong { font-size:76px; }
+  .sorp-quick-tier { align-items:flex-start; flex-direction:column; gap:8px; }
+  .sorp-quick-findings p { font-size:14px; }
+  .sorp-quick-review-feedback button { width:46px; height:46px; font-size:25px; }
   .sorp-provisional-grid,.sorp-public-evidence-split { grid-template-columns:1fr; }
   .sorp-provisional-grid { gap:15px; }
   .sorp-public-search-progress ul { grid-template-columns:1fr; }

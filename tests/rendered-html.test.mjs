@@ -67,7 +67,7 @@ test("server-renders the My Social Impact homepage", async () => {
 test("every page inherits the global build stamp", async () => {
   const layout = await readFile(new URL("../app/layout.tsx", import.meta.url), "utf8");
   assert.match(layout, /global-build-stamp/);
-  assert.match(layout, /BUILD 76 · 23 SEPTEMBER 2026 · 16:32 BST/);
+  assert.match(layout, /BUILD 77 · 23 SEPTEMBER 2026 · 17:15 BST/);
 });
 
 test("explicit setup confirmations save directly without an intelligence thinking state", async () => {
@@ -81,9 +81,10 @@ test("explicit setup confirmations save directly without an intelligence thinkin
 test("Quick Readiness Review keeps TAR and wider evidence separate", async () => {
   const conversation = await readFile(new URL("../app/sorp-readiness-conversation.tsx", import.meta.url), "utf8");
   assert.match(conversation, /Quick Readiness Review/);
-  assert.match(conversation, /Preliminary SORP readiness/);
-  assert.match(conversation, /Including wider impact evidence/);
+  assert.match(conversation, /So — how SORP ready do you look\?/);
+  assert.match(conversation, /We also found wider impact evidence/);
   assert.match(conversation, /How’s this going\?/);
+  assert.match(conversation, /Extremely useful/);
   assert.match(conversation, /go deeper/i);
 });
 
@@ -322,15 +323,12 @@ test("server-renders the conversational SORP readiness workspace", async () => {
   assert.match(source, /Choose a quick answer/);
   assert.match(source, /Or tell us in your own words/);
   assert.match(source, /is-assessment-scale/);
-  assert.match(source, /Provisional SORP readiness/);
-  assert.match(source, /Cannot establish publicly/);
   assert.match(source, /publicSearchCheckpoint/);
-  assert.match(source, /Good — we’ve found enough to give you a useful first view/);
-  assert.match(source, /Add Impact Report/);
-  assert.match(source, /onAddReport/);
+  assert.match(source, /Great — we found what we needed/);
+  assert.match(source, /see my quick review/i);
   assert.match(source, /Trustees’ Annual Report/);
-  assert.match(source, /Wider impact evidence/);
-  assert.match(source, /Your answers remain in control of the score/);
+  assert.match(source, /wider impact evidence/i);
+  assert.match(source, /historical starting point/);
   assert.match(source, /Happy with this answer\?/);
   assert.match(source, /Add a note in your own words — completely optional/);
   assert.match(source, /interaction: "confirm_structured_answer"/);
