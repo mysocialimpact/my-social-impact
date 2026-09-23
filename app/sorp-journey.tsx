@@ -20,7 +20,12 @@ export type ReadinessWorkflow = {
 export function SorpJourneyProgress({ current, completed, result = false }: { current: number; completed: number[]; result?: boolean }) {
   return <header className="sorp-journey-progress">
     <div className="sorp-journey-title"><div><span>{result ? "Your free personalised report" : `Stage ${current} of 7`}</span><strong>{result ? "Your SORP readiness result" : readinessStages[current - 1]}</strong></div><span className="sorp-journey-count">{completed.length ? `✓ ${completed.length} ${completed.length === 1 ? "stage" : "stages"} complete` : "Let’s establish what applies"}</span></div>
-    <ol aria-label="Your seven-stage SORP readiness journey">{readinessStages.map((title, index) => <li key={title} className={completed.includes(index + 1) ? "is-complete" : current === index + 1 ? "is-current" : ""} aria-current={current === index + 1 && !result ? "step" : undefined}><span aria-hidden="true">{completed.includes(index + 1) ? "✓" : index + 1}</span><small>{title}</small></li>)}</ol>
+    <ol aria-label="Your seven-stage SORP readiness journey">{readinessStages.map((title, index) => {
+      const stageNumber = index + 1;
+      const statusClass = completed.includes(stageNumber) ? "is-complete" : current === stageNumber ? "is-current" : "";
+      const reviewClass = stageNumber === 2 || stageNumber === 8 ? "is-review-stage" : "";
+      return <li key={title} className={[statusClass, reviewClass].filter(Boolean).join(" ")} aria-current={current === stageNumber && !result ? "step" : undefined}><span aria-hidden="true">{completed.includes(stageNumber) ? "✓" : stageNumber}</span><small>{title}</small></li>;
+    })}</ol>
   </header>;
 }
 

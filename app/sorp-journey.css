@@ -8,8 +8,13 @@
 .sorp-journey-progress li { position:relative; display:flex; align-items:flex-start; gap:9px; color:#66615b; border-top:2px solid #d4d0c9; padding-top:10px; }
 .sorp-journey-progress li > span { width:25px; height:25px; flex:0 0 25px; display:grid; place-items:center; border-radius:50%; border:1px solid #c9c5bf; font-size:12px; font-weight:800; }
 .sorp-journey-progress li small { font-size:11px; font-weight:700; line-height:1.35; }
+.sorp-journey-progress li.is-review-stage { padding-inline:7px; background:#f0f4ed; color:#315d45; border-top-color:#8caf98; box-shadow:inset 1px 0 #d7e2d5,inset -1px 0 #d7e2d5,inset 0 -1px #d7e2d5; }
+.sorp-journey-progress li.is-review-stage small { font-weight:850; }
+.sorp-journey-progress li.is-review-stage > span { border-color:#6f9d7e; background:#f7faf5; }
 .sorp-journey-progress li.is-current { border-top-color:#11100f; color:#11100f; }
 .sorp-journey-progress li.is-current > span { background:#f5ce00; border-color:#11100f; }
+.sorp-journey-progress li.is-review-stage.is-current { background:#e5efe4; border-top-color:#28633f; box-shadow:inset 1px 0 #a9c5ae,inset -1px 0 #a9c5ae,inset 0 -1px #a9c5ae; }
+.sorp-journey-progress li.is-review-stage.is-current > span { background:#f5ce00; border-color:#28633f; box-shadow:0 0 0 3px rgba(52,118,79,.12); }
 .sorp-journey-progress li.is-complete { border-top-color:#34764f; color:#28633f; }
 .sorp-journey-progress li.is-complete > span { background:#e7f0e7; border-color:#34764f; }
 .sorp-journey-body { width:min(1320px,calc(100% - 48px)); margin:0 auto; display:grid; grid-template-columns:minmax(230px,320px) minmax(0,1fr); gap:clamp(32px,5vw,80px); flex:1; padding:32px 0; align-items:start; }

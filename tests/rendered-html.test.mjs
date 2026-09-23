@@ -67,7 +67,7 @@ test("server-renders the My Social Impact homepage", async () => {
 test("every page inherits the global build stamp", async () => {
   const layout = await readFile(new URL("../app/layout.tsx", import.meta.url), "utf8");
   assert.match(layout, /global-build-stamp/);
-  assert.match(layout, /BUILD 74 · 23 SEPTEMBER 2026 · 15:35 BST/);
+  assert.match(layout, /BUILD 75 · 23 SEPTEMBER 2026 · 16:04 BST/);
 });
 
 test("explicit setup confirmations save directly without an intelligence thinking state", async () => {
