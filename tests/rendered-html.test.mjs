@@ -67,7 +67,7 @@ test("server-renders the My Social Impact homepage", async () => {
 test("every page inherits the global build stamp", async () => {
   const layout = await readFile(new URL("../app/layout.tsx", import.meta.url), "utf8");
   assert.match(layout, /global-build-stamp/);
-  assert.match(layout, /BUILD 79 · 23 SEPTEMBER 2026 · 17:50 BST/);
+  assert.match(layout, /BUILD 80 · 23 SEPTEMBER 2026 · 18:46 BST/);
 });
 
 test("explicit setup confirmations save directly without an intelligence thinking state", async () => {
@@ -97,6 +97,17 @@ test("structured choices share the bottom response area with chat and voice", as
   assert.ok(composer > -1 && actions > composer && textarea > actions && microphone > textarea);
   assert.doesNotMatch(conversation, /message\.actions\?\.length/);
   assert.match(conversation, /Or tell us in your own words — or ask/);
+});
+
+test("desktop SORP uses one compact two-column guidance and response grammar", async () => {
+  const conversation = await readFile(new URL("../app/sorp-readiness-conversation.tsx", import.meta.url), "utf8");
+  const progress = await readFile(new URL("../app/sorp-journey.tsx", import.meta.url), "utf8");
+  const styles = await readFile(new URL("../app/sorp-journey.css", import.meta.url), "utf8");
+  assert.doesNotMatch(progress, /Stage \$\{current\} of \$\{stageCount\}/);
+  assert.match(conversation, /function SorpStageContext/);
+  assert.match(conversation, /className="sorp-bottom-utility"/);
+  assert.match(styles, /@media\(min-width:901px\)[\s\S]*\.sorp-journey-body \{ grid-template-columns:minmax\(330px,420px\) minmax\(0,1fr\)/);
+  assert.match(styles, /\.sorp-conversation-page \.readiness-composer \{ display:grid; grid-template-columns:minmax\(330px,420px\) minmax\(0,1fr\)/);
 });
 
 test("SORP completion uses an opaque sticky header and document-flow build footer", async () => {
@@ -308,7 +319,7 @@ test("server-renders the conversational SORP readiness workspace", async () => {
   assert.match(source, /SorpResultActions/);
   const paymentSource = await readFile(new URL("../app/sorp-result-actions.tsx", import.meta.url), "utf8");
   assert.match(source, /is-result-mode/);
-  assert.match(paymentSource, /7 stages complete · Stage 8 of 8/);
+  assert.doesNotMatch(paymentSource, /7 stages complete · Stage 8 of 8/);
   assert.match(paymentSource, /Your Full Readiness Review/);
   assert.match(paymentSource, /developed SORP readiness assessment is ready/);
   assert.match(paymentSource, /Has this been useful\?/);

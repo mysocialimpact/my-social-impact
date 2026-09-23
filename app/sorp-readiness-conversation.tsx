@@ -409,6 +409,19 @@ function PublicAnswerProposal({ proposal }: { proposal: PublicReadinessFinding }
   </section>;
 }
 
+function SorpStageContext({ workflow, income, impactReportConfirmed, accountEmail }: { workflow: ReadinessWorkflow; income: AssessmentSetup["income"]; impactReportConfirmed: boolean; accountEmail?: string }) {
+  const publicIncome = workflow.known.find((item) => item.id === "income")?.value || "";
+  const showKnownContext = workflow.currentStage === 1 || workflow.next.id === "publicSearchCheckpoint";
+  return <>
+    {workflow.next.provisional ? <ProvisionalReadinessView review={workflow.next.provisional} income={income} publicIncome={publicIncome} impactReportConfirmed={impactReportConfirmed} /> : showKnownContext ? <SorpKnownContext workflow={workflow} /> : <section className="sorp-stage-context" aria-label="MSI guidance and evidence">
+      <span>MSI guidance &amp; evidence</span>
+      {workflow.next.proposal ? <PublicAnswerProposal proposal={workflow.next.proposal} /> : <><h2>{workflow.stageTitle}</h2><p>{workflow.next.why}</p></>}
+      <SorpBasisDrawer basis={workflow.next.basis} />
+    </section>}
+    <p className="sorp-journey-assurance">Your free SORP readiness report<br /><span>{accountEmail ? `Account: ${accountEmail} · saved securely` : "Narrative and impact reporting · saved on this device until you create an account"}</span></p>
+  </>;
+}
+
 export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }: { setupOnly?: boolean; onSetupComplete?: (state: ReadinessState, workflow: ReadinessWorkflow) => void }) {
   const storageKey = setupOnly ? "msi-sorp-snapshot-setup-v1" : CONVERSATION_KEY;
   const [started, setStarted] = useState(false);
@@ -1028,6 +1041,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
   const quickReview = activeResponseMessage?.workflow?.next.provisional || null;
 
   if (!setupOnly && result && state.score !== null && sessionId && reviewIndex === null) return <div className="readiness-chat is-result-mode">
+    <SorpJourneyProgress current={readinessStages.length} completed={Array.from({ length: readinessStages.length - 1 }, (_, index) => index + 1)} result />
     <SorpResultActions sessionId={sessionId} organisation={state.charityName} income={state.setup.income} result={result} onBackToAssessment={() => {
       if (!checkpoints.length) return;
       const nextIndex = checkpoints.length - 1;
@@ -1058,31 +1072,25 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
     <SorpJourneyProgress current={currentStage} completed={activeWorkflow?.completedStages || []} result={Boolean(result && reviewIndex === null)} />
 
     <div className="sorp-journey-body">
-    <aside className="sorp-journey-aside">{activeWorkflow && <SorpKnownContext workflow={activeWorkflow} />}<p className="sorp-journey-assurance">Your free SORP readiness report<br /><span>{account ? `Account: ${account.email} · saved securely` : "Narrative and impact reporting · saved on this device until you create an account"}</span></p></aside>
+    <aside className="sorp-journey-aside">{activeWorkflow && <SorpStageContext workflow={activeWorkflow} income={state.setup.income} impactReportConfirmed={state.impactReportConfirmation === "confirmed" || state.impactReportInput === "uploaded"} accountEmail={account?.email} />}</aside>
 
     <div className="readiness-thread" aria-live="polite">
       {setupOnly && workflow?.completedStages.includes(2) && <button type="button" className="sorp-setup-continue" onClick={() => onSetupComplete?.(state, workflow)}>✓ Context established — continue to the 15 questions →</button>}
       {reviewCheckpoint && <section className="sorp-reviewing-answer" aria-live="polite"><span>Reviewing saved question {reviewIndex! + 1} of {checkpoints.length}</span><strong>{reviewCheckpoint.answerText || "Saved answer"}</strong>{reviewCheckpoint.note && <p>{reviewCheckpoint.note}</p>}<small>{activeWorkflow?.next.id.match(/^(?:field:\d+|check:)/) ? "Choose another quick answer below to change this. Your later answers will be kept." : "This answer and its conversation are preserved exactly as supplied."}</small></section>}
       {activeMessages.length > 1 && <details className="sorp-conversation-history"><summary>Our conversation up to this question <span>{activeMessages.filter(message => message.role === "user").length} replies</span></summary>{activeMessages.slice(0, -1).map((message, index) => <article key={index}><small>{message.role === "user" ? "You" : "My Social Impact Intelligence"}</small><MessageContent text={message.content} />{message.organisation && <strong>{message.organisation.name} · {message.organisation.locality}</strong>}</article>)}</details>}
       {completionNotice && <p className="sorp-completion-notice" role="status">{completionNotice}</p>}
-      {activeWorkflow?.completedStages.includes(1) && currentStage === 2 && state.sorpApplicability === "likely_applies" && <p className="sorp-applicability-confirmed">✓ SORP 2026 appears to apply to you <span>For the charity and reporting context established here.</span></p>}
-      {activeWorkflow?.completedStages.includes(1) && currentStage === 2 && state.sorpApplicability === "uncertain" && <p className="sorp-applicability-confirmed">SORP 2026 may apply to you <span>We can’t confirm this completely yet because we haven’t established whether your accounts are prepared on an accruals basis.</span></p>}
       {activeMessages.map((message, index) => index === activeMessages.length - 1 && <article id="readiness-current-question" key={`${index}-${message.content.slice(0, 24)}`} className={`readiness-message is-${message.role}${message.responseKind === "detour" ? " is-detour" : ""}`}>
-        {message.role === "assistant" && <p className="sorp-current-stage">Stage {currentStage} · {readinessStages[currentStage - 1]}</p>}
         <span>{message.role === "user" ? "You" : "My Social Impact Intelligence"}</span>
         {message.label && message.responseKind === "detour" && <strong className={`readiness-label is-${message.label.toLowerCase().replace(" ", "-")}`}>{message.label === "JUDGEMENT" ? "MSI JUDGEMENT" : message.label}</strong>}
-        {message.workflow?.next.id !== "publicSearchCheckpoint" && !(message.workflow?.next.id === "publicReview" && message.workflow.next.provisional) && <div><MessageContent text={message.organisation ? "I think I’ve found you." : message.content} /></div>}
+        {message.workflow?.next.id !== "publicSearchCheckpoint" && <div><MessageContent text={message.organisation ? "I think I’ve found you." : message.content} /></div>}
         {message.workflow?.next.id === "publicSearchCheckpoint" && <PublicSearchCheckpoint workflow={message.workflow} />}
-        {message.workflow?.next.provisional && <ProvisionalReadinessView review={message.workflow.next.provisional} income={state.setup.income} publicIncome={message.workflow.known.find((item) => item.id === "income")?.value || ""} impactReportConfirmed={state.impactReportConfirmation === "confirmed" || state.impactReportInput === "uploaded"} />}
-        {message.workflow?.next.proposal && <PublicAnswerProposal proposal={message.workflow.next.proposal} />}
-        {message.role === "assistant" && !message.organisation && message.responseKind !== "result" && !["publicReview", "publicSearchCheckpoint"].includes(message.workflow?.next.id || "") && <section className="sorp-question-purpose"><strong>{message.responseKind === "detour" ? "What we need next" : "Why we’re asking"}</strong><p>{message.responseKind === "detour" ? message.workflow?.next.question : message.workflow?.next.why || "Finding the right organisation lets us use public information and establish whether SORP 2026 applies to you."}</p></section>}
+        {message.role === "assistant" && !message.organisation && message.responseKind === "detour" && <section className="sorp-question-purpose"><strong>What we need next</strong><p>{message.workflow?.next.question}</p></section>}
         {message.organisation && <section className="readiness-organisation-card" aria-label="Organisation found">
           <h3>{message.organisation.name}</h3>
           {message.organisation.locality && <p className="readiness-organisation-location">{message.organisation.locality}</p>}
           {message.publicSources?.length ? <nav className="readiness-organisation-links" aria-label="Organisation sources">{message.publicSources.slice(0, 2).map((source) => <a key={source.url} href={source.url} target="_blank" rel="noreferrer">{confirmationSourceLabel(source)}</a>)}</nav> : null}
         </section>}
         {message.organisation && <p className="sorp-confirm-question">Is this the right organisation?</p>}
-        {message.workflow && !message.organisation && message.responseKind !== "detour" && !["publicReview", "publicSearchCheckpoint", "answerConfirmation"].includes(message.workflow.next.id) && <SorpBasisDrawer basis={message.workflow.next.basis} />}
         {message.responseKind === "detour" && message.citations?.length ? <SorpBasisDrawer basis={{classification: message.label || "MSI JUDGEMENT", explanation: "The SORP passages relevant to your question.", citations: message.citations}} /> : null}
         {!message.organisation && message.publicSources?.length ? <details><summary>Sources</summary><div>{message.publicSources.map((source) => <article key={`${source.url}-${source.detail}`}><strong>{sourceKindLabel(source.kind)} · {source.label}</strong>{source.detail && <p>{source.detail}</p>}<a href={source.url}>View source <span>→</span></a></article>)}</div></details> : null}
       </article>)}
@@ -1103,8 +1111,8 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
     <form className={`readiness-composer${activityQuestion ? " is-activity-composer" : ""}${activitySelectionCount ? " has-activity-selections" : ""}${reviewIndex !== null ? " is-reviewing" : ""}`} onSubmit={submit}>
       <input ref={reportInputRef} type="file" accept="application/pdf,.pdf,.doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" hidden onChange={(event) => { const file = event.target.files?.[0]; if (file) void uploadReport(file); }} />
       <nav className="sorp-bottom-navigation" aria-label="Assessment navigation">
-        <button type="button" className="is-back" aria-label="Back to previous question" onClick={goBack} disabled={!checkpoints.length || busy || quickAdvancing || recordingState !== "idle"}>← Back</button>
-        <button type="button" className="is-save" onClick={() => { setSaveStatus("idle"); setSaveError(""); setSaveDialogOpen(true); }}>Save &amp; exit</button>
+        <span className="sorp-bottom-utility"><button type="button" className="is-back" aria-label="Back to previous question" onClick={goBack} disabled={!checkpoints.length || busy || quickAdvancing || recordingState !== "idle"}>← Back</button>
+        <button type="button" className="is-save" onClick={() => { setSaveStatus("idle"); setSaveError(""); setSaveDialogOpen(true); }}>Save &amp; exit</button></span>
         {reviewIndex !== null && <button type="button" className="is-next" onClick={goNext}>{reviewIndex < checkpoints.length - 1 ? "Next →" : result ? "Return to my report →" : "Return to current question →"}</button>}
       </nav>
       {showResponseActions && <nav className={`readiness-message-actions${/^(?:field:\d+|check:)/.test(responseQuestionId) ? " is-assessment-scale" : ""}${responseQuestionId === "activities" ? " is-multi-select" : ""}`} aria-label={responseQuestionId === "activities" ? "Choose all activities that apply" : /^(?:field:\d+|check:)/.test(responseQuestionId) ? "Choose a quick answer" : "Choose an answer"}>{responseActions.map((action) => {

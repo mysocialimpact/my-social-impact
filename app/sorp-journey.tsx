@@ -20,7 +20,7 @@ export type ReadinessWorkflow = {
 export function SorpJourneyProgress({ current, completed, result = false }: { current: number; completed: number[]; result?: boolean }) {
   const stageCount = readinessStages.length;
   return <header className="sorp-journey-progress">
-    <div className="sorp-journey-title"><div><span>{result ? `Stage ${stageCount} of ${stageCount}` : `Stage ${current} of ${stageCount}`}</span><strong>{result ? readinessStages[stageCount - 1] : readinessStages[current - 1]}</strong></div><span className="sorp-journey-count">{completed.length ? `✓ ${completed.length} ${completed.length === 1 ? "stage" : "stages"} complete` : "Let’s establish what applies"}</span></div>
+    <div className="sorp-journey-title"><strong>{result ? readinessStages[stageCount - 1] : readinessStages[current - 1]}</strong></div>
     <ol aria-label={`Your ${stageCount}-stage SORP readiness journey`}>{readinessStages.map((title, index) => {
       const stageNumber = index + 1;
       const statusClass = completed.includes(stageNumber) ? "is-complete" : current === stageNumber ? "is-current" : "";
