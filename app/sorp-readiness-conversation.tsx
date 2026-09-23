@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useRef, useState } from "react";
+import { FormEvent, type DragEvent, useEffect, useRef, useState } from "react";
 import { SorpSnapshotLink } from "./sorp-snapshot-link";
 import { SorpResultActions } from "./sorp-result-actions";
 import { buildActivitySubmission, toggleActivityChoice } from "./sorp-activity-selection";
@@ -45,6 +45,7 @@ export type ReadinessState = {
   inheritedSnapshot: boolean;
   publicReviewAcknowledged: boolean;
   impactReportInput: "none" | "awaiting_link" | "skipped" | "uploaded";
+  impactReportConfirmation: "unconfirmed" | "confirmed" | "replacement_requested";
   pendingStructuredAnswer: PendingStructuredAnswer | null;
 };
 
@@ -119,6 +120,7 @@ function blankState(): ReadinessState {
     inheritedSnapshot: false,
     publicReviewAcknowledged: false,
     impactReportInput: "none",
+    impactReportConfirmation: "unconfirmed",
     pendingStructuredAnswer: null,
   };
 }
@@ -151,7 +153,7 @@ function isDeterministicSetupReply(value: string, stepId = "") {
     return /(?:\baccrual|\breceipts?\s*(?:and|&)\s*payments?|^skip\b|^move on\b)/i.test(answer);
   }
   if (stepId === "publicReview") {
-    return /^(?:add a public report link|skip adding|continue to)/i.test(answer);
+    return /^(?:yes\b.*latest impact report|no\b.*newer impact report|add a public report link|skip adding|continue to)/i.test(answer);
   }
   if (stepId === "impactReportLink") return /^(?:skip adding|continue without)/i.test(answer);
   return false;
@@ -281,20 +283,59 @@ function FindingList({ title, items, empty }: { title: string; items: string[]; 
   return <article><h4>{title}</h4>{items.length ? <ul>{items.map((item) => <li key={item}>{item}</li>)}</ul> : <p>{empty}</p>}</article>;
 }
 
-function ProvisionalReadinessView({ review }: { review: PublicReadinessReview }) {
+function reportYear(title: string, url: string) {
+  const match = `${title} ${url}`.match(/(?:19|20)\d{2}(?:[\s-]+(?:19|20)?\d{2})?/);
+  return match?.[0] || "Latest published report";
+}
+
+function ImpactReportFound({ review, confirmed }: { review: PublicReadinessReview; confirmed: boolean }) {
+  if (!review.impactReport.found) return null;
+  const title = review.impactReport.title || "Impact Report / Annual Review";
+  return <section className="sorp-impact-report-found" aria-label="Impact report found">
+    <p className="sorp-impact-report-kicker">✓ Latest Impact Report found</p>
+    <h3>{title}</h3>
+    <p className="sorp-impact-report-year">{reportYear(title, review.impactReport.url)}</p>
+    {review.impactReport.url && <a className="sorp-impact-report-view" href={review.impactReport.url} target="_blank" rel="noreferrer">View report ↗</a>}
+    {!confirmed && <><p className="sorp-impact-report-provenance">Publicly found</p><p className="sorp-impact-report-question">Is this your latest Impact Report?</p></>}
+    {confirmed && <p className="sorp-impact-report-confirmed">✓ Confirmed with you <span>Publicly found + user confirmed · wider impact evidence</span></p>}
+  </section>;
+}
+
+function ProvisionalReadinessView({ review, impactReportConfirmed = false }: { review: PublicReadinessReview; impactReportConfirmed?: boolean }) {
   const sources = [review.trusteesReport.reviewed && review.trusteesReport.url ? { label: review.trusteesReport.title || "Trustees’ Annual Report", url: review.trusteesReport.url } : null, review.impactReport.found && review.impactReport.url ? { label: review.impactReport.title || "Impact Report", url: review.impactReport.url } : null].filter((source): source is { label: string; url: string } => Boolean(source));
-  if (!review.trusteesReport.reviewed) return null;
+  if (!review.trusteesReport.reviewed) return <ImpactReportFound review={review} confirmed={impactReportConfirmed} />;
   const reportFoundLabel = review.trusteesReport.discovery === "embedded_in_annual_accounts" ? "✓ Trustees’ Report found inside annual accounts" : "✓ Latest Trustees’ Annual Report found";
   const reportTitle = review.trusteesReport.discovery === "embedded_in_annual_accounts" && !review.trusteesReport.title ? "Trustees’ Report inside the latest annual accounts" : [review.trusteesReport.title, review.trusteesReport.period].filter(Boolean).join(" · ");
-  return <section className="sorp-provisional-view" aria-label="Starting point from last published reporting">
+  return <section className="sorp-provisional-view" aria-label="Provisional SORP readiness starting point">
+    <ImpactReportFound review={review} confirmed={impactReportConfirmed} />
     <p className="sorp-applicability-confirmed">{reportFoundLabel}</p>
     <header><div><span>Based on last published reporting</span><h3>Your starting point</h3></div><strong className={`is-${review.overallConfidence}`}><small>Evidence confidence</small>{review.overallConfidence}</strong></header>
     <p className="sorp-provisional-definition">This reflects past published reporting, not proof that you’re ready for SORP 2026. The next questions confirm what still applies and what will be ready for the reporting period we’re checking.</p>
     <div className="sorp-provisional-grid"><FindingList title="Already looks strong" items={review.strong} empty="Nothing is clear enough publicly to call strong yet." /><FindingList title="May need attention" items={review.attention} empty="No obvious concern was identified in the material reviewed." /><FindingList title="Cannot establish publicly" items={review.unknown} empty="No major public-evidence gap was identified." /></div>
     <div className="sorp-public-evidence-split"><p><strong>Trustees’ Annual Report</strong><span>{review.trusteesReport.reviewed ? reportTitle : "We could not review one confidently."}</span></p><p><strong>Wider impact evidence</strong><span>{review.impactReport.found ? review.impactReport.title || "A separate public impact report was found." : "We couldn’t find a public Impact Report or Annual Review."}</span></p></div>
     {sources.length ? <nav aria-label="Public reports reviewed">{sources.map((source) => <a key={source.url} href={source.url} target="_blank" rel="noreferrer">{source.label} ↗</a>)}</nav> : null}
-    {!review.impactReport.found && <p className="sorp-impact-report-offer"><strong>Have an Impact Report or Annual Review?</strong><span>We couldn’t find one publicly. Add it if you’d like us to take it into account.</span></p>}
+    {!review.impactReport.found && <p className="sorp-impact-report-offer"><strong>We didn’t find a separate Impact Report online.</strong><span>If you have one, adding it means we can take it into account.</span></p>}
     <p className="sorp-provisional-note">This is an evidence-based starting point, not your final result. Your answers remain in control of the score.</p>
+  </section>;
+}
+
+function ImpactReportUploader({ onChoose, dragging, onDragEnter, onDragLeave, onDragOver, onDrop, busy }: {
+  onChoose: () => void;
+  dragging: boolean;
+  onDragEnter: (event: DragEvent<HTMLButtonElement>) => void;
+  onDragLeave: (event: DragEvent<HTMLButtonElement>) => void;
+  onDragOver: (event: DragEvent<HTMLButtonElement>) => void;
+  onDrop: (event: DragEvent<HTMLButtonElement>) => void;
+  busy: boolean;
+}) {
+  return <section className={`sorp-impact-report-uploader${dragging ? " is-dragging" : ""}`} aria-label="Add your latest Impact Report">
+    <p className="sorp-impact-report-kicker">Add your latest Impact Report</p>
+    <button type="button" className="sorp-impact-report-dropzone" onClick={onChoose} onDragEnter={onDragEnter} onDragLeave={onDragLeave} onDragOver={onDragOver} onDrop={onDrop} disabled={busy}>
+      <strong>{busy ? "Reading your report…" : "Drag your report here"}</strong>
+      <span>{busy ? "Please keep this window open while we review it." : "or"}</span>
+      <b>{busy ? "Upload in progress" : "Choose file"}</b>
+    </button>
+    <small>PDF preferred · Word documents supported · maximum 4 MB</small>
   </section>;
 }
 
@@ -336,6 +377,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
   const [accountMode, setAccountMode] = useState<"signup" | "login">("signup");
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
   const [saveError, setSaveError] = useState("");
+  const [reportDragging, setReportDragging] = useState(false);
   const composerRef = useRef<HTMLTextAreaElement>(null);
   const reportInputRef = useRef<HTMLInputElement>(null);
   const threadEndRef = useRef<HTMLDivElement>(null);
@@ -500,7 +542,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
     setSaveError("");
     try {
       const progress: SavedProgress = { started, state, messages, result, intelligence, sessionId, workflow, checkpoints };
-      let action: "signup" | "login" | "save" = account ? "save" : accountMode;
+      const action: "signup" | "login" | "save" = account ? "save" : accountMode;
       if (!account && action === "signup" && saveProfile.password !== saveProfile.confirmPassword) throw new Error("The two passwords do not match. Please re-enter them and try again.");
       const response = await fetch("/api/readiness-account", {
         method: "POST", headers: { "content-type": "application/json" },
@@ -566,8 +608,13 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
 
   async function uploadReport(file: File) {
     if (busy || quickAdvancing || !workflow) return;
+    const supported = file.type === "application/pdf" || file.type === "application/msword" || file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" || /\.(pdf|doc|docx)$/i.test(file.name);
+    if (!supported) {
+      setError("Sorry — that file type is not supported. Please choose a PDF or Word document.");
+      return;
+    }
     if (file.size > 4_000_000) {
-      setError("Please choose a PDF smaller than 4 MB.");
+      setError("Sorry — that report is larger than 4 MB. Please choose a smaller PDF or Word document.");
       return;
     }
     const userMessage: Message = { role: "user", content: `Added report: ${file.name}` };
@@ -612,7 +659,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
         workflow: data.workflow,
         responseKind: data.assistant.responseKind,
       }]);
-      setCompletionNotice("✓ Report added. The provisional view now reflects the evidence in it.");
+      setCompletionNotice(`✓ IMPACT REPORT ADDED · ${file.name}`);
     } catch (caught) {
       setMessages(messages);
       setError(caught instanceof Error ? caught.message : "That report could not be reviewed yet.");
@@ -620,6 +667,17 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
       setBusy(false);
       if (reportInputRef.current) reportInputRef.current.value = "";
     }
+  }
+
+  function chooseReportFile() {
+    reportInputRef.current?.click();
+  }
+
+  function dropReport(event: DragEvent<HTMLButtonElement>) {
+    event.preventDefault();
+    setReportDragging(false);
+    const file = event.dataTransfer.files?.[0];
+    if (file) void uploadReport(file);
   }
 
   async function confirmStructuredAnswer(rawNote: string) {
@@ -908,7 +966,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
         <span>{message.role === "user" ? "You" : "My Social Impact Intelligence"}</span>
         {message.label && message.responseKind === "detour" && <strong className={`readiness-label is-${message.label.toLowerCase().replace(" ", "-")}`}>{message.label === "JUDGEMENT" ? "MSI JUDGEMENT" : message.label}</strong>}
         <div><MessageContent text={message.organisation ? "I think I’ve found you." : message.content} /></div>
-        {message.workflow?.next.provisional && <ProvisionalReadinessView review={message.workflow.next.provisional} />}
+        {message.workflow?.next.provisional && <ProvisionalReadinessView review={message.workflow.next.provisional} impactReportConfirmed={state.impactReportConfirmation === "confirmed" || state.impactReportInput === "uploaded"} />}
         {message.workflow?.next.proposal && <PublicAnswerProposal proposal={message.workflow.next.proposal} />}
         {message.role === "assistant" && !message.organisation && message.responseKind !== "result" && message.workflow?.next.id !== "publicReview" && <section className="sorp-question-purpose"><strong>{message.responseKind === "detour" ? "What we need next" : "Why we’re asking"}</strong><p>{message.responseKind === "detour" ? message.workflow?.next.question : message.workflow?.next.why || "Finding the right organisation lets us use public information and establish whether SORP 2026 applies to you."}</p></section>}
         {message.organisation && <section className="readiness-organisation-card" aria-label="Organisation found">
@@ -923,6 +981,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
           const saved = reviewCheckpoint?.answerText?.toUpperCase().startsWith(action.label.toUpperCase().replace(/^KEEP\s+/, ""));
           return <button aria-pressed={message.workflow?.next.id === "activities" ? selected : saved || undefined} className={[action.label === "SKIP FOR NOW" ? "is-skip" : "", selected || saved ? "is-selected" : ""].filter(Boolean).join(" ") || undefined} key={`${action.label}-${action.value}`} type="button" disabled={busy || quickAdvancing || index !== activeMessages.length - 1} onClick={() => selectStructuredAnswer(action.value)}>{action.label}<span>{selected || saved ? "✓" : "→"}</span></button>;
         })}</nav> : null}
+        {message.workflow?.next.id === "impactReportLink" && index === activeMessages.length - 1 && <ImpactReportUploader onChoose={chooseReportFile} dragging={reportDragging} onDragEnter={(event) => { event.preventDefault(); setReportDragging(true); }} onDragLeave={(event) => { event.preventDefault(); setReportDragging(false); }} onDragOver={(event) => { event.preventDefault(); setReportDragging(true); }} onDrop={dropReport} busy={busy} />}
         {message.workflow?.next.id === "activities" && index === messages.length - 1 && <p className="sorp-multi-select-help"><strong>Choose all that apply.</strong><span>Select more than one if needed, then add a little detail below if it would help.</span></p>}
         {message.responseKind === "detour" && message.citations?.length ? <SorpBasisDrawer basis={{classification: message.label || "MSI JUDGEMENT", explanation: "The SORP passages relevant to your question.", citations: message.citations}} /> : null}
         {!message.organisation && message.publicSources?.length ? <details><summary>Sources</summary><div>{message.publicSources.map((source) => <article key={`${source.url}-${source.detail}`}><strong>{sourceKindLabel(source.kind)} · {source.label}</strong>{source.detail && <p>{source.detail}</p>}<a href={source.url}>View source <span>→</span></a></article>)}</div></details> : null}
@@ -948,7 +1007,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
 
     </div>
     <form className={`readiness-composer${activityQuestion ? " is-activity-composer" : ""}${activitySelectionCount ? " has-activity-selections" : ""}${reviewIndex !== null ? " is-reviewing" : ""}`} onSubmit={submit}>
-      <input ref={reportInputRef} type="file" accept="application/pdf,.pdf" hidden onChange={(event) => { const file = event.target.files?.[0]; if (file) void uploadReport(file); }} />
+      <input ref={reportInputRef} type="file" accept="application/pdf,.pdf,.doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" hidden onChange={(event) => { const file = event.target.files?.[0]; if (file) void uploadReport(file); }} />
       <nav className="sorp-bottom-navigation" aria-label="Assessment navigation">
         <button type="button" className="is-back" aria-label="Back to previous question" onClick={goBack} disabled={!checkpoints.length || busy || quickAdvancing || recordingState !== "idle"}>← Back</button>
         <button type="button" className="is-save" onClick={() => { setSaveStatus("idle"); setSaveError(""); setSaveDialogOpen(true); }}>Save &amp; exit</button>
