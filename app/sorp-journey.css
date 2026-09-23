@@ -109,6 +109,8 @@
 .sorp-public-search-checkpoint li div > span { margin-top:3px; color:#4f5b51; font-size:14px; line-height:1.35; }
 .sorp-public-search-checkpoint li small { margin-top:3px; color:#6d756d; font-size:11px; }
 .sorp-public-search-note { margin:16px 0 0; color:#4f5b51; font-size:13px; line-height:1.5; }
+.sorp-public-search-actions { display:flex; align-items:center; gap:12px; margin-top:14px; color:#5a625a; font-size:12px; }
+.sorp-public-search-actions button { border:1px solid #11100f; padding:10px 14px; background:#fff; font-size:11px; font-weight:800; letter-spacing:.04em; text-transform:uppercase; cursor:pointer; }
 .sorp-provisional-view.is-evidence-gap { border-color:#b83210; background:#fffaf7; }
 .sorp-evidence-gap-copy { margin:20px 0 0; max-width:720px; color:#302c27; font-size:16px; line-height:1.55; }
 .sorp-answer-proposal { margin:0 0 18px; padding:20px; border-left:4px solid #f5ce00; background:#f6f3ec; }

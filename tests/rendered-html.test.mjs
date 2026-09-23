@@ -67,7 +67,7 @@ test("server-renders the My Social Impact homepage", async () => {
 test("every page inherits the global build stamp", async () => {
   const layout = await readFile(new URL("../app/layout.tsx", import.meta.url), "utf8");
   assert.match(layout, /global-build-stamp/);
-  assert.match(layout, /BUILD 70 · 23 SEPTEMBER 2026 · 14:07 BST/);
+  assert.match(layout, /BUILD 71 · 23 SEPTEMBER 2026 · 14:34 BST/);
 });
 
 test("explicit setup confirmations save directly without an intelligence thinking state", async () => {
@@ -316,8 +316,9 @@ test("server-renders the conversational SORP readiness workspace", async () => {
   assert.match(source, /Provisional SORP readiness/);
   assert.match(source, /Cannot establish publicly/);
   assert.match(source, /publicSearchCheckpoint/);
-  assert.match(source, /We’ve done the first public check/);
-  assert.match(source, /We’ll use this research to make the next questions quicker/);
+  assert.match(source, /Good — we’ve found enough to give you a useful first view/);
+  assert.match(source, /Add Impact Report/);
+  assert.match(source, /onAddReport/);
   assert.match(source, /Trustees’ Annual Report/);
   assert.match(source, /Wider impact evidence/);
   assert.match(source, /Your answers remain in control of the score/);

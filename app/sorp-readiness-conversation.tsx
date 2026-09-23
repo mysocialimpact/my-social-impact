@@ -158,6 +158,7 @@ function isDeterministicSetupReply(value: string, stepId = "") {
     return /^(?:yes\b.*latest impact report|no\b.*newer impact report|add a public report link|skip adding|continue to)/i.test(answer);
   }
   if (stepId === "impactReportLink") return /^(?:skip adding|continue without)/i.test(answer);
+  if (stepId === "publicSearchCheckpoint") return /^continue to quick review\b/i.test(answer);
   return false;
 }
 
@@ -321,13 +322,14 @@ function ProvisionalReadinessView({ review, impactReportConfirmed = false }: { r
   </section>;
 }
 
-function PublicSearchCheckpoint({ workflow }: { workflow: ReadinessWorkflow }) {
+function PublicSearchCheckpoint({ workflow, onAddReport }: { workflow: ReadinessWorkflow; onAddReport: () => void }) {
   const items = workflow.known.filter((item) => ["charityName", "legalStatus", "jurisdiction", "income", "accounts", "startDate", "trusteesReport", "impactReport"].includes(item.id));
+  const impactReport = items.find((item) => item.id === "impactReport");
   return <section className="sorp-public-search-checkpoint" aria-label="Public information checkpoint">
-    <p className="sorp-impact-report-kicker">We’ve done the first public check</p>
-    <h3>Here’s what we’ve found so far</h3>
-    <ul>{items.map((item) => <li key={item.id} className={item.established ? "is-found" : "is-pending"}><span aria-hidden="true">{item.established ? "✓" : "○"}</span><div><strong>{item.label}</strong><span>{item.value}</span>{item.id === "impactReport" && !item.established && <small>Not found publicly — optional</small>}</div></li>)}</ul>
-    <p className="sorp-public-search-note">We’ll use this research to make the next questions quicker. You can correct anything that has changed.</p>
+    <p className="sorp-impact-report-kicker">Good — we’ve found enough to give you a useful first view.</p>
+    <h3>Ready for a Quick Readiness Review?</h3>
+    <p className="sorp-public-search-note">We’ve confirmed the key information we need, including your latest Trustees’ Annual Report. You can see the detail on the left.</p>
+    {!impactReport?.established ? <><p className="sorp-impact-report-offer"><strong>We didn’t find a separate Impact Report or Annual Review publicly.</strong><span>That doesn’t stop us giving you a Quick Readiness Review. If you have one, adding it now may give us extra supporting evidence.</span></p><div className="sorp-public-search-actions"><button type="button" onClick={onAddReport}>Add Impact Report</button><span>or continue without it</span></div></> : <p className="sorp-impact-report-offer"><strong>We found wider public evidence too.</strong><span>We’ll keep it separate from the Trustees’ Annual Report and use it only where it genuinely adds context.</span></p>}
   </section>;
 }
 
@@ -978,7 +980,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
         <span>{message.role === "user" ? "You" : "My Social Impact Intelligence"}</span>
         {message.label && message.responseKind === "detour" && <strong className={`readiness-label is-${message.label.toLowerCase().replace(" ", "-")}`}>{message.label === "JUDGEMENT" ? "MSI JUDGEMENT" : message.label}</strong>}
         <div><MessageContent text={message.organisation ? "I think I’ve found you." : message.content} /></div>
-        {message.workflow?.next.id === "publicSearchCheckpoint" && <PublicSearchCheckpoint workflow={message.workflow} />}
+        {message.workflow?.next.id === "publicSearchCheckpoint" && <PublicSearchCheckpoint workflow={message.workflow} onAddReport={chooseReportFile} />}
         {message.workflow?.next.provisional && <ProvisionalReadinessView review={message.workflow.next.provisional} impactReportConfirmed={state.impactReportConfirmation === "confirmed" || state.impactReportInput === "uploaded"} />}
         {message.workflow?.next.proposal && <PublicAnswerProposal proposal={message.workflow.next.proposal} />}
         {message.role === "assistant" && !message.organisation && message.responseKind !== "result" && !["publicReview", "publicSearchCheckpoint"].includes(message.workflow?.next.id || "") && <section className="sorp-question-purpose"><strong>{message.responseKind === "detour" ? "What we need next" : "Why we’re asking"}</strong><p>{message.responseKind === "detour" ? message.workflow?.next.question : message.workflow?.next.why || "Finding the right organisation lets us use public information and establish whether SORP 2026 applies to you."}</p></section>}
