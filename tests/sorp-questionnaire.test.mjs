@@ -72,7 +72,7 @@ test("the main score always uses the same 15 core answers", () => {
 test("the Snapshot and conversation share the seven visible readiness stages", () => {
   assert.deepEqual([...readinessStages], [
     "Does SORP 2026 apply to you?",
-    "Gather the key information",
+    "Quick Readiness Review",
     "Objectives & activities",
     "Achievements & performance",
     "Plans for future periods",

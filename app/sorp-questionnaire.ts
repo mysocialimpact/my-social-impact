@@ -56,7 +56,7 @@ export const sectionLabels = {
 
 export const readinessStages = [
   "Does SORP 2026 apply to you?",
-  "Gather the key information",
+  "Quick Readiness Review",
   "Objectives & activities",
   "Achievements & performance",
   "Plans for future periods",

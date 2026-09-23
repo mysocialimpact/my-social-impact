@@ -67,7 +67,7 @@ test("server-renders the My Social Impact homepage", async () => {
 test("every page inherits the global build stamp", async () => {
   const layout = await readFile(new URL("../app/layout.tsx", import.meta.url), "utf8");
   assert.match(layout, /global-build-stamp/);
-  assert.match(layout, /BUILD 71 · 23 SEPTEMBER 2026 · 14:34 BST/);
+  assert.match(layout, /BUILD 72 · 23 SEPTEMBER 2026 · 15:04 BST/);
 });
 
 test("explicit setup confirmations save directly without an intelligence thinking state", async () => {
@@ -76,6 +76,15 @@ test("explicit setup confirmations save directly without an intelligence thinkin
   assert.match(conversation, /\["accountsConfirmation", "startDateConfirmation"\]/);
   assert.match(conversation, /quickAdvancing \? "Saving…"/);
   assert.doesNotMatch(conversation, /quickAdvancing \? "Understanding…"/);
+});
+
+test("Quick Readiness Review keeps TAR and wider evidence separate", async () => {
+  const conversation = await readFile(new URL("../app/sorp-readiness-conversation.tsx", import.meta.url), "utf8");
+  assert.match(conversation, /Quick Readiness Review/);
+  assert.match(conversation, /Preliminary SORP readiness/);
+  assert.match(conversation, /Including wider impact evidence/);
+  assert.match(conversation, /How’s this going\?/);
+  assert.match(conversation, /go deeper/i);
 });
 
 test("SORP completion uses an opaque sticky header and document-flow build footer", async () => {

@@ -6,6 +6,7 @@ const allowed = new Set([
   "human_review_selected", "support_5_selected", "support_custom_selected", "free_report_selected",
   "report_opened", "email_report_requested",
   "review_payment_started", "contribution_started",
+  "quick_review_feedback",
   // Retained for older live sessions while the new completion journey rolls out.
   "free_assessment_completed", "result_viewed", "review_cta_clicked", "voluntary_support_shown", "voluntary_support_no_thanks",
 ]);

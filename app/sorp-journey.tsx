@@ -5,6 +5,7 @@ export type SorpBasis = { classification: string; explanation: string; interpret
 export type PublicReadinessFinding = { fieldId: number; suggestedAnswer: "yes" | "mostly" | "partly" | "not_yet" | "not_sure"; confidence: "high" | "medium" | "low"; reason: string; trusteesReportEvidence: string; widerImpactEvidence: string; sourceUrls: string[] };
 export type PublicReadinessReview = {
   status: "reviewed" | "limited" | "unavailable"; readinessStatus?: "likely_ready" | "partly_ready" | "not_yet_ready" | "unable_to_determine"; overallConfidence: "high" | "medium" | "low";
+  tarScore?: number | null; widerEvidenceScore?: number | null; widerEvidenceReason?: string;
   strong: string[]; attention: string[]; unknown: string[];
   trusteesReport: { reviewed: boolean; title: string; url: string; period: string; discovery?: "standalone" | "embedded_in_annual_accounts" | "public_filing_unidentified" | "unavailable" };
   impactReport: { found: boolean; title: string; url: string };
