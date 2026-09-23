@@ -1026,6 +1026,9 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
   const activeWorkflow = reviewCheckpoint?.workflow || workflow;
   const activeMessages = reviewCheckpoint ? messages.slice(0, reviewCheckpoint.messagesLength) : messages;
   const currentStage = activeWorkflow?.currentStage || 1;
+  const isStageOnePayoff = activeWorkflow?.next.id === "publicSearchCheckpoint";
+  const progressCurrentStage = isStageOnePayoff ? 1 : currentStage;
+  const progressCompletedStages = isStageOnePayoff ? (activeWorkflow?.completedStages || []).filter((stage) => stage !== 1) : activeWorkflow?.completedStages || [];
   const impactMode = state.assessmentMode === "impact_readiness";
   const pendingStructuredAnswer = state.pendingStructuredAnswer;
   const activityQuestion = activeWorkflow?.next.id === "activities" && reviewIndex === null;
@@ -1069,7 +1072,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
   </section>;
 
   return <div className="readiness-chat">
-    <SorpJourneyProgress current={currentStage} completed={activeWorkflow?.completedStages || []} result={Boolean(result && reviewIndex === null)} />
+    <SorpJourneyProgress current={progressCurrentStage} completed={progressCompletedStages} result={Boolean(result && reviewIndex === null)} />
 
     <div className="sorp-journey-body">
     <aside className="sorp-journey-aside">{activeWorkflow && <SorpStageContext workflow={activeWorkflow} income={state.setup.income} impactReportConfirmed={state.impactReportConfirmation === "confirmed" || state.impactReportInput === "uploaded"} accountEmail={account?.email} organisation={activeResponseMessage?.organisation} publicSources={activeResponseMessage?.publicSources} />}</aside>

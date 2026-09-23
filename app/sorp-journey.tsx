@@ -24,8 +24,7 @@ export function SorpJourneyProgress({ current, completed, result = false }: { cu
     <ol aria-label={`Your ${stageCount}-stage SORP readiness journey`}>{readinessStages.map((title, index) => {
       const stageNumber = index + 1;
       const statusClass = completed.includes(stageNumber) ? "is-complete" : current === stageNumber ? "is-current" : "";
-      const reviewClass = stageNumber === 2 || stageNumber === 8 ? "is-review-stage" : "";
-      return <li key={title} className={[statusClass, reviewClass].filter(Boolean).join(" ")} aria-current={current === stageNumber && !result ? "step" : undefined}><span aria-hidden="true">{completed.includes(stageNumber) ? "✓" : stageNumber}</span><small>{title}</small></li>;
+      return <li key={title} className={statusClass} aria-current={current === stageNumber && !result ? "step" : undefined}><span aria-hidden="true">{completed.includes(stageNumber) ? "✓" : stageNumber}</span><small>{title}</small></li>;
     })}</ol>
   </header>;
 }

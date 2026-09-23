@@ -67,7 +67,7 @@ test("server-renders the My Social Impact homepage", async () => {
 test("every page inherits the global build stamp", async () => {
   const layout = await readFile(new URL("../app/layout.tsx", import.meta.url), "utf8");
   assert.match(layout, /global-build-stamp/);
-  assert.match(layout, /BUILD 81 · 23 SEPTEMBER 2026 · 18:52 BST/);
+  assert.match(layout, /BUILD 82 · 23 SEPTEMBER 2026 · 19:12 BST/);
 });
 
 test("explicit setup confirmations save directly without an intelligence thinking state", async () => {
@@ -108,6 +108,19 @@ test("desktop SORP uses one compact two-column guidance and response grammar", a
   assert.match(conversation, /className="sorp-bottom-utility"/);
   assert.match(styles, /@media\(min-width:901px\)[\s\S]*\.sorp-journey-body \{ grid-template-columns:minmax\(330px,420px\) minmax\(0,1fr\)/);
   assert.match(styles, /\.sorp-conversation-page \.readiness-composer \{ display:grid; grid-template-columns:minmax\(330px,420px\) minmax\(0,1fr\)/);
+});
+
+test("SORP progress shows only completed, current and future states at the right time", async () => {
+  const conversation = await readFile(new URL("../app/sorp-readiness-conversation.tsx", import.meta.url), "utf8");
+  const progress = await readFile(new URL("../app/sorp-journey.tsx", import.meta.url), "utf8");
+  const styles = await readFile(new URL("../app/sorp-journey.css", import.meta.url), "utf8");
+  assert.match(conversation, /activeWorkflow\?\.next\.id === "publicSearchCheckpoint"/);
+  assert.match(conversation, /isStageOnePayoff \? 1 : currentStage/);
+  assert.match(conversation, /filter\(\(stage\) => stage !== 1\)/);
+  assert.doesNotMatch(progress, /is-review-stage/);
+  assert.doesNotMatch(styles, /is-review-stage/);
+  assert.match(styles, /\.sorp-journey-progress li\.is-current > span \{ background:transparent; border-color:#11100f/);
+  assert.match(styles, /\.sorp-journey-progress li\.is-complete \{ border-top-color:#34764f/);
 });
 
 test("SORP completion uses an opaque sticky header and document-flow build footer", async () => {
