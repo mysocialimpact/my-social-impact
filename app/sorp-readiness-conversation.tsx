@@ -336,7 +336,7 @@ function QuickReviewExplanation({ review, onReplaceImpactReport }: { review: Pub
   return <div className="sorp-quick-review-explanation">
     <p>This is a historical starting point from your latest published reporting, not a verdict on future SORP 2026 readiness.</p>
     {widerAddsValue && <p>{review.widerEvidenceScore! > review.tarScore! ? "Encouragingly, your wider impact evidence is stronger than your Trustees’ Annual Report alone suggests." : "Your wider impact evidence adds context, but does not strengthen the picture shown by your Trustees’ Annual Report."}</p>}
-    <p>For SORP, the required narrative needs to be appropriately covered in the Trustees’ Annual Report. Make it strong enough to stand on its own; use your Impact Report and website to go deeper.</p>
+    <p>For SORP, the required narrative needs to be appropriately covered in the Trustees’ Annual Report. Make it strong enough to stand on its own.{review.impactReport.found ? " Your Impact Report and website can support and expand that story." : " Wider material, where available, can support and expand that story."}</p>
     <p>Go deeper to check whether this historical picture still reflects your current practice and where the real gaps are.</p>
     {review.impactReport.found && <button type="button" className="sorp-replace-impact-report" onClick={onReplaceImpactReport}>Have a newer Impact Report? Replace it →</button>}
   </div>;
