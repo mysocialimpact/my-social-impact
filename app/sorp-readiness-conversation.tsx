@@ -387,14 +387,18 @@ function ProvisionalReadinessView({ review, impactReportConfirmed = false, impac
   </section>;
 }
 
-function PublicSearchCheckpoint({ workflow }: { workflow: ReadinessWorkflow }) {
-  const items = workflow.known.filter((item) => ["charityName", "legalStatus", "jurisdiction", "income", "accounts", "startDate", "trusteesReport", "impactReport"].includes(item.id));
-  const charity = items.find((item) => item.id === "charityName")?.value || "your charity";
+function PublicSearchCheckpoint({ impactReportMissing, uploadedReport }: { impactReportMissing: boolean; uploadedReport: string }) {
   return <section className="sorp-public-search-checkpoint" aria-label="Public information checkpoint">
-    <p className="sorp-impact-report-kicker">Great — we found what we needed.</p>
-    <h3>✓ SORP 2026 appears to apply to {charity}</h3>
-    <p className="sorp-public-search-note">We found the key public information we need, including your latest accounts, reporting context and Trustees’ Annual Report. You can see the detail on the left.</p>
-    <p className="sorp-quick-review-ready">Your Quick Readiness Review is ready.</p>
+    <p className="sorp-impact-report-kicker">Great — we found what we need.</p>
+    <h3>Your Quick Readiness Review is ready.</h3>
+    <p className="sorp-public-search-note">We found your latest accounts, reporting context and Trustees’ Annual Report, so we can give you a first readiness view based on your latest published reporting.</p>
+    <p className="sorp-quick-review-ready">✓ SORP 2026 appears to apply to you</p>
+    {uploadedReport && <p className="sorp-impact-upload-confirmation" role="status">✓ IMPACT REPORT ADDED <span>{uploadedReport}</span></p>}
+    {impactReportMissing && <section className="sorp-stage-one-impact-offer" aria-label="Optional Impact Report">
+      <h4>We couldn’t find a separate Impact Report or Annual Review online.</h4>
+      <p>You do not need one for your Quick Readiness Review.</p>
+      <p>If you have one, adding it before the deeper assessment can give us richer evidence about your impact, outcomes and learning — and help us see whether your current practice is stronger than your latest Trustees’ Annual Report alone suggests.</p>
+    </section>}
   </section>;
 }
 
@@ -1115,9 +1119,13 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
   const contextMessage = activeResponseMessage || [...activeMessages].reverse().find((message) => message.role === "assistant");
   const responseQuestionId = activeResponseMessage?.workflow?.next.id || activeWorkflow?.next.id || "";
   const messageResponseActions = activeResponseMessage?.actions || [];
-  const responseActions = activeResponseMessage?.workflow?.next.provisional && responseQuestionId === "publicReview" && !messageResponseActions.some((action) => /go deeper/i.test(action.label))
+  const quickReviewAction = messageResponseActions.find((action) => /quick review/i.test(`${action.label} ${action.value}`))?.value || "See my quick review";
+  const responseActions = responseQuestionId === "publicSearchCheckpoint"
+    ? [{ label: "SEE MY QUICK REVIEW", value: quickReviewAction }]
+    : activeResponseMessage?.workflow?.next.provisional && responseQuestionId === "publicReview" && !messageResponseActions.some((action) => /go deeper/i.test(action.label))
     ? [{ label: "GO DEEPER", value: "Go deeper" }, ...messageResponseActions]
     : messageResponseActions;
+  const impactReportMissingAtPayoff = isStageOnePayoff && !activeWorkflow?.known.find((item) => item.id === "impactReport")?.established && state.impactReportInput !== "uploaded";
   const showResponseActions = responseActions.length > 0 && !pendingStructuredAnswer && (reviewIndex === null || /^(?:field:\d+|check:)/.test(responseQuestionId));
   const quickReview = activeResponseMessage?.workflow?.next.provisional || null;
   const saveDialog = saveDialogOpen && <div className="sorp-save-dialog-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && saveStatus !== "saving") setSaveDialogOpen(false); }}><section className="sorp-save-dialog" role="dialog" aria-modal="true" aria-labelledby="sorp-save-title">
@@ -1192,7 +1200,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
           : <div><MessageContent text={message.organisation ? "I think I’ve found you." : message.content} /></div>)}
         {message.role === "assistant" && message.responseKind !== "detour" && message.workflow && (/^field:\d+/.test(message.workflow.next.id) || message.workflow.next.id.startsWith("check:") && message.workflow.currentStage !== 7) && <DeepDiveQuestionContext workflow={message.workflow} />}
         {message.role === "assistant" && message.responseKind !== "detour" && message.workflow?.currentStage === 7 && /^(?:screen:|check:)/.test(message.workflow.next.id) && <section className="sorp-stage-seven-context"><p>{message.workflow.next.why}</p><SorpBasisDrawer basis={message.workflow.next.basis} /></section>}
-        {message.workflow?.next.id === "publicSearchCheckpoint" && <PublicSearchCheckpoint workflow={message.workflow} />}
+        {message.workflow?.next.id === "publicSearchCheckpoint" && <><PublicSearchCheckpoint impactReportMissing={impactReportMissingAtPayoff} uploadedReport={state.impactReportInput === "uploaded" ? completionNotice.match(/^✓ IMPACT REPORT ADDED · (.+)$/)?.[1] || "" : ""} />{impactReportMissingAtPayoff && <ImpactReportUploader onChoose={chooseReportFile} dragging={reportDragging} onDragEnter={(event) => { event.preventDefault(); setReportDragging(true); }} onDragLeave={(event) => { event.preventDefault(); setReportDragging(false); }} onDragOver={(event) => { event.preventDefault(); setReportDragging(true); }} onDrop={dropReport} busy={busy} />}</>}
         {message.role === "assistant" && !message.organisation && message.responseKind === "detour" && <section className="sorp-question-purpose"><strong>What we need next</strong><p>{message.workflow?.next.question}</p></section>}
         {message.organisation && <p className="sorp-confirm-question">Is this the right organisation?</p>}
         {message.responseKind === "detour" && message.citations?.length ? <SorpBasisDrawer basis={{classification: message.label || "MSI JUDGEMENT", explanation: "The SORP passages relevant to your question.", citations: message.citations}} /> : null}
@@ -1229,6 +1237,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
         return <button aria-pressed={responseQuestionId === "activities" ? selected : saved || undefined} className={[action.label === "SKIP FOR NOW" ? "is-skip" : "", selected || saved ? "is-selected" : ""].filter(Boolean).join(" ") || undefined} key={`${action.label}-${action.value}`} type="button" disabled={busy || quickAdvancing} onClick={() => selectStructuredAnswer(action.value)}>{action.label}<span>{selected || saved ? "✓" : "→"}</span></button>;
       })}</nav>}
       {responseQuestionId === "impactReportLink" && <ImpactReportUploader onChoose={chooseReportFile} dragging={reportDragging} onDragEnter={(event) => { event.preventDefault(); setReportDragging(true); }} onDragLeave={(event) => { event.preventDefault(); setReportDragging(false); }} onDragOver={(event) => { event.preventDefault(); setReportDragging(true); }} onDrop={dropReport} busy={busy} />}
+      {impactReportMissingAtPayoff && <button type="button" className="sorp-skip-impact-report" disabled={busy || quickAdvancing} onClick={() => selectStructuredAnswer(quickReviewAction)}>Continue without one <span>→</span></button>}
       {responseQuestionId === "activities" && <p className="sorp-multi-select-help"><strong>Choose all that apply.</strong><span>Select more than one if needed, then add a little detail below if it would help.</span></p>}
       {pendingStructuredAnswer && <section className="sorp-structured-confirmation" aria-live="polite">
         <strong>✓ {pendingStructuredAnswer.label}</strong>

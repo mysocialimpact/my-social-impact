@@ -67,7 +67,7 @@ test("server-renders the My Social Impact homepage", async () => {
 test("every page inherits the global build stamp", async () => {
   const layout = await readFile(new URL("../app/layout.tsx", import.meta.url), "utf8");
   assert.match(layout, /global-build-stamp/);
-  assert.match(layout, /BUILD 90 · 23 SEPTEMBER 2026 · 22:13 BST/);
+  assert.match(layout, /BUILD 91 · 23 SEPTEMBER 2026 · 22:40 BST/);
 });
 
 test("explicit setup confirmations save directly without an intelligence thinking state", async () => {
@@ -76,6 +76,24 @@ test("explicit setup confirmations save directly without an intelligence thinkin
   assert.match(conversation, /\["accountsConfirmation", "startDateConfirmation"\]/);
   assert.match(conversation, /quickAdvancing \? "Saving…"/);
   assert.doesNotMatch(conversation, /quickAdvancing \? "Understanding…"/);
+});
+
+test("Stage 1 payoff leads with Quick Review and keeps Impact Report optional", async () => {
+  const conversation = await readFile(new URL("../app/sorp-readiness-conversation.tsx", import.meta.url), "utf8");
+  const css = await readFile(new URL("../app/sorp-journey.css", import.meta.url), "utf8");
+  const payoff = conversation.slice(conversation.indexOf("function PublicSearchCheckpoint"), conversation.indexOf("function ImpactReportUploader"));
+  assert.match(payoff, /Great — we found what we need/);
+  assert.match(payoff, /Your Quick Readiness Review is ready/);
+  assert.match(payoff, /SORP 2026 appears to apply to you/);
+  assert.match(payoff, /We couldn’t find a separate Impact Report or Annual Review online/);
+  assert.match(conversation, /label: "SEE MY QUICK REVIEW"/);
+  assert.match(conversation, /Continue without one/);
+  assert.match(conversation, /impactReportMissingAtPayoff && <ImpactReportUploader/);
+  assert.match(conversation, /onDrop=\{dropReport\}/);
+  assert.match(conversation, /✓ IMPACT REPORT ADDED/);
+  assert.doesNotMatch(payoff, /Something changed\? Correct this/i);
+  assert.match(css, /\.sorp-impact-report-dropzone \{[^}]*min-height:150px/);
+  assert.match(css, /\.sorp-impact-report-dropzone strong,\.sorp-impact-report-dropzone span \{ display:none; \}/);
 });
 
 test("Stage 7 keeps six checks in the coach rail and three quick answers beside chat", async () => {
@@ -418,7 +436,7 @@ test("server-renders the conversational SORP readiness workspace", async () => {
   assert.match(source, /Or tell us in your own words/);
   assert.match(source, /is-assessment-scale/);
   assert.match(source, /publicSearchCheckpoint/);
-  assert.match(source, /Great — we found what we needed/);
+  assert.match(source, /Great — we found what we need/);
   assert.match(source, /see my quick review/i);
   assert.match(source, /Trustees’ Annual Report/);
   assert.match(source, /wider impact evidence/i);
