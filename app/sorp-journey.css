@@ -240,6 +240,18 @@ body:has(.sorp-conversation-page) > .global-build-stamp { display:none; }
 .sorp-stage-seven-context { margin:14px 0 20px; }
 .sorp-stage-seven-context > p { margin:0; color:#555047; font-size:14px; line-height:1.55; }
 .sorp-stage-seven-complete { margin:0 0 18px; padding:13px 16px; border-left:3px solid #3d7650; background:#edf3e9; color:#28633f; font-size:13px; font-weight:800; letter-spacing:.04em; text-transform:uppercase; }
+.sorp-full-review-handoff-rail { padding-top:8px; }
+.sorp-full-review-handoff-rail > span { display:block; color:#b83210; font-size:11px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; }
+.sorp-full-review-handoff-rail > strong { display:block; margin:16px 0; padding:14px 0; border-block:1px solid #d4d0c9; color:#28633f; font-size:15px; }
+.sorp-full-review-handoff-rail > p { max-width:34ch; color:#625c55; font-size:14px; line-height:1.55; }
+.sorp-full-review-handoff-main { max-width:760px; padding:clamp(12px,3vw,38px) 0; animation:sorp-full-review-reveal .4s ease-out both; }
+.sorp-full-review-handoff-tick { margin:0 0 18px; color:#28633f; font-size:13px; font-weight:800; letter-spacing:.05em; text-transform:uppercase; }
+.sorp-full-review-handoff-main h1 { margin:0 0 26px; font-family:var(--font-serif); font-size:clamp(42px,5vw,72px); font-weight:500; line-height:1.03; }
+.sorp-full-review-handoff-main > p:not(.sorp-full-review-handoff-tick) { max-width:54ch; color:#504b44; font-size:clamp(17px,1.6vw,21px); line-height:1.5; }
+.sorp-full-review-handoff-main > p:last-child { color:#28633f; }
+.sorp-full-review-handoff-main ul { display:grid; gap:10px; margin:24px 0 0; padding:0; list-style:none; color:#28633f; font-size:15px; }
+.sorp-full-review-handoff-response .sorp-stage-eight-continue { max-width:420px; }
+@keyframes sorp-full-review-reveal { from { opacity:.25; transform:translateY(8px); } to { opacity:1; transform:none; } }
 .sorp-full-review-rail { min-width:0; }
 .sorp-full-review-rail > span,.sorp-stage-eight-heading > span { color:#b83210; font-size:11px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; }
 .sorp-full-review-score { display:grid; gap:8px; padding:20px 0; border-block:1px solid #d4d0c9; }
@@ -533,7 +545,7 @@ body:has(.sorp-conversation-page) > .global-build-stamp { display:none; }
   .readiness-chat > .sorp-journey-body { overflow:visible; }
   .sorp-conversation-page .readiness-composer { position:relative; }
 }
-@media(prefers-reduced-motion:reduce) { .sorp-completion-notice { animation:none; } }
+@media(prefers-reduced-motion:reduce) { .sorp-completion-notice,.sorp-full-review-handoff-main { animation:none; } }
 .readiness-composer.sorp-stage-eight-response .sorp-quick-review-feedback { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:4px 20px; margin:0 0 12px; padding:0; border:0; background:transparent; }
 .readiness-composer.sorp-stage-eight-response .sorp-quick-review-feedback p { margin:0 0 8px; }
 .readiness-composer.sorp-stage-eight-response .sorp-quick-review-feedback p { grid-column:1; grid-row:1; }

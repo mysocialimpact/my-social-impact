@@ -104,7 +104,7 @@ type ReadinessResponse = {
   sessionId: string;
 };
 
-type SavedProgress = { started: boolean; state: ReadinessState; messages: Message[]; result: Result | null; intelligence: IntelligenceProvenance | null; sessionId: string; workflow: ReadinessWorkflow | null; checkpoints: ConversationCheckpoint[] };
+type SavedProgress = { started: boolean; state: ReadinessState; messages: Message[]; result: Result | null; intelligence: IntelligenceProvenance | null; sessionId: string; workflow: ReadinessWorkflow | null; checkpoints: ConversationCheckpoint[]; fullReviewEntered?: boolean };
 type ReadinessAccount = { id: string; email: string; name: string; position: string; organisation: string; currentStage: number; completedStages: number[]; createdAt: string; lastSavedAt: string };
 
 const emptySetup: AssessmentSetup = { role: "", jurisdiction: "", startDate: "", endDate: "", accounts: "", accountsReview: "", income: "", nearBoundary: false, activities: [] };
@@ -540,6 +540,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
   const [fullReviewFeedback, setFullReviewFeedback] = useState<number | null>(null);
   const [fullReviewFeedbackComment, setFullReviewFeedbackComment] = useState("");
   const [stageEightReportMode, setStageEightReportMode] = useState(false);
+  const [fullReviewEntry, setFullReviewEntry] = useState<"completion" | "revealing" | "open">("open");
   const [deepDiveIntroOpen, setDeepDiveIntroOpen] = useState(false);
   const [selectedQuickAction, setSelectedQuickAction] = useState<(MessageAction & { questionId: string }) | null>(null);
   const composerRef = useRef<HTMLTextAreaElement>(null);
@@ -585,12 +586,13 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
         } else {
           const saved = window.localStorage.getItem(storageKey);
           if (saved) {
-            const parsed = JSON.parse(saved) as { started?: boolean; state?: ReadinessState; messages?: Message[]; result?: Result | null; intelligence?: IntelligenceProvenance | null; sessionId?: string; workflow?: ReadinessWorkflow; checkpoints?: ConversationCheckpoint[]; quickReviewFeedback?: number | null; fullReviewFeedback?: number | null; fullReviewFeedbackComment?: string; saveProfile?: { name: string; position: string; email: string } };
+            const parsed = JSON.parse(saved) as { started?: boolean; state?: ReadinessState; messages?: Message[]; result?: Result | null; intelligence?: IntelligenceProvenance | null; sessionId?: string; workflow?: ReadinessWorkflow; checkpoints?: ConversationCheckpoint[]; fullReviewEntered?: boolean; quickReviewFeedback?: number | null; fullReviewFeedback?: number | null; fullReviewFeedbackComment?: string; saveProfile?: { name: string; position: string; email: string } };
             if (parsed.started && parsed.state && parsed.messages?.length) {
               setStarted(true);
               setState({ ...blankState(), ...parsed.state, charityName: parsed.state.charityName ?? "", contextEvidence: parsed.state.contextEvidence ?? {} });
               setMessages(parsed.messages);
               setResult(parsed.result ?? null);
+              setFullReviewEntry(parsed.result && parsed.fullReviewEntered === false ? "completion" : "open");
               setWorkflow(parsed.workflow ?? null);
               setIntelligence(parsed.workflow?.version === 2 ? parsed.intelligence ?? null : null);
               setSessionId(parsed.sessionId || newSessionId());
@@ -630,6 +632,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
           setState({ ...blankState(), ...saved.state, charityName: saved.state.charityName ?? "", contextEvidence: saved.state.contextEvidence ?? {} });
           setMessages(saved.messages);
           setResult(saved.result ?? null);
+          setFullReviewEntry(saved.result && saved.fullReviewEntered === false ? "completion" : "open");
           setWorkflow(saved.workflow ?? null);
           setIntelligence(saved.intelligence ?? null);
           setSessionId(saved.sessionId || newSessionId());
@@ -644,16 +647,22 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
 
   useEffect(() => {
     if (!hydrated || !started) return;
-    try { window.localStorage.setItem(storageKey, JSON.stringify({ started, state, messages, result, intelligence, sessionId, workflow, checkpoints, quickReviewFeedback, fullReviewFeedback, fullReviewFeedbackComment, saveProfile: { name: saveProfile.name, position: saveProfile.position, email: saveProfile.email } })); } catch { queueMicrotask(() => setError("Your browser could not save this conversation. Keep this page open to retain your progress.")); }
-  }, [hydrated, started, state, messages, result, intelligence, sessionId, workflow, checkpoints, quickReviewFeedback, fullReviewFeedback, fullReviewFeedbackComment, saveProfile, storageKey]);
+    try { window.localStorage.setItem(storageKey, JSON.stringify({ started, state, messages, result, intelligence, sessionId, workflow, checkpoints, fullReviewEntered: fullReviewEntry === "open", quickReviewFeedback, fullReviewFeedback, fullReviewFeedbackComment, saveProfile: { name: saveProfile.name, position: saveProfile.position, email: saveProfile.email } })); } catch { queueMicrotask(() => setError("Your browser could not save this conversation. Keep this page open to retain your progress.")); }
+  }, [hydrated, started, state, messages, result, intelligence, sessionId, workflow, checkpoints, fullReviewEntry, quickReviewFeedback, fullReviewFeedback, fullReviewFeedbackComment, saveProfile, storageKey]);
 
   useEffect(() => {
     if (!hydrated || !started || !account || setupOnly) return;
     const timer = window.setTimeout(() => {
-      void fetch("/api/readiness-account", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "save", progress: { started, state, messages, result, intelligence, sessionId, workflow, checkpoints } }) });
+      void fetch("/api/readiness-account", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "save", progress: { started, state, messages, result, intelligence, sessionId, workflow, checkpoints, fullReviewEntered: fullReviewEntry === "open" } }) });
     }, 900);
     return () => window.clearTimeout(timer);
-  }, [hydrated, started, account, setupOnly, state, messages, result, intelligence, sessionId, workflow, checkpoints]);
+  }, [hydrated, started, account, setupOnly, state, messages, result, intelligence, sessionId, workflow, checkpoints, fullReviewEntry]);
+
+  useEffect(() => {
+    if (fullReviewEntry !== "revealing") return;
+    const timer = window.setTimeout(() => setFullReviewEntry("open"), window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 400);
+    return () => window.clearTimeout(timer);
+  }, [fullReviewEntry]);
 
   useEffect(() => {
     const restoreReviewPosition = (event: PopStateEvent) => {
@@ -681,6 +690,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
   }, []);
 
   function startConversation(useSnapshot = false) {
+    setFullReviewEntry("open");
     setWorkflow(null);
     setSelectedQuickAction(null);
     setCompletionNotice("");
@@ -714,7 +724,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
     setSaveStatus("saving");
     setSaveError("");
     try {
-      const progress: SavedProgress = { started, state, messages, result, intelligence, sessionId, workflow, checkpoints };
+      const progress: SavedProgress = { started, state, messages, result, intelligence, sessionId, workflow, checkpoints, fullReviewEntered: fullReviewEntry === "open" };
       const action: "signup" | "login" | "save" = account ? "save" : accountMode;
       if (!account && action === "signup" && saveProfile.password !== saveProfile.confirmPassword) throw new Error("The two passwords do not match. Please re-enter them and try again.");
       const response = await fetch("/api/readiness-account", {
@@ -733,6 +743,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
           setState({ ...blankState(), ...saved.state, charityName: saved.state.charityName ?? "", contextEvidence: saved.state.contextEvidence ?? {} });
           setMessages(saved.messages);
           setResult(saved.result ?? null);
+          setFullReviewEntry(saved.result && saved.fullReviewEntered === false ? "completion" : "open");
           setWorkflow(saved.workflow ?? null);
           setIntelligence(saved.intelligence ?? null);
           setSessionId(saved.sessionId || newSessionId());
@@ -976,7 +987,10 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
         workflow: data.workflow,
         responseKind: data.assistant.responseKind,
       }]);
-      if (data.result) setResult(data.result);
+      if (data.result) {
+        setResult(data.result);
+        if (!reviewing && workflow?.currentStage === 7 && data.workflow.currentStage === 8) setFullReviewEntry("completion");
+      }
       setSelectedQuickAction(null);
     } catch (caught) {
       if (!reviewing) setMessages(messages);
@@ -1050,7 +1064,10 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
         workflow: data.workflow,
         responseKind: data.assistant.responseKind,
       }]);
-      if (data.result) setResult(data.result);
+      if (data.result) {
+        setResult(data.result);
+        if (workflow?.currentStage === 7 && data.workflow.currentStage === 8) setFullReviewEntry("completion");
+      }
       if (data.workflow.next.id !== workflow?.next.id) setSelectedQuickAction(null);
     } catch (caught) {
       setMessages(messages);
@@ -1216,6 +1233,18 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
   </section></div>;
 
   if (!setupOnly && result && state.score !== null && sessionId && reviewIndex === null) {
+    if (fullReviewEntry !== "open") return <div className="readiness-chat is-full-review-handoff">
+      <SorpJourneyProgress current={7} completed={[1, 2, 3, 4, 5, 6]} />
+      <div className="sorp-journey-body">
+        <aside className="sorp-full-review-handoff-rail"><span>Additional SORP checks</span><strong>6 of 6 complete</strong><p>You’ve worked through the final checks. Your answers and the public evidence are ready for the Full Readiness Review.</p></aside>
+        <main className="sorp-full-review-handoff-main" aria-live="polite">{fullReviewEntry === "completion" ? <><p className="sorp-full-review-handoff-tick">✓ You’ve completed the assessment</p><h1>Brilliant — thank you.</h1><p>We’ve now got your answers, the public evidence we found, and the relevant SORP checks.</p><p>Your Full Readiness Review is nearly ready.</p></> : <><p className="sorp-full-review-handoff-tick">✓ Assessment complete</p><h1>Putting your Full Readiness Review together…</h1><ul><li>✓ Combining your answers</li><li>✓ Checking the evidence</li><li>✓ Identifying strengths and gaps</li><li>✓ Prioritising your next actions</li></ul></>}</main>
+      </div>
+      <div className="readiness-composer sorp-full-review-handoff-response">
+        <div className="sorp-response-utility"><nav className="sorp-bottom-navigation" aria-label="Assessment navigation"><span className="sorp-bottom-utility"><button type="button" className="is-back" onClick={goBack} disabled={!checkpoints.length || fullReviewEntry === "revealing"}>← Back</button><button type="button" className="is-save" onClick={() => { setSaveStatus("idle"); setSaveError(""); setSaveDialogOpen(true); }}>Save &amp; exit</button></span></nav></div>
+        <section className="sorp-response-fields">{fullReviewEntry === "completion" && <button className="sorp-stage-eight-continue" type="button" onClick={() => setFullReviewEntry("revealing")}>Build my Full Review <span>→</span></button>}</section>
+      </div>
+      {saveDialog}
+    </div>;
     if (stageEightReportMode) return <div className="readiness-chat is-result-mode">
       <SorpResultActions sessionId={sessionId} organisation={state.charityName} income={state.setup.income} result={result} startWithChoices onBackToAssessment={() => setStageEightReportMode(false)}>
         <FullReadinessReport result={result} impactMode={impactMode} />

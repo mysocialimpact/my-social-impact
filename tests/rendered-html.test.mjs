@@ -67,7 +67,7 @@ test("server-renders the My Social Impact homepage", async () => {
 test("every page inherits the global build stamp", async () => {
   const layout = await readFile(new URL("../app/layout.tsx", import.meta.url), "utf8");
   assert.match(layout, /global-build-stamp/);
-  assert.match(layout, /BUILD 95 · 23 SEPTEMBER 2026 · 23:13 BST/);
+  assert.match(layout, /BUILD 96 · 23 SEPTEMBER 2026 · 23:22 BST/);
 });
 
 test("explicit setup confirmations save directly without an intelligence thinking state", async () => {
@@ -121,6 +121,22 @@ test("Stage 8 stays in the assessment workspace until the user enters report mod
   assert.match(stageEight, /\{saveDialog\}/);
   assert.doesNotMatch(stageEight, /sorp-usefulness|Has this been useful/);
   assert.match(resultActions, /startWithChoices/);
+});
+
+test("Stage 7 completion waits for the user's reveal before entering Stage 8", async () => {
+  const conversation = await readFile(new URL("../app/sorp-readiness-conversation.tsx", import.meta.url), "utf8");
+  const handoff = conversation.slice(conversation.indexOf('if (fullReviewEntry !== "open") return'), conversation.indexOf('if (stageEightReportMode) return'));
+  assert.match(conversation, /workflow\?\.currentStage === 7 && data\.workflow\.currentStage === 8\) setFullReviewEntry\("completion"\)/);
+  assert.match(handoff, /<SorpJourneyProgress current=\{7\}/);
+  assert.match(handoff, /You’ve completed the assessment/);
+  assert.match(handoff, /Brilliant — thank you/);
+  assert.match(handoff, /Build my Full Review/);
+  assert.match(handoff, /Putting your Full Readiness Review together/);
+  assert.match(handoff, /Combining your answers/);
+  assert.match(handoff, /← Back/);
+  assert.match(handoff, /Save &amp; exit/);
+  assert.match(conversation, /setTimeout\(\(\) => setFullReviewEntry\("open"\)/);
+  assert.match(conversation, /fullReviewEntered: fullReviewEntry === "open"/);
 });
 
 test("post-review choices are three equal routes with existing prices and actions", async () => {
