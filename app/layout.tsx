@@ -49,7 +49,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <body className={`${sans.variable} ${serif.variable}`}>
         {children}
         <div className="global-build-stamp" aria-label="Website build information">
-          BUILD 101 · 24 SEPTEMBER 2026 · 00:29 BST
+          BUILD 102 · 24 SEPTEMBER 2026 · 00:30 BST
         </div>
       </body>
     </html>

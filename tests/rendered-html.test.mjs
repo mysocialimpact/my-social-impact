@@ -135,8 +135,8 @@ test("Stage 8 stays in the assessment workspace until the user enters report mod
   assert.match(stageEight, /Save &amp; exit/);
   assert.match(stageEight, /\{saveDialog\}/);
   assert.doesNotMatch(stageEight, /sorp-usefulness|Has this been useful/);
-  assert.match(resultActions, /useState\(openOnEntry\)/);
-  assert.match(conversation, /<SorpResultActions[^>]*openOnEntry/);
+  assert.match(resultActions, /useState\(false\)/);
+  assert.match(conversation, /<SorpResultActions[^>]*startWithChoices/);
 });
 
 test("Stage 8 headline review limits findings and leaves detail for report mode", async () => {
@@ -162,7 +162,7 @@ test("finished report has its own editorial view, email action and print treatme
   assert.match(conversation, /Statutory report &amp; wider evidence/);
   assert.match(actions, /Your SORP Readiness Report/);
   assert.match(actions, /Email my report/);
-  assert.match(actions, /Want to go beyond compliance\?/);
+  assert.match(actions, /SORP is the requirement\.<br \/>Better impact is the opportunity\./);
   assert.match(actions, /Print \/ save PDF/);
   assert.match(css, /@media print \{[\s\S]*?\.sorp-report-email[\s\S]*?display: none !important/);
   assert.match(css, /\.sorp-final-priorities li,\.sorp-final-findings,\.sorp-final-areas article \{ break-inside:avoid; \}/);
@@ -187,18 +187,28 @@ test("Stage 7 completion waits for the user's reveal before entering Stage 8", a
 test("post-review choices are three equal routes with existing prices and actions", async () => {
   const actions = await readFile(new URL("../app/sorp-result-actions.tsx", import.meta.url), "utf8");
   const css = await readFile(new URL("../app/sorp-ready.css", import.meta.url), "utf8");
+  assert.match(actions, /You’ve completed your free SORP readiness assessment\./);
   assert.match(actions, /What would you like to do next\?/);
-  assert.match(actions, /Human review — £\{chosenBand\.amount\}/);
+  assert.match(actions, /Talk it through — £\{chosenBand\.amount\}/);
   assert.match(actions, /Chartered Accountant and social impact consultant/);
-  assert.match(actions, /review fee is credited against that work/);
+  assert.match(actions, /<details className="sorp-choice-included"><summary>What’s included\?/);
+  assert.match(actions, /Fee credited against any subsequent MSI project work/);
   assert.match(actions, /mailto:marcus@mysocialimpact\.org/);
+  assert.match(actions, /Book my review/);
   assert.match(actions, /Support the free tool — £5/);
   assert.match(actions, /Choose another amount/);
   assert.match(actions, /Take my free report — £0/);
+  assert.match(actions, /No payment required/);
+  assert.match(actions, /Show my report/);
   assert.match(actions, /openReport\("free", "free_report_selected"\)/);
+  assert.match(actions, /if \(saved\?\.reportOpen && !startWithChoices\)/);
+  assert.match(actions, /supportRef\.current\?\.scrollIntoView/);
+  assert.match(actions, /Want a copy in your inbox\?/);
+  assert.match(actions, /SORP is the requirement\.<br \/>Better impact is the opportunity\./);
+  for (const [tier, price] of [["small", 50], ["medium", 100], ["large", 200]]) assert.match(actions, new RegExp(`id: "${tier}"[^\\n]*amount: ${price}`));
   assert.doesNotMatch(actions, /No thanks — show my free report/);
   assert.match(css, /\.sorp-value-choice-grid \{[^}]*grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/);
-  assert.match(css, /\.sorp-value-choice-grid article\.is-free \{ background:#fff9df; \}/);
+  assert.match(css, /\.sorp-value-choice-grid article\.is-free \{ background:#faf8f0; \}/);
   assert.match(css, /\.sorp-result-preview-grid,\.sorp-value-choice-grid,\.sorp-report-email,\.sorp-report-review-cta \{ grid-template-columns: 1fr; \}/);
 });
 

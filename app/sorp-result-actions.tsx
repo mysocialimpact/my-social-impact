@@ -38,11 +38,11 @@ function headline(items: string[], fallback: string) {
   return items.length ? items.slice(0, 3) : [fallback];
 }
 
-export function SorpResultActions({ sessionId, organisation, income, result, children, onBackToAssessment, startWithChoices = false, openOnEntry = false }: { sessionId: string; organisation: string; income: string; result: ResultSummary; children: ReactNode; onBackToAssessment: () => void; startWithChoices?: boolean; openOnEntry?: boolean }) {
+export function SorpResultActions({ sessionId, organisation, income, result, children, onBackToAssessment, startWithChoices = false }: { sessionId: string; organisation: string; income: string; result: ResultSummary; children: ReactNode; onBackToAssessment: () => void; startWithChoices?: boolean }) {
   const storageKey = `msi-sorp-report-mode:${sessionId}`;
   const [choice, setChoice] = useState<Choice>(null);
   const [usefulness, setUsefulness] = useState<Usefulness>(null);
-  const [reportOpen, setReportOpen] = useState(openOnEntry);
+  const [reportOpen, setReportOpen] = useState(false);
   const [feedback, setFeedback] = useState("");
   const [band, setBand] = useState<ReviewBand>(() => suggestedBand(income));
   const [supportAmount, setSupportAmount] = useState(5);
@@ -56,9 +56,9 @@ export function SorpResultActions({ sessionId, organisation, income, result, chi
   const [emailError, setEmailError] = useState("");
   const reportRef = useRef<HTMLElement>(null);
   const reviewRef = useRef<HTMLDivElement>(null);
+  const supportRef = useRef<HTMLDivElement>(null);
   const chosenBand = reviewBands.find((item) => item.id === band)!;
   const tier = band === "small" ? "Tier 1" : band === "medium" ? "Tier 2" : "Tier 3";
-  const tierIncome = band === "small" ? "up to £500k" : band === "medium" ? "£500k–£15m" : "over £15m";
   const finalSupport = useMemo(() => customSupport ? Number(customSupport) : supportAmount, [customSupport, supportAmount]);
   const strongest = headline(result.strong, "Your answers give us a useful starting point for the reporting work ahead.");
   const gaps = headline(result.attention.length ? result.attention : result.priorities, "No immediate weaker area was identified in this initial readiness check.");
@@ -67,14 +67,14 @@ export function SorpResultActions({ sessionId, organisation, income, result, chi
     queueMicrotask(() => {
       try {
         const saved = JSON.parse(window.localStorage.getItem(storageKey) || "null") as { reportOpen?: boolean; usefulness?: Usefulness; choice?: Choice } | null;
-        if (saved?.reportOpen) setReportOpen(true);
+        if (saved?.reportOpen && !startWithChoices) setReportOpen(true);
         if (saved?.usefulness) setUsefulness(saved.usefulness);
         if (saved?.choice) setChoice(saved.choice);
       } catch { /* A damaged local preference should not block the free report. */ }
     });
     void track(sessionId, "assessment_completed", {}, true);
     void track(sessionId, "result_preview_viewed", {}, true);
-  }, [sessionId, storageKey]);
+  }, [sessionId, startWithChoices, storageKey]);
 
   useEffect(() => {
     try { window.localStorage.setItem(storageKey, JSON.stringify({ reportOpen, usefulness, choice })); } catch { /* The report remains available in the current tab. */ }
@@ -106,6 +106,7 @@ export function SorpResultActions({ sessionId, organisation, income, result, chi
   function showSupport(custom = false) {
     if (!custom) { setSupportAmount(5); setCustomSupport(""); }
     openReport("support", custom ? "support_custom_selected" : "support_5_selected");
+    window.setTimeout(() => supportRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
   }
 
   async function checkout(paymentType: "human_review" | "voluntary_support") {
@@ -153,7 +154,7 @@ export function SorpResultActions({ sessionId, organisation, income, result, chi
     <p className="readiness-payment-note">One-off payment through Stripe. Your email is collected securely in checkout. Cost genuinely a barrier? Email <a href="mailto:marcus@mysocialimpact.org">marcus@mysocialimpact.org</a>.</p>
   </div>;
 
-  const supportPanel = <div className="readiness-checkout-panel is-support">
+  const supportPanel = <div ref={supportRef} className="readiness-checkout-panel is-support">
     <div><span>Voluntary contribution</span><h4>Support the free tool</h4><p>Help us keep improving this and building useful free tools for charities. Payment is entirely optional and your report is already open below.</p></div>
     <div className="readiness-support-amounts" aria-label="Choose a voluntary support amount">{[5,10,20].map((amount) => <button type="button" className={!customSupport && supportAmount === amount ? "is-selected" : ""} key={amount} onClick={() => { setSupportAmount(amount); setCustomSupport(""); setIdempotencyKey(""); }}>£{amount}</button>)}<label><span>Another amount £</span><input aria-label="Another support amount in pounds" type="number" min="1" max="1000" step="1" value={customSupport} onChange={(event) => { setCustomSupport(event.target.value); setIdempotencyKey(""); }} /></label></div>
     <button className="readiness-pay-button" type="button" disabled={busy || !Number.isFinite(finalSupport) || finalSupport < 1} onClick={() => void checkout("voluntary_support")}>{busy ? "OPENING SECURE CHECKOUT…" : `CONTRIBUTE £${Number.isFinite(finalSupport) ? finalSupport : 0} SECURELY`} <span>→</span></button>
@@ -161,30 +162,27 @@ export function SorpResultActions({ sessionId, organisation, income, result, chi
   </div>;
 
   const choiceCards = <section className="sorp-value-choice" aria-labelledby="sorp-next-actions-title">
-    <header><h2 id="sorp-next-actions-title">What would you like to do next?</h2></header>
+    <header><span>You’ve completed your free SORP readiness assessment.</span><p>If it’s already given you what you need, brilliant — that means it worked.</p><p>If you’d like some human judgement, or simply want to help us keep tools like this free, you can do that too.</p><h2 id="sorp-next-actions-title">What would you like to do next?</h2></header>
     <div className="sorp-value-choice-grid">
       <article>
-        <span>Optional human help</span><h3>Human review — £{chosenBand.amount}</h3>
-        <p className="sorp-choice-tier">{tier} charity · income {tierIncome}</p>
+        <span>Human review</span><h3>Talk it through — £{chosenBand.amount}</h3>
+        <p className="sorp-choice-tier">{tier} charity</p>
         <p className="sorp-choice-price-note">£{chosenBand.amount} because your charity falls within SORP {tier}.</p>
-        <h4>Talk it through with a human.</h4>
-        <p>Some SORP questions involve judgement about evidence, proportionality, what belongs in the Trustees’ Annual Report and how strongly you can make an impact claim.</p>
-        <p>Marcus Warry is a Chartered Accountant and social impact consultant. In 60 minutes, he’ll review your assessment and reporting, challenge the judgement areas and help you decide what needs doing.</p>
-        <p>You’ll receive a short written summary covering:</p>
-        <ul><li>what looks strong</li><li>what needs attention</li><li>judgement areas</li><li>your three priority actions</li></ul>
-        <p className="sorp-choice-credit">If we subsequently work together on a My Social Impact project, the review fee is credited against that work.</p>
+        <p>60 minutes with Marcus Warry, Chartered Accountant and social impact consultant.</p>
+        <p>We’ll review the judgement areas, gaps and priorities with you and help you decide what actually needs doing.</p>
+        <details className="sorp-choice-included"><summary>What’s included? <span aria-hidden="true">+</span></summary><ul><li>Review of your assessment and relevant reporting</li><li>Discussion of judgement areas</li><li>Strengths and gaps</li><li>Three priority actions</li><li>Short written summary</li><li>Fee credited against any subsequent MSI project work</li></ul></details>
         <p className="sorp-choice-affordability">Cost genuinely a barrier? Email <a href="mailto:marcus@mysocialimpact.org">marcus@mysocialimpact.org</a>. We don’t want cost to stop a charity getting useful help.</p>
-        <div className="sorp-choice-actions"><button type="button" onClick={showReview}>Book my human review <b>→</b></button></div>
+        <div className="sorp-choice-actions"><button type="button" onClick={showReview}>Book my review <b>→</b></button></div>
       </article>
       <article>
         <span>Voluntary contribution</span><h3>Support the free tool — £5</h3>
-        <p>If the tool has been useful, a small voluntary contribution helps us keep improving it and building more free tools for charities.</p>
-        <div className="sorp-choice-actions"><button type="button" onClick={() => showSupport(false)}>Chuck in £5 <b>→</b></button><button className="is-text" type="button" onClick={() => showSupport(true)}>Choose another amount</button></div>
+        <p>If this has been useful, £5 genuinely helps us keep improving it and building more free tools for charities.</p>
+        <div className="sorp-choice-actions"><button className="is-text" type="button" onClick={() => showSupport(true)}>Choose another amount</button><button type="button" onClick={() => showSupport(false)}>Chuck in £5 <b>→</b></button></div>
       </article>
       <article className="is-free">
         <span>Free report</span><h3>Take my free report — £0</h3>
-        <p>If the free tool has already told you what you need, brilliant — that means it worked.</p>
-        <div className="sorp-choice-actions"><button type="button" onClick={() => openReport("free", "free_report_selected")}>Show my free report <b>→</b></button></div>
+        <p>No payment required.</p><p>If the tool has already given you what you need, take the report and use it.</p>
+        <div className="sorp-choice-actions"><button type="button" onClick={() => openReport("free", "free_report_selected")}>Show my report <b>→</b></button></div>
       </article>
     </div>
   </section>;
@@ -207,8 +205,8 @@ export function SorpResultActions({ sessionId, organisation, income, result, chi
         <div className="sorp-report-hero-result"><strong>{result.score}<small> / 100</small></strong><b>{result.band}</b><span>Confidence: {result.confidence}</span><button type="button" onClick={() => window.print()}>Print / save PDF ↗</button></div>
       </header>
       <div className="sorp-full-report">{children}</div>
-      <section className="sorp-report-email" aria-labelledby="sorp-report-email-title"><div><span>Keep your report</span><h2 id="sorp-report-email-title">Keep your report</h2><p>Send yourself a copy so you can keep it, share it with trustees or discuss it with your team.</p><small>Your full report remains visible and free. Email is optional.</small></div>{emailState === "sent" ? <p className="sorp-report-email-success" role="status">✓ Your report has been sent to {email}.</p> : <form onSubmit={sendReport}><label htmlFor="sorp-report-email">Email address<input id="sorp-report-email" type="email" autoComplete="email" required value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.org" /></label><label htmlFor="sorp-report-role">Your role — optional<select id="sorp-report-role" value={role} onChange={(event) => setRole(event.target.value as Role)}><option value="">Prefer not to say</option><option>Trustee</option><option>CEO</option><option>Employee</option><option>Adviser</option><option>Other</option></select></label><button type="submit" disabled={emailState === "sending"}>{emailState === "sending" ? "Sending…" : "Email my report"} <span>→</span></button>{emailError && <p role="alert"><strong>Sorry — we couldn’t email your report just now.</strong> {emailError} Your report is still available here.</p>}</form>}</section>
-      <section className="sorp-report-beyond"><span>The next opportunity</span><h2>Want to go beyond compliance?</h2><div><p>My Social Impact would love to help. We can help you close the SORP gaps we identified — and strengthen how impact is measured, managed, evidenced and communicated throughout the year.</p>{Boolean(result.judgement?.length) && <p>Want to talk the judgement areas through with a human? We can do that too.</p>}<a href="mailto:marcus@mysocialimpact.org?subject=SORP%20readiness%20and%20impact%20conversation">Book a conversation <span>→</span></a><small>Opens an email to Marcus so you can arrange a time.</small></div></section>
+      <section className="sorp-report-email" aria-labelledby="sorp-report-email-title"><div><span>Keep your report</span><h2 id="sorp-report-email-title">Keep your report</h2><p>Want a copy in your inbox?</p><small>Your full report is already open and free. Email is optional.</small></div>{emailState === "sent" ? <p className="sorp-report-email-success" role="status">✓ Your report has been sent to {email}.</p> : <form onSubmit={sendReport}><label htmlFor="sorp-report-email">Email address<input id="sorp-report-email" type="email" autoComplete="email" required value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.org" /></label><label htmlFor="sorp-report-role">Your role — optional<select id="sorp-report-role" value={role} onChange={(event) => setRole(event.target.value as Role)}><option value="">Prefer not to say</option><option>Trustee</option><option>CEO</option><option>Employee</option><option>Adviser</option><option>Other</option></select></label><button type="submit" disabled={emailState === "sending"}>{emailState === "sending" ? "Sending…" : "Email my report"} <span>→</span></button>{emailError && <p role="alert"><strong>Sorry — we couldn’t email your report just now.</strong> {emailError} Your report is still available here.</p>}</form>}</section>
+      <section className="sorp-report-beyond"><span>The next opportunity</span><h2>SORP is the requirement.<br />Better impact is the opportunity.</h2><div><p>My Social Impact would love to help you go beyond compliance — strengthening how impact is measured, managed, evidenced and communicated.</p><a href="mailto:marcus@mysocialimpact.org?subject=SORP%20readiness%20and%20impact%20conversation">Book a conversation <span>→</span></a><small>Opens an email to Marcus so you can arrange a time.</small></div></section>
       {choice === "review" && reviewPanel}{choice === "support" && supportPanel}
     </section>}
     {error && <p className="readiness-payment-error" role="alert">{error}</p>}
