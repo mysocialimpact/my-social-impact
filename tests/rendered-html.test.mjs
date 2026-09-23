@@ -67,7 +67,7 @@ test("server-renders the My Social Impact homepage", async () => {
 test("every page inherits the global build stamp", async () => {
   const layout = await readFile(new URL("../app/layout.tsx", import.meta.url), "utf8");
   assert.match(layout, /global-build-stamp/);
-  assert.match(layout, /BUILD 96 · 23 SEPTEMBER 2026 · 23:22 BST/);
+  assert.match(layout, /BUILD 97 · 23 SEPTEMBER 2026 · 23:34 BST/);
 });
 
 test("explicit setup confirmations save directly without an intelligence thinking state", async () => {
@@ -121,6 +121,24 @@ test("Stage 8 stays in the assessment workspace until the user enters report mod
   assert.match(stageEight, /\{saveDialog\}/);
   assert.doesNotMatch(stageEight, /sorp-usefulness|Has this been useful/);
   assert.match(resultActions, /startWithChoices/);
+});
+
+test("finished report has its own editorial view, email action and print treatment", async () => {
+  const conversation = await readFile(new URL("../app/sorp-readiness-conversation.tsx", import.meta.url), "utf8");
+  const actions = await readFile(new URL("../app/sorp-result-actions.tsx", import.meta.url), "utf8");
+  const css = await readFile(new URL("../app/sorp-ready.css", import.meta.url), "utf8");
+  assert.match(conversation, /if \(stageEightReportMode\)[\s\S]*?<FinalReadinessReport result=\{result\} impactMode=\{impactMode\}/);
+  assert.match(conversation, /Your three biggest priorities/);
+  assert.match(conversation, /SORP 2026 is our primary source of truth/);
+  assert.match(conversation, /MSI JUDGEMENT is our explanatory label, not an official fourth SORP category/);
+  assert.match(conversation, /What already looks strong/);
+  assert.match(conversation, /Statutory report &amp; wider evidence/);
+  assert.match(actions, /Your SORP Readiness Report/);
+  assert.match(actions, /Email my report/);
+  assert.match(actions, /Want to go beyond compliance\?/);
+  assert.match(actions, /Print \/ save PDF/);
+  assert.match(css, /@media print \{[\s\S]*?\.sorp-report-email[\s\S]*?display: none !important/);
+  assert.match(css, /\.sorp-final-priorities li,\.sorp-final-findings,\.sorp-final-areas article \{ break-inside:avoid; \}/);
 });
 
 test("Stage 7 completion waits for the user's reveal before entering Stage 8", async () => {

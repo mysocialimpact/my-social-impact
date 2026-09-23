@@ -300,6 +300,51 @@ function FullReadinessReport({ result, impactMode }: { result: Result; impactMod
   </section>;
 }
 
+function finalPriorityCategory(priority: string, result: Result) {
+  const normalised = priority.trim().toLowerCase();
+  if (result.must.some((item) => item.trim().toLowerCase() === normalised) || /^must\b/i.test(priority)) return "MUST";
+  if (result.should.some((item) => item.trim().toLowerCase() === normalised) || /^should\b/i.test(priority)) return "SHOULD";
+  if (result.judgement.some((item) => item.trim().toLowerCase() === normalised) || /^(?:msi )?judgement\b/i.test(priority)) return "MSI JUDGEMENT";
+  if (result.may.some((item) => item.trim().toLowerCase() === normalised) || /^may\b/i.test(priority)) return "MAY";
+  return "ASSESSMENT PRIORITY";
+}
+
+function finalPriorityGuidance(category: string) {
+  if (category === "MUST") return { why: "This concerns reporting that SORP requires in the Trustees’ Annual Report.", next: "Check the relevant requirement against your draft report, gather the supporting evidence and assign an owner." };
+  if (category === "SHOULD") return { why: "Strengthening this would make the statutory narrative clearer and better supported.", next: "Agree what better evidence or explanation you can include in the next reporting cycle." };
+  if (category === "MSI JUDGEMENT") return { why: "The right treatment depends on your context and the strength of the evidence available.", next: "Discuss the claim or reporting decision with the relevant trustees and document the reasoning." };
+  if (category === "MAY") return { why: "This is an optional opportunity to add useful context.", next: "Decide whether it would genuinely help readers understand your work, then include it only if proportionate." };
+  return { why: "The assessment identified this as an area that could improve your next report.", next: "Review the underlying evidence, agree an owner and decide what needs to change." };
+}
+
+function FinalReportFindings({ title, items, empty, id }: { title: string; items: string[]; empty: string; id?: string }) {
+  return <section className="sorp-final-findings" id={id}><h3>{title}</h3>{items.length ? <ul>{items.map((item, index) => <li key={`${index}-${item}`}>{item}</li>)}</ul> : <p>{empty}</p>}</section>;
+}
+
+function FinalReadinessReport({ result, impactMode }: { result: Result; impactMode: boolean }) {
+  const priorities = result.priorities.length ? result.priorities.slice(0, 3) : result.attention.slice(0, 3);
+  return <div className="sorp-final-report">
+    <section className="sorp-final-priorities" aria-labelledby="sorp-final-priorities-title">
+      <div className="sorp-final-section-heading"><span>01 / Where to focus</span><h2 id="sorp-final-priorities-title">Your three biggest priorities</h2><p>The most useful next steps from this assessment, before the next relevant reporting period.</p></div>
+      {priorities.length ? <ol>{priorities.map((priority, index) => { const category = finalPriorityCategory(priority, result); const guidance = finalPriorityGuidance(category); return <li key={`${index}-${priority}`}><span className="sorp-final-priority-number">0{index + 1}</span><div><span className="sorp-final-category">{category}</span><h3>{priority}</h3><p><strong>Why it matters</strong> {guidance.why}</p><p><strong>What to do next</strong> {guidance.next}</p></div></li>; })}</ol> : <p className="sorp-final-empty">No specific priority action was identified from the information available. Review the supporting detail below for areas that may need clarification.</p>}
+    </section>
+
+    <section className="sorp-final-method" aria-labelledby="sorp-final-method-title"><div className="sorp-final-section-heading"><span>02 / The basis</span><h2 id="sorp-final-method-title">How we reached this view</h2></div><div><p><strong>SORP 2026 is our primary source of truth.</strong> This view combines your latest Trustees’ Annual Report, relevant wider public impact evidence, your answers and corrections, and the additional SORP checks.</p><dl><div><dt>MUST</dt><dd>Required by SORP</dd></div><div><dt>SHOULD</dt><dd>Recommended or expected by SORP</dd></div><div><dt>MAY</dt><dd>Optional or permitted by SORP</dd></div><div><dt>MSI JUDGEMENT</dt><dd>Where context, evidence, proportionality or interpretation matters</dd></div></dl><p className="sorp-final-method-note">MSI JUDGEMENT is our explanatory label, not an official fourth SORP category. {impactMode ? "SORP does not apply in the circumstances established; the findings offer wider impact-reporting guidance." : "This is a readiness assessment of narrative and impact reporting, not a declaration of full SORP compliance."}</p></div></section>
+
+    <section className="sorp-final-strengths" aria-labelledby="sorp-final-strengths-title"><div className="sorp-final-section-heading"><span>03 / Your foundation</span><h2 id="sorp-final-strengths-title">What already looks strong</h2></div>{result.strong.length ? <ul>{result.strong.map((item, index) => <li key={`${index}-${item}`}><span aria-hidden="true">✓</span>{item}</li>)}</ul> : <p>The evidence reviewed did not establish a clear strength yet. That is a reason to add context, not a judgement that the work is absent.</p>}</section>
+
+    <section className="sorp-final-requirements" aria-labelledby="sorp-final-requirements-title"><div className="sorp-final-section-heading"><span>04 / The SORP lens</span><h2 id="sorp-final-requirements-title">What the findings mean</h2></div><div className="sorp-final-requirements-list"><FinalReportFindings title="MUST address" items={result.must} empty="No specific MUST gap was flagged by this assessment." /><FinalReportFindings title="SHOULD strengthen" items={result.should} empty="No specific SHOULD opportunity was flagged by this assessment." /><FinalReportFindings title="MAY / opportunities" items={result.may} empty="No additional MAY option was identified." /><FinalReportFindings title="Human judgement may help" items={result.judgement} empty="No specific judgement area was flagged, though context can still matter." /></div></section>
+
+    <section className="sorp-final-judgement" aria-labelledby="sorp-final-judgement-title"><div className="sorp-final-section-heading"><span>05 / Where nuance matters</span><h2 id="sorp-final-judgement-title">Where human judgement may be most valuable</h2></div><div><p>Some SORP questions need more than a mechanical answer: the strength of evidence, proportionality, support for impact claims and what belongs in the Trustees’ Annual Report all depend on context.</p>{result.judgement.length ? <ul>{result.judgement.map((item, index) => <li key={`${index}-${item}`}>{item}</li>)}</ul> : <p>No specific judgement issue was identified from the information supplied.</p>}</div></section>
+
+    <section className="sorp-final-evidence" aria-labelledby="sorp-final-evidence-title"><div className="sorp-final-section-heading"><span>06 / Where the evidence sits</span><h2 id="sorp-final-evidence-title">Statutory report &amp; wider evidence</h2></div><div className="sorp-final-evidence-columns"><FinalReportFindings title="Trustees’ Annual Report" items={result.trusteesReportReadiness} empty="The statutory-report view remains limited by the evidence available." /><FinalReportFindings title="Wider impact evidence" items={result.widerImpactEvidence} empty="No separate wider impact evidence materially changed this view." /></div><p>Wider evidence can support and expand the story, but it does not automatically satisfy a requirement that needs appropriate coverage in the Trustees’ Annual Report.</p></section>
+
+    <section className="sorp-final-detail" aria-labelledby="sorp-final-detail-title"><div className="sorp-final-section-heading"><span>07 / Supporting detail</span><h2 id="sorp-final-detail-title">Your assessment by area</h2></div><div className="sorp-final-areas">{result.sectionScores.map((section, index) => <article key={section.section}><span>0{index + 1}</span><div><h3>{section.label}</h3><p>{section.narrative}</p></div><strong>{section.score}<small> / 100</small></strong></article>)}</div><FinalReportFindings title="Additional SORP checks" items={result.additionalChecks} empty="No additional requirement was triggered by the information supplied." /><FinalReportFindings title="Your confirmed practice" items={result.userConfirmedPractice} empty="No further current practice was confirmed beyond the assessment answers." /></section>
+
+    <section className="sorp-final-perspective"><span>My Social Impact perspective</span><h2>SORP is the requirement.<br />Better impact is the opportunity.</h2><p>Getting the reporting right matters. The bigger opportunity is building the evidence, learning and management practices that make strong impact reporting easier every year.</p></section>
+  </div>;
+}
+
 function FullReviewRail({ result }: { result: Result }) {
   const links = [
     ["full-review-strong", "✓ What looks strong"], ["full-review-gaps", "△ Important gaps"],
@@ -1247,7 +1292,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
     </div>;
     if (stageEightReportMode) return <div className="readiness-chat is-result-mode">
       <SorpResultActions sessionId={sessionId} organisation={state.charityName} income={state.setup.income} result={result} startWithChoices onBackToAssessment={() => setStageEightReportMode(false)}>
-        <FullReadinessReport result={result} impactMode={impactMode} />
+        <FinalReadinessReport result={result} impactMode={impactMode} />
         {intelligence && <details className="readiness-intelligence" aria-label="Effective intelligence provenance">
           <summary>{intelligence.layers.filter((layer) => layer.id === "msi-core" || layer.id === "sorp-readiness-intelligence").map((layer) => `${intelligenceLayerLabel(layer)} · ${layer.label}`).join(" · ")}</summary>
           <div><p><strong>{intelligence.registry} · {intelligence.effectiveVersion}</strong><span>Published intelligence only · {intelligence.mode === "CURRENT" ? "latest for this new session" : intelligence.mode === "PINNED" ? "pinned for this conversation" : "last known published — Cow Console was temporarily unavailable"}</span></p>{intelligence.layers.map((layer) => <p key={`${layer.id}-${layer.version}`}><strong>{intelligenceLayerLabel(layer)} · {layer.label}</strong><span>{layer.relationship.toLowerCase()} · {layer.status.toLowerCase()} · published {layer.publishedAt ? new Intl.DateTimeFormat("en-GB", { dateStyle: "medium", timeStyle: "short" }).format(new Date(layer.publishedAt)) : "date unavailable"}</span></p>)}{intelligence.runtimeControls.map((control) => <p key={`${control.name}-${control.type}`}><strong>{control.name} · {control.type}</strong><span>Represented by {control.representedBy}</span></p>)}</div>
