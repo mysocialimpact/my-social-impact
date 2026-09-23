@@ -39,6 +39,7 @@ export type ReadinessState = {
   uncertainty: string[];
   fields: Record<string, FieldState>;
   additional: Record<string, AdditionalState>;
+  stageSevenScreening?: Record<string, "yes" | "no" | "not_sure">;
   completedStages: number[];
   currentStage: number;
   score: number | null;
@@ -119,6 +120,7 @@ function blankState(): ReadinessState {
     uncertainty: [],
     fields: Object.fromEntries(coreQuestions.map((question) => [String(question.id), { answer: null, evidence: "", confidence: 0 }])),
     additional: Object.fromEntries(additionalChecks.map((check) => [check.id, { answer: null, evidence: "", relevant: false }])),
+    stageSevenScreening: {},
     completedStages: [],
     currentStage: 1,
     score: null,
@@ -152,6 +154,7 @@ function looksLikeQuestion(value: string) {
 
 function isDeterministicSetupReply(value: string, stepId = "") {
   const answer = value.trim();
+  if (/^(?:screen:|check:)/.test(stepId) && /^(?:yes|no|not sure)$/i.test(answer)) return true;
   if (["accountsConfirmation", "startDateConfirmation"].includes(stepId)) {
     return /^(?:yes|yep|yeah|correct|right|no|nope|i\s+(?:don[’']?t|do not)\s+know|not sure|skip|move on)\b/i.test(answer);
   }
@@ -409,15 +412,24 @@ const stageCheckLabels: Record<number, string> = {
   11: "Balanced reporting", 12: "Factors affecting results", 13: "Future plans", 14: "A consistent report story", 15: "Information ready to report",
 };
 
+const stageSevenProgress = [
+  { id: "volunteers", label: "Volunteers" },
+  { id: "grant_making", label: "Grant-making" },
+  { id: "fundraising", label: "Fundraising" },
+  { id: "social_investment", label: "Social investment" },
+  { id: "investments", label: "Financial investments" },
+  { id: "group", label: "Subsidiaries / group" },
+];
+
 function DeepDiveStageRail({ workflow, state }: { workflow: ReadinessWorkflow; state: ReadinessState }) {
   const checks = workflow.currentStage === 7
-    ? additionalChecks.filter((check) => state.additional[check.id]?.relevant || workflow.next.id === `check:${check.id}`).map((check) => ({ id: check.id, label: check.title, complete: state.additional[check.id]?.answer !== null && state.additional[check.id]?.answer !== undefined, current: workflow.next.id === `check:${check.id}` }))
+    ? stageSevenProgress.map((check) => ({ ...check, complete: Boolean(state.stageSevenScreening?.[check.id]) && !(workflow.next.id === `check:${check.id}`), current: workflow.next.id === `screen:${check.id}` || workflow.next.id === `check:${check.id}` }))
     : coreQuestions.filter((question) => stageForQuestion(question) === workflow.currentStage).map((question) => ({ id: String(question.id), label: stageCheckLabels[question.id], complete: state.fields[String(question.id)]?.answer !== null && state.fields[String(question.id)]?.answer !== undefined, current: workflow.next.id === `field:${question.id}` }));
   const complete = checks.filter((check) => check.complete).length;
   return <section className="sorp-stage-coach" aria-label={`${workflow.stageTitle} progress`}>
     <span>Your progress</span><h2>{workflow.stageTitle}</h2>
     {checks.length > 0 && <><p className="sorp-stage-coach-count">{complete} of {checks.length} checks complete</p><ol>{checks.map((check) => <li key={check.id} className={check.complete ? "is-complete" : check.current ? "is-current" : undefined}><span aria-hidden="true">{check.complete ? "✓" : "○"}</span>{check.label}</li>)}</ol></>}
-    <p className="sorp-stage-coach-note">{complete > 0 ? "Good progress — keep confirming what still reflects your current practice." : "Your published reporting gives us a starting point. You can confirm or correct it as we go."}</p>
+    <p className="sorp-stage-coach-note">{workflow.currentStage === 7 ? "Nearly there. These final checks help us make sure we haven’t missed any additional SORP requirements relevant to your charity." : complete > 0 ? "Good progress — keep confirming what still reflects your current practice." : "Your published reporting gives us a starting point. You can confirm or correct it as we go."}</p>
   </section>;
 }
 
@@ -695,7 +707,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
       setError("");
       return;
     }
-    const pending = structuredAnswerFromAction(value, selectedWorkflow.next.id);
+    const pending = selectedWorkflow.currentStage === 7 && selectedWorkflow.next.id.startsWith("check:") ? null : structuredAnswerFromAction(value, selectedWorkflow.next.id);
     if (!pending) {
       void sendMessage(value);
       return;
@@ -1066,6 +1078,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
 
   if (!setupOnly && result && state.score !== null && sessionId && reviewIndex === null) return <div className="readiness-chat is-result-mode">
     <SorpJourneyProgress current={readinessStages.length} completed={Array.from({ length: readinessStages.length - 1 }, (_, index) => index + 1)} result />
+    <p className="sorp-stage-seven-complete">✓ Additional SORP checks complete</p>
     <SorpResultActions sessionId={sessionId} organisation={state.charityName} income={state.setup.income} result={result} onBackToAssessment={() => {
       if (!checkpoints.length) return;
       const nextIndex = checkpoints.length - 1;
@@ -1112,7 +1125,8 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
         {message.workflow?.next.id !== "publicSearchCheckpoint" && (message.workflow?.next.id === "publicReview" && message.workflow.next.provisional?.trusteesReport.reviewed
           ? <QuickReviewExplanation review={message.workflow.next.provisional} onReplaceImpactReport={() => selectStructuredAnswer("No — I have a newer Impact Report")} />
           : <div><MessageContent text={message.organisation ? "I think I’ve found you." : message.content} /></div>)}
-        {message.role === "assistant" && message.responseKind !== "detour" && message.workflow && /^(?:field:\d+|check:)/.test(message.workflow.next.id) && <DeepDiveQuestionContext workflow={message.workflow} />}
+        {message.role === "assistant" && message.responseKind !== "detour" && message.workflow && (/^field:\d+/.test(message.workflow.next.id) || message.workflow.next.id.startsWith("check:") && message.workflow.currentStage !== 7) && <DeepDiveQuestionContext workflow={message.workflow} />}
+        {message.role === "assistant" && message.responseKind !== "detour" && message.workflow?.currentStage === 7 && /^(?:screen:|check:)/.test(message.workflow.next.id) && <section className="sorp-stage-seven-context"><p>{message.workflow.next.why}</p><SorpBasisDrawer basis={message.workflow.next.basis} /></section>}
         {message.workflow?.next.id === "publicSearchCheckpoint" && <PublicSearchCheckpoint workflow={message.workflow} />}
         {message.role === "assistant" && !message.organisation && message.responseKind === "detour" && <section className="sorp-question-purpose"><strong>What we need next</strong><p>{message.workflow?.next.question}</p></section>}
         {message.organisation && <p className="sorp-confirm-question">Is this the right organisation?</p>}
@@ -1144,7 +1158,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
       </nav>
       </div>
       <section className="sorp-response-fields" aria-label="Respond to MSI Intelligence">
-      {showResponseActions && <nav className={`readiness-message-actions${/^(?:field:\d+|check:)/.test(responseQuestionId) ? " is-assessment-scale" : ""}${responseQuestionId === "activities" ? " is-multi-select" : ""}`} aria-label={responseQuestionId === "activities" ? "Choose all activities that apply" : /^(?:field:\d+|check:)/.test(responseQuestionId) ? "Choose a quick answer" : "Choose an answer"}>{responseActions.map((action) => {
+      {showResponseActions && <nav className={`readiness-message-actions${/^(?:screen:|check:)/.test(responseQuestionId) && currentStage === 7 ? " is-stage-seven-choices" : /^(?:field:\d+|check:)/.test(responseQuestionId) ? " is-assessment-scale" : ""}${responseQuestionId === "activities" ? " is-multi-select" : ""}`} aria-label={responseQuestionId === "activities" ? "Choose all activities that apply" : /^(?:screen:|field:\d+|check:)/.test(responseQuestionId) ? "Choose a quick answer" : "Choose an answer"}>{responseActions.map((action) => {
         const selected = responseQuestionId === "activities" && activitySelections.includes(action.value);
         const saved = reviewCheckpoint?.answerText?.toUpperCase().startsWith(action.label.toUpperCase().replace(/^KEEP\s+/, ""));
         return <button aria-pressed={responseQuestionId === "activities" ? selected : saved || undefined} className={[action.label === "SKIP FOR NOW" ? "is-skip" : "", selected || saved ? "is-selected" : ""].filter(Boolean).join(" ") || undefined} key={`${action.label}-${action.value}`} type="button" disabled={busy || quickAdvancing} onClick={() => selectStructuredAnswer(action.value)}>{action.label}<span>{selected || saved ? "✓" : "→"}</span></button>;

@@ -67,7 +67,7 @@ test("server-renders the My Social Impact homepage", async () => {
 test("every page inherits the global build stamp", async () => {
   const layout = await readFile(new URL("../app/layout.tsx", import.meta.url), "utf8");
   assert.match(layout, /global-build-stamp/);
-  assert.match(layout, /BUILD 87 · 23 SEPTEMBER 2026 · 21:33 BST/);
+  assert.match(layout, /BUILD 88 · 23 SEPTEMBER 2026 · 21:49 BST/);
 });
 
 test("explicit setup confirmations save directly without an intelligence thinking state", async () => {
@@ -76,6 +76,17 @@ test("explicit setup confirmations save directly without an intelligence thinkin
   assert.match(conversation, /\["accountsConfirmation", "startDateConfirmation"\]/);
   assert.match(conversation, /quickAdvancing \? "Saving…"/);
   assert.doesNotMatch(conversation, /quickAdvancing \? "Understanding…"/);
+});
+
+test("Stage 7 keeps six checks in the coach rail and three quick answers beside chat", async () => {
+  const conversation = await readFile(new URL("../app/sorp-readiness-conversation.tsx", import.meta.url), "utf8");
+  const css = await readFile(new URL("../app/sorp-journey.css", import.meta.url), "utf8");
+  for (const label of ["Volunteers", "Grant-making", "Fundraising", "Social investment", "Financial investments", "Subsidiaries / group"]) assert.match(conversation, new RegExp(label));
+  assert.match(conversation, /stageSevenScreening/);
+  assert.match(conversation, /is-stage-seven-choices/);
+  assert.match(css, /grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/);
+  assert.match(conversation, /<textarea ref=\{composerRef\}/);
+  assert.match(conversation, /Use microphone/i);
 });
 
 test("Quick Readiness Review keeps TAR and wider evidence separate", async () => {
@@ -117,7 +128,7 @@ test("Deep Dive keeps suggested answers and evidence beside the question, with s
   const rail = conversation.slice(conversation.indexOf("function SorpStageContext"), conversation.indexOf("export function SorpReadinessConversation"));
   assert.match(conversation, /function DeepDiveStageRail/);
   assert.match(conversation, /function DeepDiveQuestionContext/);
-  assert.match(conversation, /message\.workflow && \/\^\(\?:field:/);
+  assert.match(conversation, /message\.workflow && \(\/\^field:/);
   assert.match(conversation, /<DeepDiveQuestionContext workflow=\{message\.workflow\}/);
   assert.match(rail, /<DeepDiveStageRail workflow=\{workflow\} state=\{state\}/);
   assert.doesNotMatch(rail, /<PublicAnswerProposal/);
