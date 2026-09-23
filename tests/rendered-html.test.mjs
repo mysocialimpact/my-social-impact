@@ -67,7 +67,7 @@ test("server-renders the My Social Impact homepage", async () => {
 test("every page inherits the global build stamp", async () => {
   const layout = await readFile(new URL("../app/layout.tsx", import.meta.url), "utf8");
   assert.match(layout, /global-build-stamp/);
-  assert.match(layout, /BUILD 98 · 23 SEPTEMBER 2026 · 23:40 BST/);
+  assert.match(layout, /BUILD 99 · 24 SEPTEMBER 2026 · 00:01 BST/);
 });
 
 test("explicit setup confirmations save directly without an intelligence thinking state", async () => {
@@ -88,13 +88,25 @@ test("Stage 1 payoff leads with Quick Review and keeps Impact Report optional", 
   assert.match(payoff, /SORP 2026 appears to apply to you/);
   assert.match(payoff, /We couldn’t find a separate Impact Report or Annual Review online/);
   assert.match(conversation, /label: "SEE MY QUICK REVIEW"/);
-  assert.match(conversation, /Continue without one/);
+  assert.doesNotMatch(conversation, /Continue without one/);
   assert.match(conversation, /impactReportMissingAtPayoff && <ImpactReportUploader/);
   assert.match(conversation, /onDrop=\{dropReport\}/);
   assert.match(conversation, /✓ IMPACT REPORT ADDED/);
   assert.doesNotMatch(payoff, /Something changed\? Correct this/i);
   assert.match(css, /\.sorp-impact-report-dropzone \{[^}]*min-height:150px/);
   assert.match(css, /\.sorp-impact-report-dropzone strong,\.sorp-impact-report-dropzone span \{ display:none; \}/);
+});
+
+test("Stage 1 checkpoint has one review action and optional chat", async () => {
+  const conversation = await readFile(new URL("../app/sorp-readiness-conversation.tsx", import.meta.url), "utf8");
+  assert.match(conversation, /const responseActions = isStageOnePayoff\s*\? \[\{ label: "SEE MY QUICK REVIEW"/);
+  assert.match(conversation, /ANYTHING YOU’D LIKE TO ADD, CLARIFY OR ASK BEFORE YOU SEE YOUR QUICK REVIEW\?/);
+  assert.match(conversation, /\(!isStageOnePayoff \|\| composer\.trim\(\)\.length >= 2\)/);
+  assert.match(conversation, /isStageOnePayoff \? "Send message"/);
+  assert.doesNotMatch(conversation, /sorp-skip-impact-report/);
+  assert.match(conversation, /onDrop=\{dropReport\}/);
+  assert.match(conversation, /onClick=\{onChoose\}/);
+  assert.match(conversation, /className="readiness-mic"/);
 });
 
 test("Stage 7 keeps six checks in the coach rail and three quick answers beside chat", async () => {
