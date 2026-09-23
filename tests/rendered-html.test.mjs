@@ -126,13 +126,27 @@ test("Stage 8 stays in the assessment workspace until the user enters report mod
   const stageEight = conversation.slice(conversation.indexOf('return <div className="readiness-chat is-stage-eight"'), conversation.indexOf("if (!started) return"));
   assert.match(stageEight, /<SorpJourneyProgress/);
   assert.match(stageEight, /<FullReviewRail result=\{result\}/);
-  assert.match(stageEight, /<FullReadinessReport result=\{result\}/);
+  assert.match(stageEight, /<HeadlineReadinessReview result=\{result\}/);
+  assert.doesNotMatch(stageEight, /<FinalReadinessReport|<FullReadinessReport|readiness-result-sections/);
+  assert.match(stageEight, /So — where do you now stand\?/);
+  assert.match(stageEight, /Continue to my full report &amp; next actions/);
   assert.match(stageEight, /<QuickReviewFeedback full/);
   assert.match(stageEight, /← Back/);
   assert.match(stageEight, /Save &amp; exit/);
   assert.match(stageEight, /\{saveDialog\}/);
   assert.doesNotMatch(stageEight, /sorp-usefulness|Has this been useful/);
   assert.match(resultActions, /startWithChoices/);
+});
+
+test("Stage 8 headline review limits findings and leaves detail for report mode", async () => {
+  const conversation = await readFile(new URL("../app/sorp-readiness-conversation.tsx", import.meta.url), "utf8");
+  const headline = conversation.slice(conversation.indexOf("function HeadlineReadinessReview"), conversation.indexOf("function finalPriorityCategory"));
+  for (const title of ["What looks strong", "Most important gaps", "MUST address", "Where human judgement may help", "Your top 3 priorities"]) assert.match(headline, new RegExp(title));
+  for (const items of ["result.strong", "result.attention", "result.judgement"]) assert.match(headline, new RegExp(`${items.replaceAll(".", "\\.")}\\.slice\\(0, 3\\)`));
+  assert.match(headline, /result\.must\.slice\(0, 3\)/);
+  assert.match(headline, /result\.priorities\.slice\(0, 3\)/);
+  assert.doesNotMatch(headline, /sectionScores|widerImpactEvidence|userConfirmedPractice|result.should|result.may/);
+  assert.match(conversation, /if \(stageEightReportMode\)[\s\S]*?<FinalReadinessReport result=\{result\} impactMode=\{impactMode\}/);
 });
 
 test("finished report has its own editorial view, email action and print treatment", async () => {

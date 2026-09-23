@@ -288,16 +288,23 @@ function intelligenceLayerLabel(layer: IntelligenceProvenance["layers"][number])
   return layer.name;
 }
 
-function ResultList({ id, title, items, empty }: { id?: string; title: string; items: string[]; empty: string }) {
-  return <article id={id}><h4>{title}</h4>{items.length ? <ul>{items.map((item) => <li key={item}>{item}</li>)}</ul> : <p>{empty}</p>}</article>;
+function HeadlineReviewSection({ id, title, items, empty, ordered = false }: { id: string; title: string; items: string[]; empty: string; ordered?: boolean }) {
+  const contents = items.length ? items.map((item, index) => <li key={`${index}-${item}`}>{item}</li>) : null;
+  return <section className="sorp-stage-eight-section" id={id}><h2>{title}</h2>{contents ? ordered ? <ol>{contents}</ol> : <ul>{contents}</ul> : <p>{empty}</p>}</section>;
 }
 
-function FullReadinessReport({ result, impactMode }: { result: Result; impactMode: boolean }) {
-  return <section className="readiness-report-detail">
-    <p className="readiness-result-note">{impactMode ? "SORP does not apply in the circumstances established. This report offers wider narrative and impact-reporting guidance." : "This assesses readiness for the narrative and impact-reporting aspects of SORP 2026. It is not a declaration of full SORP compliance."}</p>
-    <div className="readiness-result-sections">{result.sectionScores.map((section) => <article key={section.section}><div><h3>{section.label}</h3><strong>{section.score}</strong></div><i><b style={{ width: `${section.score}%` }} /></i><p>{section.narrative}</p></article>)}</div>
-    <div className="readiness-result-grid"><ResultList id="full-review-strong" title="What looks strong" items={result.strong} empty="No clear strength has been evidenced yet." /><ResultList id="full-review-gaps" title="Important gaps" items={result.attention} empty="No immediate weaker area was identified." /><ResultList title="Trustees’ Annual Report readiness" items={result.trusteesReportReadiness} empty="The Trustees’ Annual Report view remains limited by the evidence available." /><ResultList title="Wider impact evidence" items={result.widerImpactEvidence} empty="No separate wider impact evidence materially changed this assessment." /><ResultList title="User-confirmed current practice" items={result.userConfirmedPractice} empty="No current practice was confirmed beyond the structured assessment answers." /><ResultList id="full-review-must" title="MUST areas" items={result.must} empty="No applicable MUST area was flagged by this assessment." /><ResultList id="full-review-should" title="SHOULD opportunities" items={result.should} empty="No weaker SHOULD opportunity was identified." /><ResultList title="MAY options" items={result.may} empty="No additional MAY option was identified." /><ResultList id="full-review-judgement" title="MSI JUDGEMENT areas" items={result.judgement} empty="No specific judgement area was flagged, although context still matters." /><ResultList title="Additional SORP checks" items={result.additionalChecks} empty="No additional check was triggered by the information supplied." /><ResultList id="full-review-priorities" title="Priority actions" items={result.priorities} empty="Add more context to build practical priorities." /></div>
-  </section>;
+function HeadlineReadinessReview({ result, impactMode }: { result: Result; impactMode: boolean }) {
+  const priorities = result.priorities.length ? result.priorities.slice(0, 3) : result.attention.slice(0, 3);
+  const importantMust = result.must.filter((item) => result.priorities.some((priority) => priority.trim().toLowerCase() === item.trim().toLowerCase())).slice(0, 3);
+  const must = importantMust.length ? importantMust : result.must.slice(0, 3);
+  return <div className="sorp-stage-eight-headlines">
+    <p className="sorp-stage-eight-caveat">{impactMode ? "SORP does not apply in the circumstances established. This is a headline view of your wider narrative and impact-reporting readiness." : "This is a headline readiness view, not a declaration of full SORP compliance. Your detailed personalised report is next."}</p>
+    <HeadlineReviewSection id="full-review-strong" title="What looks strong" items={result.strong.slice(0, 3)} empty="No clear strength has been evidenced yet." />
+    <HeadlineReviewSection id="full-review-gaps" title="Most important gaps" items={result.attention.slice(0, 3)} empty="No immediate weaker area was identified." />
+    <HeadlineReviewSection id="full-review-must" title="MUST address" items={must} empty="No important MUST gap was flagged by this assessment." />
+    <HeadlineReviewSection id="full-review-judgement" title="Where human judgement may help" items={result.judgement.slice(0, 3)} empty="No specific judgement area was flagged, although context can still matter." />
+    <HeadlineReviewSection id="full-review-priorities" title="Your top 3 priorities" items={priorities} empty="Add more context to build practical priorities." ordered />
+  </div>;
 }
 
 function finalPriorityCategory(priority: string, result: Result) {
@@ -348,8 +355,8 @@ function FinalReadinessReport({ result, impactMode }: { result: Result; impactMo
 function FullReviewRail({ result }: { result: Result }) {
   const links = [
     ["full-review-strong", "✓ What looks strong"], ["full-review-gaps", "△ Important gaps"],
-    ["full-review-must", "MUST areas"], ["full-review-should", "SHOULD opportunities"],
-    ["full-review-judgement", "JUDGEMENT areas"], ["full-review-priorities", "Priority actions"],
+    ["full-review-must", "MUST address"], ["full-review-judgement", "Human judgement"],
+    ["full-review-priorities", "Top 3 priorities"],
   ];
   return <aside className="sorp-full-review-rail" aria-label="Full Readiness Review summary">
     <span>Your Full Readiness Review</span><div className="sorp-full-review-score"><strong>{result.score}<small> / 100</small></strong><b>{result.band}</b></div>
@@ -1303,11 +1310,11 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
       <SorpJourneyProgress current={readinessStages.length} completed={Array.from({ length: readinessStages.length - 1 }, (_, index) => index + 1)} result />
       <div className="sorp-journey-body">
         <FullReviewRail result={result} />
-        <main className="sorp-stage-eight-main"><p className="sorp-stage-seven-complete">✓ Additional SORP checks complete</p><header className="sorp-stage-eight-heading"><span>Your Full Readiness Review</span><h1>{result.band} <strong>{result.score} <small>/ 100</small></strong></h1><p>Evidence confidence: <b>{result.confidence}</b></p><p>{result.overview}</p></header><FullReadinessReport result={result} impactMode={impactMode} /></main>
+        <main className="sorp-stage-eight-main"><p className="sorp-stage-seven-complete">✓ Additional SORP checks complete</p><header className="sorp-stage-eight-heading"><span>Your Full Readiness Review</span><h1>So — where do you now stand?</h1><p className="sorp-stage-eight-verdict"><strong>{result.score} / 100</strong> · {result.band} <span>Confidence: {result.confidence}</span></p><p>{result.overview}</p></header><HeadlineReadinessReview result={result} impactMode={impactMode} /></main>
       </div>
       <div className="readiness-composer sorp-stage-eight-response">
         <div className="sorp-response-utility"><nav className="sorp-bottom-navigation" aria-label="Assessment navigation"><span className="sorp-bottom-utility"><button type="button" className="is-back" onClick={goBack} disabled={!checkpoints.length}>← Back</button><button type="button" className="is-save" onClick={() => { setSaveStatus("idle"); setSaveError(""); setSaveDialogOpen(true); }}>Save &amp; exit</button></span></nav></div>
-        <section className="sorp-response-fields" aria-label="Respond to your Full Readiness Review"><QuickReviewFeedback full value={fullReviewFeedback} comment={fullReviewFeedbackComment} onSelect={recordFullReviewFeedback} onComment={recordFullReviewFeedbackComment} /><button className="sorp-stage-eight-continue" type="button" onClick={() => setStageEightReportMode(true)}>Continue to report &amp; next actions <span>→</span></button></section>
+        <section className="sorp-response-fields" aria-label="Respond to your Full Readiness Review"><QuickReviewFeedback full value={fullReviewFeedback} comment={fullReviewFeedbackComment} onSelect={recordFullReviewFeedback} onComment={recordFullReviewFeedbackComment} /><button className="sorp-stage-eight-continue" type="button" onClick={() => setStageEightReportMode(true)}>Continue to my full report &amp; next actions <span>→</span></button></section>
       </div>
       {saveDialog}
     </div>;
