@@ -1,6 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import { createRequire } from "node:module";
+import { fileURLToPath } from "node:url";
+
+const require = createRequire(import.meta.url);
 
 const actions = readFileSync(new URL("../app/sorp-result-actions.tsx", import.meta.url), "utf8");
 const conversation = readFileSync(new URL("../app/sorp-readiness-conversation.tsx", import.meta.url), "utf8");
@@ -19,4 +23,19 @@ test("assessment milestones and best-effort Grow submission stay separate from c
     assert.match(conversation, new RegExp(event));
   assert.match(route, /"book_conversation_clicked"/);
   assert.match(readFileSync(new URL("../app/sorp-growth.ts", import.meta.url), "utf8"), /catch \{ \/\* Grow outages/);
+});
+
+test("a Grow outage cannot reject or hold up the customer journey", async () => {
+  const ts = require("typescript"), { Module } = require("node:module");
+  const path = fileURLToPath(new URL("../app/sorp-growth.ts", import.meta.url));
+  const compiled = new Module(path);
+  compiled.filename = path;
+  compiled.paths = Module._nodeModulePaths(require("node:path").dirname(path));
+  compiled._compile(ts.transpileModule(readFileSync(path, "utf8"), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText, path);
+  const originalWindow = globalThis.window, originalFetch = globalThis.fetch;
+  const storage = new Map();
+  globalThis.window = { location: { search: "?utm_source=test" }, localStorage: { getItem: key => storage.get(key) || null, setItem: (key, value) => storage.set(key, value) } };
+  globalThis.fetch = async () => { throw new Error("Grow is offline"); };
+  try { await assert.doesNotReject(compiled.exports.trackSorpEvent("failure-test-session", "book_conversation_clicked")); }
+  finally { globalThis.window = originalWindow; globalThis.fetch = originalFetch; }
 });
