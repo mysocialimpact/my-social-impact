@@ -603,7 +603,6 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
   const streamRef = useRef<MediaStream | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const feedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   function growthContext(nextState = state, nextResult: Result | null = result) {
     const tier = nextState.setup.income === "tier1" ? "Tier 1" : nextState.setup.income === "tier2" ? "Tier 2" : nextState.setup.income === "tier3" ? "Tier 3" : "tier uncertain";
@@ -761,7 +760,6 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
 
   useEffect(() => () => {
     if (timerRef.current) clearInterval(timerRef.current);
-    if (feedbackTimerRef.current) clearTimeout(feedbackTimerRef.current);
     streamRef.current?.getTracks().forEach((track) => track.stop());
   }, []);
 
@@ -954,27 +952,16 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
 
   function recordQuickReviewFeedbackComment(value: string) {
     setQuickReviewFeedbackComment(value);
-    if (feedbackTimerRef.current) clearTimeout(feedbackTimerRef.current);
     // Written feedback stays in the assessment; Grow needs only the rating.
   }
 
   function recordFullReviewFeedback(value: number) {
     setFullReviewFeedback(value);
-    void fetch("/api/growth-event", {
-      method: "POST", headers: { "content-type": "application/json" },
-      body: JSON.stringify({ eventId: `${sessionId}:full-review-feedback:${crypto.randomUUID()}`, eventType: "quick_review_feedback", rating: value, sessionId }),
-    }).catch(() => undefined);
+    void trackSorpEvent(sessionId, "full_review_feedback_submitted", { ...growthContext(), rating: value }, false);
   }
 
   function recordFullReviewFeedbackComment(value: string) {
     setFullReviewFeedbackComment(value);
-    if (feedbackTimerRef.current) clearTimeout(feedbackTimerRef.current);
-    feedbackTimerRef.current = setTimeout(() => {
-      void fetch("/api/growth-event", {
-        method: "POST", headers: { "content-type": "application/json" },
-        body: JSON.stringify({ eventId: `${sessionId}:full-review-comment:${crypto.randomUUID()}`, eventType: "quick_review_feedback", rating: fullReviewFeedback, comment: value.trim(), sessionId }),
-      }).catch(() => undefined);
-    }, 650);
   }
 
   function dropReport(event: DragEvent<HTMLButtonElement>) {

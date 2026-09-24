@@ -9,6 +9,7 @@ const allowed = new Set([
   "quick_review_feedback",
   "assessment_started", "organisation_found", "organisation_confirmed", "quick_review_reached",
   "quick_review_feedback_submitted", "deep_dive_started", "full_review_viewed", "report_emailed",
+  "full_review_feedback_submitted",
   "support_selected", "support_payment_started", "human_review_payment_started",
   "book_conversation_clicked", "contact_email_clicked", "impact_report_found", "impact_report_uploaded",
   "save_and_exit", "assessment_resumed", "last_stage_reached",
