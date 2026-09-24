@@ -602,7 +602,6 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
   const streamRef = useRef<MediaStream | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const welcomeMessageRef = useRef<string | null>(null);
 
   function growthContext(nextState = state, nextResult: Result | null = result) {
     const tier = nextState.setup.income === "tier1" ? "Tier 1" : nextState.setup.income === "tier2" ? "Tier 2" : nextState.setup.income === "tier3" ? "Tier 3" : "tier uncertain";
@@ -655,8 +654,8 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
           const saved = window.localStorage.getItem(storageKey);
           if (saved) {
             const parsed = JSON.parse(saved) as { started?: boolean; state?: ReadinessState; messages?: Message[]; result?: Result | null; intelligence?: IntelligenceProvenance | null; sessionId?: string; workflow?: ReadinessWorkflow; checkpoints?: ConversationCheckpoint[]; fullReviewEntered?: boolean; quickReviewFeedback?: number | null; fullReviewFeedback?: number | null; fullReviewFeedbackComment?: string; saveProfile?: { name: string; position: string; email: string } };
-            if (parsed.started && parsed.state && parsed.messages?.length) {
-              setStarted(true);
+            if (parsed.state && parsed.messages?.length) {
+              setStarted(Boolean(parsed.started));
               setState({ ...blankState(), ...parsed.state, charityName: parsed.state.charityName ?? "", contextEvidence: parsed.state.contextEvidence ?? {} });
               setMessages(parsed.messages);
               setResult(parsed.result ?? null);
@@ -672,7 +671,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
                 ...checkpoint,
                 answerText: checkpoint.answerText || parsed.messages?.[checkpoint.messagesLength]?.content || "Saved answer",
               })) : []);
-              if (parsed.sessionId) void trackSorpEvent(parsed.sessionId, "assessment_resumed", growthContext(parsed.state, parsed.result ?? null));
+              if (parsed.started && parsed.sessionId) void trackSorpEvent(parsed.sessionId, "assessment_resumed", growthContext(parsed.state, parsed.result ?? null));
             }
           }
         }
@@ -716,7 +715,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
   }, [hydrated, setupOnly]);
 
   useEffect(() => {
-    if (!hydrated || !started) return;
+    if (!hydrated || (!started && !messages.length)) return;
     try { window.localStorage.setItem(storageKey, JSON.stringify({ started, state, messages, result, intelligence, sessionId, workflow, checkpoints, fullReviewEntered: fullReviewEntry === "open", quickReviewFeedback, fullReviewFeedback, fullReviewFeedbackComment, saveProfile: { name: saveProfile.name, position: saveProfile.position, email: saveProfile.email } })); } catch { queueMicrotask(() => setError("Your browser could not save this conversation. Keep this page open to retain your progress.")); }
   }, [hydrated, started, state, messages, result, intelligence, sessionId, workflow, checkpoints, fullReviewEntry, quickReviewFeedback, fullReviewFeedback, fullReviewFeedbackComment, saveProfile, storageKey]);
 
@@ -763,6 +762,12 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
   }, []);
 
   function startConversation(useSnapshot = false) {
+    if (!useSnapshot && messages.length) {
+      if ((state.organisationResearch as { status?: string })?.status === "unsearched") setMessages((current) => [...current, { role: "assistant", content: "Let’s find your charity. What is it called? A location or a few words about its work can help." }]);
+      setStarted(true);
+      void trackSorpEvent(sessionId, "assessment_started", { currentStage: 1, charityTier: "tier uncertain" });
+      return;
+    }
     setFullReviewEntry("open");
     setWorkflow(null);
     setSelectedQuickAction(null);
@@ -1092,7 +1097,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
       if (workflow?.next.id === "activities" && !preserveActivitySelections) setActivitySelections([]);
       setState(data.state);
       setWorkflow(data.workflow);
-      recordJourneyProgress(data, workflow);
+      if (started) recordJourneyProgress(data, workflow);
       if (deepDiveIntroOpen && data.workflow.currentStage >= 3) setDeepDiveIntroOpen(false);
       if (setupOnly && data.workflow.completedStages.includes(2)) onSetupComplete?.(data.state, data.workflow);
       const newlyKnown = data.workflow.known.filter(item => item.established && !workflow?.known.find(previous => previous.id === item.id)?.established);
@@ -1125,13 +1130,6 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
       else setBusy(false);
     }
   }
-
-  useEffect(() => {
-    if (!started || !welcomeMessageRef.current) return;
-    const firstMessage = welcomeMessageRef.current;
-    welcomeMessageRef.current = null;
-    void sendMessage(firstMessage, firstMessage, false, "conversation_first");
-  });
 
   function submit(event: FormEvent) {
     event.preventDefault();
@@ -1351,19 +1349,20 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
       </aside>
       <main className="sorp-welcome-message">
         <span>My Social Impact Intelligence</span>
-        <h1>Talk it through.<br />Get your free report.</h1>
-        <p>You’re about to use specialist guidance built around SORP 2026 and MSI’s social impact expertise.</p>
-        <p>Answer quickly, talk things through or ask questions at any point. We’ll show you why we’re asking, and you’ll get a personalised SORP readiness report at the end.</p>
-        <strong>No charge. No card. No surprise paywall.</strong>
+        {!messages.length ? <><h1>Talk it through.<br />Get your free report.</h1>
+          <p>You’re about to use specialist guidance built around SORP 2026 and MSI’s social impact expertise.</p>
+          <p>Answer quickly, talk things through or ask questions at any point. We’ll show you why we’re asking, and you’ll get a personalised SORP readiness report at the end.</p>
+          <strong>No charge. No card. No surprise paywall.</strong></> : <div className="sorp-welcome-thread" aria-live="polite">{messages.map((message, index) => <article key={index} className={`readiness-message is-${message.role}`}><span>{message.role === "user" ? "You" : "My Social Impact Intelligence"}</span><MessageContent text={message.content} />{message.organisation && <p><strong>{message.organisation.name}</strong>{message.organisation.locality ? ` · ${message.organisation.locality}` : ""}</p>}{message.actions?.length ? <div className="sorp-welcome-candidates">{message.actions.map((action) => <button type="button" key={action.value} onClick={() => void sendMessage(action.value, action.label, false, "conversation_first")}>{action.label} →</button>)}</div> : null}</article>)}{busy && <p role="status">Checking the public register and responding…</p>}</div>}
       </main>
     </div>
-    <form className="readiness-composer sorp-welcome-composer" onSubmit={(event) => { event.preventDefault(); welcomeMessageRef.current = composer.trim() || null; startConversation(false); }}>
+    <form className="readiness-composer sorp-welcome-composer" onSubmit={(event) => { event.preventDefault(); if (composer.trim()) void sendMessage(composer, composer, false, "conversation_first"); }}>
       <div className="sorp-response-utility"><p>Quick answers + conversation</p><button type="button" className="readiness-sign-in-link" onClick={() => { startConversation(false); setAccountMode("login"); setSaveStatus("idle"); setSaveError(""); setSaveDialogOpen(true); }}>Already have an account? Sign in</button></div>
       <section className="sorp-response-fields" aria-label="Start your free SORP readiness check">
-        <label htmlFor="readiness-answer">Want to ask something first?</label>
+        <label htmlFor="readiness-answer">Ask a question or tell us which charity you mean. Your check starts when you choose Start.</label>
         <textarea ref={composerRef} id="readiness-answer" rows={2} value={composer} onChange={(event) => setComposer(event.target.value)} placeholder="Type or say what you’d like to know…" maxLength={4000} />
         {error && <p className="sorp-welcome-error" role="alert">Sorry, {error}</p>}
-        <div className="readiness-submit-row"><button type="button" className="readiness-mic" onClick={recordingState === "recording" ? stopRecording : () => void startRecording()} disabled={recordingState === "transcribing"}>{recordingState === "recording" ? `Stop · ${recordingTime(recordingSeconds)}` : recordingState === "transcribing" ? "Transcribing…" : "Use microphone"}</button><button type="submit" disabled={recordingState !== "idle"}>Start my free SORP readiness check <span>→</span></button></div>
+        <div className="readiness-submit-row"><button type="button" className="readiness-mic" onClick={recordingState === "recording" ? stopRecording : () => void startRecording()} disabled={recordingState === "transcribing" || busy}>{recordingState === "recording" ? `Stop · ${recordingTime(recordingSeconds)}` : recordingState === "transcribing" ? "Transcribing…" : "Use microphone"}</button><button type="submit" disabled={!composer.trim() || recordingState !== "idle" || busy}>Send message <span>→</span></button></div>
+        <button type="button" className="sorp-welcome-start" disabled={busy || recordingState !== "idle"} onClick={() => startConversation(false)}>Start my free SORP readiness check <span>→</span></button>
       </section>
     </form>
     {saveDialog}

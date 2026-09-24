@@ -29,7 +29,12 @@
 .sorp-welcome-composer .sorp-response-utility { display:grid; gap:10px; align-content:start; }
 .sorp-welcome-composer .sorp-response-utility p { margin:0; color:#28633f; font-size:12px; font-weight:700; }
 .sorp-welcome-composer .readiness-sign-in-link { justify-self:start; min-height:0!important; padding:0!important; border:0; background:transparent; color:#11100f; cursor:pointer; font-size:12px; text-decoration:underline; text-underline-offset:3px; }
-.sorp-welcome-composer .readiness-submit-row button[type="submit"] { background:#11100f; color:#fff; border:1px solid #11100f; }
+.sorp-welcome-composer .readiness-submit-row button[type="submit"] { background:#fff; color:#11100f; border:1px solid #11100f; }
+.sorp-welcome-composer .sorp-welcome-start { display:flex; justify-content:space-between; width:100%; margin-top:8px; border:1px solid #11100f; background:#11100f; color:#fff; text-align:left; }
+.sorp-welcome-thread article { padding:16px 0; border-bottom:1px solid #dedad3; }
+.sorp-welcome-thread article > span { display:block; margin-bottom:8px; color:#726c66; font-size:11px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; }
+.sorp-welcome-thread .sorp-welcome-candidates { display:flex; flex-wrap:wrap; gap:8px; margin:12px 0 0; }
+.sorp-welcome-thread .sorp-welcome-candidates button { border:1px solid #11100f; background:#fff; padding:10px 12px; color:#11100f; text-align:left; cursor:pointer; }
 .sorp-welcome-error { margin:8px 0 0; color:#a53113; font-size:12px; line-height:1.4; }
 .sorp-conversation-page:has(.readiness-chat),.sorp-workspace-page:has(.readiness-chat) { min-height:0; }
 .sorp-conversation-page .readiness-chat { height:calc(var(--sorp-viewport-height,100dvh) - 64px - var(--sorp-stamp-height,0px)); min-height:0; }
