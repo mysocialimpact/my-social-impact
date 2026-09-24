@@ -990,7 +990,9 @@
 .readiness-next-choices button strong { font-size: .82rem; letter-spacing: .04em; text-transform: uppercase; }
 .readiness-next-choices button span { color: rgba(255,255,255,.72); font-size: .75rem; }
 .readiness-checkout-panel { padding: clamp(1.5rem,4vw,3.5rem); display: grid; grid-template-columns: minmax(0,.9fr) minmax(320px,1.1fr); gap: 1.5rem clamp(2rem,5vw,5rem); background: var(--sorp-orange); }
-.readiness-checkout-panel.is-support { background: #252321; }
+.readiness-checkout-panel.is-support { border: 1px solid var(--line); background: #f8f6f1; color: var(--ink); }
+.readiness-checkout-panel.is-support > div:first-child > span { color: var(--sorp-orange); }
+.readiness-checkout-panel.is-support h4 { font-size: clamp(1.7rem,3vw,2.8rem); line-height: 1; text-transform: none; }
 .readiness-checkout-panel h4 { margin: .7rem 0 1.2rem; font-size: clamp(2rem,4vw,4rem); line-height: .95; text-transform: uppercase; }
 .readiness-checkout-panel p { line-height: 1.6; }
 .readiness-checkout-panel fieldset { margin: 0; padding: 0; border: 0; }
@@ -1008,13 +1010,20 @@
 .readiness-pay-button:disabled { cursor: wait; opacity: .62; }
 .readiness-payment-note { grid-column: 1 / -1; margin: 0; color: rgba(255,255,255,.75); font-size: .72rem; }
 .readiness-payment-note a { text-decoration: underline; }
-.readiness-support-amounts { align-self: start; display: grid; grid-template-columns: repeat(3,1fr); gap: .55rem; }
-.readiness-support-amounts button,.readiness-support-amounts label { min-height: 62px; border: 1px solid rgba(255,255,255,.55); background: transparent; color: var(--white); display: grid; place-items: center; cursor: pointer; font-weight: 800; }
-.readiness-support-amounts button.is-selected { background: var(--sorp-yellow); color: var(--ink); border-color: var(--sorp-yellow); }
-.readiness-support-amounts label { grid-column: 1 / -1; grid-template-columns: auto 1fr; padding: .7rem 1rem; gap: .8rem; }
-.readiness-support-amounts input { width: 100%; min-height: 42px; padding: .55rem; border: 0; background: var(--white); color: var(--ink); font-size: 1rem; }
+.readiness-support-selection { align-self: start; min-width: 0; }
+.readiness-support-amounts { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: .45rem; }
+.readiness-support-amounts button { min-height: 48px; padding: .55rem .3rem; border: 1px solid var(--line); background: var(--white); color: var(--ink); cursor: pointer; font-size: .75rem; font-weight: 800; text-transform: uppercase; }
+.readiness-support-amounts button.is-selected { border-color: var(--ink); background: var(--ink); color: var(--white); }
+.readiness-support-amounts button:focus-visible,.readiness-support-custom input:focus-visible { outline: 2px solid var(--sorp-orange); outline-offset: 2px; }
+.readiness-support-custom { max-width: 270px; margin-top: .9rem; display: grid; gap: .35rem; font-size: .72rem; font-weight: 800; text-transform: uppercase; }
+.readiness-support-custom-input { min-height: 46px; display: flex; align-items: center; border: 1px solid var(--ink); background: var(--white); font-size: 1rem; }
+.readiness-support-custom-input b { padding: 0 .7rem; font-size: 1.05rem; }
+.readiness-support-custom input { width: 100%; min-width: 0; height: 44px; border: 0; background: transparent; color: var(--ink); font-size: 1rem; }
+.readiness-support-custom small { color: var(--muted); font-size: .68rem; font-weight: 500; text-transform: none; }
+.readiness-checkout-panel.is-support .readiness-pay-button { border-color: var(--ink); background: var(--ink); color: var(--white); }
+.readiness-checkout-panel.is-support .readiness-payment-note { color: var(--muted); }
 .readiness-no-thanks { grid-column: 1 / -1; justify-self: start; border: 0; background: transparent; color: rgba(255,255,255,.78); cursor: pointer; text-decoration: underline; }
-.readiness-payment-error { margin: 0; padding: 1rem clamp(1.5rem,4vw,3.5rem); border-top: 2px solid var(--sorp-yellow); background: #381108; color: var(--white); font-weight: 700; }
+.readiness-payment-error { grid-column: 1 / -1; margin: 0; padding: .8rem 1rem; border-left: 3px solid var(--sorp-orange); background: var(--white); color: var(--ink); font-size: .82rem; font-weight: 700; }
 
 .sorp-payment-return { min-height: 100svh; padding: max(1.25rem,env(safe-area-inset-top)) 1.25rem max(1.25rem,env(safe-area-inset-bottom)); display: grid; place-items: center; background: var(--sorp-yellow); color: var(--ink); }
 .sorp-payment-return section { width: min(760px,100%); padding: clamp(2rem,6vw,5rem); border: 2px solid var(--ink); background: var(--paper); box-shadow: 16px 16px 0 var(--ink); }
@@ -1071,8 +1080,7 @@
   .readiness-next-choices button { min-height: 104px; border-right: 0; }
   .readiness-checkout-panel fieldset { min-width: 0; }
   .readiness-review-credit,.readiness-pay-button,.readiness-payment-note,.readiness-no-thanks { grid-column: 1; }
-  .readiness-support-amounts { grid-template-columns: repeat(2,1fr); }
-  .readiness-support-amounts label { grid-column: 1 / -1; }
+  .readiness-support-amounts { grid-template-columns: repeat(2,minmax(0,1fr)); }
   .sorp-completion-event { min-height: 70svh; padding: 3rem 1rem; }
   .sorp-completion-event > h1 { font-size: clamp(3rem,14vw,4.9rem); overflow-wrap: anywhere; }
   .sorp-completion-event ol { margin-top: 2.8rem; }

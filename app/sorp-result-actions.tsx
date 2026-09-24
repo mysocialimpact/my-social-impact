@@ -1,7 +1,8 @@
 "use client";
 
-import { FormEvent, ReactNode, useEffect, useMemo, useRef, useState } from "react";
+import { FormEvent, ReactNode, useEffect, useRef, useState } from "react";
 import { trackSorpEvent } from "./sorp-growth";
+import { supportPence, type SupportChoice } from "./sorp-payment-amounts";
 
 type ReviewBand = "small" | "medium" | "large";
 type Choice = "review" | "support" | "free" | null;
@@ -37,7 +38,7 @@ export function SorpResultActions({ sessionId, organisation, income, result, imp
   const [reportOpen, setReportOpen] = useState(false);
   const [feedback, setFeedback] = useState("");
   const [band, setBand] = useState<ReviewBand>(() => suggestedBand(income));
-  const [supportAmount, setSupportAmount] = useState(5);
+  const [supportChoice, setSupportChoice] = useState<SupportChoice>(5);
   const [customSupport, setCustomSupport] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -52,7 +53,7 @@ export function SorpResultActions({ sessionId, organisation, income, result, imp
   const supportRef = useRef<HTMLDivElement>(null);
   const chosenBand = reviewBands.find((item) => item.id === band)!;
   const tier = band === "small" ? "Tier 1" : band === "medium" ? "Tier 2" : "Tier 3";
-  const finalSupport = useMemo(() => customSupport ? Number(customSupport) : supportAmount, [customSupport, supportAmount]);
+  const finalSupportMinor = supportPence(supportChoice, customSupport);
   const strongest = headline(result.strong, "Your answers give us a useful starting point for the reporting work ahead.");
   const gaps = headline(result.attention.length ? result.attention : result.priorities, "No immediate weaker area was identified in this initial readiness check.");
   const contactHref = `mailto:marcus@marcuswarry.com?subject=${encodeURIComponent(`SORP readiness conversation — ${organisation || "your organisation"}`)}`;
@@ -101,29 +102,31 @@ export function SorpResultActions({ sessionId, organisation, income, result, imp
   }
 
   function showSupport(custom = false) {
-    if (!custom) { setSupportAmount(5); setCustomSupport(""); }
+    setSupportChoice(custom ? "other" : 5);
+    setCustomSupport("");
     openReport("support", "support_selected");
     window.setTimeout(() => supportRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
   }
 
   async function checkout(paymentType: "human_review" | "voluntary_support") {
-    const amount = paymentType === "human_review" ? chosenBand.amount : finalSupport;
-    if (!Number.isFinite(amount) || amount < 1 || amount > 1000) { setError("Choose an amount from £1 to £1,000."); return; }
+    const amountMinor = paymentType === "human_review" ? chosenBand.amount * 100 : finalSupportMinor;
+    if (amountMinor === null) { setError("Sorry — please enter a GBP amount between £1 and £1,000, with no more than two decimal places."); return; }
     setBusy(true); setError("");
     const key = idempotencyKey || crypto.randomUUID();
     setIdempotencyKey(key);
     const startedEvent = paymentType === "human_review" ? "human_review_payment_started" : "support_payment_started";
-    void trackResult(startedEvent, { paymentType, band: paymentType === "human_review" ? band : "none", amountMinor: Math.round(amount * 100), currency: "GBP" }, false);
+    void trackResult(startedEvent, { paymentType, band: paymentType === "human_review" ? band : "none", amountMinor, currency: "GBP" }, false);
     try {
       const response = await fetch("/api/sorp-payments/checkout", {
         method: "POST", headers: { "content-type": "application/json" },
-        body: JSON.stringify({ paymentType, band: paymentType === "human_review" ? band : null, amountMinor: Math.round(amount * 100), sessionId, organisation, idempotencyKey: key }),
+        body: JSON.stringify({ paymentType, band: paymentType === "human_review" ? band : null, amountMinor, sessionId, organisation, idempotencyKey: key }),
       });
       const data = await response.json() as { url?: string; error?: string };
-      if (!response.ok || !data.url) throw new Error(data.error || "Secure checkout could not be started.");
+      if (!response.ok || !data.url) throw new Error(data.error || "We could not open secure checkout just now.");
       window.location.assign(data.url);
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Secure checkout could not be started. No payment was taken.");
+      const detail = caught instanceof Error ? caught.message : "We could not open secure checkout just now.";
+      setError(`Sorry — ${detail} No payment was taken. Please try again shortly.`);
       setBusy(false);
     }
   }
@@ -149,13 +152,15 @@ export function SorpResultActions({ sessionId, organisation, income, result, imp
     <fieldset><legend>Charity size</legend>{reviewBands.map((item) => <label key={item.id} className={band === item.id ? "is-selected" : ""}><input type="radio" name="review-band" checked={band === item.id} onChange={() => { setBand(item.id); setIdempotencyKey(""); }} /><span><b>{item.label}</b><small>{item.income}</small></span><strong>£{item.amount}</strong></label>)}</fieldset>
     <p className="readiness-review-credit">If we subsequently work together on a My Social Impact project, we’ll credit the cost of your review against that work. There is no obligation to buy anything afterwards.</p>
     <button className="readiness-pay-button" type="button" disabled={busy} onClick={() => void checkout("human_review")}>{busy ? "OPENING SECURE CHECKOUT…" : `BOOK MY HUMAN REVIEW — £${chosenBand.amount}`} <span>→</span></button>
+    {error && <p className="readiness-payment-error" role="alert">{error}</p>}
     <p className="readiness-payment-note">One-off payment through Stripe. Your email is collected securely in checkout. Cost genuinely a barrier? Email <a href="mailto:marcus@mysocialimpact.org">marcus@mysocialimpact.org</a>.</p>
   </div>;
 
   const supportPanel = <div ref={supportRef} className="readiness-checkout-panel is-support">
     <div><span>Voluntary contribution</span><h4>Support the free tool</h4><p>Help us keep improving this and building useful free tools for charities. Payment is entirely optional and your report is already open below.</p></div>
-    <div className="readiness-support-amounts" aria-label="Choose a voluntary support amount">{[5,10,20].map((amount) => <button type="button" className={!customSupport && supportAmount === amount ? "is-selected" : ""} key={amount} onClick={() => { setSupportAmount(amount); setCustomSupport(""); setIdempotencyKey(""); }}>£{amount}</button>)}<label><span>Another amount £</span><input aria-label="Another support amount in pounds" type="number" min="1" max="1000" step="1" value={customSupport} onChange={(event) => { setCustomSupport(event.target.value); setIdempotencyKey(""); }} /></label></div>
-    <button className="readiness-pay-button" type="button" disabled={busy || !Number.isFinite(finalSupport) || finalSupport < 1} onClick={() => void checkout("voluntary_support")}>{busy ? "OPENING SECURE CHECKOUT…" : `CONTRIBUTE £${Number.isFinite(finalSupport) ? finalSupport : 0} SECURELY`} <span>→</span></button>
+    <div className="readiness-support-selection"><div className="readiness-support-amounts" aria-label="Choose a voluntary support amount">{([5, 10, 20] as const).map((amount) => <button type="button" aria-pressed={supportChoice === amount} className={supportChoice === amount ? "is-selected" : ""} key={amount} onClick={() => { setSupportChoice(amount); setCustomSupport(""); setError(""); setIdempotencyKey(""); }}>£{amount}</button>)}<button type="button" aria-pressed={supportChoice === "other"} className={supportChoice === "other" ? "is-selected" : ""} onClick={() => { setSupportChoice("other"); setError(""); setIdempotencyKey(""); }}>Other amount</button></div>{supportChoice === "other" && <label className="readiness-support-custom" htmlFor="sorp-custom-support"><span>Amount in GBP</span><span className="readiness-support-custom-input"><b>£</b><input id="sorp-custom-support" aria-label="Other support amount in pounds" type="text" inputMode="decimal" autoComplete="off" placeholder="11.00" value={customSupport} onChange={(event) => { setCustomSupport(event.target.value); setError(""); setIdempotencyKey(""); }} /></span><small>£1–£1,000 · up to two decimal places</small></label>}</div>
+    <button className="readiness-pay-button" type="button" disabled={busy} onClick={() => void checkout("voluntary_support")}>{busy ? "OPENING SECURE CHECKOUT…" : finalSupportMinor === null ? "ENTER AN AMOUNT TO CONTINUE" : `CONTRIBUTE £${(finalSupportMinor / 100).toFixed(finalSupportMinor % 100 ? 2 : 0)} SECURELY`} <span>→</span></button>
+    {error && <p className="readiness-payment-error" role="alert">{error}</p>}
     <p className="readiness-payment-note">This is optional support for the free tool.</p>
   </div>;
 
@@ -207,6 +212,5 @@ export function SorpResultActions({ sessionId, organisation, income, result, imp
       <section className="sorp-report-beyond"><span>The next opportunity</span><h2>SORP is the requirement.<br />Better impact is the opportunity.</h2><div><p>My Social Impact would love to help you go beyond compliance — strengthening how impact is measured, managed, evidenced and communicated.</p><a href={contactHref} onClick={() => { void trackResult("book_conversation_clicked"); }}>Book a conversation <span>→</span></a><small><a href={contactHref} onClick={() => { void trackResult("contact_email_clicked"); }}>marcus@marcuswarry.com</a></small></div></section>
       {choice === "review" && reviewPanel}{choice === "support" && supportPanel}
     </section>}
-    {error && <p className="readiness-payment-error" role="alert">{error}</p>}
   </main>;
 }
