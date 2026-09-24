@@ -346,7 +346,7 @@ body:has(.sorp-conversation-page) > .global-build-stamp { display:none; }
 .sorp-snapshot-position { margin:0; padding:16px var(--sorp-pad); background:#f6f3ec; font-size:13px; }
 .sorp-workspace-page .sorp-workspace-brand { position:sticky; top:0; z-index:40; height:64px; }
 .sorp-workspace-page .sorp-journey-progress,.sorp-conversation-page .sorp-journey-progress { top:64px; }
-.sorp-conversation-page > .sorp-workspace-brand { height:64px; background:#fbfaf7; isolation:isolate; }
+.sorp-conversation-page > .sorp-workspace-brand { height:64px; background:#fff; isolation:isolate; }
 .sorp-snapshot-known { width:min(1180px,calc(100% - 48px)); margin:24px auto; }
 .sorp-snapshot-known .sorp-known-context dl { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:0 24px; }
 .sorp-setup-continue { padding:16px; margin:16px 0; border:1px solid #34764f; background:#edf3e9; color:#28633f; cursor:pointer; }

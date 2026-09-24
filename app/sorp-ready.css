@@ -268,11 +268,14 @@
 .sorp-tool summary:focus-visible { outline: 3px solid var(--sorp-orange); outline-offset: 3px; }
 
 .sorp-workspace-page { min-height: 100svh; overflow-x: clip; background: var(--paper); color: var(--ink); }
-.sorp-workspace-brand { min-height: 64px; padding: .85rem clamp(1rem, 3vw, 2.5rem); display: flex; align-items: center; justify-content: space-between; gap: 2rem; border-bottom: 1px solid var(--ink); background: var(--sorp-yellow); }
-.sorp-workspace-brand a { display: flex; align-items: baseline; gap: 1rem; }
-.sorp-workspace-brand span { color: var(--sorp-orange); font-size: .68rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
-.sorp-workspace-brand strong { font-family: var(--font-serif); font-size: 1.1rem; font-weight: 500; }
-.sorp-workspace-brand p { margin: 0; font-size: .68rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+.sorp-workspace-brand { min-height: 64px; padding: .5rem clamp(1rem, 3vw, 2.5rem); display: flex; align-items: center; justify-content: space-between; gap: 2rem; border-bottom: 1px solid var(--ink); background: var(--white); }
+.sorp-workspace-brand a { min-width: 0; display: flex; align-items: center; white-space: nowrap; }
+.sorp-workspace-brand a > span { color: var(--orange); font-size: .72rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.sorp-workspace-brand a > strong { margin-left: 1.25rem; padding-left: 1.25rem; border-left: 1px solid var(--line); font-family: var(--font-serif); font-size: 1.1rem; font-weight: 500; }
+.sorp-workspace-brand-meta { min-width: 0; display: grid; gap: .1rem; text-align: right; }
+.sorp-workspace-brand-meta p { margin: 0; font-size: .75rem; font-weight: 800; letter-spacing: .06em; line-height: 1.25; text-transform: uppercase; }
+.sorp-workspace-brand-meta small { color: var(--muted); font-size: .72rem; line-height: 1.2; }
+.sorp-workspace-brand-mobile { display: none; }
 .sorp-workspace-page .sorp-tool { width: min(100%, 1500px); margin: 0 auto; scroll-margin-top: 0; }
 .sorp-workspace-page .sorp-tool-shell { overflow: visible; border-top: 0; padding-bottom: calc(78px + env(safe-area-inset-bottom)); }
 .sorp-workspace-page .sorp-tool-header { position: sticky; top: 0; z-index: 32; }
@@ -587,10 +590,13 @@
   .sorp-final h2 { font-size: clamp(3.4rem, 14vw, 5rem); }
   .sorp-final > div { grid-template-columns: 1fr; }
 
-  .sorp-workspace-brand { min-height: 52px; padding: .65rem 1rem; }
-  .sorp-workspace-brand a { gap: .65rem; }
-  .sorp-workspace-brand strong { font-size: .95rem; }
-  .sorp-workspace-brand p { display: none; }
+  .sorp-workspace-brand { min-height: 52px; padding: .4rem 1rem; gap: .5rem; }
+  .sorp-workspace-brand a { display: grid; gap: .05rem; white-space: nowrap; }
+  .sorp-workspace-brand a > span { font-size: .65rem; }
+  .sorp-workspace-brand a > strong { margin-left: 0; padding-left: 0; border-left: 0; font-size: 1rem; line-height: 1.15; }
+  .sorp-workspace-brand-meta p { color: var(--orange); font-size: .7rem; }
+  .sorp-workspace-brand-desktop,.sorp-workspace-brand-meta small { display: none; }
+  .sorp-workspace-brand-mobile { display: inline; }
   .sorp-workspace-page .sorp-tool { margin-inline: 0; }
   .sorp-workspace-page .sorp-tool-shell { border-inline: 0; padding-bottom: calc(76px + env(safe-area-inset-bottom)); }
   .sorp-workspace-page .sorp-tool-header { min-height: 60px; padding: .7rem 1rem; align-items: center; }
@@ -622,7 +628,7 @@
   .sorp-workspace-page .sorp-live-result { padding-inline: 1rem; }
 }
 
-.sorp-conversation-page { --chat-header: 68px; --sorp-pad: clamp(1.25rem, 5vw, 6rem); min-height: 100svh; background: var(--paper); color: var(--ink); }
+.sorp-conversation-page { --chat-header: 68px; --sorp-orange: var(--orange); --sorp-pad: clamp(1.25rem, 5vw, 6rem); min-height: 100svh; background: var(--paper); color: var(--ink); }
 .sorp-conversation-page .sorp-workspace-brand { position: sticky; top: 0; z-index: 40; }
 .readiness-intro { min-height: calc(100svh - var(--chat-header)); padding: clamp(3rem, 7vw, 7rem) var(--sorp-pad); display: grid; grid-template-columns: .36fr 1fr; gap: 2rem clamp(3rem, 8vw, 9rem); align-content: center; background: var(--sorp-yellow); }
 .readiness-intro > * { min-width: 0; }
