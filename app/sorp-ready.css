@@ -966,6 +966,7 @@
 .sorp-report-beyond a { max-width:370px; min-height:55px; margin-top:2rem; padding:1rem 0; display:flex; justify-content:space-between; gap:1rem; border-top:1px solid var(--ink); border-bottom:1px solid var(--ink); font-size:.78rem; font-weight:900; text-decoration:none; text-transform:uppercase; }
 .sorp-report-beyond a:hover,.sorp-report-beyond a:focus-visible { color:var(--sorp-orange); }
 .sorp-report-beyond small { display:block; margin-top:.6rem; color:var(--muted); font-size:.75rem; }
+.sorp-report-beyond small a { display:inline; min-height:0; margin:0; padding:0; border:0; color:var(--ink); font-size:.9rem; font-weight:700; text-transform:none; text-decoration:underline; text-underline-offset:3px; }
 .readiness-checkout-panel ul { margin: 1.2rem 0 0; padding-left: 1.2rem; line-height: 1.6; }
 @keyframes sorp-completion-sweep { to { transform: translateX(110%); } }
 @keyframes sorp-stage-done { to { transform: scale(1); } }

@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, ReactNode, useEffect, useMemo, useRef, useState } from "react";
+import { trackSorpEvent } from "./sorp-growth";
 
 type ReviewBand = "small" | "medium" | "large";
 type Choice = "review" | "support" | "free" | null;
@@ -18,20 +19,6 @@ const reviewBands: Array<{ id: ReviewBand; label: string; income: string; amount
   { id: "medium", label: "Medium charity", income: "£500,000–£15 million income", amount: 100 },
   { id: "large", label: "Large charity", income: "Over £15 million income", amount: 200 },
 ];
-
-function eventId(sessionId: string, eventType: string, once = false) {
-  return once ? `${sessionId}:${eventType}` : `${sessionId}:${eventType}:${crypto.randomUUID()}`;
-}
-
-async function track(sessionId: string, eventType: string, extras: Record<string, unknown> = {}, once = false) {
-  if (!sessionId) return;
-  const marker = `msi-growth:${sessionId}:${eventType}`;
-  if (once && window.localStorage.getItem(marker)) return;
-  if (once) window.localStorage.setItem(marker, "1");
-  try {
-    await fetch("/api/growth-event", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ eventId: eventId(sessionId, eventType, once), sessionId, eventType, ...extras }) });
-  } catch { /* Analytics must never interrupt the free result. */ }
-}
 
 function suggestedBand(income: string): ReviewBand {
   if (income === "tier2") return "medium";
@@ -68,6 +55,10 @@ export function SorpResultActions({ sessionId, organisation, income, result, imp
   const finalSupport = useMemo(() => customSupport ? Number(customSupport) : supportAmount, [customSupport, supportAmount]);
   const strongest = headline(result.strong, "Your answers give us a useful starting point for the reporting work ahead.");
   const gaps = headline(result.attention.length ? result.attention : result.priorities, "No immediate weaker area was identified in this initial readiness check.");
+  const contactHref = `mailto:marcus@marcuswarry.com?subject=${encodeURIComponent(`SORP readiness conversation — ${organisation || "your organisation"}`)}`;
+  function trackResult(eventType: string, extras: { paymentType?: string; band?: string; amountMinor?: number; currency?: string } = {}, once = true) {
+    return trackSorpEvent(sessionId, eventType, { organisation, charityTier: tier, readinessScore: result.score, evidenceConfidence: result.confidence, currentStage: 8, ...extras }, once);
+  }
 
   useEffect(() => {
     queueMicrotask(() => {
@@ -78,14 +69,14 @@ export function SorpResultActions({ sessionId, organisation, income, result, imp
         if (saved?.choice) setChoice(saved.choice);
       } catch { /* A damaged local preference should not block the free report. */ }
     });
-    void track(sessionId, "assessment_completed", {}, true);
-    void track(sessionId, "result_preview_viewed", {}, true);
+    void trackResult("assessment_completed");
+    void trackResult("result_preview_viewed");
   }, [sessionId, startWithChoices, storageKey]);
 
   useEffect(() => {
     try { window.localStorage.setItem(storageKey, JSON.stringify({ reportOpen, usefulness, choice })); } catch { /* The report remains available in the current tab. */ }
     if (reportOpen) {
-      void track(sessionId, "report_opened", {}, true);
+      void trackResult("report_opened");
       window.setTimeout(() => reportRef.current?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" }), 80);
     }
   }, [choice, reportOpen, sessionId, storageKey, usefulness]);
@@ -93,15 +84,15 @@ export function SorpResultActions({ sessionId, organisation, income, result, imp
   function answerUsefulness(value: Exclude<Usefulness, null>) {
     setUsefulness(value);
     setError("");
-    void track(sessionId, value === "very" ? "usefulness_very" : value === "somewhat" ? "usefulness_somewhat" : "usefulness_not_really", {}, true);
+    void trackResult(value === "very" ? "usefulness_very" : value === "somewhat" ? "usefulness_somewhat" : "usefulness_not_really");
   }
 
-  function openReport(nextChoice: Exclude<Choice, null>, eventType: "human_review_selected" | "support_5_selected" | "support_custom_selected" | "free_report_selected") {
+  function openReport(nextChoice: Exclude<Choice, null>, eventType: "human_review_selected" | "support_selected" | "free_report_selected") {
     setChoice(nextChoice);
     setReportOpen(true);
     setError("");
     setIdempotencyKey("");
-    void track(sessionId, eventType, nextChoice === "review" ? { paymentType: "human_review", band } : nextChoice === "support" ? { paymentType: "voluntary_support", band: "none" } : {}, true);
+    void trackResult(eventType, nextChoice === "review" ? { paymentType: "human_review", band } : nextChoice === "support" ? { paymentType: "voluntary_support", band: "none" } : {});
   }
 
   function showReview() {
@@ -111,7 +102,7 @@ export function SorpResultActions({ sessionId, organisation, income, result, imp
 
   function showSupport(custom = false) {
     if (!custom) { setSupportAmount(5); setCustomSupport(""); }
-    openReport("support", custom ? "support_custom_selected" : "support_5_selected");
+    openReport("support", "support_selected");
     window.setTimeout(() => supportRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
   }
 
@@ -121,8 +112,8 @@ export function SorpResultActions({ sessionId, organisation, income, result, imp
     setBusy(true); setError("");
     const key = idempotencyKey || crypto.randomUUID();
     setIdempotencyKey(key);
-    const startedEvent = paymentType === "human_review" ? "review_payment_started" : "contribution_started";
-    await track(sessionId, startedEvent, { paymentType, band: paymentType === "human_review" ? band : "none", amountMinor: Math.round(amount * 100), currency: "GBP" });
+    const startedEvent = paymentType === "human_review" ? "human_review_payment_started" : "support_payment_started";
+    void trackResult(startedEvent, { paymentType, band: paymentType === "human_review" ? band : "none", amountMinor: Math.round(amount * 100), currency: "GBP" }, false);
     try {
       const response = await fetch("/api/sorp-payments/checkout", {
         method: "POST", headers: { "content-type": "application/json" },
@@ -146,7 +137,7 @@ export function SorpResultActions({ sessionId, organisation, income, result, imp
       if (!response.ok || !data.ok || !data.attachment?.endsWith(".pdf")) throw new Error(data.error || "The full PDF attachment could not be confirmed. Please try again.");
       setEmailedFile(data.attachment);
       setEmailState("sent");
-      void track(sessionId, "email_report_requested", { role: role || "not_supplied" }, true);
+      void trackResult("report_emailed");
     } catch (caught) {
       setEmailState("idle");
       setEmailError(caught instanceof Error ? caught.message : "We could not send your report just now.");
@@ -213,7 +204,7 @@ export function SorpResultActions({ sessionId, organisation, income, result, imp
       </header>
       <div className="sorp-full-report">{children}</div>
       <section className="sorp-report-email" aria-labelledby="sorp-report-email-title"><div><span>Keep your report</span><h2 id="sorp-report-email-title">Keep your report</h2><p>Want the full report as a PDF in your inbox?</p><small>Your full report is already open and free. Email is optional.</small></div>{emailState === "sent" ? <p className="sorp-report-email-success" role="status">✓ Your full report PDF ({emailedFile}) has been emailed to {email}.</p> : <form onSubmit={sendReport}><label htmlFor="sorp-report-email">Email address<input id="sorp-report-email" type="email" autoComplete="email" required value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.org" /></label><label htmlFor="sorp-report-role">Your role — optional<select id="sorp-report-role" value={role} onChange={(event) => setRole(event.target.value as Role)}><option value="">Prefer not to say</option><option>Trustee</option><option>CEO</option><option>Employee</option><option>Adviser</option><option>Other</option></select></label><button type="submit" disabled={emailState === "sending"}>{emailState === "sending" ? "Sending full PDF…" : "Email my report"} <span>→</span></button>{emailError && <p role="alert"><strong>Sorry — we couldn’t email your full PDF report just now.</strong> {emailError} Your report is still available here; please try again.</p>}</form>}</section>
-      <section className="sorp-report-beyond"><span>The next opportunity</span><h2>SORP is the requirement.<br />Better impact is the opportunity.</h2><div><p>My Social Impact would love to help you go beyond compliance — strengthening how impact is measured, managed, evidenced and communicated.</p><a href="mailto:marcus@mysocialimpact.org?subject=SORP%20readiness%20and%20impact%20conversation">Book a conversation <span>→</span></a><small>Opens an email to Marcus so you can arrange a time.</small></div></section>
+      <section className="sorp-report-beyond"><span>The next opportunity</span><h2>SORP is the requirement.<br />Better impact is the opportunity.</h2><div><p>My Social Impact would love to help you go beyond compliance — strengthening how impact is measured, managed, evidenced and communicated.</p><a href={contactHref} onClick={() => { void trackResult("book_conversation_clicked"); }}>Book a conversation <span>→</span></a><small><a href={contactHref} onClick={() => { void trackResult("contact_email_clicked"); }}>marcus@marcuswarry.com</a></small></div></section>
       {choice === "review" && reviewPanel}{choice === "support" && supportPanel}
     </section>}
     {error && <p className="readiness-payment-error" role="alert">{error}</p>}

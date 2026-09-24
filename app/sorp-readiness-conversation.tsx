@@ -3,6 +3,7 @@
 import { FormEvent, type DragEvent, useEffect, useRef, useState } from "react";
 import { SorpSnapshotLink } from "./sorp-snapshot-link";
 import { SorpResultActions } from "./sorp-result-actions";
+import { trackSorpEvent } from "./sorp-growth";
 import { buildActivitySubmission, toggleActivityChoice } from "./sorp-activity-selection";
 import { SorpJourneyProgress, SorpKnownContext, SorpBasisDrawer, type PublicReadinessFinding, type PublicReadinessReview, type ReadinessWorkflow } from "./sorp-journey";
 import { additionalChecks, coreQuestions, readinessStages, stageForQuestion, type AdditionalAnswerValue, type AnswerValue, type AssessmentSetup } from "./sorp-questionnaire";
@@ -604,6 +605,23 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const feedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  function growthContext(nextState = state, nextResult: Result | null = result) {
+    const tier = nextState.setup.income === "tier1" ? "Tier 1" : nextState.setup.income === "tier2" ? "Tier 2" : nextState.setup.income === "tier3" ? "Tier 3" : "tier uncertain";
+    return { organisation: nextState.charityName || undefined, charityTier: tier, readinessScore: nextResult?.score, evidenceConfidence: nextResult?.confidence, currentStage: Math.min(8, Math.max(1, nextState.currentStage || 1)) };
+  }
+
+  function recordJourneyProgress(data: ReadinessResponse, previous: ReadinessWorkflow | null) {
+    const id = data.sessionId || sessionId;
+    const context = { ...growthContext(data.state, data.result), currentStage: data.workflow.currentStage };
+    if (data.assistant.organisation) void trackSorpEvent(id, "organisation_found", { ...context, organisation: data.assistant.organisation.name });
+    if (data.workflow.known.some(item => item.id === "charityName" && item.established)) void trackSorpEvent(id, "organisation_confirmed", context);
+    if (data.workflow.currentStage === 2) void trackSorpEvent(id, "quick_review_reached", context);
+    if (data.workflow.currentStage >= 3) void trackSorpEvent(id, "deep_dive_started", context);
+    if (data.result && data.workflow.currentStage === 8) void trackSorpEvent(id, "assessment_completed", context);
+    if (data.workflow.next.provisional?.impactReport.found) void trackSorpEvent(id, "impact_report_found", context);
+    if (data.workflow.currentStage !== previous?.currentStage) void trackSorpEvent(id, "last_stage_reached", context, false);
+  }
+
   useEffect(() => {
     const viewport = window.visualViewport;
     const stamp = document.querySelector<HTMLElement>(".global-build-stamp");
@@ -656,6 +674,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
                 ...checkpoint,
                 answerText: checkpoint.answerText || parsed.messages?.[checkpoint.messagesLength]?.content || "Saved answer",
               })) : []);
+              if (parsed.sessionId) void trackSorpEvent(parsed.sessionId, "assessment_resumed", growthContext(parsed.state, parsed.result ?? null));
             }
           }
         }
@@ -689,6 +708,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
           setIntelligence(saved.intelligence ?? null);
           setSessionId(saved.sessionId || newSessionId());
           setCheckpoints(Array.isArray(saved.checkpoints) ? saved.checkpoints : []);
+          if (saved.sessionId) void trackSorpEvent(saved.sessionId, "assessment_resumed", growthContext(saved.state, saved.result ?? null));
         }
       } catch (caught) {
         if (!abort.signal.aborted) console.error("Saved SORP account could not be restored", caught);
@@ -715,6 +735,10 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
     const timer = window.setTimeout(() => setFullReviewEntry("open"), window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 400);
     return () => window.clearTimeout(timer);
   }, [fullReviewEntry]);
+
+  useEffect(() => {
+    if (result && workflow?.currentStage === 8 && fullReviewEntry === "open") void trackSorpEvent(sessionId, "full_review_viewed", growthContext());
+  }, [result, workflow?.currentStage, fullReviewEntry, sessionId]);
 
   useEffect(() => {
     const restoreReviewPosition = (event: PopStateEvent) => {
@@ -751,7 +775,9 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
     setActivitySelections([]);
     setQuickReviewFeedback(null);
     setQuickReviewFeedbackComment("");
-    setSessionId(newSessionId());
+    const id = newSessionId();
+    setSessionId(id);
+    void trackSorpEvent(id, "assessment_started", { currentStage: 1, charityTier: "tier uncertain" });
     if (useSnapshot) {
       const raw = window.localStorage.getItem(SNAPSHOT_RESULT_KEY);
       const snapshot = raw ? stateFromSnapshot(raw) : null;
@@ -810,6 +836,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
         setCompletionNotice("✓ Signed in. Your saved assessment has been restored.");
         window.setTimeout(() => setSaveDialogOpen(false), 700);
       } else {
+        void trackSorpEvent(sessionId, "save_and_exit", growthContext());
         window.setTimeout(() => window.location.assign("/are-you-sorp-ready?progress=saved"), 900);
       }
     } catch (caught) {
@@ -906,6 +933,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
         responseKind: data.assistant.responseKind,
       }]);
       setCompletionNotice(`✓ IMPACT REPORT ADDED · ${file.name}`);
+      void trackSorpEvent(data.sessionId || sessionId, "impact_report_uploaded", growthContext(data.state, data.result));
     } catch (caught) {
       setMessages(messages);
       setError(caught instanceof Error ? caught.message : "That report could not be reviewed yet.");
@@ -921,34 +949,13 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
 
   function recordQuickReviewFeedback(value: number) {
     setQuickReviewFeedback(value);
-    void fetch("/api/growth-event", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        eventId: `${sessionId}:quick-review-feedback:${crypto.randomUUID()}`,
-        eventType: "quick_review_feedback",
-        rating: value,
-        sessionId,
-      }),
-    }).catch(() => undefined);
+    void trackSorpEvent(sessionId, "quick_review_feedback_submitted", { ...growthContext(), rating: value }, false);
   }
 
   function recordQuickReviewFeedbackComment(value: string) {
     setQuickReviewFeedbackComment(value);
     if (feedbackTimerRef.current) clearTimeout(feedbackTimerRef.current);
-    feedbackTimerRef.current = setTimeout(() => {
-      void fetch("/api/growth-event", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          eventId: `${sessionId}:quick-review-comment:${crypto.randomUUID()}`,
-          eventType: "quick_review_feedback",
-          rating: quickReviewFeedback,
-          comment: value.trim(),
-          sessionId,
-        }),
-      }).catch(() => undefined);
-    }, 650);
+    // Written feedback stays in the assessment; Grow needs only the rating.
   }
 
   function recordFullReviewFeedback(value: number) {
@@ -1023,6 +1030,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
         }].slice(-30));
       }
       setState(data.state);
+      recordJourneyProgress(data, workflow);
       if (!reviewing) setWorkflow(data.workflow);
       const newlyCompleted = data.workflow.completedStages.filter(stage => !workflow?.completedStages.includes(stage));
       setCompletionNotice(reviewing ? "✓ Answer updated. Later answers have been kept." : newlyCompleted.includes(7) && data.workflow.currentStage === 8 ? "✓ 7 STAGES COMPLETE · YOUR FULL READINESS REVIEW IS READY" : newlyCompleted.length ? `✓ ${newlyCompleted.map(stage => `Stage ${stage}`).join(" & ")} complete. One more part of your readiness picture established.` : "");
@@ -1098,6 +1106,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
       if (workflow?.next.id === "activities" && !preserveActivitySelections) setActivitySelections([]);
       setState(data.state);
       setWorkflow(data.workflow);
+      recordJourneyProgress(data, workflow);
       if (deepDiveIntroOpen && data.workflow.currentStage >= 3) setDeepDiveIntroOpen(false);
       if (setupOnly && data.workflow.completedStages.includes(2)) onSetupComplete?.(data.state, data.workflow);
       const newlyKnown = data.workflow.known.filter(item => item.established && !workflow?.known.find(previous => previous.id === item.id)?.established);
