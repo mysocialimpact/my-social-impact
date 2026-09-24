@@ -456,17 +456,14 @@ test("server-renders the simple assessment hub", async () => {
   assert.doesNotMatch(html, /href="\/are-you-sorp-ready\/snapshot"/i);
 });
 
-test("server-renders the focused SORP snapshot workspace", async () => {
+test("legacy Snapshot route does not offer a second public entrance", async () => {
   const response = await render("/are-you-sorp-ready/snapshot");
   assert.equal(response.status, 200);
 
   const html = await response.text();
   assert.match(html, /<title>SORP Ready Snapshot \| My Social Impact<\/title>/i);
-  assert.match(html, /A quick route/i);
-  assert.match(html, /The right context first/i);
-  assert.match(html, /15-question snapshot/i);
-  assert.match(html, /Find my organisation/i);
-  assert.match(html, /no surprise paywall/i);
+  assert.match(html, /Opening your free SORP readiness check/i);
+  assert.doesNotMatch(html, /15-question snapshot/i);
 });
 
 test("server-renders the dedicated SORP results workspace", async () => {

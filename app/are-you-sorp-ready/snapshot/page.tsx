@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { SorpWorkspace } from "../../sorp-workspace";
+import { SorpSnapshotLegacyGate } from "../../sorp-snapshot-legacy-gate";
 import "../../sorp-ready.css";
 
 export const metadata: Metadata = {
@@ -8,5 +8,5 @@ export const metadata: Metadata = {
 };
 
 export default function Page() {
-  return <SorpWorkspace view="snapshot" />;
+  return <SorpSnapshotLegacyGate />;
 }
