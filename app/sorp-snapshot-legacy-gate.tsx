@@ -12,8 +12,8 @@ export function SorpSnapshotLegacyGate() {
     const restore = window.setTimeout(() => {
       try {
         const raw = window.localStorage.getItem("msi-sorp-readiness-v2");
-        const saved = raw ? JSON.parse(raw) as { mode?: string; coreAnswers?: Record<string, string>; setupWorkflow?: unknown } : null;
-        if (saved && (saved.setupWorkflow || saved.mode && saved.mode !== "welcome" || Object.keys(saved.coreAnswers ?? {}).length)) {
+        const saved = raw ? JSON.parse(raw) as { setupWorkflow?: unknown } : null;
+        if (saved?.setupWorkflow) {
           setHasSavedSnapshot(true);
           return;
         }
