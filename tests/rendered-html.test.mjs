@@ -228,6 +228,21 @@ test("Quick Readiness Review keeps TAR and wider evidence separate", async () =>
   assert.match(conversation, /go deeper/i);
 });
 
+test("Quick Review feedback belongs only in the response area with chat and one progression action", async () => {
+  const source = await readFile(new URL("../app/sorp-readiness-conversation.tsx", import.meta.url), "utf8");
+  const body = source.slice(source.indexOf('<div className="readiness-thread"'), source.indexOf('<form className={`readiness-composer'));
+  assert.doesNotMatch(body, /<QuickReviewFeedback/);
+  const response = source.slice(source.indexOf('<form className={`readiness-composer'));
+  assert.match(response, /isQuickReviewResponse && <QuickReviewFeedback hideComment/);
+  assert.match(response, /showResponseActions && !isQuickReviewResponse/);
+  assert.match(response, /ANYTHING YOU’D LIKE TO ADD OR ASK BEFORE YOU GO DEEPER\?/);
+  assert.match(response, /!\(isStageOnePayoff \|\| isQuickReviewResponse\) \|\| composer\.trim\(\)\.length >= 2/);
+  assert.match(response, /selectStructuredAnswer\(goDeeperAction, "GO DEEPER"\)/);
+  assert.match(source, /quick_review_feedback_submitted/);
+  assert.match(response, /id="readiness-answer"/);
+  assert.match(response, /className="readiness-mic"/);
+});
+
 test("Deep Dive introduces the next step and keeps suggested answers in scale order", async () => {
   const conversation = await readFile(new URL("../app/sorp-readiness-conversation.tsx", import.meta.url), "utf8");
   const css = await readFile(new URL("../app/sorp-journey.css", import.meta.url), "utf8");

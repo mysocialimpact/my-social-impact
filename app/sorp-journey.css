@@ -589,3 +589,15 @@ body:has(.sorp-conversation-page) > .global-build-stamp { display:none; }
 .readiness-composer.sorp-stage-eight-response .sorp-quick-review-feedback label { grid-column:2; grid-row:1/4; display:grid; margin:0; }
 .readiness-composer.sorp-stage-eight-response .sorp-quick-review-feedback textarea { min-height:60px; height:64px; }
 @media(max-width:900px) { .readiness-composer.sorp-stage-eight-response .sorp-quick-review-feedback { display:block; } }
+
+/* Quick Review: feedback and conversation share the existing response area. */
+.readiness-composer.is-quick-review-response .sorp-quick-review-feedback { display:flex; flex-direction:column; gap:8px; margin:0 0 16px; padding:0; border:0; background:transparent; }
+.readiness-composer.is-quick-review-response .sorp-quick-review-feedback p { margin:0; }
+.readiness-composer.is-quick-review-response .sorp-quick-review-feedback p strong { font-size:14px; }
+.readiness-composer.is-quick-review-response .sorp-quick-review-feedback p span { display:block; }
+.readiness-composer.is-quick-review-response .sorp-feedback-stars { order:1; display:flex; gap:8px; margin:0; }
+.readiness-composer.is-quick-review-response .sorp-feedback-stars button { flex:0 0 44px; width:44px; height:44px; min-height:44px; border:1px solid #11100f; font-size:30px; }
+.readiness-composer.is-quick-review-response .sorp-feedback-scale { order:2; display:flex; width:min(100%,252px); }
+.readiness-composer.is-quick-review-response .readiness-submit-row { display:flex; flex-wrap:wrap; justify-content:flex-end; gap:8px; }
+.readiness-composer.is-quick-review-response .readiness-submit-row button { flex:1 1 auto; }
+.readiness-composer.is-quick-review-response .readiness-submit-row .sorp-quick-review-chat-send { background:transparent; color:#11100f; border:1px solid #aaa399; }
