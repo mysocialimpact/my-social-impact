@@ -119,7 +119,7 @@ export function SorpReadyPage() {
         </section>
 
         <section className="sorp-assessment sorp-section" id="assessment">
-          <SectionHeading number="03" eyebrow="One place to begin" title={<>Start with a conversation.<br />Choose the shortcut inside.</>} />
+          <SectionHeading number="03" eyebrow="One place to begin" title={<>One free assessment.<br />Answer your way.</>} />
           <div className="sorp-route-grid is-single">
             <article className="sorp-route is-conversation is-primary-route" data-reveal>
               <div className="sorp-route-top"><span>Free guided assessment</span><strong>Ask questions<br />as you go</strong></div>
@@ -129,11 +129,6 @@ export function SorpReadyPage() {
             </article>
           </div>
 
-          <div className="sorp-route-note" data-reveal>
-            <h3>Rather whiz through it?</h3>
-            <p>Once you enter, you can switch to a 15-question Quick Snapshot. It takes around eight minutes and gives you the same free initial readiness report.</p>
-            <p>You can return to the conversation afterwards if you want to ask questions or add context.</p>
-          </div>
         </section>
 
         <section className="sorp-language sorp-section" id="language">
@@ -154,7 +149,7 @@ export function SorpReadyPage() {
           </div>
           <div className="sorp-jurisdiction-grid" data-reveal>
             <article><span>England &amp; Wales</span><p>Some smaller non-company charities and CIOs may be eligible to use receipts &amp; payments accounts.</p><strong>Charitable companies prepare accruals accounts.</strong></article>
-            <article><span>Scotland / Northern Ireland</span><p>Eligibility thresholds and legal forms differ, so the Snapshot asks enough information to help establish what is likely to apply.</p></article>
+            <article><span>Scotland / Northern Ireland</span><p>Eligibility thresholds and legal forms differ, so the assessment asks enough information to help establish what is likely to apply.</p></article>
           </div>
           <div className="sorp-applicability-grid">
             <article className="sorp-cic-note" data-reveal><span>What about a CIC?</span><h3>Charitable company ≠ CIC</h3><p>A Community Interest Company is a company with a community purpose, but it is not automatically a charity.</p><p>Charities SORP therefore does not apply simply because an organisation is a CIC.</p><strong>You are still welcome to use the assessment.</strong><p>The underlying questions about purpose, evidence, outcomes, impact, learning and reporting may still be useful.</p></article>
@@ -192,14 +187,14 @@ export function SorpReadyPage() {
         </section>
 
         <section className="sorp-result sorp-section" id="result">
-          <SectionHeading number="08" eyebrow="What your free report shows" title={<>A clear picture.<br />Useful next steps.</>} copy={<p>This is an illustrative example. Your own free report is created at the end of the guided conversation—or after the 15-question Quick Snapshot.</p>} />
+          <SectionHeading number="08" eyebrow="What your free report shows" title={<>A clear picture.<br />Useful next steps.</>} copy={<p>This is an illustrative example. Your own free report is created at the end of the guided assessment.</p>} />
           <div className="sorp-result-card" data-reveal>
             <header><div><p>Your SORP 2026</p><h3>Impact readiness</h3></div><strong>68 <span>/ 100</span></strong></header>
             <div className="sorp-result-bars">{readinessAreas.map(([name, score]) => <div key={name}><span>{name}</span><i><b style={{ width: `${score}%` }} /></i><strong>{score}</strong></div>)}</div>
             <div className="sorp-result-findings">{["What looks strong", "What needs attention", "MUST requirements to address", "SHOULD opportunities", "MAY options", "Areas requiring judgement"].map((item, index) => <span key={item}><b>0{index + 1}</b>{item}</span>)}</div>
             <small>Illustrative front-end preview · not an assessment result</small>
           </div>
-          <div className="sorp-continue" data-reveal><div><p>Want to explore your result?</p><h3>Continue with the SORP assistant.</h3><span>If you have completed the Snapshot on this device, the readiness conversation can use it immediately and focus on the areas where richer context will help.</span></div><Link href={`${conversationUrl}?from=snapshot`}>Talk through my result <span>→</span></Link></div>
+          <div className="sorp-continue" data-reveal><div><p>Want to explore your result?</p><h3>Continue with the SORP assistant.</h3><span>Ask questions and add context wherever it would help.</span></div><Link href={conversationUrl}>Start my free SORP readiness check <span>→</span></Link></div>
         </section>
 
         <section className="sorp-review sorp-section" id="review">

@@ -405,8 +405,8 @@ test("server-renders the Are You SORP Ready product page", async () => {
   assert.match(html, /practical readiness report at the end/i);
   assert.match(html, /No payment\. No surprise paywall/i);
   assert.match(html, /Start your free readiness conversation/i);
-  assert.match(html, /Start with a conversation/i);
-  assert.match(html, /15-question Quick Snapshot/i);
+  assert.match(html, /One free assessment/i);
+  assert.doesNotMatch(html, /15-question Quick Snapshot/i);
   assert.doesNotMatch(html, /href="\/are-you-sorp-ready\/snapshot"/i);
   assert.match(html, /Start your free conversation/i);
   assert.doesNotMatch(html, /A useful result\. No account\. No email gate\./i);
@@ -487,14 +487,15 @@ test("server-renders the conversational SORP readiness workspace", async () => {
   assert.match(html, /<title>SORP Readiness Conversation \| My Social Impact<\/title>/i);
   assert.match(html, /Talk it through/i);
   assert.match(html, /Get your free report/i);
-  assert.match(html, /Start my free conversation/i);
+  assert.match(html, /Start my free SORP readiness check/i);
   assert.match(html, /My Social Impact Intelligence/i);
-  assert.match(html, /15-question shortcut/i);
+  assert.match(html, /Want to ask something first/i);
+  assert.doesNotMatch(html, /15-question shortcut/i);
 
   const source = await readFile(new URL("../app/sorp-readiness-conversation.tsx", import.meta.url), "utf8");
   assert.match(source, /Let’s find your charity\./);
   assert.match(source, /What is the charity called\?/);
-  assert.match(source, /why we’re asking and the SORP basis/);
+  assert.match(source, /We’ll show you why we’re asking/);
   assert.match(source, /charityName/);
   assert.match(source, /readiness-message-heading/);
   assert.match(source, /readiness-message-list/);
@@ -594,6 +595,19 @@ test("server-renders the conversational SORP readiness workspace", async () => {
   const reportProxy = await readFile(new URL("../app/api/readiness/report/route.ts", import.meta.url), "utf8");
   assert.match(reportProxy, /\/api\/readiness\/report/);
   assert.doesNotMatch(proxy, /OPENAI_API_KEY|authorization.*Bearer/i);
+});
+
+test("public SORP welcome has one assessment entrance", async () => {
+  const response = await render("/are-you-sorp-ready/conversation");
+  assert.equal(response.status, 200);
+  const html = await response.text();
+  assert.match(html, /What we’ll do/i);
+  assert.match(html, /Talk it through/i);
+  assert.match(html, /Want to ask something first/i);
+  assert.match(html, /Start my free SORP readiness check/i);
+  assert.match(html, /Use microphone/i);
+  assert.doesNotMatch(html, /Take the 15-question shortcut/i);
+  assert.doesNotMatch(html, /Use my completed Snapshot/i);
 });
 
 test("server-renders the Community Mapping product page", async () => {

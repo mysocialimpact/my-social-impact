@@ -39,7 +39,6 @@ export default function AssessmentsPage() {
             <div className="assessment-choice-copy">
               <p>A completely free guided conversation for charities and the accountants and advisers who support them.</p>
               <p>Ask SORP questions, understand what applies to your situation and receive a practical readiness report at the end. No card and no surprise paywall.</p>
-              <p>If you prefer to move quickly, a 15-question shortcut is available once you enter.</p>
             </div>
             <div className="assessment-choice-actions">
               <Link className="is-primary" href="/are-you-sorp-ready/conversation">Start your free SORP conversation <span>→</span></Link>

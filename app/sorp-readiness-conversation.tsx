@@ -1,7 +1,6 @@
 "use client";
 
 import { FormEvent, type DragEvent, useEffect, useRef, useState } from "react";
-import { SorpSnapshotLink } from "./sorp-snapshot-link";
 import { SorpResultActions } from "./sorp-result-actions";
 import { trackSorpEvent } from "./sorp-growth";
 import { buildActivitySubmission, toggleActivityChoice } from "./sorp-activity-selection";
@@ -577,7 +576,6 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
   const [checkpoints, setCheckpoints] = useState<ConversationCheckpoint[]>([]);
   const [reviewIndex, setReviewIndex] = useState<number | null>(null);
   const [activitySelections, setActivitySelections] = useState<string[]>([]);
-  const [snapshotAvailable, setSnapshotAvailable] = useState(false);
   const [hydrated, setHydrated] = useState(false);
   const [recordingState, setRecordingState] = useState<"idle" | "recording" | "transcribing">("idle");
   const [recordingSeconds, setRecordingSeconds] = useState(0);
@@ -603,6 +601,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
   const streamRef = useRef<MediaStream | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const welcomeMessageRef = useRef<string | null>(null);
 
   function growthContext(nextState = state, nextResult: Result | null = result) {
     const tier = nextState.setup.income === "tier1" ? "Tier 1" : nextState.setup.income === "tier2" ? "Tier 2" : nextState.setup.income === "tier3" ? "Tier 3" : "tier uncertain";
@@ -645,7 +644,6 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
         const wantsSnapshot = !setupOnly && new URLSearchParams(window.location.search).get("from") === "snapshot";
         const snapshotRaw = window.localStorage.getItem(SNAPSHOT_RESULT_KEY);
         const snapshot = snapshotRaw ? stateFromSnapshot(snapshotRaw) : null;
-        setSnapshotAvailable(Boolean(snapshot));
         if (wantsSnapshot && snapshot) {
           setSessionId(newSessionId());
           setState(snapshot.state);
@@ -1127,6 +1125,13 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
     }
   }
 
+  useEffect(() => {
+    if (!started || !welcomeMessageRef.current) return;
+    const firstMessage = welcomeMessageRef.current;
+    welcomeMessageRef.current = null;
+    void sendMessage(firstMessage, firstMessage, false, "conversation_first");
+  });
+
   function submit(event: FormEvent) {
     event.preventDefault();
     if (isReadinessScale) {
@@ -1316,13 +1321,42 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
     </div>;
   }
 
-  if (!started) return <section className="readiness-intro">
+  if (!started && setupOnly) return <section className="readiness-intro">
     <p className="readiness-kicker">SORP 2026<br /><strong>Completely free</strong></p>
     <h1>{setupOnly ? <>A quick route.<br />The right context first.</> : <>Talk it through.<br />Get your free report.</>}</h1>
     <div className="readiness-intro-copy">{setupOnly && <p>We’ll find your organisation and establish what applies, then take you straight to the 15-question snapshot.</p>}<p>You’re about to talk to <strong>My Social Impact Intelligence</strong>: specialist guidance built from MSI’s SORP and social impact expertise.</p><p>First we’ll establish whether SORP 2026 applies, then gather the context and explore your readiness for its narrative and impact-reporting expectations. You’ll see what we know, why we’re asking and the SORP basis as we go.</p><p>At the end, you’ll receive your personalised SORP readiness report. <strong>There is no charge, no card and no surprise paywall.</strong></p></div>
-    <div className="readiness-intro-actions"><button type="button" onClick={() => startConversation(false)}>{setupOnly ? "Find my organisation" : "Start my free conversation"} <span>→</span></button>{!setupOnly && (snapshotAvailable ? <button type="button" className="is-secondary" onClick={() => startConversation(true)}>Use my completed Snapshot <span>→</span></button> : <SorpSnapshotLink className="is-secondary" startLabel="Take the 15-question shortcut" />)}</div>
-    {!setupOnly && <p className="readiness-intro-note"><strong>Prefer to whiz through?</strong> The Quick Snapshot takes around eight minutes. Both routes produce the same free initial report, and you can return to the conversation afterwards. Create an account at any point to save and resume across devices. <button type="button" className="readiness-sign-in-link" onClick={() => { startConversation(false); setAccountMode("login"); setSaveStatus("idle"); setSaveError(""); setSaveDialogOpen(true); }}>Already have an account? Sign in.</button></p>}
+    <div className="readiness-intro-actions"><button type="button" onClick={() => startConversation(false)}>Find my organisation <span>→</span></button></div>
   </section>;
+
+  if (!started) return <div className="readiness-chat sorp-welcome">
+    <div className="sorp-journey-body">
+      <aside className="sorp-journey-aside sorp-welcome-orientation">
+        <span>What we’ll do</span>
+        <h2>We’ll do the public homework first.</h2>
+        <p>We’ll use public information to do as much of the work as possible for you. We’ll look for:</p>
+        <ul><li>Your charity record</li><li>Latest accounts</li><li>Trustees’ Annual Report</li><li>Wider impact evidence where available</li></ul>
+        <p>Then we’ll give you a Quick Readiness Review and help you go deeper where useful.</p>
+        <small>Completely free · No card required</small>
+      </aside>
+      <main className="sorp-welcome-message">
+        <span>My Social Impact Intelligence</span>
+        <h1>Talk it through.<br />Get your free report.</h1>
+        <p>You’re about to use specialist guidance built around SORP 2026 and MSI’s social impact expertise.</p>
+        <p>Answer quickly, talk things through or ask questions at any point. We’ll show you why we’re asking, and you’ll get a personalised SORP readiness report at the end.</p>
+        <strong>No charge. No card. No surprise paywall.</strong>
+      </main>
+    </div>
+    <form className="readiness-composer sorp-welcome-composer" onSubmit={(event) => { event.preventDefault(); welcomeMessageRef.current = composer.trim() || null; startConversation(false); }}>
+      <div className="sorp-response-utility"><p>Quick answers + conversation</p><button type="button" className="readiness-sign-in-link" onClick={() => { startConversation(false); setAccountMode("login"); setSaveStatus("idle"); setSaveError(""); setSaveDialogOpen(true); }}>Already have an account? Sign in</button></div>
+      <section className="sorp-response-fields" aria-label="Start your free SORP readiness check">
+        <label htmlFor="readiness-answer">Want to ask something first?</label>
+        <textarea ref={composerRef} id="readiness-answer" rows={2} value={composer} onChange={(event) => setComposer(event.target.value)} placeholder="Type or say what you’d like to know…" maxLength={4000} />
+        {error && <p className="sorp-welcome-error" role="alert">Sorry, {error}</p>}
+        <div className="readiness-submit-row"><button type="button" className="readiness-mic" onClick={recordingState === "recording" ? stopRecording : () => void startRecording()} disabled={recordingState === "transcribing"}>{recordingState === "recording" ? `Stop · ${recordingTime(recordingSeconds)}` : recordingState === "transcribing" ? "Transcribing…" : "Use microphone"}</button><button type="submit" disabled={recordingState !== "idle"}>Start my free SORP readiness check <span>→</span></button></div>
+      </section>
+    </form>
+    {saveDialog}
+  </div>;
 
   return <div className="readiness-chat">
     <SorpJourneyProgress current={progressCurrentStage} completed={progressCompletedStages} result={Boolean(result && reviewIndex === null)} />
