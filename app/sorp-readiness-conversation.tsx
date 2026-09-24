@@ -2,6 +2,7 @@
 
 import { FormEvent, type DragEvent, useEffect, useRef, useState } from "react";
 import { SorpResultActions } from "./sorp-result-actions";
+import { SorpMobilePanes } from "./sorp-mobile-panes";
 import { trackSorpEvent } from "./sorp-growth";
 import { buildActivitySubmission, toggleActivityChoice } from "./sorp-activity-selection";
 import { SorpJourneyProgress, SorpKnownContext, SorpBasisDrawer, type PublicReadinessFinding, type PublicReadinessReview, type ReadinessWorkflow } from "./sorp-journey";
@@ -1066,7 +1067,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           message: value,
-          interaction,
+          interaction: interaction || "button_action",
           draftActivitySelections: interaction === "conversation_first" && workflow?.next.id === "activities" ? activitySelections : undefined,
           state,
           history: nextMessages.slice(-40).map(({ role, content }) => ({ role, content })),
@@ -1134,6 +1135,11 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
 
   function submit(event: FormEvent) {
     event.preventDefault();
+    // Text and voice are conversation, even beside an uncommitted button choice.
+    if (composer.trim()) {
+      void sendMessage(composer, composer, true, "conversation_first");
+      return;
+    }
     if (isReadinessScale) {
       const choice = activeQuickAction || suggestedQuickAction;
       if (composer.trim() && (!activeQuickAction || looksLikeQuestion(composer))) {
@@ -1285,6 +1291,9 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
     </form>
   </section></div>;
 
+  const reviewConversation = <section className="sorp-review-conversation" aria-live="polite">{messages.filter(message => message.responseKind === "detour" || message.role === "user").slice(-6).map((message, index) => <article key={`${index}-${message.content.slice(0, 24)}`}><small>{message.role === "user" ? "You" : "My Social Impact Intelligence"}</small><MessageContent text={message.content} /></article>)}{busy && <p role="status">{workingStatus}</p>}{error && <p role="alert">{error}</p>}</section>;
+  const reviewChatInput = <form className="sorp-review-chat-input" onSubmit={submit}><label htmlFor="readiness-answer">Anything you’d like to discuss about your report?</label><textarea ref={composerRef} id="readiness-answer" rows={2} value={composer} onChange={event => setComposer(event.target.value)} placeholder="Type or say what you’d like to ask…" maxLength={4000} /><div className="readiness-submit-row"><button type="button" className="readiness-mic" onClick={recordingState === "recording" ? stopRecording : () => void startRecording()} disabled={busy || recordingState === "transcribing"}>{recordingState === "recording" ? "Stop recording" : recordingState === "transcribing" ? "Transcribing…" : "Use microphone"}</button><button type="submit" disabled={busy || composer.trim().length < 2 || recordingState !== "idle"}>{busy ? "Understanding…" : "Send message"} <span>→</span></button></div></form>;
+
   if (!setupOnly && result && state.score !== null && sessionId && reviewIndex === null) {
     if (fullReviewEntry !== "open") return <div className="readiness-chat is-full-review-handoff">
       <SorpJourneyProgress current={7} completed={[1, 2, 3, 4, 5, 6]} />
@@ -1306,16 +1315,18 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
           <div><p><strong>{intelligence.registry} · {intelligence.effectiveVersion}</strong><span>Published intelligence only · {intelligence.mode === "CURRENT" ? "latest for this new session" : intelligence.mode === "PINNED" ? "pinned for this conversation" : "last known published — Cow Console was temporarily unavailable"}</span></p>{intelligence.layers.map((layer) => <p key={`${layer.id}-${layer.version}`}><strong>{intelligenceLayerLabel(layer)} · {layer.label}</strong><span>{layer.relationship.toLowerCase()} · {layer.status.toLowerCase()} · published {layer.publishedAt ? new Intl.DateTimeFormat("en-GB", { dateStyle: "medium", timeStyle: "short" }).format(new Date(layer.publishedAt)) : "date unavailable"}</span></p>)}{intelligence.runtimeControls.map((control) => <p key={`${control.name}-${control.type}`}><strong>{control.name} · {control.type}</strong><span>Represented by {control.representedBy}</span></p>)}</div>
         </details>}
       </SorpResultActions>
+      <div className="sorp-report-conversation">{reviewConversation}<div className="readiness-composer"><div className="sorp-response-utility"><button type="button" onClick={() => setStageEightReportMode(false)}>← Back to assessment</button><button type="button" onClick={() => setSaveDialogOpen(true)}>Save &amp; exit</button></div><section className="sorp-response-fields">{reviewChatInput}</section></div></div>
+      {saveDialog}
     </div>;
     return <div className="readiness-chat is-stage-eight">
       <SorpJourneyProgress current={readinessStages.length} completed={Array.from({ length: readinessStages.length - 1 }, (_, index) => index + 1)} result />
-      <div className="sorp-journey-body">
+      <SorpMobilePanes>
         <FullReviewRail result={result} />
-        <main className="sorp-stage-eight-main"><p className="sorp-stage-seven-complete">✓ Additional SORP checks complete</p><header className="sorp-stage-eight-heading"><span>Your Full Readiness Review</span><h1>So — where do you now stand?</h1><p className="sorp-stage-eight-verdict"><strong>{result.score} / 100</strong> · {result.band} <span>Confidence: {result.confidence}</span></p><p>{result.overview}</p></header><HeadlineReadinessReview result={result} impactMode={impactMode} /></main>
-      </div>
+        <main className="sorp-stage-eight-main"><p className="sorp-stage-seven-complete">✓ Additional SORP checks complete</p><header className="sorp-stage-eight-heading"><span>Your Full Readiness Review</span><h1>So — where do you now stand?</h1><p className="sorp-stage-eight-verdict"><strong>{result.score} / 100</strong> · {result.band} <span>Confidence: {result.confidence}</span></p><p>{result.overview}</p></header><HeadlineReadinessReview result={result} impactMode={impactMode} />{reviewConversation}</main>
+      </SorpMobilePanes>
       <div className="readiness-composer sorp-stage-eight-response">
         <div className="sorp-response-utility"><nav className="sorp-bottom-navigation" aria-label="Assessment navigation"><span className="sorp-bottom-utility"><button type="button" className="is-back" onClick={goBack} disabled={!checkpoints.length}>← Back</button><button type="button" className="is-save" onClick={() => { setSaveStatus("idle"); setSaveError(""); setSaveDialogOpen(true); }}>Save &amp; exit</button></span></nav></div>
-        <section className="sorp-response-fields" aria-label="Respond to your Full Readiness Review"><QuickReviewFeedback full value={fullReviewFeedback} comment={fullReviewFeedbackComment} onSelect={recordFullReviewFeedback} onComment={recordFullReviewFeedbackComment} /><button className="sorp-stage-eight-continue" type="button" onClick={() => setStageEightReportMode(true)}>Continue to my full report &amp; next actions <span>→</span></button></section>
+        <section className="sorp-response-fields" aria-label="Respond to your Full Readiness Review"><QuickReviewFeedback full value={fullReviewFeedback} comment={fullReviewFeedbackComment} onSelect={recordFullReviewFeedback} onComment={recordFullReviewFeedbackComment} />{reviewChatInput}<button className="sorp-stage-eight-continue" type="button" onClick={() => setStageEightReportMode(true)}>Continue to my full report &amp; next actions <span>→</span></button></section>
       </div>
       {saveDialog}
     </div>;
@@ -1361,7 +1372,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
   return <div className="readiness-chat">
     <SorpJourneyProgress current={progressCurrentStage} completed={progressCompletedStages} result={Boolean(result && reviewIndex === null)} />
 
-    <div className="sorp-journey-body">
+    <SorpMobilePanes>
     <aside className="sorp-journey-aside">
       {activeWorkflow && <SorpStageContext workflow={activeWorkflow} state={reviewCheckpoint?.state || state} impactReportConfirmed={state.impactReportConfirmation === "confirmed"} impactReportUploaded={state.impactReportInput === "uploaded"} accountEmail={account?.email} organisation={contextMessage?.organisation} publicSources={contextMessage?.publicSources} />}
       {!contextMessage?.organisation && !activeWorkflow?.known.some((item) => item.established) && currentStage === 1 && <section className="sorp-context-intro"><span>What we’re going to do</span><h2>We’ll do the public homework first.</h2><p>We’ll use public information to do as much of the work as possible for you. We’ll look for your charity record, accounts and Trustees’ Annual Report, establish the SORP context, then give you a Quick Readiness Review.</p><small>Completely free · No card required</small></section>}
@@ -1375,16 +1386,16 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
       {activeMessages.map((message, index) => index === activeMessages.length - 1 && <article id="readiness-current-question" key={`${index}-${message.content.slice(0, 24)}`} className={`readiness-message is-${message.role}${message.responseKind === "detour" ? " is-detour" : ""}`}>
         <span>{message.role === "user" ? "You" : "My Social Impact Intelligence"}</span>
         {message.label && message.responseKind === "detour" && <strong className={`readiness-label is-${message.label.toLowerCase().replace(" ", "-")}`}>{message.label === "JUDGEMENT" ? "MSI JUDGEMENT" : message.label}</strong>}
-        {message.workflow?.next.id !== "publicSearchCheckpoint" && (deepDiveIntroOpen && message.workflow?.next.id === "publicReview" && message.responseKind !== "detour"
+        {message.responseKind === "detour" ? <div><MessageContent text={message.content} /></div> : message.workflow?.next.id !== "publicSearchCheckpoint" && (deepDiveIntroOpen && message.workflow?.next.id === "publicReview"
           ? <DeepDiveIntroduction />
           : message.workflow?.next.id === "publicReview" && message.workflow.next.provisional?.trusteesReport.reviewed
           ? <QuickReviewExplanation review={message.workflow.next.provisional} onReplaceImpactReport={() => selectStructuredAnswer("No — I have a newer Impact Report")} />
           : <div><MessageContent text={message.organisation ? "I think I’ve found you." : message.content} /></div>)}
         {message.role === "assistant" && message.responseKind !== "detour" && message.workflow && (/^field:\d+/.test(message.workflow.next.id) || message.workflow.next.id.startsWith("check:") && message.workflow.currentStage !== 7) && <DeepDiveQuestionContext workflow={message.workflow} />}
         {message.role === "assistant" && message.responseKind !== "detour" && message.workflow?.currentStage === 7 && /^(?:screen:|check:)/.test(message.workflow.next.id) && <section className="sorp-stage-seven-context"><p>{message.workflow.next.why}</p><SorpBasisDrawer basis={message.workflow.next.basis} /></section>}
-        {message.workflow?.next.id === "publicSearchCheckpoint" && <><PublicSearchCheckpoint workflow={message.workflow} impactReportMissing={impactReportMissingAtPayoff} uploadedReport={state.impactReportInput === "uploaded" ? completionNotice.match(/^✓ IMPACT REPORT ADDED · (.+)$/)?.[1] || "" : ""} />{impactReportMissingAtPayoff && <ImpactReportUploader onChoose={chooseReportFile} dragging={reportDragging} onDragEnter={(event) => { event.preventDefault(); setReportDragging(true); }} onDragLeave={(event) => { event.preventDefault(); setReportDragging(false); }} onDragOver={(event) => { event.preventDefault(); setReportDragging(true); }} onDrop={dropReport} busy={busy} />}</>}
-        {message.role === "assistant" && !message.organisation && message.responseKind === "detour" && <section className="sorp-question-purpose"><strong>What we need next</strong><p>{message.workflow?.next.question}</p></section>}
-        {message.organisation && <p className="sorp-confirm-question">Is this the right organisation?</p>}
+        {message.responseKind !== "detour" && message.workflow?.next.id === "publicSearchCheckpoint" && <><PublicSearchCheckpoint workflow={message.workflow} impactReportMissing={impactReportMissingAtPayoff} uploadedReport={state.impactReportInput === "uploaded" ? completionNotice.match(/^✓ IMPACT REPORT ADDED · (.+)$/)?.[1] || "" : ""} />{impactReportMissingAtPayoff && <ImpactReportUploader onChoose={chooseReportFile} dragging={reportDragging} onDragEnter={(event) => { event.preventDefault(); setReportDragging(true); }} onDragLeave={(event) => { event.preventDefault(); setReportDragging(false); }} onDragOver={(event) => { event.preventDefault(); setReportDragging(true); }} onDrop={dropReport} busy={busy} />}</>}
+        {message.organisation && <div className="sorp-mobile-organisation"><strong>{message.organisation.name}</strong><p>{message.organisation.locality}</p></div>}
+        {message.organisation && message.responseKind !== "detour" && <p className="sorp-confirm-question">Is this the right organisation?</p>}
         {message.responseKind === "detour" && message.citations?.length ? <SorpBasisDrawer basis={{classification: message.label || "MSI JUDGEMENT", explanation: "The SORP passages relevant to your question.", citations: message.citations}} /> : null}
         {!message.organisation && message.publicSources?.length ? <details><summary>Sources</summary><div>{message.publicSources.map((source) => <article key={`${source.url}-${source.detail}`}><strong>{sourceKindLabel(source.kind)} · {source.label}</strong>{source.detail && <p>{source.detail}</p>}<a href={source.url}>View source <span>→</span></a></article>)}</div></details> : null}
       </article>)}
@@ -1401,7 +1412,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
       <div ref={threadEndRef} />
     </div>
 
-    </div>
+    </SorpMobilePanes>
     <form className={`readiness-composer${activityQuestion ? " is-activity-composer" : ""}${activitySelectionCount ? " has-activity-selections" : ""}${reviewIndex !== null ? " is-reviewing" : ""}${isStageOnePayoff ? " is-stage-one-payoff" : ""}${isQuickReviewResponse ? " is-quick-review-response" : ""}`} onSubmit={submit}>
       <input ref={reportInputRef} type="file" accept="application/pdf,.pdf,.doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" hidden onChange={(event) => { const file = event.target.files?.[0]; if (file) void uploadReport(file); }} />
       <div className="sorp-response-utility">
