@@ -982,7 +982,6 @@
 .sorp-report-beyond a:hover,.sorp-report-beyond a:focus-visible { color:var(--sorp-orange); }
 .sorp-report-beyond small { display:block; margin-top:.6rem; color:var(--muted); font-size:.75rem; }
 .sorp-report-beyond small a { display:inline; min-height:0; margin:0; padding:0; border:0; color:var(--ink); font-size:.9rem; font-weight:700; text-transform:none; text-decoration:underline; text-underline-offset:3px; }
-.readiness-chat.is-result-mode:has(.sorp-report-bridge) > .sorp-report-conversation { display:none; }
 .sorp-report-bridge { width:min(1140px,calc(100% - 2 * var(--sorp-pad))); margin:0 auto; padding:clamp(3rem,6vw,6rem) 0 clamp(4rem,7vw,7rem); }
 .sorp-report-bridge span { color:var(--sorp-orange); font-size:.73rem; font-weight:900; letter-spacing:.08em; text-transform:uppercase; }
 .sorp-bridge-opening { max-width:850px; padding-bottom:clamp(3rem,6vw,6rem); }
