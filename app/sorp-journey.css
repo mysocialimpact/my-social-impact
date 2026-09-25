@@ -713,6 +713,7 @@ body:has(.sorp-conversation-page) > .global-build-stamp { display:none; }
   .sorp-welcome-controls { grid-template-columns:auto auto minmax(0,1fr); }
 }
 @media(max-width:600px) {
+  .sorp-conversation-page .readiness-chat.sorp-welcome { height:calc(var(--sorp-viewport-height,100dvh) - 70px - var(--sorp-stamp-height,0px)); }
   .sorp-conversation-page .readiness-composer.sorp-welcome-composer { padding:7px 16px calc(8px + env(safe-area-inset-bottom)); }
   .sorp-conversation-page .readiness-composer.sorp-welcome-composer > .sorp-response-utility { display:flex; margin:0 0 6px; }
   .sorp-welcome-composer .sorp-response-utility p { display:none; }
