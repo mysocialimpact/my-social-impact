@@ -26,10 +26,11 @@ function suggestedBand(income: string): ReviewBand {
   return "small";
 }
 
-export function SorpResultActions({ sessionId, organisation, income, result, impactMode, children, onBackToAssessment }: { sessionId: string; organisation: string; income: string; result: ReportResult; impactMode: boolean; children: ReactNode; onBackToAssessment: () => void }) {
+export function SorpResultActions({ sessionId, organisation, income, result, impactMode, children, onBackToAssessment, onSurfaceChange }: { sessionId: string; organisation: string; income: string; result: ReportResult; impactMode: boolean; children: ReactNode; onBackToAssessment: () => void; onSurfaceChange?: (surface: "full_report" | "next_actions") => void }) {
   const storageKey = `msi-sorp-report-mode:${sessionId}`;
   const [choice, setChoice] = useState<Choice>(null);
   const [reportOpen, setReportOpen] = useState(false);
+  useEffect(() => { onSurfaceChange?.(reportOpen ? "full_report" : "next_actions"); }, [reportOpen, onSurfaceChange]);
   const [band, setBand] = useState<ReviewBand>(() => suggestedBand(income));
   const [supportChoice, setSupportChoice] = useState<SupportChoice>(5);
   const [customSupport, setCustomSupport] = useState("");
