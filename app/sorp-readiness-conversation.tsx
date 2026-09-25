@@ -594,7 +594,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
   const [fullReviewFeedbackComment, setFullReviewFeedbackComment] = useState("");
   const [fullReviewFeedbackStep, setFullReviewFeedbackStep] = useState(false);
   const [stageEightReportMode, setStageEightReportMode] = useState(false);
-  const [fullReviewEntry, setFullReviewEntry] = useState<"completion" | "revealing" | "open">("open");
+  const [fullReviewEntry, setFullReviewEntry] = useState<"completion" | "revealing" | "ready" | "open">("open");
   const [deepDiveIntroOpen, setDeepDiveIntroOpen] = useState(false);
   const [selectedQuickAction, setSelectedQuickAction] = useState<(MessageAction & { questionId: string }) | null>(null);
   const composerRef = useRef<HTMLTextAreaElement>(null);
@@ -739,8 +739,15 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
   }, [hydrated, started, account, setupOnly, state, messages, result, intelligence, sessionId, workflow, checkpoints, quickReviewFeedbackStep, quickReviewFeedback, quickReviewFeedbackComment, fullReviewEntry, fullReviewFeedbackStep, fullReviewFeedback, fullReviewFeedbackComment]);
 
   useEffect(() => {
-    if (fullReviewEntry !== "revealing") return;
-    const timer = window.setTimeout(() => setFullReviewEntry("open"), window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 400);
+    if (fullReviewEntry !== "revealing" || !result) return;
+    // The result was generated with the final Stage 7 answer; this is a brief reveal, not a second calculation.
+    const timer = window.setTimeout(() => setFullReviewEntry("ready"), window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 300 : 1450);
+    return () => window.clearTimeout(timer);
+  }, [fullReviewEntry, result]);
+
+  useEffect(() => {
+    if (fullReviewEntry !== "ready") return;
+    const timer = window.setTimeout(() => setFullReviewEntry("open"), window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 300 : 850);
     return () => window.clearTimeout(timer);
   }, [fullReviewEntry]);
 
@@ -1333,15 +1340,25 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
   const reviewChatInput = <form className="sorp-review-chat-input" onSubmit={submit}><label htmlFor="readiness-answer">Anything you’d like to discuss about your report?</label><textarea ref={composerRef} id="readiness-answer" rows={2} value={composer} onChange={event => setComposer(event.target.value)} placeholder="Type or say what you’d like to ask…" maxLength={4000} /><div className="readiness-submit-row"><button type="button" className="readiness-mic" onClick={recordingState === "recording" ? stopRecording : () => void startRecording()} disabled={busy || recordingState === "transcribing"}>{recordingState === "recording" ? "Stop recording" : recordingState === "transcribing" ? "Transcribing…" : "Use microphone"}</button><button type="submit" disabled={busy || composer.trim().length < 2 || recordingState !== "idle"}>{busy ? "Understanding…" : "Send message"} <span>→</span></button></div></form>;
 
   if (!setupOnly && result && state.score !== null && sessionId && reviewIndex === null) {
-    if (fullReviewEntry !== "open") return <div className="readiness-chat is-full-review-handoff">
+    if (fullReviewEntry === "revealing" || fullReviewEntry === "ready") return <div className={`readiness-chat is-full-review-building${fullReviewEntry === "ready" ? " is-ready" : ""}`}>
+      <div className="sorp-full-review-building" role="status" aria-live="polite">
+        <header><span>My Social Impact Intelligence</span><strong>Are You SORP Ready?</strong></header>
+        <div className="sorp-full-review-building-grid">
+          <main><p className="sorp-full-review-building-kicker">✓ Assessment complete</p><h1>{fullReviewEntry === "ready" ? "✓ Your Full Readiness Review is ready." : "Building your Full Readiness Review…"}</h1><ol aria-label="How your review was assembled"><li>Bringing together your answers</li><li>Checking the public evidence</li><li>Comparing your reporting with the relevant SORP requirements</li><li>Identifying strengths and gaps</li><li>Prioritising what matters next</li></ol></main>
+          <aside><h2>SORP is the requirement.<br /><em>Better impact is the opportunity.</em></h2><p>For My Social Impact, this isn’t just about compliance.</p><p>Better impact information should help charities understand what is working, learn what isn’t, make better decisions and ultimately create more impact.</p></aside>
+        </div>
+        <footer><div><strong>Thank you for using Are You SORP Ready?</strong><p>If this has been useful, please share it with another charity. We want to help as many organisations as possible get ready for SORP 2026 — and strengthen their impact practice too.</p></div><div><strong>Built with The Ideas Shed</strong><p>The Ideas Shed creates useful digital tools that help charities and purpose-led organisations do better work. More tools are coming.</p></div></footer>
+      </div>
+    </div>;
+    if (fullReviewEntry === "completion") return <div className="readiness-chat is-full-review-handoff">
       <SorpJourneyProgress current={7} completed={[1, 2, 3, 4, 5, 6]} />
       <div className="sorp-journey-body">
         <aside className="sorp-full-review-handoff-rail"><span>Additional SORP checks</span><strong>6 of 6 complete</strong><p>You’ve worked through the final checks. Your answers and the public evidence are ready for the Full Readiness Review.</p></aside>
-        <main className="sorp-full-review-handoff-main" aria-live="polite">{fullReviewEntry === "completion" ? <><p className="sorp-full-review-handoff-tick">✓ You’ve completed the assessment</p><h1>Brilliant — thank you.</h1><p>We’ve now got your answers, the public evidence we found, and the relevant SORP checks.</p><p>Your Full Readiness Review is nearly ready.</p></> : <><p className="sorp-full-review-handoff-tick">✓ Assessment complete</p><h1>Putting your Full Readiness Review together…</h1><ul><li>✓ Combining your answers</li><li>✓ Checking the evidence</li><li>✓ Identifying strengths and gaps</li><li>✓ Prioritising your next actions</li></ul></>}</main>
+        <main className="sorp-full-review-handoff-main" aria-live="polite"><p className="sorp-full-review-handoff-tick">✓ You’ve completed the assessment</p><h1>Brilliant — thank you.</h1><p>We’ve now got your answers, the public evidence we found, and the relevant SORP checks.</p><p>Your Full Readiness Review is nearly ready.</p></main>
       </div>
       <div className="readiness-composer sorp-full-review-handoff-response">
-        <div className="sorp-response-utility"><nav className="sorp-bottom-navigation" aria-label="Assessment navigation"><span className="sorp-bottom-utility"><button type="button" className="is-back" onClick={goBack} disabled={!checkpoints.length || fullReviewEntry === "revealing"}>← Back</button><button type="button" className="is-save" onClick={() => { setSaveStatus("idle"); setSaveError(""); setSaveDialogOpen(true); }}>Save &amp; exit</button></span><small className="sorp-save-hint">Save to an account anytime and pick up where you left off.</small></nav></div>
-        <section className="sorp-response-fields">{fullReviewEntry === "completion" && <button className="sorp-stage-eight-continue" type="button" onClick={() => setFullReviewEntry("revealing")}>Build my Full Review <span>→</span></button>}</section>
+        <div className="sorp-response-utility"><nav className="sorp-bottom-navigation" aria-label="Assessment navigation"><span className="sorp-bottom-utility"><button type="button" className="is-back" onClick={goBack} disabled={!checkpoints.length}>← Back</button><button type="button" className="is-save" onClick={() => { setSaveStatus("idle"); setSaveError(""); setSaveDialogOpen(true); }}>Save &amp; exit</button></span><small className="sorp-save-hint">Save to an account anytime and pick up where you left off.</small></nav></div>
+        <section className="sorp-response-fields"><button className="sorp-stage-eight-continue" type="button" onClick={() => setFullReviewEntry("revealing")}>Build my Full Review <span>→</span></button></section>
       </div>
       {saveDialog}
     </div>;
