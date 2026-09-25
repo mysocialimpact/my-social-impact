@@ -562,6 +562,7 @@ function SorpStageContext({ workflow, state, impactReportConfirmed, impactReport
 export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }: { setupOnly?: boolean; onSetupComplete?: (state: ReadinessState, workflow: ReadinessWorkflow) => void }) {
   const storageKey = setupOnly ? "msi-sorp-snapshot-setup-v1" : CONVERSATION_KEY;
   const [started, setStarted] = useState(false);
+  const [welcomeQuestionOpen, setWelcomeQuestionOpen] = useState(false);
   const [state, setState] = useState<ReadinessState>(() => blankState());
   const [messages, setMessages] = useState<Message[]>([]);
   const [composer, setComposer] = useState("");
@@ -1338,33 +1339,36 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
   </section>;
 
   if (!started) return <div className="readiness-chat sorp-welcome">
-    <div className="sorp-journey-body">
-      <aside className="sorp-journey-aside sorp-welcome-orientation">
-        <span>What we’ll do</span>
-        <h2>We’ll do the public homework first.</h2>
-        <p>We’ll use public information to do as much of the work as possible for you. We’ll look for:</p>
-        <ul><li>Your charity record</li><li>Latest accounts</li><li>Trustees’ Annual Report</li><li>Wider impact evidence where available</li></ul>
-        <p>Then we’ll give you a Quick Readiness Review and help you go deeper where useful.</p>
-        <small>Completely free · No card required</small>
-      </aside>
-      <main className="sorp-welcome-message">
-        <span>My Social Impact Intelligence</span>
-        {!messages.length ? <><h1>Talk it through.<br />Get your free report.</h1>
-          <p>You’re about to use specialist guidance built around SORP 2026 and MSI’s social impact expertise.</p>
-          <p>Answer quickly, talk things through or ask questions at any point. We’ll show you why we’re asking, and you’ll get a personalised SORP readiness report at the end.</p>
-          <strong>No charge. No card. No surprise paywall.</strong></> : <div className="sorp-welcome-thread" aria-live="polite">{messages.map((message, index) => <article key={index} className={`readiness-message is-${message.role}`}><span>{message.role === "user" ? "You" : "My Social Impact Intelligence"}</span><MessageContent text={message.content} />{message.organisation && <p><strong>{message.organisation.name}</strong>{message.organisation.locality ? ` · ${message.organisation.locality}` : ""}</p>}{message.actions?.length ? <div className="sorp-welcome-candidates">{message.actions.map((action) => <button type="button" key={action.value} onClick={() => void sendMessage(action.value, action.label, false, "conversation_first")}>{action.label} →</button>)}</div> : null}</article>)}{busy && <p role="status">Checking the public register and responding…</p>}</div>}
-      </main>
+    <div className="sorp-welcome-scroll">
+      <div className="sorp-welcome-grid">
+        <main className="sorp-welcome-story">
+          <p className="sorp-welcome-eyebrow">My Social Impact Intelligence · SORP 2026</p>
+          <h1>Know where you stand.<br /><em>See what comes next.</em></h1>
+          <p className="sorp-welcome-lead">We’ll find and read the public reporting you already have, then talk through what SORP 2026 asks of your charity. You get a useful first view quickly—and a full personalised review when you’re done.</p>
+          <div className="sorp-welcome-journey" aria-label="How your readiness check works">
+            <section><span>01</span><div><h2>We do the homework</h2><p>Your charity record, latest accounts and Trustees’ Annual Report—plus wider impact evidence where available.</p></div></section>
+            <section><span>02</span><div><h2>We talk it through</h2><p>A short, intelligent conversation about what the public evidence cannot tell us. Answer quickly, explain in your own words or ask why.</p></div></section>
+            <section><span>03</span><div><h2>You get a clear way forward</h2><p>Your SORP readiness review shows what looks strong, what needs attention and what to do next.</p></div></section>
+          </div>
+          <div className="sorp-welcome-actions">
+            <button type="button" className="sorp-welcome-start" onClick={() => startConversation(false)}>Start my free SORP readiness check <span aria-hidden="true">→</span></button>
+            <p>Full readiness review included <span>·</span> No card required</p>
+            <div className="sorp-welcome-alternatives"><button type="button" onClick={() => { setAccountMode("login"); setSaveStatus("idle"); setSaveError(""); setSaveDialogOpen(true); }}>Already have an account? Sign in</button><button type="button" onClick={() => setWelcomeQuestionOpen(true)}>Not ready to start? Ask a quick SORP question</button></div>
+          </div>
+        </main>
+        <aside className="sorp-welcome-outcome" aria-label="Illustrative preview of your readiness review">
+          <div className="sorp-welcome-report">
+            <header><span>What you’ll receive</span><small>Illustrative preview · not your result</small></header>
+            <div className="sorp-welcome-report-title"><p>My Social Impact</p><h2>Your SORP<br />readiness review.</h2><span>Evidence-led · Personal to your charity</span></div>
+            <dl><div><dt>Readiness view</dt><dd>Where you stand now</dd></div><div><dt>Evidence confidence</dt><dd>How strong the starting evidence is</dd></div></dl>
+            <div className="sorp-welcome-report-findings"><p><span>✓</span><strong>What’s already working</strong><small>The strengths your reporting can build on.</small></p><p><span>△</span><strong>What needs attention</strong><small>Important gaps, without the jargon.</small></p><p><span>→</span><strong>What to do next</strong><small>Clear priorities for your next report.</small></p></div>
+            <footer>SORP is the requirement.<br />Better impact reporting is the opportunity.</footer>
+          </div>
+        </aside>
+      </div>
+      <section className="sorp-welcome-free" aria-label="Why this check is free"><div><span>Yes, it really is free</span><h2>The full review is yours. No paywall at the end.</h2></div><p>We built this to help charities make sense of SORP and improve how they show the difference they make. Afterwards, you can choose a paid human review or make a small voluntary contribution to help keep the tool free. Neither is required to get your report.</p></section>
     </div>
-    <form className="readiness-composer sorp-welcome-composer" onSubmit={(event) => { event.preventDefault(); if (composer.trim()) void sendMessage(composer, composer, false, "conversation_first"); }}>
-      <div className="sorp-response-utility"><p>Quick answers + conversation</p><button type="button" className="readiness-sign-in-link" onClick={() => { startConversation(false); setAccountMode("login"); setSaveStatus("idle"); setSaveError(""); setSaveDialogOpen(true); }}>Already have an account? Sign in</button></div>
-      <section className="sorp-response-fields" aria-label="Start your free SORP readiness check">
-        <label htmlFor="readiness-answer">Ask a question or tell us which charity you mean. Your check starts when you choose Start.</label>
-        <textarea ref={composerRef} id="readiness-answer" rows={2} value={composer} onChange={(event) => setComposer(event.target.value)} placeholder="Type or say what you’d like to know…" maxLength={4000} />
-        {error && <p className="sorp-welcome-error" role="alert">Sorry, {error}</p>}
-        <div className="readiness-submit-row"><button type="button" className="readiness-mic" onClick={recordingState === "recording" ? stopRecording : () => void startRecording()} disabled={recordingState === "transcribing" || busy}>{recordingState === "recording" ? `Stop · ${recordingTime(recordingSeconds)}` : recordingState === "transcribing" ? "Transcribing…" : "Use microphone"}</button><button type="submit" disabled={!composer.trim() || recordingState !== "idle" || busy}>Send message <span>→</span></button></div>
-        <button type="button" className="sorp-welcome-start" disabled={busy || recordingState !== "idle"} onClick={() => startConversation(false)}>Start my free SORP readiness check <span>→</span></button>
-      </section>
-    </form>
+    {welcomeQuestionOpen && <div className="sorp-welcome-question-backdrop"><section className="sorp-welcome-question" role="dialog" aria-modal="true" aria-labelledby="sorp-welcome-question-title" onKeyDown={(event) => { if (event.key === "Escape") setWelcomeQuestionOpen(false); }}><header><div><span>My Social Impact Intelligence</span><h2 id="sorp-welcome-question-title">Ask a quick SORP question.</h2><p>Your readiness check won’t start until you choose Start.</p></div><button type="button" aria-label="Close question" onClick={() => setWelcomeQuestionOpen(false)}>Close ×</button></header><div className="sorp-welcome-thread" aria-live="polite">{messages.length ? messages.map((message, index) => <article key={index} className={`readiness-message is-${message.role}`}><span>{message.role === "user" ? "You" : "My Social Impact Intelligence"}</span><MessageContent text={message.content} />{message.organisation && <p><strong>{message.organisation.name}</strong>{message.organisation.locality ? ` · ${message.organisation.locality}` : ""}</p>}{message.actions?.length ? <div className="sorp-welcome-candidates">{message.actions.map((action) => <button type="button" key={action.value} disabled={busy} onClick={() => void sendMessage(action.value, action.label, false, "conversation_first")}>{action.label} →</button>)}</div> : null}</article>) : <p>Ask about SORP 2026, the check or a charity you have in mind.</p>}{busy && <p role="status">Thinking that through…</p>}</div><form onSubmit={(event) => { event.preventDefault(); if (composer.trim()) void sendMessage(composer, composer, false, "conversation_first"); }}><label htmlFor="sorp-welcome-question-input">Your question</label><textarea ref={composerRef} id="sorp-welcome-question-input" autoFocus rows={2} value={composer} onChange={(event) => setComposer(event.target.value)} placeholder="Type your question…" maxLength={4000} />{error && <p className="sorp-welcome-error" role="alert">Sorry, {error}</p>}<button type="submit" disabled={!composer.trim() || busy}>Send question <span aria-hidden="true">→</span></button></form></section></div>}
     {saveDialog}
   </div>;
 
