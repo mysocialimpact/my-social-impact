@@ -40,8 +40,10 @@ export function SorpResultActions({ sessionId, organisation, income, result, imp
   const [role, setRole] = useState<Role>("");
   const [emailState, setEmailState] = useState<"idle" | "sending" | "sent">("idle");
   const [emailError, setEmailError] = useState("");
+  const [emailPanelOpen, setEmailPanelOpen] = useState(false);
   const [emailedFile, setEmailedFile] = useState("");
   const reportRef = useRef<HTMLElement>(null);
+  const actionEmailRef = useRef<HTMLInputElement>(null);
   const reviewRef = useRef<HTMLDivElement>(null);
   const supportRef = useRef<HTMLDivElement>(null);
   const chosenBand = reviewBands.find((item) => item.id === band)!;
@@ -71,6 +73,10 @@ export function SorpResultActions({ sessionId, organisation, income, result, imp
       window.setTimeout(() => reportRef.current?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" }), 80);
     }
   }, [choice, reportOpen, sessionId, storageKey]);
+
+  useEffect(() => {
+    if (emailPanelOpen) actionEmailRef.current?.focus({ preventScroll: true });
+  }, [emailPanelOpen]);
 
   function openReport(nextChoice: Exclude<Choice, null>, eventType: "human_review_selected" | "support_selected" | "free_report_selected") {
     setChoice(nextChoice);
@@ -124,6 +130,7 @@ export function SorpResultActions({ sessionId, organisation, income, result, imp
       if (!response.ok || !data.ok || !data.attachment?.endsWith(".pdf")) throw new Error(data.error || "The full PDF attachment could not be confirmed. Please try again.");
       setEmailedFile(data.attachment);
       setEmailState("sent");
+      setEmailPanelOpen(false);
       void trackResult("report_emailed");
     } catch (caught) {
       setEmailState("idle");
@@ -189,6 +196,13 @@ export function SorpResultActions({ sessionId, organisation, income, result, imp
       <section className="sorp-report-beyond"><span>The next opportunity</span><h2>SORP is the requirement.<br />Better impact is the opportunity.</h2><div><p>My Social Impact would love to help you go beyond compliance — strengthening how impact is measured, managed, evidenced and communicated.</p><a href={contactHref} onClick={() => { void trackResult("book_conversation_clicked"); }}>Book a conversation <span>→</span></a><small><a href={contactHref} onClick={() => { void trackResult("contact_email_clicked"); }}>marcus@marcuswarry.com</a></small></div></section>
       {postReportChoices}
       {choice === "review" && reviewPanel}{choice === "support" && supportPanel}
+      <div className="sorp-report-action-bar" role="region" aria-label="Your report actions"><div className="sorp-report-action-inner">
+        <div className="sorp-report-action is-email"><span>Keep this</span><button type="button" aria-expanded={emailPanelOpen} aria-controls="sorp-action-email-panel" disabled={emailState === "sent"} onClick={() => { setEmailError(""); setEmailPanelOpen((open) => !open); }}>{emailState === "sent" ? "Sent ✓" : "Email my PDF"}<b aria-hidden="true">{emailState === "sent" ? "" : "→"}</b></button></div>
+        <div className="sorp-report-action is-human"><span>Want help with it?</span><button type="button" onClick={showReview}>Book a human review — £{chosenBand.amount}<b aria-hidden="true">→</b></button></div>
+        <div className="sorp-report-action is-support"><span>Want to support us?</span><button type="button" onClick={() => showSupport(false)}>Support the free tool — £5+<b aria-hidden="true">→</b></button></div>
+        {emailPanelOpen && emailState !== "sent" && <form id="sorp-action-email-panel" className="sorp-action-email-panel" onSubmit={sendReport}><label htmlFor="sorp-action-email">Where should we send your full PDF?<input ref={actionEmailRef} id="sorp-action-email" type="email" autoComplete="email" required value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.org" /></label><button type="submit" disabled={emailState === "sending"}>{emailState === "sending" ? "Sending full PDF…" : "Send my PDF →"}</button>{emailError && <p role="alert">Sorry — {emailError} Please try again.</p>}</form>}
+        {emailState === "sent" && <span className="sorp-action-email-sent" role="status">Your full PDF is on its way to {email}.</span>}
+      </div></div>
     </section>}
   </main>;
 }

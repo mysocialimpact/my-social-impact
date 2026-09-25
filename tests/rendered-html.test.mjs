@@ -229,6 +229,24 @@ test("pre-report bridge gives one free-report action and keeps paid options afte
   assert.doesNotMatch(conversation, /startWithChoices/);
 });
 
+test("full report action bar reuses in-place PDF email and existing paid panels", async () => {
+  const actions = await readFile(new URL("../app/sorp-result-actions.tsx", import.meta.url), "utf8");
+  const css = await readFile(new URL("../app/sorp-ready.css", import.meta.url), "utf8");
+  assert.match(actions, /className="sorp-report-action-bar" role="region"/);
+  assert.match(actions, /Email my PDF/);
+  assert.match(actions, /Book a human review — £\{chosenBand\.amount\}/);
+  assert.match(actions, /Support the free tool — £5\+/);
+  assert.match(actions, /className="sorp-action-email-panel" onSubmit=\{sendReport\}/);
+  assert.match(actions, /fetch\("\/api\/readiness\/report-email"/);
+  assert.match(actions, /setEmailState\("sent"\);\s*setEmailPanelOpen\(false\)/);
+  assert.match(actions, /onClick=\{showReview\}/);
+  assert.match(actions, /onClick=\{\(\) => showSupport\(false\)\}/);
+  assert.match(actions, /\{choice === "review" && reviewPanel\}\{choice === "support" && supportPanel\}/);
+  assert.match(css, /\.sorp-report-action-bar \{ position:fixed;/);
+  assert.match(css, /\.sorp-report-action-inner \{ grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
+  assert.match(css, /\.sorp-report-action-bar,\.readiness-intelligence[^}]*display: none !important/);
+});
+
 test("Quick Readiness Review keeps TAR and wider evidence separate", async () => {
   const conversation = await readFile(new URL("../app/sorp-readiness-conversation.tsx", import.meta.url), "utf8");
   assert.match(conversation, /Quick Readiness Review/);
