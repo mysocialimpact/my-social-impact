@@ -385,6 +385,8 @@ body:has(.sorp-conversation-page) > .global-build-stamp { display:none; }
 .readiness-composer .sorp-quick-review-feedback textarea { min-height:52px; background:#fff; }
 .readiness-composer .sorp-impact-report-uploader { margin:0 0 10px; }
 .sorp-bottom-navigation { display:grid; grid-template-columns:auto auto 1fr; gap:8px; margin-bottom:10px; }
+.sorp-bottom-navigation .sorp-save-hint { flex-basis:100%; grid-column:1/-1; color:#665f55; font-size:11px; font-weight:500; line-height:1.35; }
+.sorp-report-conversation .sorp-save-hint { display:block; grid-column:1/-1; margin-top:8px; color:#665f55; font-size:11px; font-weight:500; line-height:1.35; }
 .readiness-composer .sorp-bottom-navigation button { min-height:42px; padding:9px 14px; background:#fff; color:#11100f; }
 .readiness-composer .sorp-bottom-navigation button.is-back { border-color:#11100f; }
 .readiness-composer .sorp-bottom-navigation button.is-save { border-color:#777068; color:#59534b; }
