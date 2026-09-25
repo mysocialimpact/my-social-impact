@@ -105,7 +105,7 @@ type ReadinessResponse = {
   sessionId: string;
 };
 
-type SavedProgress = { started: boolean; state: ReadinessState; messages: Message[]; result: Result | null; intelligence: IntelligenceProvenance | null; sessionId: string; workflow: ReadinessWorkflow | null; checkpoints: ConversationCheckpoint[]; fullReviewEntered?: boolean; fullReviewFeedbackStep?: boolean; fullReviewFeedback?: number | null; fullReviewFeedbackComment?: string };
+type SavedProgress = { started: boolean; state: ReadinessState; messages: Message[]; result: Result | null; intelligence: IntelligenceProvenance | null; sessionId: string; workflow: ReadinessWorkflow | null; checkpoints: ConversationCheckpoint[]; quickReviewFeedbackStep?: boolean; quickReviewFeedback?: number | null; quickReviewFeedbackComment?: string; fullReviewEntered?: boolean; fullReviewFeedbackStep?: boolean; fullReviewFeedback?: number | null; fullReviewFeedbackComment?: string };
 type ReadinessAccount = { id: string; email: string; name: string; position: string; organisation: string; currentStage: number; completedStages: number[]; createdAt: string; lastSavedAt: string };
 
 const emptySetup: AssessmentSetup = { role: "", jurisdiction: "", startDate: "", endDate: "", accounts: "", accountsReview: "", income: "", nearBoundary: false, activities: [] };
@@ -411,12 +411,12 @@ function ImpactReportFound({ review, confirmed, uploaded = false }: { review: Pu
   </section>;
 }
 
-function QuickReviewFeedback({ value, comment, onSelect, onComment, full = false, hideComment = false }: { value: number | null; comment: string; onSelect: (value: number) => void; onComment: (value: string) => void; full?: boolean; hideComment?: boolean }) {
+function QuickReviewFeedback({ value, comment, onSelect, onComment, full = false, hideIntro = false }: { value: number | null; comment: string; onSelect: (value: number) => void; onComment: (value: string) => void; full?: boolean; hideIntro?: boolean }) {
   return <section className={`sorp-quick-review-feedback${full ? " is-full-review" : ""}`} aria-label={full ? "Full Readiness Review feedback" : "Quick Readiness Review feedback"}>
-    <p><strong>{full ? "How useful was this?" : "How’s this going?"}</strong>{!full && <span>This is a free tool and we genuinely want to make it as useful as possible.</span>}</p>
-    <div className="sorp-feedback-scale"><span>1 · Not useful yet</span><span>5 · Extremely useful</span></div>
+    {!hideIntro && <p><strong>{full ? "How useful was this?" : "How’s this going?"}</strong>{!full && <span>This is a free tool and we genuinely want to make it as useful as possible.</span>}</p>}
+    <div className="sorp-feedback-scale"><span>{full ? "1 · Not useful yet" : "1 = Not useful yet"}</span><span>{full ? "5 · Extremely useful" : "5 = Extremely useful"}</span></div>
     <div className="sorp-feedback-stars" role="group" aria-label={`How useful was this ${full ? "Full" : "Quick"} Readiness Review?`}>{[1, 2, 3, 4, 5].map((rating) => <button key={rating} type="button" className={value === rating ? "is-selected" : undefined} aria-label={`${rating} out of 5`} aria-pressed={value === rating} onClick={() => onSelect(rating)}>{value !== null && rating <= value ? "★" : "☆"}</button>)}</div>
-    {!hideComment && <label><strong>{full ? "Anything we could improve?" : "Anything you’d like to tell us?"}</strong><span>Optional</span><textarea value={comment} maxLength={800} rows={2} onChange={(event) => onComment(event.target.value)} placeholder="Add a short comment if useful…" /></label>}
+    <label><strong>Anything we could improve?</strong><span>Optional</span><textarea value={comment} maxLength={800} rows={2} onChange={(event) => onComment(event.target.value)} placeholder="Add a short comment if useful…" /></label>
   </section>;
 }
 
@@ -589,6 +589,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
   const [reportDragging, setReportDragging] = useState(false);
   const [quickReviewFeedback, setQuickReviewFeedback] = useState<number | null>(null);
   const [quickReviewFeedbackComment, setQuickReviewFeedbackComment] = useState("");
+  const [quickReviewFeedbackStep, setQuickReviewFeedbackStep] = useState(false);
   const [fullReviewFeedback, setFullReviewFeedback] = useState<number | null>(null);
   const [fullReviewFeedbackComment, setFullReviewFeedbackComment] = useState("");
   const [fullReviewFeedbackStep, setFullReviewFeedbackStep] = useState(false);
@@ -654,7 +655,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
         } else {
           const saved = window.localStorage.getItem(storageKey);
           if (saved) {
-            const parsed = JSON.parse(saved) as { started?: boolean; state?: ReadinessState; messages?: Message[]; result?: Result | null; intelligence?: IntelligenceProvenance | null; sessionId?: string; workflow?: ReadinessWorkflow; checkpoints?: ConversationCheckpoint[]; fullReviewEntered?: boolean; fullReviewFeedbackStep?: boolean; quickReviewFeedback?: number | null; fullReviewFeedback?: number | null; fullReviewFeedbackComment?: string; saveProfile?: { name: string; position: string; email: string } };
+            const parsed = JSON.parse(saved) as { started?: boolean; state?: ReadinessState; messages?: Message[]; result?: Result | null; intelligence?: IntelligenceProvenance | null; sessionId?: string; workflow?: ReadinessWorkflow; checkpoints?: ConversationCheckpoint[]; quickReviewFeedbackStep?: boolean; quickReviewFeedback?: number | null; quickReviewFeedbackComment?: string; fullReviewEntered?: boolean; fullReviewFeedbackStep?: boolean; fullReviewFeedback?: number | null; fullReviewFeedbackComment?: string; saveProfile?: { name: string; position: string; email: string } };
             if (parsed.state && parsed.messages?.length) {
               setStarted(Boolean(parsed.started));
               setState({ ...blankState(), ...parsed.state, charityName: parsed.state.charityName ?? "", contextEvidence: parsed.state.contextEvidence ?? {} });
@@ -665,6 +666,8 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
               setIntelligence(parsed.workflow?.version === 2 ? parsed.intelligence ?? null : null);
               setSessionId(parsed.sessionId || newSessionId());
               setQuickReviewFeedback(typeof parsed.quickReviewFeedback === "number" ? parsed.quickReviewFeedback : null);
+              setQuickReviewFeedbackComment(typeof parsed.quickReviewFeedbackComment === "string" ? parsed.quickReviewFeedbackComment : "");
+              setQuickReviewFeedbackStep(Boolean(parsed.quickReviewFeedbackStep));
               setFullReviewFeedback(typeof parsed.fullReviewFeedback === "number" ? parsed.fullReviewFeedback : null);
               setFullReviewFeedbackComment(typeof parsed.fullReviewFeedbackComment === "string" ? parsed.fullReviewFeedbackComment : "");
               setFullReviewFeedbackStep(Boolean(parsed.fullReviewFeedbackStep));
@@ -704,6 +707,9 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
           setResult(saved.result ?? null);
           setFullReviewEntry(saved.result && saved.fullReviewEntered === false ? "completion" : "open");
           setFullReviewFeedbackStep(Boolean(saved.fullReviewFeedbackStep));
+          setQuickReviewFeedbackStep(Boolean(saved.quickReviewFeedbackStep));
+          setQuickReviewFeedback(typeof saved.quickReviewFeedback === "number" ? saved.quickReviewFeedback : null);
+          setQuickReviewFeedbackComment(saved.quickReviewFeedbackComment || "");
           setFullReviewFeedback(typeof saved.fullReviewFeedback === "number" ? saved.fullReviewFeedback : null);
           setFullReviewFeedbackComment(saved.fullReviewFeedbackComment || "");
           setWorkflow(saved.workflow ?? null);
@@ -721,16 +727,16 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
 
   useEffect(() => {
     if (!hydrated || (!started && !messages.length)) return;
-    try { window.localStorage.setItem(storageKey, JSON.stringify({ started, state, messages, result, intelligence, sessionId, workflow, checkpoints, fullReviewEntered: fullReviewEntry === "open", fullReviewFeedbackStep, quickReviewFeedback, fullReviewFeedback, fullReviewFeedbackComment, saveProfile: { name: saveProfile.name, position: saveProfile.position, email: saveProfile.email } })); } catch { queueMicrotask(() => setError("Your browser could not save this conversation. Keep this page open to retain your progress.")); }
-  }, [hydrated, started, state, messages, result, intelligence, sessionId, workflow, checkpoints, fullReviewEntry, fullReviewFeedbackStep, quickReviewFeedback, fullReviewFeedback, fullReviewFeedbackComment, saveProfile, storageKey]);
+    try { window.localStorage.setItem(storageKey, JSON.stringify({ started, state, messages, result, intelligence, sessionId, workflow, checkpoints, quickReviewFeedbackStep, quickReviewFeedback, quickReviewFeedbackComment, fullReviewEntered: fullReviewEntry === "open", fullReviewFeedbackStep, fullReviewFeedback, fullReviewFeedbackComment, saveProfile: { name: saveProfile.name, position: saveProfile.position, email: saveProfile.email } })); } catch { queueMicrotask(() => setError("Your browser could not save this conversation. Keep this page open to retain your progress.")); }
+  }, [hydrated, started, state, messages, result, intelligence, sessionId, workflow, checkpoints, quickReviewFeedbackStep, quickReviewFeedback, quickReviewFeedbackComment, fullReviewEntry, fullReviewFeedbackStep, fullReviewFeedback, fullReviewFeedbackComment, saveProfile, storageKey]);
 
   useEffect(() => {
     if (!hydrated || !started || !account || setupOnly) return;
     const timer = window.setTimeout(() => {
-      void fetch("/api/readiness-account", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "save", progress: { started, state, messages, result, intelligence, sessionId, workflow, checkpoints, fullReviewEntered: fullReviewEntry === "open", fullReviewFeedbackStep, fullReviewFeedback, fullReviewFeedbackComment } }) });
+      void fetch("/api/readiness-account", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "save", progress: { started, state, messages, result, intelligence, sessionId, workflow, checkpoints, quickReviewFeedbackStep, quickReviewFeedback, quickReviewFeedbackComment, fullReviewEntered: fullReviewEntry === "open", fullReviewFeedbackStep, fullReviewFeedback, fullReviewFeedbackComment } }) });
     }, 900);
     return () => window.clearTimeout(timer);
-  }, [hydrated, started, account, setupOnly, state, messages, result, intelligence, sessionId, workflow, checkpoints, fullReviewEntry, fullReviewFeedbackStep, fullReviewFeedback, fullReviewFeedbackComment]);
+  }, [hydrated, started, account, setupOnly, state, messages, result, intelligence, sessionId, workflow, checkpoints, quickReviewFeedbackStep, quickReviewFeedback, quickReviewFeedbackComment, fullReviewEntry, fullReviewFeedbackStep, fullReviewFeedback, fullReviewFeedbackComment]);
 
   useEffect(() => {
     if (fullReviewEntry !== "revealing") return;
@@ -782,6 +788,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
     setActivitySelections([]);
     setQuickReviewFeedback(null);
     setQuickReviewFeedbackComment("");
+    setQuickReviewFeedbackStep(false);
     setFullReviewFeedbackStep(false);
     const id = newSessionId();
     setSessionId(id);
@@ -810,7 +817,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
     setSaveStatus("saving");
     setSaveError("");
     try {
-      const progress: SavedProgress = { started, state, messages, result, intelligence, sessionId, workflow, checkpoints, fullReviewEntered: fullReviewEntry === "open", fullReviewFeedbackStep, fullReviewFeedback, fullReviewFeedbackComment };
+      const progress: SavedProgress = { started, state, messages, result, intelligence, sessionId, workflow, checkpoints, quickReviewFeedbackStep, quickReviewFeedback, quickReviewFeedbackComment, fullReviewEntered: fullReviewEntry === "open", fullReviewFeedbackStep, fullReviewFeedback, fullReviewFeedbackComment };
       const action: "signup" | "login" | "save" = account ? "save" : accountMode;
       if (!account && action === "signup" && saveProfile.password !== saveProfile.confirmPassword) throw new Error("The two passwords do not match. Please re-enter them and try again.");
       const response = await fetch("/api/readiness-account", {
@@ -831,6 +838,9 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
           setResult(saved.result ?? null);
           setFullReviewEntry(saved.result && saved.fullReviewEntered === false ? "completion" : "open");
           setFullReviewFeedbackStep(Boolean(saved.fullReviewFeedbackStep));
+          setQuickReviewFeedbackStep(Boolean(saved.quickReviewFeedbackStep));
+          setQuickReviewFeedback(typeof saved.quickReviewFeedback === "number" ? saved.quickReviewFeedback : null);
+          setQuickReviewFeedbackComment(saved.quickReviewFeedbackComment || "");
           setFullReviewFeedback(typeof saved.fullReviewFeedback === "number" ? saved.fullReviewFeedback : null);
           setFullReviewFeedbackComment(saved.fullReviewFeedbackComment || "");
           setWorkflow(saved.workflow ?? null);
@@ -1413,6 +1423,24 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
     {saveDialog}
   </div>;
 
+  if (quickReviewFeedbackStep && activeWorkflow?.next.id === "publicReview" && reviewIndex === null && !deepDiveIntroOpen) {
+    const quickReviewChatMessages = messages.flatMap((message, index) => message.role === "assistant" && message.responseKind === "detour" && message.workflow?.next.id === "publicReview"
+      ? [...(messages[index - 1]?.role === "user" ? [messages[index - 1]] : []), message]
+      : []).slice(-4);
+    return <div className="readiness-chat is-quick-review-feedback-step">
+      <SorpJourneyProgress current={2} completed={activeWorkflow.completedStages || []} />
+      <SorpMobilePanes>
+        <aside className="sorp-feedback-rail"><span>Quick Readiness Review</span><strong>Your first readiness view is ready.</strong><p>The deeper review is just ahead.</p></aside>
+        <main className="sorp-feedback-main"><span>One quick thing · optional</span><h1>How’s this going?</h1><p>This is a free tool, and your feedback genuinely helps us make it more useful for the charities that come after you.</p>{(quickReviewChatMessages.length > 0 || busy || error) && <section className="sorp-review-conversation" aria-live="polite">{quickReviewChatMessages.map((message, index) => <article key={`${index}-${message.content.slice(0, 24)}`}><small>{message.role === "user" ? "You" : "My Social Impact Intelligence"}</small><MessageContent text={message.content} /></article>)}{busy && <p role="status">{workingStatus}</p>}{error && <p role="alert">{error}</p>}</section>}</main>
+      </SorpMobilePanes>
+      <div className="readiness-composer sorp-quick-feedback-response">
+        <div className="sorp-response-utility"><nav className="sorp-bottom-navigation" aria-label="Assessment navigation"><span className="sorp-bottom-utility"><button type="button" className="is-back" onClick={() => setQuickReviewFeedbackStep(false)}>← Back</button><button type="button" className="is-save" onClick={() => { setSaveStatus("idle"); setSaveError(""); setSaveDialogOpen(true); }}>Save &amp; exit</button></span></nav></div>
+        <section className="sorp-response-fields" aria-label="Optional feedback before the deeper review"><QuickReviewFeedback hideIntro value={quickReviewFeedback} comment={quickReviewFeedbackComment} onSelect={recordQuickReviewFeedback} onComment={recordQuickReviewFeedbackComment} /><details className="sorp-feedback-chat"><summary>Want to ask MSI something first?</summary><form className="sorp-review-chat-input" onSubmit={submit}><label htmlFor="readiness-answer">Anything you’d like to ask before you go deeper?</label><textarea ref={composerRef} id="readiness-answer" rows={2} value={composer} onChange={(event) => setComposer(event.target.value)} placeholder="Type or say what you’d like to ask…" maxLength={4000} /><div className="readiness-submit-row"><button type="button" className="readiness-mic" onClick={recordingState === "recording" ? stopRecording : () => void startRecording()} disabled={busy || recordingState === "transcribing"}>{recordingState === "recording" ? "Stop recording" : recordingState === "transcribing" ? "Transcribing…" : "Use microphone"}</button><button type="submit" disabled={busy || composer.trim().length < 2 || recordingState !== "idle"}>{busy ? "Understanding…" : "Send message"} <span>→</span></button></div></form></details><button className="sorp-stage-eight-continue" type="button" disabled={busy || recordingState !== "idle"} onClick={() => { setQuickReviewFeedbackStep(false); setDeepDiveIntroOpen(true); }}>Go deeper <span>→</span></button></section>
+      </div>
+      {saveDialog}
+    </div>;
+  }
+
   return <div className="readiness-chat">
     <SorpJourneyProgress current={progressCurrentStage} completed={progressCompletedStages} result={Boolean(result && reviewIndex === null)} />
 
@@ -1430,9 +1458,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
       {activeMessages.map((message, index) => index === activeMessages.length - 1 && <article id="readiness-current-question" key={`${index}-${message.content.slice(0, 24)}`} className={`readiness-message is-${message.role}${message.responseKind === "detour" ? " is-detour" : ""}`}>
         <span>{message.role === "user" ? "You" : "My Social Impact Intelligence"}</span>
         {message.label && message.responseKind === "detour" && <strong className={`readiness-label is-${message.label.toLowerCase().replace(" ", "-")}`}>{message.label === "JUDGEMENT" ? "MSI JUDGEMENT" : message.label}</strong>}
-        {message.responseKind === "detour" ? <div><MessageContent text={message.content} /></div> : message.workflow?.next.id !== "publicSearchCheckpoint" && (deepDiveIntroOpen && message.workflow?.next.id === "publicReview"
-          ? <DeepDiveIntroduction />
-          : message.workflow?.next.id === "publicReview" && message.workflow.next.provisional?.trusteesReport.reviewed
+        {deepDiveIntroOpen && responseQuestionId === "publicReview" ? <DeepDiveIntroduction /> : message.responseKind === "detour" ? <div><MessageContent text={message.content} /></div> : message.workflow?.next.id !== "publicSearchCheckpoint" && (message.workflow?.next.id === "publicReview" && message.workflow.next.provisional?.trusteesReport.reviewed
           ? <QuickReviewExplanation review={message.workflow.next.provisional} onReplaceImpactReport={() => selectStructuredAnswer("No — I have a newer Impact Report")} />
           : <div><MessageContent text={message.organisation ? "I think I’ve found you." : message.content} /></div>)}
         {message.role === "assistant" && message.responseKind !== "detour" && message.workflow && (/^field:\d+/.test(message.workflow.next.id) || message.workflow.next.id.startsWith("check:") && message.workflow.currentStage !== 7) && <DeepDiveQuestionContext workflow={message.workflow} />}
@@ -1468,7 +1494,6 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
       </nav>
       </div>
       <section className="sorp-response-fields" aria-label="Respond to MSI Intelligence">
-      {isQuickReviewResponse && <QuickReviewFeedback hideComment value={quickReviewFeedback} comment={quickReviewFeedbackComment} onSelect={recordQuickReviewFeedback} onComment={recordQuickReviewFeedbackComment} />}
       {showResponseActions && !isQuickReviewResponse && <nav className={`readiness-message-actions${/^(?:screen:|check:)/.test(responseQuestionId) && currentStage === 7 ? " is-stage-seven-choices" : /^(?:field:\d+|check:)/.test(responseQuestionId) ? " is-assessment-scale" : ""}${responseQuestionId === "activities" ? " is-multi-select" : ""}`} aria-label={responseQuestionId === "activities" ? "Choose all activities that apply" : /^(?:screen:|field:\d+|check:)/.test(responseQuestionId) ? "Choose a quick answer" : "Choose an answer"}>{orderedResponseActions.map((action) => {
         const selected = responseQuestionId === "activities" ? activitySelections.includes(action.value) : activeQuickAction?.value === action.value;
         const saved = !activeQuickAction && reviewCheckpoint?.answerText?.toUpperCase().startsWith(action.label.toUpperCase().replace(/^KEEP\s+/, ""));
@@ -1480,7 +1505,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
       {responseQuestionId === "activities" && <p className="sorp-multi-select-help"><strong>Choose all that apply.</strong><span>Select more than one if needed, then add a little detail below if it would help.</span></p>}
       <label htmlFor="readiness-answer" aria-live="polite">{isQuickReviewResponse ? "ANYTHING YOU’D LIKE TO ADD OR ASK BEFORE YOU GO DEEPER?" : isStageOnePayoff ? "ANYTHING YOU’D LIKE TO ADD, CLARIFY OR ASK BEFORE YOU SEE YOUR QUICK REVIEW?" : isReadinessScale ? "WANT TO ADD ANYTHING, OR FANCY A QUICK CHAT BEFORE YOU SUBMIT THIS ANSWER?" : `Or tell us in your own words — or ask ${impactMode ? "an impact" : "a SORP"} question.`}</label>
       <textarea ref={composerRef} id="readiness-answer" rows={2} value={composer} onChange={(event) => setComposer(event.target.value)} placeholder={activityQuestion ? "Add detail—or ask us why this matters…" : pendingStructuredAnswer ? "Add an optional note…" : "Type or say what you know…"} maxLength={4000} />
-      <div className="readiness-submit-row"><button type="button" className="readiness-mic" onClick={recordingState === "recording" ? stopRecording : () => void startRecording()} disabled={busy || quickAdvancing || recordingState === "transcribing"}>{recordingState === "recording" ? `Stop · ${recordingTime(recordingSeconds)}` : recordingState === "transcribing" ? "Transcribing…" : "Use microphone"}</button>{(!(isStageOnePayoff || isQuickReviewResponse) || composer.trim().length >= 2) && <button type="submit" className={isQuickReviewResponse ? "sorp-quick-review-chat-send" : busy || quickAdvancing ? "is-working" : undefined} disabled={busy || quickAdvancing || (!isReadinessScale && !pendingStructuredAnswer && !(activityQuestion && activitySelections.length) && composer.trim().length < 2) || isReadinessScale && !activeQuickAction && !suggestedQuickAction && !composer.trim() || recordingState !== "idle"}>{busy ? "Understanding…" : quickAdvancing ? "Saving…" : isStageOnePayoff || isQuickReviewResponse ? "Send message" : isReadinessScale ? "Continue" : reviewIndex !== null ? "Save revised answer" : conversationFirstMessage ? "Send message" : activityQuestion && activitySelections.length ? "Continue with choices" : result ? "Keep talking" : "Continue"} <span>→</span></button>}{isQuickReviewResponse && <button type="button" disabled={busy || quickAdvancing || recordingState !== "idle" || reviewIndex !== null} onClick={() => selectStructuredAnswer(goDeeperAction, "GO DEEPER")}>Go deeper <span>→</span></button>}</div>
+      <div className="readiness-submit-row"><button type="button" className="readiness-mic" onClick={recordingState === "recording" ? stopRecording : () => void startRecording()} disabled={busy || quickAdvancing || recordingState === "transcribing"}>{recordingState === "recording" ? `Stop · ${recordingTime(recordingSeconds)}` : recordingState === "transcribing" ? "Transcribing…" : "Use microphone"}</button>{(!(isStageOnePayoff || isQuickReviewResponse) || composer.trim().length >= 2) && <button type="submit" className={isQuickReviewResponse ? "sorp-quick-review-chat-send" : busy || quickAdvancing ? "is-working" : undefined} disabled={busy || quickAdvancing || (!isReadinessScale && !pendingStructuredAnswer && !(activityQuestion && activitySelections.length) && composer.trim().length < 2) || isReadinessScale && !activeQuickAction && !suggestedQuickAction && !composer.trim() || recordingState !== "idle"}>{busy ? "Understanding…" : quickAdvancing ? "Saving…" : isStageOnePayoff || isQuickReviewResponse ? "Send message" : isReadinessScale ? "Continue" : reviewIndex !== null ? "Save revised answer" : conversationFirstMessage ? "Send message" : activityQuestion && activitySelections.length ? "Continue with choices" : result ? "Keep talking" : "Continue"} <span>→</span></button>}{isQuickReviewResponse && <button type="button" disabled={busy || quickAdvancing || recordingState !== "idle" || reviewIndex !== null} onClick={() => setQuickReviewFeedbackStep(true)}>Continue <span>→</span></button>}</div>
       </section>
     </form>
     {saveDialog}
