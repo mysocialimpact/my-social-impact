@@ -105,7 +105,7 @@ type ReadinessResponse = {
   sessionId: string;
 };
 
-type SavedProgress = { started: boolean; state: ReadinessState; messages: Message[]; result: Result | null; intelligence: IntelligenceProvenance | null; sessionId: string; workflow: ReadinessWorkflow | null; checkpoints: ConversationCheckpoint[]; fullReviewEntered?: boolean };
+type SavedProgress = { started: boolean; state: ReadinessState; messages: Message[]; result: Result | null; intelligence: IntelligenceProvenance | null; sessionId: string; workflow: ReadinessWorkflow | null; checkpoints: ConversationCheckpoint[]; fullReviewEntered?: boolean; fullReviewFeedbackStep?: boolean; fullReviewFeedback?: number | null; fullReviewFeedbackComment?: string };
 type ReadinessAccount = { id: string; email: string; name: string; position: string; organisation: string; currentStage: number; completedStages: number[]; createdAt: string; lastSavedAt: string };
 
 const emptySetup: AssessmentSetup = { role: "", jurisdiction: "", startDate: "", endDate: "", accounts: "", accountsReview: "", income: "", nearBoundary: false, activities: [] };
@@ -353,15 +353,14 @@ function FinalReadinessReport({ result, impactMode }: { result: Result; impactMo
   </div>;
 }
 
-function FullReviewRail({ result }: { result: Result }) {
+function FullReviewRail() {
   const links = [
     ["full-review-strong", "✓ What looks strong"], ["full-review-gaps", "△ Important gaps"],
     ["full-review-must", "MUST address"], ["full-review-judgement", "Human judgement"],
     ["full-review-priorities", "Top 3 priorities"],
   ];
   return <aside className="sorp-full-review-rail" aria-label="Full Readiness Review summary">
-    <span>Your Full Readiness Review</span><div className="sorp-full-review-score"><strong>{result.score}<small> / 100</small></strong><b>{result.band}</b></div>
-    <p>Confidence: <strong>{result.confidence}</strong></p>
+    <span>Your Full Readiness Review</span>
     <nav aria-label="Jump to a review section">{links.map(([id, label]) => <a key={id} href={`#${id}`}>{label} <span aria-hidden="true">↗</span></a>)}</nav>
   </aside>;
 }
@@ -414,8 +413,8 @@ function ImpactReportFound({ review, confirmed, uploaded = false }: { review: Pu
 
 function QuickReviewFeedback({ value, comment, onSelect, onComment, full = false, hideComment = false }: { value: number | null; comment: string; onSelect: (value: number) => void; onComment: (value: string) => void; full?: boolean; hideComment?: boolean }) {
   return <section className={`sorp-quick-review-feedback${full ? " is-full-review" : ""}`} aria-label={full ? "Full Readiness Review feedback" : "Quick Readiness Review feedback"}>
-    <p><strong>{full ? "How was this?" : "How’s this going?"}</strong><span>This is a free tool and we genuinely want to {full ? "keep improving it" : "make it as useful as possible"}.</span></p>
-    <div className="sorp-feedback-scale"><span>1 · {full ? "Not useful" : "Not useful yet"}</span><span>5 · Extremely useful</span></div>
+    <p><strong>{full ? "How useful was this?" : "How’s this going?"}</strong>{!full && <span>This is a free tool and we genuinely want to make it as useful as possible.</span>}</p>
+    <div className="sorp-feedback-scale"><span>1 · Not useful yet</span><span>5 · Extremely useful</span></div>
     <div className="sorp-feedback-stars" role="group" aria-label={`How useful was this ${full ? "Full" : "Quick"} Readiness Review?`}>{[1, 2, 3, 4, 5].map((rating) => <button key={rating} type="button" className={value === rating ? "is-selected" : undefined} aria-label={`${rating} out of 5`} aria-pressed={value === rating} onClick={() => onSelect(rating)}>{value !== null && rating <= value ? "★" : "☆"}</button>)}</div>
     {!hideComment && <label><strong>{full ? "Anything we could improve?" : "Anything you’d like to tell us?"}</strong><span>Optional</span><textarea value={comment} maxLength={800} rows={2} onChange={(event) => onComment(event.target.value)} placeholder="Add a short comment if useful…" /></label>}
   </section>;
@@ -592,6 +591,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
   const [quickReviewFeedbackComment, setQuickReviewFeedbackComment] = useState("");
   const [fullReviewFeedback, setFullReviewFeedback] = useState<number | null>(null);
   const [fullReviewFeedbackComment, setFullReviewFeedbackComment] = useState("");
+  const [fullReviewFeedbackStep, setFullReviewFeedbackStep] = useState(false);
   const [stageEightReportMode, setStageEightReportMode] = useState(false);
   const [fullReviewEntry, setFullReviewEntry] = useState<"completion" | "revealing" | "open">("open");
   const [deepDiveIntroOpen, setDeepDiveIntroOpen] = useState(false);
@@ -654,7 +654,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
         } else {
           const saved = window.localStorage.getItem(storageKey);
           if (saved) {
-            const parsed = JSON.parse(saved) as { started?: boolean; state?: ReadinessState; messages?: Message[]; result?: Result | null; intelligence?: IntelligenceProvenance | null; sessionId?: string; workflow?: ReadinessWorkflow; checkpoints?: ConversationCheckpoint[]; fullReviewEntered?: boolean; quickReviewFeedback?: number | null; fullReviewFeedback?: number | null; fullReviewFeedbackComment?: string; saveProfile?: { name: string; position: string; email: string } };
+            const parsed = JSON.parse(saved) as { started?: boolean; state?: ReadinessState; messages?: Message[]; result?: Result | null; intelligence?: IntelligenceProvenance | null; sessionId?: string; workflow?: ReadinessWorkflow; checkpoints?: ConversationCheckpoint[]; fullReviewEntered?: boolean; fullReviewFeedbackStep?: boolean; quickReviewFeedback?: number | null; fullReviewFeedback?: number | null; fullReviewFeedbackComment?: string; saveProfile?: { name: string; position: string; email: string } };
             if (parsed.state && parsed.messages?.length) {
               setStarted(Boolean(parsed.started));
               setState({ ...blankState(), ...parsed.state, charityName: parsed.state.charityName ?? "", contextEvidence: parsed.state.contextEvidence ?? {} });
@@ -667,6 +667,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
               setQuickReviewFeedback(typeof parsed.quickReviewFeedback === "number" ? parsed.quickReviewFeedback : null);
               setFullReviewFeedback(typeof parsed.fullReviewFeedback === "number" ? parsed.fullReviewFeedback : null);
               setFullReviewFeedbackComment(typeof parsed.fullReviewFeedbackComment === "string" ? parsed.fullReviewFeedbackComment : "");
+              setFullReviewFeedbackStep(Boolean(parsed.fullReviewFeedbackStep));
               if (parsed.saveProfile) setSaveProfile((current) => ({ ...current, ...parsed.saveProfile }));
               setCheckpoints(Array.isArray(parsed.checkpoints) ? parsed.checkpoints.map((checkpoint) => ({
                 ...checkpoint,
@@ -702,6 +703,9 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
           setMessages(saved.messages);
           setResult(saved.result ?? null);
           setFullReviewEntry(saved.result && saved.fullReviewEntered === false ? "completion" : "open");
+          setFullReviewFeedbackStep(Boolean(saved.fullReviewFeedbackStep));
+          setFullReviewFeedback(typeof saved.fullReviewFeedback === "number" ? saved.fullReviewFeedback : null);
+          setFullReviewFeedbackComment(saved.fullReviewFeedbackComment || "");
           setWorkflow(saved.workflow ?? null);
           setIntelligence(saved.intelligence ?? null);
           setSessionId(saved.sessionId || newSessionId());
@@ -717,16 +721,16 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
 
   useEffect(() => {
     if (!hydrated || (!started && !messages.length)) return;
-    try { window.localStorage.setItem(storageKey, JSON.stringify({ started, state, messages, result, intelligence, sessionId, workflow, checkpoints, fullReviewEntered: fullReviewEntry === "open", quickReviewFeedback, fullReviewFeedback, fullReviewFeedbackComment, saveProfile: { name: saveProfile.name, position: saveProfile.position, email: saveProfile.email } })); } catch { queueMicrotask(() => setError("Your browser could not save this conversation. Keep this page open to retain your progress.")); }
-  }, [hydrated, started, state, messages, result, intelligence, sessionId, workflow, checkpoints, fullReviewEntry, quickReviewFeedback, fullReviewFeedback, fullReviewFeedbackComment, saveProfile, storageKey]);
+    try { window.localStorage.setItem(storageKey, JSON.stringify({ started, state, messages, result, intelligence, sessionId, workflow, checkpoints, fullReviewEntered: fullReviewEntry === "open", fullReviewFeedbackStep, quickReviewFeedback, fullReviewFeedback, fullReviewFeedbackComment, saveProfile: { name: saveProfile.name, position: saveProfile.position, email: saveProfile.email } })); } catch { queueMicrotask(() => setError("Your browser could not save this conversation. Keep this page open to retain your progress.")); }
+  }, [hydrated, started, state, messages, result, intelligence, sessionId, workflow, checkpoints, fullReviewEntry, fullReviewFeedbackStep, quickReviewFeedback, fullReviewFeedback, fullReviewFeedbackComment, saveProfile, storageKey]);
 
   useEffect(() => {
     if (!hydrated || !started || !account || setupOnly) return;
     const timer = window.setTimeout(() => {
-      void fetch("/api/readiness-account", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "save", progress: { started, state, messages, result, intelligence, sessionId, workflow, checkpoints, fullReviewEntered: fullReviewEntry === "open" } }) });
+      void fetch("/api/readiness-account", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "save", progress: { started, state, messages, result, intelligence, sessionId, workflow, checkpoints, fullReviewEntered: fullReviewEntry === "open", fullReviewFeedbackStep, fullReviewFeedback, fullReviewFeedbackComment } }) });
     }, 900);
     return () => window.clearTimeout(timer);
-  }, [hydrated, started, account, setupOnly, state, messages, result, intelligence, sessionId, workflow, checkpoints, fullReviewEntry]);
+  }, [hydrated, started, account, setupOnly, state, messages, result, intelligence, sessionId, workflow, checkpoints, fullReviewEntry, fullReviewFeedbackStep, fullReviewFeedback, fullReviewFeedbackComment]);
 
   useEffect(() => {
     if (fullReviewEntry !== "revealing") return;
@@ -778,6 +782,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
     setActivitySelections([]);
     setQuickReviewFeedback(null);
     setQuickReviewFeedbackComment("");
+    setFullReviewFeedbackStep(false);
     const id = newSessionId();
     setSessionId(id);
     void trackSorpEvent(id, "assessment_started", { currentStage: 1, charityTier: "tier uncertain" });
@@ -805,7 +810,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
     setSaveStatus("saving");
     setSaveError("");
     try {
-      const progress: SavedProgress = { started, state, messages, result, intelligence, sessionId, workflow, checkpoints, fullReviewEntered: fullReviewEntry === "open" };
+      const progress: SavedProgress = { started, state, messages, result, intelligence, sessionId, workflow, checkpoints, fullReviewEntered: fullReviewEntry === "open", fullReviewFeedbackStep, fullReviewFeedback, fullReviewFeedbackComment };
       const action: "signup" | "login" | "save" = account ? "save" : accountMode;
       if (!account && action === "signup" && saveProfile.password !== saveProfile.confirmPassword) throw new Error("The two passwords do not match. Please re-enter them and try again.");
       const response = await fetch("/api/readiness-account", {
@@ -825,6 +830,9 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
           setMessages(saved.messages);
           setResult(saved.result ?? null);
           setFullReviewEntry(saved.result && saved.fullReviewEntered === false ? "completion" : "open");
+          setFullReviewFeedbackStep(Boolean(saved.fullReviewFeedbackStep));
+          setFullReviewFeedback(typeof saved.fullReviewFeedback === "number" ? saved.fullReviewFeedback : null);
+          setFullReviewFeedbackComment(saved.fullReviewFeedbackComment || "");
           setWorkflow(saved.workflow ?? null);
           setIntelligence(saved.intelligence ?? null);
           setSessionId(saved.sessionId || newSessionId());
@@ -1041,7 +1049,10 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
       }]);
       if (data.result) {
         setResult(data.result);
-        if (!reviewing && workflow?.currentStage === 7 && data.workflow.currentStage === 8) setFullReviewEntry("completion");
+        if (!reviewing && workflow?.currentStage === 7 && data.workflow.currentStage === 8) {
+          setFullReviewEntry("completion");
+          setFullReviewFeedbackStep(false);
+        }
       }
       setSelectedQuickAction(null);
     } catch (caught) {
@@ -1303,7 +1314,12 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
     </form>
   </section></div>;
 
-  const reviewConversation = <section className="sorp-review-conversation" aria-live="polite">{messages.filter(message => message.responseKind === "detour" || message.role === "user").slice(-6).map((message, index) => <article key={`${index}-${message.content.slice(0, 24)}`}><small>{message.role === "user" ? "You" : "My Social Impact Intelligence"}</small><MessageContent text={message.content} /></article>)}{busy && <p role="status">{workingStatus}</p>}{error && <p role="alert">{error}</p>}</section>;
+  // Questionnaire answers remain saved, but only actual conversations belong beside the review.
+  const reviewStartIndex = messages.findLastIndex((message) => message.responseKind === "result");
+  const reviewChatMessages = messages.flatMap((message, index) => index > reviewStartIndex && message.role === "assistant" && message.responseKind === "detour" && message.workflow?.currentStage === 8
+    ? [...(messages[index - 1]?.role === "user" ? [messages[index - 1]] : []), message]
+    : []).slice(-4);
+  const reviewConversation = reviewChatMessages.length || busy || error ? <section className="sorp-review-conversation" aria-live="polite">{reviewChatMessages.map((message, index) => <article key={`${index}-${message.content.slice(0, 24)}`}><small>{message.role === "user" ? "You" : "My Social Impact Intelligence"}</small><MessageContent text={message.content} /></article>)}{busy && <p role="status">{workingStatus}</p>}{error && <p role="alert">{error}</p>}</section> : null;
   const reviewChatInput = <form className="sorp-review-chat-input" onSubmit={submit}><label htmlFor="readiness-answer">Anything you’d like to discuss about your report?</label><textarea ref={composerRef} id="readiness-answer" rows={2} value={composer} onChange={event => setComposer(event.target.value)} placeholder="Type or say what you’d like to ask…" maxLength={4000} /><div className="readiness-submit-row"><button type="button" className="readiness-mic" onClick={recordingState === "recording" ? stopRecording : () => void startRecording()} disabled={busy || recordingState === "transcribing"}>{recordingState === "recording" ? "Stop recording" : recordingState === "transcribing" ? "Transcribing…" : "Use microphone"}</button><button type="submit" disabled={busy || composer.trim().length < 2 || recordingState !== "idle"}>{busy ? "Understanding…" : "Send message"} <span>→</span></button></div></form>;
 
   if (!setupOnly && result && state.score !== null && sessionId && reviewIndex === null) {
@@ -1320,25 +1336,37 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
       {saveDialog}
     </div>;
     if (stageEightReportMode) return <div className="readiness-chat is-result-mode">
-      <SorpResultActions sessionId={sessionId} organisation={state.charityName} income={state.setup.income} result={result} impactMode={impactMode} startWithChoices onBackToAssessment={() => setStageEightReportMode(false)}>
+      <SorpResultActions sessionId={sessionId} organisation={state.charityName} income={state.setup.income} result={result} impactMode={impactMode} startWithChoices onBackToAssessment={() => { setStageEightReportMode(false); setFullReviewFeedbackStep(false); }}>
         <FinalReadinessReport result={result} impactMode={impactMode} />
         {intelligence && <details className="readiness-intelligence" aria-label="Effective intelligence provenance">
           <summary>{intelligence.layers.filter((layer) => layer.id === "msi-core" || layer.id === "sorp-readiness-intelligence").map((layer) => `${intelligenceLayerLabel(layer)} · ${layer.label}`).join(" · ")}</summary>
           <div><p><strong>{intelligence.registry} · {intelligence.effectiveVersion}</strong><span>Published intelligence only · {intelligence.mode === "CURRENT" ? "latest for this new session" : intelligence.mode === "PINNED" ? "pinned for this conversation" : "last known published — Cow Console was temporarily unavailable"}</span></p>{intelligence.layers.map((layer) => <p key={`${layer.id}-${layer.version}`}><strong>{intelligenceLayerLabel(layer)} · {layer.label}</strong><span>{layer.relationship.toLowerCase()} · {layer.status.toLowerCase()} · published {layer.publishedAt ? new Intl.DateTimeFormat("en-GB", { dateStyle: "medium", timeStyle: "short" }).format(new Date(layer.publishedAt)) : "date unavailable"}</span></p>)}{intelligence.runtimeControls.map((control) => <p key={`${control.name}-${control.type}`}><strong>{control.name} · {control.type}</strong><span>Represented by {control.representedBy}</span></p>)}</div>
         </details>}
       </SorpResultActions>
-      <div className="sorp-report-conversation">{reviewConversation}<div className="readiness-composer"><div className="sorp-response-utility"><button type="button" onClick={() => setStageEightReportMode(false)}>← Back to assessment</button><button type="button" onClick={() => setSaveDialogOpen(true)}>Save &amp; exit</button><small className="sorp-save-hint">Save to an account anytime and pick up where you left off.</small></div><section className="sorp-response-fields">{reviewChatInput}</section></div></div>
+      <div className="sorp-report-conversation">{reviewConversation}<div className="readiness-composer"><div className="sorp-response-utility"><button type="button" onClick={() => { setStageEightReportMode(false); setFullReviewFeedbackStep(false); }}>← Back to assessment</button><button type="button" onClick={() => setSaveDialogOpen(true)}>Save &amp; exit</button><small className="sorp-save-hint">Save to an account anytime and pick up where you left off.</small></div><section className="sorp-response-fields">{reviewChatInput}</section></div></div>
+      {saveDialog}
+    </div>;
+    if (fullReviewFeedbackStep) return <div className="readiness-chat is-full-review-feedback">
+      <SorpJourneyProgress current={8} completed={readinessStages.map((_, index) => index + 1)} result />
+      <SorpMobilePanes>
+        <aside className="sorp-feedback-rail"><span>Assessment complete</span><strong>Your Full Readiness Review is ready.</strong><p>Your detailed personalised report and next actions are just ahead.</p></aside>
+        <main className="sorp-feedback-main"><span>One last thing · optional</span><h1>Help us make this better.</h1><p>This tool is free because we want charities to have genuinely useful help with SORP 2026.</p><p>Your feedback helps us improve the questions, explanations and recommendations for the charities that use it after you.</p><p>It takes a few seconds and is completely optional.</p>{reviewConversation}</main>
+      </SorpMobilePanes>
+      <div className="readiness-composer sorp-stage-eight-response sorp-feedback-response">
+        <div className="sorp-response-utility"><nav className="sorp-bottom-navigation" aria-label="Assessment navigation"><span className="sorp-bottom-utility"><button type="button" className="is-back" onClick={() => setFullReviewFeedbackStep(false)}>← Back</button><button type="button" className="is-save" onClick={() => { setSaveStatus("idle"); setSaveError(""); setSaveDialogOpen(true); }}>Save &amp; exit</button></span></nav></div>
+        <section className="sorp-response-fields" aria-label="Optional feedback before your full report"><QuickReviewFeedback full value={fullReviewFeedback} comment={fullReviewFeedbackComment} onSelect={recordFullReviewFeedback} onComment={recordFullReviewFeedbackComment} /><details className="sorp-feedback-chat"><summary>Want to ask MSI something first?</summary>{reviewChatInput}</details><button className="sorp-stage-eight-continue" type="button" onClick={() => setStageEightReportMode(true)}>Continue to my full report &amp; next actions <span>→</span></button></section>
+      </div>
       {saveDialog}
     </div>;
     return <div className="readiness-chat is-stage-eight">
       <SorpJourneyProgress current={readinessStages.length} completed={Array.from({ length: readinessStages.length - 1 }, (_, index) => index + 1)} result />
       <SorpMobilePanes>
-        <FullReviewRail result={result} />
-        <main className="sorp-stage-eight-main"><p className="sorp-stage-seven-complete">✓ Additional SORP checks complete</p><header className="sorp-stage-eight-heading"><span>Your Full Readiness Review</span><h1>So — where do you now stand?</h1><p className="sorp-stage-eight-verdict"><strong>{result.score} / 100</strong> · {result.band} <span>Confidence: {result.confidence}</span></p><p>{result.overview}</p></header><HeadlineReadinessReview result={result} impactMode={impactMode} />{reviewConversation}</main>
+        <FullReviewRail />
+        <main className="sorp-stage-eight-main"><header className="sorp-stage-eight-heading"><span>Your Full Readiness Review</span><h1>So — where do you now stand?</h1><p className="sorp-stage-eight-verdict"><strong>{result.score} / 100</strong> · {result.band} <span>Confidence: {result.confidence}</span></p></header><HeadlineReadinessReview result={result} impactMode={impactMode} />{reviewConversation}</main>
       </SorpMobilePanes>
       <div className="readiness-composer sorp-stage-eight-response">
         <div className="sorp-response-utility"><nav className="sorp-bottom-navigation" aria-label="Assessment navigation"><span className="sorp-bottom-utility"><button type="button" className="is-back" onClick={goBack} disabled={!checkpoints.length}>← Back</button><button type="button" className="is-save" onClick={() => { setSaveStatus("idle"); setSaveError(""); setSaveDialogOpen(true); }}>Save &amp; exit</button></span><small className="sorp-save-hint">Save to an account anytime and pick up where you left off.</small></nav></div>
-        <section className="sorp-response-fields" aria-label="Respond to your Full Readiness Review"><QuickReviewFeedback full value={fullReviewFeedback} comment={fullReviewFeedbackComment} onSelect={recordFullReviewFeedback} onComment={recordFullReviewFeedbackComment} />{reviewChatInput}<button className="sorp-stage-eight-continue" type="button" onClick={() => setStageEightReportMode(true)}>Continue to my full report &amp; next actions <span>→</span></button></section>
+        <section className="sorp-response-fields" aria-label="Respond to your Full Readiness Review"><details className="sorp-feedback-chat"><summary>Want to ask MSI about this review?</summary>{reviewChatInput}</details><button className="sorp-stage-eight-continue" type="button" onClick={() => setFullReviewFeedbackStep(true)}>Continue <span>→</span></button></section>
       </div>
       {saveDialog}
     </div>;

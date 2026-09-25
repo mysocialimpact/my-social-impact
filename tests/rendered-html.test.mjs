@@ -120,21 +120,28 @@ test("Stage 7 keeps six checks in the coach rail and three quick answers beside 
   assert.match(conversation, /Use microphone/i);
 });
 
-test("Stage 8 stays in the assessment workspace until the user enters report mode", async () => {
+test("Stage 8 stays concise and hands off to optional feedback before report mode", async () => {
   const conversation = await readFile(new URL("../app/sorp-readiness-conversation.tsx", import.meta.url), "utf8");
   const resultActions = await readFile(new URL("../app/sorp-result-actions.tsx", import.meta.url), "utf8");
+  const feedback = conversation.slice(conversation.indexOf('if (fullReviewFeedbackStep) return'), conversation.indexOf('return <div className="readiness-chat is-stage-eight"'));
   const stageEight = conversation.slice(conversation.indexOf('return <div className="readiness-chat is-stage-eight"'), conversation.indexOf("if (!started) return"));
   assert.match(stageEight, /<SorpJourneyProgress/);
-  assert.match(stageEight, /<FullReviewRail result=\{result\}/);
+  assert.match(stageEight, /<FullReviewRail \/>/);
   assert.match(stageEight, /<HeadlineReadinessReview result=\{result\}/);
   assert.doesNotMatch(stageEight, /<FinalReadinessReport|<FullReadinessReport|readiness-result-sections/);
   assert.match(stageEight, /So — where do you now stand\?/);
-  assert.match(stageEight, /Continue to my full report &amp; next actions/);
-  assert.match(stageEight, /<QuickReviewFeedback full/);
+  assert.match(stageEight, /onClick=\{\(\) => setFullReviewFeedbackStep\(true\)\}>Continue/);
+  assert.doesNotMatch(stageEight, /<QuickReviewFeedback full|Continue to my full report &amp; next actions/);
   assert.match(stageEight, /← Back/);
   assert.match(stageEight, /Save &amp; exit/);
   assert.match(stageEight, /\{saveDialog\}/);
   assert.doesNotMatch(stageEight, /sorp-usefulness|Has this been useful/);
+  assert.match(feedback, /Help us make this better/);
+  assert.match(feedback, /<QuickReviewFeedback full/);
+  assert.match(feedback, /Continue to my full report &amp; next actions/);
+  assert.match(feedback, /onClick=\{\(\) => setStageEightReportMode\(true\)\}/);
+  assert.match(conversation, /message\.responseKind === "detour" && message\.workflow\?\.currentStage === 8/);
+  assert.doesNotMatch(conversation, /messages\.filter\(message => message\.responseKind === "detour" \|\| message\.role === "user"\)/);
   assert.match(resultActions, /useState\(false\)/);
   assert.match(conversation, /<SorpResultActions[^>]*startWithChoices/);
 });
@@ -173,7 +180,7 @@ test("finished report has its own editorial view, email action and print treatme
 test("Stage 7 completion waits for the user's reveal before entering Stage 8", async () => {
   const conversation = await readFile(new URL("../app/sorp-readiness-conversation.tsx", import.meta.url), "utf8");
   const handoff = conversation.slice(conversation.indexOf('if (fullReviewEntry !== "open") return'), conversation.indexOf('if (stageEightReportMode) return'));
-  assert.match(conversation, /workflow\?\.currentStage === 7 && data\.workflow\.currentStage === 8\) setFullReviewEntry\("completion"\)/);
+  assert.match(conversation, /workflow\?\.currentStage === 7 && data\.workflow\.currentStage === 8\) \{\s*setFullReviewEntry\("completion"\)/);
   assert.match(handoff, /<SorpJourneyProgress current=\{7\}/);
   assert.match(handoff, /You’ve completed the assessment/);
   assert.match(handoff, /Brilliant — thank you/);
