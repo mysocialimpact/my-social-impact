@@ -1169,6 +1169,19 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
       setDeepDiveIntroOpen(false);
       return;
     }
+    const previous = checkpoints.at(-1);
+    if (reviewIndex === null && workflow?.next.id === "impactReportLink" && state.impactReportConfirmation === "replacement_requested" && previous?.workflow?.next.id === "publicReview") {
+      setState(previous.state);
+      setWorkflow(previous.workflow);
+      setResult(previous.result);
+      setMessages(messages.slice(0, previous.messagesLength));
+      setCheckpoints((current) => current.slice(0, -1));
+      setSelectedQuickAction(null);
+      setCompletionNotice(previous.completionNotice);
+      setComposer("");
+      setError("");
+      return;
+    }
     if (!checkpoints.length) return;
     const nextIndex = reviewIndex === null ? checkpoints.length - 1 : Math.max(0, reviewIndex - 1);
     setReviewIndex(nextIndex);
