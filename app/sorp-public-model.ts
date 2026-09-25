@@ -14,14 +14,14 @@ export const band = (score: number | null) => score === null ? "Not enough evide
 export const methodology = "This is a retrospective published-evidence review of narrative and impact-reporting readiness, not a full accounts audit or a compliance certificate. SORP 2026 is the source of truth. The same 15 equally weighted fields and existing 0–4 response scale are used separately for each lens: clearly evidenced 4, mostly 3, partly 2, positively not yet in place 1, not established 0. Each lens totals up to 60 points, expressed as a rounded percentage. Unestablished evidence reduces the evidence-readiness score; it does not prove that a practice is absent. No score is given when the source cannot be read or nothing can be established. Wider evidence never changes the TAR score. Tier-specific classifications use latest published income, not a prediction of next-period income. Current unpublished practice requires separate evidence and human judgement.";
 export function highlights(lens: Lens) {
   const strong = lens.findings.filter(f => weights[f.answer] >= 3).sort((a, b) => weights[b.answer] - weights[a.answer]).slice(0, 3);
-  const gaps = lens.findings.filter(f => weights[f.answer] < 3).sort((a, b) => Number(b.classification === "MUST") - Number(a.classification === "MUST") || weights[a.answer] - weights[b.answer]).slice(0, 3);
+  const gaps = lens.findings.filter(f => weights[f.answer] < 4).sort((a, b) => Number(b.classification === "MUST") - Number(a.classification === "MUST") || weights[a.answer] - weights[b.answer]).slice(0, 3);
   return { strong, gaps, priorities: gaps.length ? gaps : lens.findings.filter(f => f.answer !== "yes").slice(0, 3) };
 }
 export function emptyLens(lens: "tar" | "wider", limitation: string): Lens { return { lens, readable: false, score: null, confidence: "LOW", title: lens === "tar" ? "Statutory reporting not assessed" : "Wider evidence not assessed", period: "", sourceUrl: "", accountingBasis: "unknown", findings: [], limitation }; }
 export function emailResult(report: Report) {
   const { tar, wider } = report;
   const { strong, gaps, priorities } = highlights(tar);
-  const category = (value: string) => tar.findings.filter(f => f.classification === value && weights[f.answer] < 3).map(f => f.action);
+  const category = (value: string) => tar.findings.filter(f => f.classification === value && weights[f.answer] < 4).map(f => f.action);
   return { score: tar.score ?? 0, band: band(tar.score), confidence: tar.confidence, overview: `Published-evidence review for ${report.candidate.name}. TAR readiness: ${tar.score === null ? "not scored" : `${tar.score}/100`}. Separate wider-evidence view: ${wider.score === null ? "not scored" : `${wider.score}/100`}. ${tar.limitation} ${wider.limitation} Generated ${report.createdAt.slice(0, 10)}. Intelligence ${report.intelligence.effectiveVersion}.`,
     strong: strong.map(f => f.finding), attention: gaps.map(f => f.finding), priorities: priorities.map(f => f.action),
     must: category("MUST"), should: category("SHOULD"), may: [], judgement: tar.findings.filter(f => ["JUDGEMENT", "MSI_READINESS"].includes(f.classification)).map(f => f.reason),
@@ -32,4 +32,4 @@ export function emailResult(report: Report) {
   };
 }
 // Keep this concise enough for the existing canonical conversation context.
-export function conversationReport(report: Report | null) { return report && { basis: "Published evidence only; immutable retrospective scores", organisation: report.candidate.name, methodology, ...Object.fromEntries([report.tar, report.wider].map(lens => [lens.lens, { score: lens.score, confidence: lens.confidence, title: lens.title, period: lens.period, limitation: lens.limitation, findings: lens.findings.map(({ sources, ...f }) => ({ ...f, sorpReferences: sources.map(s => s.reference) })) }])) }; }
+export function conversationReport(report: Report | null) { return report && { basis: "Published evidence only; immutable retrospective scores", sourceAcquisition: "MSI found and retrieved these public sources. The user identified the organisation; they did not supply or upload these documents.", organisation: report.candidate.name, methodology, ...Object.fromEntries([report.tar, report.wider].map(lens => [lens.lens, { score: lens.score, confidence: lens.confidence, title: lens.title, period: lens.period, limitation: lens.limitation, findings: lens.findings.map(({ sources, ...f }) => ({ ...f, sorpReferences: sources.map(s => s.reference) })) }])) }; }
