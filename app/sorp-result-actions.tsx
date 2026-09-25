@@ -6,7 +6,6 @@ import { supportPence, type SupportChoice } from "./sorp-payment-amounts";
 
 type ReviewBand = "small" | "medium" | "large";
 type Choice = "review" | "support" | "free" | null;
-type Usefulness = "very" | "somewhat" | "not_really" | null;
 type Role = "" | "Trustee" | "CEO" | "Employee" | "Adviser" | "Other";
 type ReportResult = {
   score: number; band: string; confidence: "HIGH" | "MEDIUM" | "LOW"; overview: string;
@@ -27,16 +26,10 @@ function suggestedBand(income: string): ReviewBand {
   return "small";
 }
 
-function headline(items: string[], fallback: string) {
-  return items.length ? items.slice(0, 3) : [fallback];
-}
-
-export function SorpResultActions({ sessionId, organisation, income, result, impactMode, children, onBackToAssessment, startWithChoices = false }: { sessionId: string; organisation: string; income: string; result: ReportResult; impactMode: boolean; children: ReactNode; onBackToAssessment: () => void; startWithChoices?: boolean }) {
+export function SorpResultActions({ sessionId, organisation, income, result, impactMode, children, onBackToAssessment }: { sessionId: string; organisation: string; income: string; result: ReportResult; impactMode: boolean; children: ReactNode; onBackToAssessment: () => void }) {
   const storageKey = `msi-sorp-report-mode:${sessionId}`;
   const [choice, setChoice] = useState<Choice>(null);
-  const [usefulness, setUsefulness] = useState<Usefulness>(null);
   const [reportOpen, setReportOpen] = useState(false);
-  const [feedback, setFeedback] = useState("");
   const [band, setBand] = useState<ReviewBand>(() => suggestedBand(income));
   const [supportChoice, setSupportChoice] = useState<SupportChoice>(5);
   const [customSupport, setCustomSupport] = useState("");
@@ -54,8 +47,6 @@ export function SorpResultActions({ sessionId, organisation, income, result, imp
   const chosenBand = reviewBands.find((item) => item.id === band)!;
   const tier = band === "small" ? "Tier 1" : band === "medium" ? "Tier 2" : "Tier 3";
   const finalSupportMinor = supportPence(supportChoice, customSupport);
-  const strongest = headline(result.strong, "Your answers give us a useful starting point for the reporting work ahead.");
-  const gaps = headline(result.attention.length ? result.attention : result.priorities, "No immediate weaker area was identified in this initial readiness check.");
   const contactHref = `mailto:marcus@marcuswarry.com?subject=${encodeURIComponent(`SORP readiness conversation — ${organisation || "your organisation"}`)}`;
   function trackResult(eventType: string, extras: { paymentType?: string; band?: string; amountMinor?: number; currency?: string } = {}, once = true) {
     return trackSorpEvent(sessionId, eventType, { organisation, charityTier: tier, readinessScore: result.score, evidenceConfidence: result.confidence, currentStage: 8, ...extras }, once);
@@ -64,29 +55,22 @@ export function SorpResultActions({ sessionId, organisation, income, result, imp
   useEffect(() => {
     queueMicrotask(() => {
       try {
-        const saved = JSON.parse(window.localStorage.getItem(storageKey) || "null") as { reportOpen?: boolean; usefulness?: Usefulness; choice?: Choice } | null;
-        if (saved?.reportOpen && !startWithChoices) setReportOpen(true);
-        if (saved?.usefulness) setUsefulness(saved.usefulness);
+        const saved = JSON.parse(window.localStorage.getItem(storageKey) || "null") as { reportOpen?: boolean; choice?: Choice } | null;
+        if (saved?.reportOpen) setReportOpen(true);
         if (saved?.choice) setChoice(saved.choice);
       } catch { /* A damaged local preference should not block the free report. */ }
     });
     void trackResult("assessment_completed");
     void trackResult("result_preview_viewed");
-  }, [sessionId, startWithChoices, storageKey]);
+  }, [sessionId, storageKey]);
 
   useEffect(() => {
-    try { window.localStorage.setItem(storageKey, JSON.stringify({ reportOpen, usefulness, choice })); } catch { /* The report remains available in the current tab. */ }
+    try { window.localStorage.setItem(storageKey, JSON.stringify({ reportOpen, choice })); } catch { /* The report remains available in the current tab. */ }
     if (reportOpen) {
       void trackResult("report_opened");
       window.setTimeout(() => reportRef.current?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" }), 80);
     }
-  }, [choice, reportOpen, sessionId, storageKey, usefulness]);
-
-  function answerUsefulness(value: Exclude<Usefulness, null>) {
-    setUsefulness(value);
-    setError("");
-    void trackResult(value === "very" ? "usefulness_very" : value === "somewhat" ? "usefulness_somewhat" : "usefulness_not_really");
-  }
+  }, [choice, reportOpen, sessionId, storageKey]);
 
   function openReport(nextChoice: Exclude<Choice, null>, eventType: "human_review_selected" | "support_selected" | "free_report_selected") {
     setChoice(nextChoice);
@@ -164,9 +148,9 @@ export function SorpResultActions({ sessionId, organisation, income, result, imp
     <p className="readiness-payment-note">This is optional support for the free tool.</p>
   </div>;
 
-  const choiceCards = <section className="sorp-value-choice" aria-labelledby="sorp-next-actions-title">
-    <header><span>You’ve completed your free SORP readiness assessment.</span><p>If it’s already given you what you need, brilliant — that means it worked.</p><p>If you’d like some human judgement, or simply want to help us keep tools like this free, you can do that too.</p><h2 id="sorp-next-actions-title">What would you like to do next?</h2></header>
-    <div className="sorp-value-choice-grid">
+  const postReportChoices = <section className="sorp-value-choice sorp-post-report-choices" aria-labelledby="sorp-next-actions-title">
+    <header><span>Optional next steps</span><h2 id="sorp-next-actions-title">What would you like to do next?</h2><p>Your report is yours. If you’d like human judgement or want to help keep this tool free, those options are here when you need them.</p></header>
+    <div className="sorp-value-choice-grid is-post-report">
       <article>
         <span>Human review</span><h3>Talk it through — £{chosenBand.amount}</h3>
         <p className="sorp-choice-tier">{tier} charity</p>
@@ -182,25 +166,18 @@ export function SorpResultActions({ sessionId, organisation, income, result, imp
         <p>If this has been useful, £5 genuinely helps us keep improving it and building more free tools for charities.</p>
         <div className="sorp-choice-actions"><button className="is-text" type="button" onClick={() => showSupport(true)}>Choose another amount</button><button type="button" onClick={() => showSupport(false)}>Chuck in £5 <b>→</b></button></div>
       </article>
-      <article className="is-free">
-        <span>Free report</span><h3>Take my free report — £0</h3>
-        <p>No payment required.</p><p>If the tool has already given you what you need, take the report and use it.</p>
-        <div className="sorp-choice-actions"><button type="button" onClick={() => openReport("free", "free_report_selected")}>Show my report <b>→</b></button></div>
-      </article>
     </div>
   </section>;
 
   return <main className={`sorp-completion-flow${reportOpen ? " is-report-open" : ""}`}>
-    {!reportOpen && startWithChoices && <section className="sorp-next-actions"><button type="button" className="sorp-back-to-assessment" onClick={onBackToAssessment}>← Back to assessment</button>{choiceCards}</section>}
-    {!reportOpen && !startWithChoices && <>
-      <section className="sorp-completion-event" aria-labelledby="completion-title"><div className="sorp-completion-sweep" aria-hidden="true" /><button type="button" className="sorp-back-to-assessment" onClick={onBackToAssessment}>← Back to assessment</button><h1 id="completion-title">Your Full Readiness Review</h1><strong>Your developed SORP readiness assessment is ready.</strong></section>
-      <section className="sorp-result-preview"><header><div><span>Your SORP readiness</span><h2>{result.band}</h2><p>{result.overview}</p><p className="sorp-result-confidence"><b>Confidence</b> {result.confidence}</p></div><div><strong>{result.score}</strong><span>/ 100</span></div></header><div className="sorp-result-preview-grid"><article><h3>What already looks strong</h3><ul>{strongest.map((item) => <li key={item}>{item}</li>)}</ul></article><article><h3>Important gaps</h3><ul>{gaps.map((item) => <li key={item}>{item}</li>)}</ul></article></div><p className="sorp-report-ready">This Full Review combines the public evidence with your answers and deeper SORP checks.</p></section>
-      <section className="sorp-usefulness"><span>One quick question</span><h2>Has this been useful?</h2>
-        {!usefulness && <div className="sorp-usefulness-actions"><button type="button" onClick={() => answerUsefulness("very")}>Yes — very useful <b>→</b></button><button type="button" onClick={() => answerUsefulness("somewhat")}>Yes — somewhat useful <b>→</b></button><button type="button" onClick={() => answerUsefulness("not_really")}>Not really <b>→</b></button></div>}
-        {(usefulness === "very" || usefulness === "somewhat") && choiceCards}
-        {usefulness === "not_really" && <form className="sorp-missing-feedback" onSubmit={(event) => { event.preventDefault(); openReport("free", "free_report_selected"); }}><h3>Thanks — that’s useful to know.</h3><label htmlFor="sorp-missing-feedback">What was missing? <span>Optional</span></label><textarea id="sorp-missing-feedback" value={feedback} onChange={(event) => setFeedback(event.target.value)} maxLength={1000} rows={3} placeholder="A short note, if useful…" /><button type="submit">Show my free report <span>→</span></button></form>}
-      </section>
-    </>}
+    {!reportOpen && <section className="sorp-report-bridge" aria-labelledby="sorp-report-bridge-title">
+      <header className="sorp-bridge-opening"><span>Assessment complete</span><h1 id="sorp-report-bridge-title">You’ve completed your SORP readiness assessment.</h1><p>Your full personalised report is ready.</p></header>
+      <section className="sorp-bridge-belief" aria-label="My Social Impact philosophy"><span>The bigger picture</span><h2>SORP is the requirement.<br /><em>Better impact is the opportunity.</em></h2></section>
+      <section className="sorp-bridge-vision"><div><span>Why we exist</span><h2>Imagine a world where social impact was taken as seriously as financial performance.</h2></div><p>SORP asks charities to report better. The bigger opportunity is to understand what they are trying to change, gather useful evidence, learn what works, make better decisions, improve delivery and communicate impact with confidence.</p></section>
+      <section className="sorp-bridge-practice"><span>That’s what My Social Impact does.</span><h2>We help charities turn clearer reporting into stronger impact practice.</h2><p>Purpose <b aria-hidden="true">→</b> Evidence <b aria-hidden="true">→</b> Learning <b aria-hidden="true">→</b> Better decisions <b aria-hidden="true">→</b> Better impact</p></section>
+      <section className="sorp-bridge-human"><span>Where people matter</span><h2>Some questions need more than a mechanical answer.</h2><p>Your report may highlight incomplete evidence, SORP judgement calls or opportunities to strengthen how you work. Sometimes a good conversation is the useful next step. After you’ve seen your report, you can choose to talk it through with My Social Impact if you’d like human help.</p></section>
+      <footer className="sorp-bridge-finish"><div><span>Your report comes first</span><h2>Your full report is free.</h2><p>No card. No paywall. See your report first.</p></div><button type="button" onClick={() => openReport("free", "free_report_selected")}>View my full report <span aria-hidden="true">→</span></button></footer>
+    </section>}
     {reportOpen && <section className="sorp-report-mode" ref={reportRef}>
       <button type="button" className="sorp-back-to-assessment is-on-report" onClick={onBackToAssessment}>← Back to assessment</button>
       <header className="sorp-report-mode-header">
@@ -210,6 +187,7 @@ export function SorpResultActions({ sessionId, organisation, income, result, imp
       <div className="sorp-full-report">{children}</div>
       <section className="sorp-report-email" aria-labelledby="sorp-report-email-title"><div><span>Keep your report</span><h2 id="sorp-report-email-title">Keep your report</h2><p>Want the full report as a PDF in your inbox?</p><small>Your full report is already open and free. Email is optional.</small></div>{emailState === "sent" ? <p className="sorp-report-email-success" role="status">✓ Your full report PDF ({emailedFile}) has been emailed to {email}.</p> : <form onSubmit={sendReport}><label htmlFor="sorp-report-email">Email address<input id="sorp-report-email" type="email" autoComplete="email" required value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.org" /></label><label htmlFor="sorp-report-role">Your role — optional<select id="sorp-report-role" value={role} onChange={(event) => setRole(event.target.value as Role)}><option value="">Prefer not to say</option><option>Trustee</option><option>CEO</option><option>Employee</option><option>Adviser</option><option>Other</option></select></label><button type="submit" disabled={emailState === "sending"}>{emailState === "sending" ? "Sending full PDF…" : "Email my report"} <span>→</span></button>{emailError && <p role="alert"><strong>Sorry — we couldn’t email your full PDF report just now.</strong> {emailError} Your report is still available here; please try again.</p>}</form>}</section>
       <section className="sorp-report-beyond"><span>The next opportunity</span><h2>SORP is the requirement.<br />Better impact is the opportunity.</h2><div><p>My Social Impact would love to help you go beyond compliance — strengthening how impact is measured, managed, evidenced and communicated.</p><a href={contactHref} onClick={() => { void trackResult("book_conversation_clicked"); }}>Book a conversation <span>→</span></a><small><a href={contactHref} onClick={() => { void trackResult("contact_email_clicked"); }}>marcus@marcuswarry.com</a></small></div></section>
+      {postReportChoices}
       {choice === "review" && reviewPanel}{choice === "support" && supportPanel}
     </section>}
   </main>;

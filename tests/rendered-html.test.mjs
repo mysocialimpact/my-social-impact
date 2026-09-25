@@ -143,7 +143,7 @@ test("Stage 8 stays concise and hands off to optional feedback before report mod
   assert.match(conversation, /message\.responseKind === "detour" && message\.workflow\?\.currentStage === 8/);
   assert.doesNotMatch(conversation, /messages\.filter\(message => message\.responseKind === "detour" \|\| message\.role === "user"\)/);
   assert.match(resultActions, /useState\(false\)/);
-  assert.match(conversation, /<SorpResultActions[^>]*startWithChoices/);
+  assert.match(conversation, /<SorpResultActions sessionId=\{sessionId\}/);
 });
 
 test("Stage 8 headline review limits findings and leaves detail for report mode", async () => {
@@ -193,10 +193,23 @@ test("Stage 7 completion waits for the user's reveal before entering Stage 8", a
   assert.match(conversation, /fullReviewEntered: fullReviewEntry === "open"/);
 });
 
-test("post-review choices are three equal routes with existing prices and actions", async () => {
+test("pre-report bridge gives one free-report action and keeps paid options after the report", async () => {
   const actions = await readFile(new URL("../app/sorp-result-actions.tsx", import.meta.url), "utf8");
+  const conversation = await readFile(new URL("../app/sorp-readiness-conversation.tsx", import.meta.url), "utf8");
   const css = await readFile(new URL("../app/sorp-ready.css", import.meta.url), "utf8");
-  assert.match(actions, /You’ve completed your free SORP readiness assessment\./);
+  const bridge = actions.match(/\{!reportOpen && <section className="sorp-report-bridge"[\s\S]*?<\/section>\}/)?.[0] || "";
+  assert.match(bridge, /You’ve completed your SORP readiness assessment\./);
+  assert.match(bridge, /Your full personalised report is ready\./);
+  assert.match(bridge, /SORP is the requirement\.<br \/><em>Better impact is the opportunity\./);
+  assert.match(bridge, /Imagine a world where social impact was taken as seriously as financial performance\./);
+  assert.match(bridge, /That’s what My Social Impact does\./);
+  assert.match(bridge, /After you’ve seen your report/);
+  assert.match(bridge, /Your full report is free\./);
+  assert.match(bridge, /View my full report/);
+  assert.equal((bridge.match(/<button\b/g) || []).length, 1);
+  assert.doesNotMatch(bridge, /£|YOU|No payment|choiceCards|postReportChoices/);
+  assert.match(css, /:has\(\.sorp-report-bridge\) > \.sorp-report-conversation \{ display:none; \}/);
+  assert.match(actions, /\{postReportChoices\}[\s\S]*\{choice === "review" && reviewPanel\}/);
   assert.match(actions, /What would you like to do next\?/);
   assert.match(actions, /Talk it through — £\{chosenBand\.amount\}/);
   assert.match(actions, /Chartered Accountant and social impact consultant/);
@@ -206,19 +219,14 @@ test("post-review choices are three equal routes with existing prices and action
   assert.match(actions, /Book my review/);
   assert.match(actions, /Support the free tool — £5/);
   assert.match(actions, /Choose another amount/);
-  assert.match(actions, /Take my free report — £0/);
-  assert.match(actions, /No payment required/);
-  assert.match(actions, /Show my report/);
   assert.match(actions, /openReport\("free", "free_report_selected"\)/);
-  assert.match(actions, /if \(saved\?\.reportOpen && !startWithChoices\)/);
+  assert.match(actions, /if \(saved\?\.reportOpen\) setReportOpen\(true\)/);
   assert.match(actions, /supportRef\.current\?\.scrollIntoView/);
-  assert.match(actions, /Want a copy in your inbox\?/);
   assert.match(actions, /SORP is the requirement\.<br \/>Better impact is the opportunity\./);
   for (const [tier, price] of [["small", 50], ["medium", 100], ["large", 200]]) assert.match(actions, new RegExp(`id: "${tier}"[^\\n]*amount: ${price}`));
-  assert.doesNotMatch(actions, /No thanks — show my free report/);
-  assert.match(css, /\.sorp-value-choice-grid \{[^}]*grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/);
-  assert.match(css, /\.sorp-value-choice-grid article\.is-free \{ background:#faf8f0; \}/);
-  assert.match(css, /\.sorp-result-preview-grid,\.sorp-value-choice-grid,\.sorp-report-email,\.sorp-report-review-cta \{ grid-template-columns: 1fr; \}/);
+  assert.match(css, /\.sorp-value-choice-grid\.is-post-report \{ grid-template-columns:repeat\(2,minmax\(0,1fr\)\); \}/);
+  assert.match(css, /\.sorp-value-choice-grid\.is-post-report \{ grid-template-columns:1fr; \}/);
+  assert.doesNotMatch(conversation, /startWithChoices/);
 });
 
 test("Quick Readiness Review keeps TAR and wider evidence separate", async () => {
@@ -522,13 +530,9 @@ test("server-renders the conversational SORP readiness workspace", async () => {
   const paymentSource = await readFile(new URL("../app/sorp-result-actions.tsx", import.meta.url), "utf8");
   assert.match(source, /is-result-mode/);
   assert.doesNotMatch(paymentSource, /7 stages complete · Stage 8 of 8/);
-  assert.match(paymentSource, /Your Full Readiness Review/);
-  assert.match(paymentSource, /developed SORP readiness assessment is ready/);
-  assert.match(paymentSource, /Has this been useful\?/);
-  assert.match(paymentSource, /Yes — very useful/);
-  assert.match(paymentSource, /Yes — somewhat useful/);
-  assert.match(paymentSource, /Not really/);
-  assert.match(paymentSource, /Show my free report/);
+  assert.match(paymentSource, /You’ve completed your SORP readiness assessment\./);
+  assert.match(paymentSource, /Your full personalised report is ready\./);
+  assert.match(paymentSource, /View my full report/);
   assert.match(paymentSource, /Print \/ save PDF/);
   assert.match(paymentSource, /Support the free tool/);
   assert.match(paymentSource, /This is optional support for the free tool\./);
