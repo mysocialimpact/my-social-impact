@@ -638,6 +638,21 @@ test("server-renders the conversational SORP readiness workspace", async () => {
   assert.doesNotMatch(proxy, /OPENAI_API_KEY|authorization.*Bearer/i);
 });
 
+test("server-renders the preserved advanced SORP experience without promoting it", async () => {
+  const response = await render("/are-you-sorp-ready/advanced");
+  assert.equal(response.status, 200);
+
+  const html = await response.text();
+  assert.match(html, /<title>SORP Readiness Conversation \| My Social Impact<\/title>/i);
+  assert.match(html, /Start my free SORP readiness check/i);
+  assert.match(html, /My Social Impact Intelligence/i);
+  assert.match(html, /name="robots" content="noindex, nofollow"/i);
+
+  const publicEntry = await render("/are-you-sorp-ready/conversation");
+  const publicHtml = await publicEntry.text();
+  assert.doesNotMatch(publicHtml, /href="\/are-you-sorp-ready\/advanced"/i);
+});
+
 test("public SORP welcome has one assessment entrance", async () => {
   const response = await render("/are-you-sorp-ready/conversation");
   assert.equal(response.status, 200);
