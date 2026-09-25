@@ -1,12 +1,11 @@
 import type { Metadata } from "next";
-import { SorpConversationWorkspace } from "../../sorp-conversation-workspace";
-import "../../sorp-ready.css";
+import { SorpPublicReview } from "../../sorp-public-review";
 
 export const metadata: Metadata = {
-  title: "SORP Readiness Conversation",
-  description: "Talk to My Social Impact Intelligence, understand what SORP 2026 expects and receive a free personalised SORP readiness report.",
+  title: "Are You SORP Ready? — Your free published-evidence review",
+  description: "A free, source-grounded SORP 2026 review of your charity’s published reporting. Clear findings, evidence and priorities. No card or email required.",
 };
 
 export default function Page() {
-  return <SorpConversationWorkspace />;
+  return <SorpPublicReview />;
 }
