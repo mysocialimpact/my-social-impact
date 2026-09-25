@@ -49,7 +49,11 @@ function SorpNavigation() {
   }, []);
 
   useEffect(() => {
-    document.querySelector<HTMLAnchorElement>(`.sorp-ready-nav a[href="#${active}"]`)?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+    const scroller = document.querySelector<HTMLElement>(".sorp-ready-nav > div");
+    const link = scroller?.querySelector<HTMLAnchorElement>(`a[href="#${active}"]`);
+    if (!scroller || !link || scroller.scrollWidth <= scroller.clientWidth) return;
+    const left = scroller.scrollLeft + link.getBoundingClientRect().left - scroller.getBoundingClientRect().left - (scroller.clientWidth - link.clientWidth) / 2;
+    scroller.scrollTo({ left, behavior: "smooth" });
   }, [active]);
 
   return (
@@ -228,6 +232,7 @@ export function SorpReadyPage() {
         <section className="sorp-final" data-reveal><p>SORP 2026 · Free SORP readiness report</p><h2>This looks useful.<br /><em>I should probably deal with this now.</em></h2><div><Link href={conversationUrl}>Start my free readiness conversation <span>→</span></Link></div></section>
       </main>
       <Footer />
+      <div className="sorp-landing-cta"><Link href={conversationUrl}>Start my free SORP readiness check <span aria-hidden="true">→</span></Link></div>
     </>
   );
 }
