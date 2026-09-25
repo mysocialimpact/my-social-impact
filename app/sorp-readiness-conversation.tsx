@@ -1063,7 +1063,7 @@ export function SorpReadinessConversation({ setupOnly = false, onSetupComplete }
     setComposer("");
     if (deterministicSetupReply) setQuickAdvancing(true);
     else {
-      setWorkingStatus(interaction === "conversation_first" ? "Listening to what you mean and answering before we move on…" : workingStatusFor(value, state, workflow));
+      setWorkingStatus(interaction === "conversation_first" ? workflow?.next.id === "organisation" && !looksLikeQuestion(value) ? "Searching for your charity — hang on a sec…" : "Listening to what you mean and answering before we move on…" : workingStatusFor(value, state, workflow));
       setBusy(true);
     }
     setError("");
