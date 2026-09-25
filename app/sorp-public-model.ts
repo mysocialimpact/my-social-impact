@@ -1,5 +1,6 @@
 export const PUBLIC_BUILD = "PUBLIC-1 · 25 SEPTEMBER 2026";
-export const STORAGE_KEY = "msi-sorp-public-evidence-v1";
+// Do not reuse pre-validation trial results after the source-corpus guard.
+export const STORAGE_KEY = "msi-sorp-public-evidence-v2";
 export type Candidate = { name: string; registrationNumber: string; locality: string; jurisdiction: string; entityType: string; latestIncome: number | null; financialYearEnd: string; accountingBasis: string; accountingBasisConfidence: string; website: string; officialUrl: string; summary: string; reportUrl: string; reportTitle: string; reportPeriod: string; publicReadiness: { impactReport: { found: boolean; title: string; url: string } }; sources: { label: string; url: string; detail: string; kind: string }[] };
 export type Finding = { fieldId: number; answer: "yes" | "mostly" | "partly" | "not_yet" | "not_sure"; confidence: string; finding: string; reason: string; excerpt: string; page: string; sourceUrl: string; action: string; requirement: string; classification: string; sources: { reference: string; page: number; text: string }[] };
 export type Lens = { lens: "tar" | "wider"; readable: boolean; score: number | null; confidence: string; title: string; period: string; sourceUrl: string; accountingBasis: string; findings: Finding[]; limitation: string };
