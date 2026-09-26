@@ -1,4 +1,4 @@
-export const PUBLIC_BUILD = "PUBLIC-2 · 26 SEPTEMBER 2026";
+export const PUBLIC_BUILD = "PUBLIC-3 · 26 SEPTEMBER 2026";
 // Do not reuse pre-validation trial results after the source-corpus guard.
 export const STORAGE_KEY = "msi-sorp-public-evidence-v2";
 export type Candidate = { name: string; registrationNumber: string; locality: string; jurisdiction: string; entityType: string; latestIncome: number | null; financialYearEnd: string; accountingBasis: string; accountingBasisConfidence: string; website: string; officialUrl: string; summary: string; reportUrl: string; reportTitle: string; reportPeriod: string; publicReadiness: { impactReport: { found: boolean; title: string; url: string } }; sources: { label: string; url: string; detail: string; kind: string }[] };
@@ -7,7 +7,7 @@ export type Lens = { lens: "tar" | "wider"; readable: boolean; score: number | n
 export type Intelligence = { effectiveVersion: string; layers: { name: string; label: string; version: number }[] };
 export type Report = { candidate: Candidate; tar: Lens; wider: Lens; createdAt: string; intelligence: Intelligence };
 export type Research = { status: string; candidates: Candidate[]; selected: Candidate | null; query: string };
-export type Turn = { role: "assistant" | "user"; content: string; citations?: { reference: string; extract: string }[] };
+export type Turn = { role: "assistant" | "user"; content: string; promptId?: number; citations?: { reference: string; extract: string }[] };
 export const weights = { yes: 4, mostly: 3, partly: 2, not_yet: 1, not_sure: 0 };
 export const answerLabels = { yes: "Clearly evidenced", mostly: "Mostly evidenced", partly: "Partly evidenced", not_yet: "Not yet in place", not_sure: "Not established" };
 export const classificationLabel = (value: string) => ["JUDGEMENT", "MSI_READINESS"].includes(value) ? "MSI JUDGEMENT" : value;
@@ -17,6 +17,22 @@ export function highlights(lens: Lens) {
   const strong = lens.findings.filter(f => weights[f.answer] >= 3).sort((a, b) => weights[b.answer] - weights[a.answer]).slice(0, 3);
   const gaps = lens.findings.filter(f => weights[f.answer] < 4).sort((a, b) => Number(b.classification === "MUST") - Number(a.classification === "MUST") || weights[a.answer] - weights[b.answer]).slice(0, 3);
   return { strong, gaps, priorities: gaps.length ? gaps : lens.findings.filter(f => f.answer !== "yes").slice(0, 3) };
+}
+// The guided review asks only about material gaps in this charity's existing
+// findings. It never changes either published-evidence score.
+export function guidedPrompts(report: Report): Finding[] {
+  const wider = new Map(report.wider.findings.map(finding => [finding.fieldId, finding]));
+  return report.tar.findings
+    .filter(finding => finding.answer !== "yes" && (finding.answer !== "mostly" || finding.confidence.toUpperCase() !== "HIGH"))
+    .sort((first, second) => {
+      const importance = (finding: Finding) =>
+        (finding.classification === "MUST" ? 5 : 0)
+        + (finding.answer === "not_sure" ? 4 : finding.answer === "partly" ? 3 : 2)
+        + (finding.confidence.toUpperCase() === "LOW" ? 2 : finding.confidence.toUpperCase() === "MEDIUM" ? 1 : 0)
+        + ((weights[wider.get(finding.fieldId)?.answer || finding.answer] > weights[finding.answer]) ? 2 : 0);
+      return importance(second) - importance(first);
+    })
+    .slice(0, 3);
 }
 export function emptyLens(lens: "tar" | "wider", limitation: string): Lens { return { lens, readable: false, score: null, confidence: "LOW", title: lens === "tar" ? "Statutory reporting not assessed" : "Wider evidence not assessed", period: "", sourceUrl: "", accountingBasis: "unknown", findings: [], limitation }; }
 export function emailResult(report: Report, conversationNotes: string[] = []) {

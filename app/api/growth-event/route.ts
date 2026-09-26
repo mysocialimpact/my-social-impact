@@ -14,7 +14,7 @@ const allowed = new Set([
   "book_conversation_clicked", "contact_email_clicked", "impact_report_found", "impact_report_uploaded",
   "save_and_exit", "assessment_resumed", "last_stage_reached",
   "email_captured", "public_research_completed", "snapshot_viewed", "tar_score", "wider_evidence_score",
-  "snapshot_feedback_rating", "guided_conversation_started", "guided_conversation_completed",
+  "snapshot_feedback_rating", "guided_conversation_started", "guided_prompt_completed", "guided_conversation_completed", "guided_conversation_skipped", "full_report_generation_started",
   "full_report_viewed", "pdf_email_sent", "final_feedback_rating", "support_ask_viewed",
   "deep_dive_offer_viewed", "deep_dive_clicked", "ten_minute_call_clicked", "stage_viewed", "non_sorp_identified",
   // Retained for older live sessions while the new completion journey rolls out.
