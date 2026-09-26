@@ -19,11 +19,11 @@ export function highlights(lens: Lens) {
   return { strong, gaps, priorities: gaps.length ? gaps : lens.findings.filter(f => f.answer !== "yes").slice(0, 3) };
 }
 export function emptyLens(lens: "tar" | "wider", limitation: string): Lens { return { lens, readable: false, score: null, confidence: "LOW", title: lens === "tar" ? "Statutory reporting not assessed" : "Wider evidence not assessed", period: "", sourceUrl: "", accountingBasis: "unknown", findings: [], limitation }; }
-export function emailResult(report: Report) {
+export function emailResult(report: Report, conversationNotes: string[] = []) {
   const { tar, wider } = report;
   const { strong, gaps, priorities } = highlights(tar);
   const category = (value: string) => tar.findings.filter(f => f.classification === value && weights[f.answer] < 4).map(f => f.action);
-  return { score: tar.score ?? 0, band: band(tar.score), confidence: tar.confidence, overview: `Published-evidence review for ${report.candidate.name}. TAR readiness: ${tar.score === null ? "not scored" : `${tar.score}/100`}. Separate wider-evidence view: ${wider.score === null ? "not scored" : `${wider.score}/100`}. ${tar.limitation} ${wider.limitation} Generated ${report.createdAt.slice(0, 10)}. Intelligence ${report.intelligence.effectiveVersion}.`,
+  return { score: tar.score ?? 0, band: band(tar.score), confidence: tar.confidence, overview: `Published-evidence review for ${report.candidate.name}. TAR readiness: ${tar.score === null ? "not scored" : `${tar.score}/100`}. Separate wider-evidence view: ${wider.score === null ? "not scored" : `${wider.score}/100`}. ${tar.limitation} ${wider.limitation} Generated ${report.createdAt.slice(0, 10)}. Intelligence ${report.intelligence.effectiveVersion}.${conversationNotes.length ? ` User-supplied conversation context, not independently verified and not used to change published-evidence scores: ${conversationNotes.join(" | ").slice(0, 3000)}.` : ""}`,
     strong: strong.map(f => f.finding), attention: gaps.map(f => f.finding), priorities: priorities.map(f => f.action),
     must: category("MUST"), should: category("SHOULD"), may: [], judgement: tar.findings.filter(f => ["JUDGEMENT", "MSI_READINESS"].includes(f.classification)).map(f => f.reason),
     additionalChecks: ["This published-evidence narrative review is not a complete financial-statement or all-module compliance audit. Conditional SORP requirements and current circumstances need separate consideration."],

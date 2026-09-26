@@ -13,6 +13,10 @@ const allowed = new Set([
   "support_selected", "support_payment_started", "human_review_payment_started",
   "book_conversation_clicked", "contact_email_clicked", "impact_report_found", "impact_report_uploaded",
   "save_and_exit", "assessment_resumed", "last_stage_reached",
+  "email_captured", "public_research_completed", "snapshot_viewed", "tar_score", "wider_evidence_score",
+  "snapshot_feedback_rating", "guided_conversation_started", "guided_conversation_completed",
+  "full_report_viewed", "pdf_email_sent", "final_feedback_rating", "support_ask_viewed",
+  "deep_dive_offer_viewed", "deep_dive_clicked", "ten_minute_call_clicked", "stage_viewed", "non_sorp_identified",
   // Retained for older live sessions while the new completion journey rolls out.
   "free_assessment_completed", "result_viewed", "review_cta_clicked", "voluntary_support_shown", "voluntary_support_no_thanks",
 ]);
