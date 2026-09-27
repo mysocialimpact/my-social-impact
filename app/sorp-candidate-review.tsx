@@ -134,6 +134,7 @@ export function SorpCandidateReview() {
   const [navigation, setNavigation] = useState<ReviewHistory>({ past: [], current: locationOf(initial), future: [] });
   const [loaded, setLoaded] = useState(false);
   const hydrated = useRef(false);
+  const emailAttempt = useRef<string | null>(null);
   const previousSaved = useRef<Saved | null>(null);
   const [busy, setBusy] = useState("");
   const [homeworkReveal, setHomeworkReveal] = useState(8);
@@ -181,6 +182,14 @@ export function SorpCandidateReview() {
   useEffect(() => { if (busy !== "tar" || quickFinishing) return; const index = progressClock % quickMessages.length; quickMessageIndex.current = index; quickMessageShownAt.current = performance.now(); const timer = window.setTimeout(() => setProgressClock(value => value + 1), quickMessageDuration(quickMessages[index])); return () => window.clearTimeout(timer); }, [busy, progressClock, quickFinishing]);
   useEffect(() => { if (busy !== "email") return; setProgressClock(0); const timer = window.setInterval(() => setProgressClock(value => value + 1), 3800); return () => window.clearInterval(timer); }, [busy]);
   useEffect(() => { if (!milestone) return; const timer = window.setTimeout(() => setMilestone(""), 1800); return () => window.clearTimeout(timer); }, [milestone]);
+  useEffect(() => {
+    if (saved.step !== "done") { emailAttempt.current = null; return; }
+    if (!loaded || !saved.report || !saved.email || saved.emailSent) return;
+    const receiptKey = `msi-review-email:${saved.sessionId}:${saved.email.trim().toLowerCase()}`;
+    if (emailAttempt.current === receiptKey) return;
+    emailAttempt.current = receiptKey;
+    void sendFinalReport(receiptKey);
+  }, [loaded, saved.step, saved.sessionId, saved.email, saved.emailSent]);
   function event(type: string, extra = {}) { void trackSorpEvent(saved.sessionId, type, { organisation: saved.candidate?.name, readinessScore: saved.report?.tar.score ?? undefined, ...extra }, false); }
   async function saveFeedback(phase: "quick" | "final", rating: number, comment: string) {
     if (!rating && !comment.trim()) return;
@@ -313,14 +322,32 @@ export function SorpCandidateReview() {
     const started = performance.now();
     setBusy("email"); setError(""); setGeneration([]); setGenerationReady(false); go("generating"); event("full_report_generation_started");
     try {
-      const data = await post("/api/readiness/report-email", { sessionId: saved.sessionId, email: saved.email, name: saved.name, role: saved.role === "OTHER" ? saved.roleOther : saved.role, shareRequestWithMsi: true, organisation: saved.candidate?.name, result: resultWithContext(report), impactMode: false });
-      if (!data.ok || !data.attachment?.endsWith(".pdf")) throw new Error("The full PDF was not confirmed as attached. Please retry.");
       setGenerationReady(true);
       await revealSteps(reportSteps);
       await pause(Math.max(0, 12000 - (performance.now() - started)));
-      setSaved(state => ({ ...state, emailSent: true, step: "report-ready", reportView: 0 })); event("pdf_email_sent");
-    } catch (cause) { setError(cause instanceof Error ? cause.message : "Email failed. No success was confirmed."); setSaved(state => ({ ...state, step: "complete" })); }
+      setSaved(state => ({ ...state, step: "report-ready", reportView: 0 }));
+    } catch (cause) { setError(cause instanceof Error ? cause.message : "Report preparation failed. Please retry."); setSaved(state => ({ ...state, step: "complete" })); }
     finally { setBusy(""); setGenerationReady(false); }
+  }
+  async function sendFinalReport(receiptKey: string) {
+    if (saved.step !== "done" || !report || !saved.email || saved.emailSent) return;
+    const send = async () => {
+      try {
+        if (localStorage.getItem(receiptKey) === "sent") {
+          setSaved(state => ({ ...state, emailSent: true }));
+          return;
+        }
+        const data = await post("/api/readiness/review-report-email", { deliveryStage: "done", sessionId: saved.sessionId, email: saved.email, name: saved.name, role: saved.role === "OTHER" ? saved.roleOther : saved.role, shareRequestWithMsi: true, organisation: saved.candidate?.name, result: resultWithContext(report), impactMode: false });
+        if (!data.ok || !data.attachment?.endsWith(".pdf")) throw new Error("The full PDF was not confirmed as attached. Please retry.");
+        // Persist the receipt before rendering success, including across tabs/history.
+        localStorage.setItem(receiptKey, "sent");
+        setSaved(state => ({ ...state, emailSent: true }));
+        event("pdf_email_sent");
+      } catch (cause) { setError(cause instanceof Error ? cause.message : "Email failed. No success was confirmed."); }
+    };
+    // The provider also deduplicates the unchanged report if a tab closes mid-send.
+    if (navigator.locks) await navigator.locks.request(receiptKey, send);
+    else await send();
   }
   async function contribute() {
     const amountMinor = supportPence(support, custom);
@@ -409,7 +436,7 @@ export function SorpCandidateReview() {
             <h2>Before your next reporting period</h2><p>Work through the priorities above and keep evidence of what changes. Impact is not something to reconstruct at year-end. The aim is to make useful impact information part of normal management throughout the year.</p>
           </>}
         </>}
-        {saved.step === "email-ready" && <><p className="scr-kicker">YOUR PERSONALISED REPORT IS READY ✓</p><h1>Your report is yours.</h1><div className="scr-email-celebration"><small>WE’VE EMAILED YOUR PDF TO:</small><strong>{saved.email}</strong><span aria-hidden="true">✓</span></div><p>It includes your published starting point, current self-reported readiness, the 15 assessment areas, your comments, SORP sources and your priorities.</p><p>Share it with colleagues or trustees, use it as an internal action plan, or bring it to a conversation with My Social Impact.</p></>}
+        {saved.step === "email-ready" && <><p className="scr-kicker">YOUR PERSONALISED REPORT IS READY ✓</p><h1>Your report is yours.</h1><div className="scr-email-celebration"><small>YOUR REPORT IS READY</small><span aria-hidden="true">✓</span></div><p>It includes your published starting point, current self-reported readiness, the 15 assessment areas, your comments, SORP sources and your priorities.</p><p>Share it with colleagues or trustees, use it as an internal action plan, or bring it to a conversation with My Social Impact.</p></>}
         {saved.step === "final-feedback" && <><p className="scr-kicker">OPTIONAL · A FEW SECONDS</p><h1>ONE LAST FAVOUR?</h1><p>If you gave us feedback earlier, thank you.</p><p>Now you’ve seen the full process, we’d love to know how the experience felt overall.</p><FeedbackPanel overall rating={saved.finalRating} comment={saved.finalComment} status={feedbackStatus.final} onRating={value => { setSaved(state => ({ ...state, finalRating: value })); void saveFeedback("final", value, saved.finalComment); }} onComment={value => { setFeedbackStatus(current => ({ ...current, final: "" })); setSaved(state => ({ ...state, finalComment: value })); }} onCommentBlur={() => void saveFeedback("final", saved.finalRating, saved.finalComment)}/></>}
         {saved.step === "support" && <><p className="scr-kicker">WHAT NEXT · OPTIONAL CONTRIBUTION</p><h1>ENJOYED THIS?<br/>HELP US KEEP IT FREE.</h1><p className="scr-lead">If this has been useful, a small contribution helps us keep building and running free tools like this, particularly for smaller charities.</p><p>Your report is already yours. This is completely optional.</p>{saved.supportPaid ? <p className="scr-mail">THANK YOU. THAT GENUINELY HELPS ✓</p> : checkout ? <><SorpPublicSupportCheckout clientSecret={checkout.clientSecret} sessionId={checkout.sessionId} onPaid={() => { setSaved(state => ({ ...state, supportPaid: true })); setCheckout(null); }}/><button type="button" className="scr-clear" onClick={() => setCheckout(null)}>CLOSE PAYMENT AND STAY HERE</button></> : <><div className="scr-amounts">{([5, 10, 20, "other"] as const).map(amount => <button key={amount} type="button" aria-pressed={support === amount} onClick={() => setSupport(amount)}>{amount === "other" ? "OTHER" : `£${amount}`}</button>)}</div>{support === "other" && <label className="scr-context">Amount in pounds<input inputMode="decimal" value={custom} onChange={e => setCustom(e.target.value)} /></label>}</>}</>}
         {saved.step === "before-go" && <div className="scr-ending-intro"><p className="scr-kicker">BEFORE WE SEND YOUR REPORT…</p><h1>CAN WE TELL YOU A LITTLE ABOUT US?</h1><p className="scr-lead">Your personalised report is ready and it’s yours.</p><p>Before we send it, we hope you don’t mind us taking two quick screens to introduce My Social Impact and show how we can help if you want to go further.</p><p className="scr-ending-promise">Then we’ll email your report to the address you gave us at the start.</p></div>}
