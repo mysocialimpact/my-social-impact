@@ -224,8 +224,23 @@
 @keyframes scr-ecosystem-arrive{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
 @media(prefers-reduced-motion:reduce){.scr-ecosystem-thread path,.scr-ecosystem-arrival{animation:none}.scr-ecosystem li::before{transition:none}}
 @media(max-width:760px){.scr-ecosystem{margin:0 auto 25px;max-width:340px}.scr-page--intro .scr-guide .scr-ecosystem h2{font-size:33px}.scr-page--intro .scr-guide .scr-ecosystem-caption{font-size:17px}.scr-welcome-copy p{font-size:15px}}
-.scr-ending-intro{padding:clamp(20px,5vw,64px) 0;border-top:2px solid var(--scr-green)}
+.scr-ending-intro{padding:clamp(20px,4vw,52px) 0;border-top:1px solid var(--line)}
 .scr-ending-intro>p{max-width:620px}
+.scr-ending-intro h1{max-width:760px;text-wrap:balance}
+.scr-ending-intro .scr-ending-promise{margin-top:30px;padding-top:20px;border-top:1px solid var(--line);color:var(--scr-green);font-size:15px}
+.scr-beyond-visual{display:block;width:100%;max-width:360px;margin:20px auto 0;overflow:visible}
+.scr-beyond-thread{fill:none;stroke:var(--orange);stroke-width:1.3;stroke-dasharray:1000;animation:scr-beyond-draw 1.8s ease-out both}
+.scr-beyond-halo{fill:none;stroke:var(--orange);stroke-width:.6;opacity:.17}
+.scr-beyond-start{fill:var(--scr-green)}
+.scr-beyond-check{fill:none;stroke:var(--paper);stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.scr-beyond-label{fill:var(--scr-green);font-family:var(--font-sans);font-size:11px;font-weight:750;letter-spacing:1.3px}
+.scr-beyond-impact,.scr-beyond-excellence{fill:var(--ink);font-family:var(--font-serif);font-size:37px;letter-spacing:-1.5px}
+.scr-beyond-excellence{font-size:34px}.scr-beyond-excellence tspan:last-child{fill:var(--orange)}
+.scr-beyond-arrow,.scr-beyond-rays{fill:none;stroke:var(--orange);stroke-width:1.3;stroke-linecap:round}
+.scr-guide .scr-beyond-caption{max-width:310px;margin:0 auto;font-family:var(--font-serif);font-size:20px;line-height:1.35;color:var(--ink);letter-spacing:-.025em}
+@keyframes scr-beyond-draw{from{stroke-dashoffset:1000}to{stroke-dashoffset:0}}
+@media(max-width:760px){.scr-beyond-visual{max-width:260px;margin-block:8px}.scr-guide .scr-beyond-caption{max-width:340px;font-size:18px}.scr-ending-intro{padding-top:22px}}
+@media(prefers-reduced-motion:reduce){.scr-beyond-thread{animation:none}}
 .scr-ending-finish{border-top:2px solid var(--scr-green);padding-top:28px}
 .scr-ending-finish>.scr-kicker{color:var(--scr-green)}
 .scr-ending-finish .scr-email-celebration strong{overflow-wrap:anywhere}
