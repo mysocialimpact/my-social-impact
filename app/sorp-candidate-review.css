@@ -96,6 +96,9 @@
 .scr-progress-sequence li.is-complete span{color:var(--scr-green);animation:scr-appear .35s ease-out}
 .scr-progress-message{max-width:720px;min-height:78px;margin-top:26px;padding:18px 0;border-block:1px solid var(--ink);font-family:var(--font-serif);font-size:clamp(23px,2.7vw,34px);line-height:1.18;animation:scr-appear .4s ease-out}
 .scr-progress-message{white-space:pre-line}
+.scr-quick-message{display:grid}
+.scr-quick-message>span{grid-area:1/1;min-height:2lh}
+.scr-quick-message .scr-message-size{visibility:hidden;pointer-events:none}
 .scr-confirmed{display:grid;gap:3px;margin:22px 0;padding:15px 0;border-block:1px solid var(--line)}
 .scr-confirmed p{margin:0;color:var(--scr-green);font-size:14px;font-weight:700}
 .scr-results article{display:flex;justify-content:space-between;align-items:center;gap:20px;padding:18px 0;border-top:1px solid var(--line)}
