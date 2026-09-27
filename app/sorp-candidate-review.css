@@ -302,6 +302,9 @@
 .scr-done-links{display:grid;gap:10px;max-width:480px;margin-top:28px}
 .scr-done-links>*{display:block;padding:15px;border:1px solid var(--ink);background:var(--white);color:var(--ink)!important;text-align:left;text-decoration:none!important;font-size:12px;font-weight:800}
 .scr-error{margin:20px 0;padding:15px;border-left:3px solid #b02a17;background:#fff2ed;color:#7b2117;font-size:14px}
+.scr-upload-report{display:inline-flex;align-items:center;justify-content:space-between;gap:25px;min-height:52px;margin-top:25px;padding:14px 18px;background:var(--ink);color:#fff;font-size:12px;font-weight:800;cursor:pointer}
+.scr-upload-report:focus-within{outline:3px solid var(--scr-green);outline-offset:3px}
+.scr-upload-report input{position:absolute;width:1px;height:1px;opacity:0}
 .scr-bottom{position:fixed;inset:auto 0 0;z-index:65;display:grid;grid-template-columns:minmax(250px,.34fr) minmax(0,.66fr);gap:clamp(26px,3vw,54px);padding:10px clamp(20px,3vw,44px) calc(10px + env(safe-area-inset-bottom));border-top:1px solid var(--ink);background:var(--paper);box-shadow:0 -8px 20px #11111110}
 .scr-bottom>div{display:flex;align-items:center;justify-content:space-between;gap:12px;min-width:0}
 .scr-bottom>div:last-child{justify-content:flex-end}

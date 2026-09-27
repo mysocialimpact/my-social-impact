@@ -10,7 +10,7 @@ import { SorpReviewBooking } from "./sorp-review-booking";
 import { band, classificationLabel, emailResult, emptyLens, highlights, weights, type Candidate, type Finding, type Intelligence, type Lens, type Report, type Research } from "./sorp-public-model";
 import "./sorp-candidate-review.css";
 
-type Step = "intro" | "find" | "confirmation" | "homework" | "quick-generating" | "quick-ready" | "quick" | "quick-feedback" | "method" | "criterion" | "complete" | "generating" | "report-ready" | "report" | "email-ready" | "final-feedback" | "support" | "before-go" | "next" | "help" | "done" | "non-sorp";
+type Step = "intro" | "find" | "confirmation" | "homework" | "quick-generating" | "tar-recovery" | "quick-ready" | "quick" | "quick-feedback" | "method" | "criterion" | "complete" | "generating" | "report-ready" | "report" | "email-ready" | "final-feedback" | "support" | "before-go" | "next" | "help" | "done" | "non-sorp";
 type Correction = { answer?: AnswerValue; context: string; savedContext?: string; reviewed: boolean };
 type Saved = { sessionId: string; step: Step; query: string; research: Research | null; candidate: Candidate | null; state: unknown; intelligence: Intelligence | null; report: Report | null; email: string; emailConfirm: string; name: string; role: string; roleOther: string; criterion: number; corrections: Record<string, Correction>; reportView: number; emailSent: boolean; supportPaid: boolean; quickRating: number; quickComment: string; finalRating: number; finalComment: string };
 type ReviewLocation = Pick<Saved, "step" | "criterion" | "reportView">;
@@ -26,7 +26,7 @@ const isLocation = (value: unknown): value is ReviewLocation => Boolean(value &&
 const isTransient = (step: Step) => step === "quick-generating" || step === "generating";
 const phases = ["Find charity", "Public homework", "Quick review", "Current readiness", "Your report", "What next"];
 const scale = answerOptions.map(({ value, label }) => ({ value, label: label.toUpperCase() }));
-const phaseFor = (step: Step) => step === "intro" || step === "find" || step === "confirmation" ? 0 : step === "homework" ? 1 : step === "quick-generating" || step === "quick-ready" || step === "quick" || step === "quick-feedback" ? 2 : step === "method" || step === "criterion" || step === "complete" ? 3 : step === "generating" || step === "report-ready" || step === "report" || step === "email-ready" ? 4 : 5;
+const phaseFor = (step: Step) => step === "intro" || step === "find" || step === "confirmation" ? 0 : step === "homework" ? 1 : step === "quick-generating" || step === "tar-recovery" || step === "quick-ready" || step === "quick" || step === "quick-feedback" ? 2 : step === "method" || step === "criterion" || step === "complete" ? 3 : step === "generating" || step === "report-ready" || step === "report" || step === "email-ready" ? 4 : 5;
 const safeLink = (url: string) => /^https:\/\//.test(url) ? url : "";
 const quickSteps = ["Reading your Trustees’ Annual Report", "Finding purposes, activities and public benefit", "Looking for achievements, outcomes and impact", "Checking future plans and learning", "Mapping evidence to SORP 2026", "Assessing the 15 areas", "Calculating your published-reporting score"];
 const reportSteps = ["Bringing together your published evidence", "Adding your current responses and context", "Comparing published reporting with your current view", "Checking the relevant SORP 2026 requirements", "Prioritising what matters most", "Turning findings into practical next steps", "Preparing your personalised PDF"];
@@ -38,9 +38,10 @@ const areaLabels = ["Purpose", "Public benefit", "Objectives", "Programmes", "Me
 const pause = (milliseconds: number) => new Promise(resolve => setTimeout(resolve, milliseconds));
 
 async function post(url: string, body: unknown) {
-  const response = await fetch(url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+  const multipart = body instanceof FormData;
+  const response = await fetch(url, { method: "POST", headers: multipart ? undefined : { "content-type": "application/json" }, body: multipart ? body : JSON.stringify(body) });
   const data = await response.json();
-  if (!response.ok || data.error) throw new Error(data.error || "That step could not be completed. Please try again.");
+  if (!response.ok || data.error) { const failure = new Error(data.error || "That step could not be completed. Please try again.") as Error & { recovery?: string }; failure.recovery = data.recovery; throw failure; }
   return data;
 }
 
@@ -154,7 +155,7 @@ export function SorpCandidateReview() {
     if (hydrated.current) return;
     hydrated.current = true;
     let restored: Saved;
-    try { const stored = JSON.parse(localStorage.getItem(KEY) || "null"); restored = stored?.sessionId ? { ...initial, ...stored, emailConfirm: stored.emailConfirm || stored.email || "", reportView: Math.min(stored.reportView || 0, 1), corrections: Object.fromEntries(Object.entries(stored.corrections || {}).map(([id, value]) => { const correction = (value && typeof value === "object" ? value : { context: "", reviewed: false }) as Correction; return [id, { ...correction, savedContext: correction.savedContext ?? correction.context }]; })), step: stored.step === "email-ready" ? "final-feedback" : stored.step === "generating" ? "complete" : stored.step === "quick-generating" ? "homework" : stored.step } : { ...initial, sessionId: crypto.randomUUID() }; }
+    try { const stored = JSON.parse(localStorage.getItem(KEY) || "null"); restored = stored?.sessionId ? { ...initial, ...stored, emailConfirm: stored.emailConfirm || stored.email || "", reportView: Math.min(stored.reportView || 0, 1), corrections: Object.fromEntries(Object.entries(stored.corrections || {}).map(([id, value]) => { const correction = (value && typeof value === "object" ? value : { context: "", reviewed: false }) as Correction; return [id, { ...correction, savedContext: correction.savedContext ?? correction.context }]; })), step: stored.step === "email-ready" ? "final-feedback" : stored.step === "generating" ? "complete" : stored.step === "quick-generating" ? "homework" : stored.step } : { ...initial, sessionId: crypto.randomUUID() }; if (restored.report && (!restored.report.tar.diagnostics?.allChunksIndexed || !restored.report.tar.diagnostics?.assessmentRetrievalSucceeded)) restored = { ...restored, report: null, emailSent: false, step: "homework", reportView: 0 }; }
     catch { restored = { ...initial, sessionId: crypto.randomUUID() }; setError("This browser could not restore a saved review. Please keep this page open until your PDF arrives."); }
     setSaved(restored);
     try { const history = JSON.parse(localStorage.getItem(HISTORY_KEY) || "null"); const current = locationOf(restored); setNavigation(history && isLocation(history.current) && sameLocation(history.current, current) && Array.isArray(history.past) && history.past.every(isLocation) && Array.isArray(history.future) && history.future.every(isLocation) ? history : { past: [], current, future: [] }); }
@@ -251,6 +252,15 @@ export function SorpCandidateReview() {
     catch (cause) { setError(cause instanceof Error ? cause.message : "We could not inspect that organisation yet."); }
     finally { setBusy(""); }
   }
+  async function finishQuickReview(lens: Lens, started: number) {
+    if (!lens.readable || lens.score === null || !lens.diagnostics?.assessmentRetrievalSucceeded || !lens.diagnostics.allChunksIndexed) throw new Error("The Trustees’ Annual Report was not fully read. We cannot give a score yet.");
+    const next: Report = { candidate: saved.candidate!, tar: lens, wider: emptyLens("wider", "Wider evidence was deliberately not assessed in this published-reporting review."), createdAt: new Date().toISOString(), intelligence: saved.intelligence! };
+    setQuickFinishing(true); setGenerationReady(true);
+    await revealSteps(quickSteps);
+    await pause(Math.max(0, 6500 - (performance.now() - started), quickMessageDuration(quickMessages[quickMessageIndex.current]) - (performance.now() - quickMessageShownAt.current)));
+    setSaved(state => ({ ...state, report: next, email: state.email.trim(), step: saved.candidate?.entityType === "registered_charity" ? "quick-ready" : "non-sorp" }));
+    event("public_research_completed", { readinessScore: lens.score ?? undefined, evidenceConfidence: lens.confidence }); event("quick_review_reached"); event("tar_score", { readinessScore: lens.score ?? undefined });
+  }
   async function review(e?: React.FormEvent) {
     e?.preventDefault(); if (!saved.candidate || !saved.email.trim() || !saved.intelligence || busy) return;
     if (saved.email.trim().toLowerCase() !== saved.emailConfirm.trim().toLowerCase()) { setEmailMismatch(true); return; }
@@ -259,15 +269,19 @@ export function SorpCandidateReview() {
     setBusy("tar"); setError(""); setProgressClock(0); setQuickFinishing(false); setGenerationReady(false); setGeneration([]); go("quick-generating"); event("email_captured");
     try {
       const data = await post("/api/published-review", { operation: "tar", candidate: saved.candidate, state: saved.state, sessionId: saved.sessionId, intelligencePin: saved.intelligence });
-      const lens = data.lens as Lens;
-      const next: Report = { candidate: saved.candidate, tar: lens, wider: emptyLens("wider", "Wider evidence was deliberately not assessed in this published-reporting review."), createdAt: new Date().toISOString(), intelligence: saved.intelligence };
-      setQuickFinishing(true);
-      setGenerationReady(true);
-      await revealSteps(quickSteps);
-      await pause(Math.max(0, 6500 - (performance.now() - started), quickMessageDuration(quickMessages[quickMessageIndex.current]) - (performance.now() - quickMessageShownAt.current)));
-      setSaved(state => ({ ...state, report: next, email: state.email.trim(), step: saved.candidate?.entityType === "registered_charity" ? "quick-ready" : "non-sorp" }));
-      event("public_research_completed", { readinessScore: lens.score ?? undefined, evidenceConfidence: lens.confidence }); event("quick_review_reached"); event("tar_score", { readinessScore: lens.score ?? undefined });
-    } catch (cause) { setSaved(state => ({ ...state, step: "homework" })); setError(cause instanceof Error ? cause.message : "The statutory review could not finish. Please retry."); }
+      await finishQuickReview(data.lens as Lens, started);
+    } catch (cause) { setSaved(state => ({ ...state, step: (cause as { recovery?: string })?.recovery === "upload-report" ? "tar-recovery" : "homework" })); setError((cause as { recovery?: string })?.recovery === "upload-report" ? "" : cause instanceof Error ? cause.message : "The statutory review could not finish. Please retry."); }
+    finally { setBusy(""); setGenerationReady(false); }
+  }
+  async function uploadTar(file?: File) {
+    if (!file || !saved.candidate || !saved.intelligence || busy) return;
+    const started = performance.now();
+    const payload = new FormData();
+    payload.set("payload", JSON.stringify({ operation: "tar", candidate: saved.candidate, state: saved.state, sessionId: saved.sessionId, intelligencePin: saved.intelligence }));
+    payload.set("report", file);
+    setBusy("tar"); setError(""); setProgressClock(0); setQuickFinishing(false); setGenerationReady(false); setGeneration([]); go("quick-generating");
+    try { const data = await post("/api/published-review", payload); await finishQuickReview(data.lens as Lens, started); }
+    catch (cause) { setSaved(state => ({ ...state, step: "tar-recovery" })); setError(cause instanceof Error ? cause.message : "This copy could not be read. Please choose a readable PDF."); }
     finally { setBusy(""); setGenerationReady(false); }
   }
   function updateCorrection(patch: Partial<Correction>) {
@@ -336,7 +350,7 @@ export function SorpCandidateReview() {
     if (saved.step === "find") return <><p className="scr-kicker">GOOD TO KNOW</p><h2>SORP 2026 HAS THREE REPORTING TIERS.</h2><div className="scr-tier-visual" role="group" aria-label="SORP 2026 reporting tiers"><div><span>TIER 1</span><strong>£500k or less</strong></div><div><span>TIER 2</span><strong>Over £500k to £15m</strong></div><div><span>TIER 3</span><strong>Over £15m</strong></div></div><p>Your tier affects which SORP reporting requirements apply.</p></>;
     if (saved.step === "confirmation") return <><p className="scr-kicker">IDENTITY CHECK</p><h2>Is this your charity?</h2><p>Check the legal name, charity number and official sources. The website is shown to confirm identity, not used in the published-report score.</p></>;
     if (saved.step === "homework") return <><p className="scr-kicker">WHAT HAPPENS NEXT</p><h2>A published starting point.</h2><p>We’ll assess the Trustees’ Annual Report and accounts against 15 areas mapped to SORP 2026. You’ll get a quick view before telling us where things stand today.</p></>;
-    if (saved.step === "quick-generating" || saved.step === "quick-ready") return <><p className="scr-kicker">HOW THIS WORKS</p><h2>SORP 2026 IS OUR SOURCE OF TRUTH.</h2><p>We compare your latest published Trustees’ Annual Report and accounts against 15 areas mapped to SORP 2026.</p><p>My Social Impact’s methodology interprets the published evidence and applies a fixed scoring approach to give you a historical SORP-readiness starting point.</p><p>Next, you’ll tell us what has changed since then.</p></>;
+    if (saved.step === "quick-generating" || saved.step === "quick-ready" || saved.step === "tar-recovery") return <><p className="scr-kicker">HOW THIS WORKS</p><h2>SORP 2026 IS OUR SOURCE OF TRUTH.</h2><p>We compare your latest published Trustees’ Annual Report and accounts against 15 areas mapped to SORP 2026.</p><p>My Social Impact’s methodology interprets the published evidence and applies a fixed scoring approach to give you a historical SORP-readiness starting point.</p><p>Next, you’ll tell us what has changed since then.</p></>;
     if (saved.step === "quick") return <div className="scr-quick-language"><p className="scr-kicker">THE LANGUAGE OF SORP</p><dl>{[["MUST", "Required to comply with the SORP."], ["SHOULD", "Good-practice recommendations that charities are encouraged to follow."], ["MAY", "Options or approaches a charity can choose where appropriate."]].map(([label, description]) => <div key={label}><dt className={`scr-quick-term--${label.toLowerCase()}`}>{label}</dt><dd>{description}</dd></div>)}</dl><p className="scr-quick-language-note">Some areas require judgement when applying the SORP to real evidence.</p><p>My Social Impact Intelligence assesses the published evidence against these requirements. You can inspect the SORP source behind each assessment in the next stage.</p></div>;
     if (saved.step === "quick-feedback") return <div className="scr-feedback-guide"><h2>HELP THE NEXT CHARITY</h2><div className="scr-feedback-visual" role="img" aria-label="Feedback passed forward to help the next charity"><svg viewBox="0 0 400 250" aria-hidden="true" focusable="false"><path className="scr-feedback-link" d="M97 124 C150 124 149 84 204 84 S260 124 307 124"/><circle className="scr-feedback-ripple scr-feedback-ripple--first" cx="95" cy="124" r="76"/><circle className="scr-feedback-ripple" cx="95" cy="124" r="50"/><circle className="scr-feedback-ripple scr-feedback-ripple--last" cx="307" cy="124" r="76"/><circle className="scr-feedback-ripple" cx="307" cy="124" r="50"/><circle className="scr-feedback-origin" cx="95" cy="124" r="13"/><circle className="scr-feedback-passing" cx="203" cy="84" r="7"/><circle className="scr-feedback-destination" cx="307" cy="124" r="13"/></svg></div><p>Your feedback helps us make this more useful for the next charity.</p></div>;
     if (saved.step === "final-feedback") return <><p className="scr-kicker">OPTIONAL FEEDBACK</p><h2>Help the next charity.</h2><p>A rating or comment helps us improve this free tool. You can continue without leaving feedback.</p></>;
@@ -403,6 +417,7 @@ export function SorpCandidateReview() {
         {saved.step === "help" && <SorpReviewBooking onSelect={() => event("book_conversation_clicked")} />}
         {saved.step === "done" && <div className="scr-ending-finish"><p className="scr-kicker">THANK YOU ✓</p><h1>YOUR REVIEW IS COMPLETE.</h1><div className="scr-email-celebration"><small>{saved.emailSent ? "YOUR PERSONALISED REPORT HAS BEEN EMAILED TO:" : "EMAIL DELIVERY IS NOT YET CONFIRMED"}</small>{saved.emailSent && <strong>{saved.email}</strong>}{!saved.emailSent && <p>Your report is available below. We have not confirmed that the email was sent.</p>}<span aria-hidden="true">{saved.emailSent ? "✓" : "→"}</span></div><p>We hope it helps you get ready for SORP 2026 and, more importantly, strengthen the impact information you use throughout the year.</p><p>Share it with colleagues or trustees, use it as an action plan, or bring it to a conversation with My Social Impact.</p><div className="scr-done-links"><button type="button" onClick={() => setSaved(state => ({ ...state, step: "report", reportView: 0 }))}>VIEW MY REPORT →</button><button type="button" onClick={() => setSaved(state => ({ ...state, step: "help" }))}>BOOK A CONVERSATION →</button><a href="https://mysocialimpact.org/" target="_blank" rel="noreferrer">VISIT MY SOCIAL IMPACT →</a></div></div>}
         {saved.step === "non-sorp" && <><p className="scr-kicker">LEGAL STATUS CHECK</p><h1>We need to pause this SORP review.</h1><p>The entity identified is not a registered charity. Please check the legal entity and charity number before we assess SORP applicability.</p></>}
+        {saved.step === "tar-recovery" && <><p className="scr-kicker">REPORT READING PAUSED</p><h1>WE FOUND YOUR REPORT.<br/>WE NEED A READABLE COPY TO CONTINUE.</h1><p className="scr-lead">We need to read the Trustees’ Annual Report properly before we can give you a reliable score.</p><label className="scr-upload-report">UPLOAD THE REPORT →<input type="file" accept="application/pdf,.pdf" disabled={!!busy} onChange={event => { const file = event.target.files?.[0]; if (file) void uploadTar(file); }} /></label></>}
         {error && <div className="scr-error" role="alert">{error}</div>}
       </section></div>
     <footer className="scr-bottom">
@@ -413,6 +428,7 @@ export function SorpCandidateReview() {
         {saved.step === "confirmation" && <><button type="button" className="is-secondary" onClick={() => setSaved(state => ({ ...state, step: "find", research: null }))}>NOT MY CHARITY — TRY AGAIN</button><button onClick={() => void startHomework()}>YES, THIS IS MY CHARITY <span>→</span></button></>}
         {saved.step === "homework" && (saved.report ? <button onClick={() => go("quick")}>RETURN TO QUICK REVIEW <span>→</span></button> : !saved.state ? busy ? <span className="scr-bottom-status">Checking the public evidence…</span> : <button onClick={() => void startHomework()}>RETRY PUBLIC HOMEWORK <span>→</span></button> : <button type="submit" form="scr-email-form" disabled={!!busy || !saved.email.trim()}>BUILD MY QUICK REVIEW <span>→</span></button>)}
         {saved.step === "quick-generating" && <span className="scr-bottom-status">Building your Quick Review…</span>}
+        {saved.step === "tar-recovery" && <span className="scr-bottom-status">Your progress is saved. Upload a readable PDF to continue.</span>}
         {saved.step === "quick-ready" && <button onClick={() => go("quick")}>VIEW MY QUICK REVIEW <span>→</span></button>}
         {saved.step === "quick" && <button onClick={() => { go("quick-feedback"); event("snapshot_viewed"); }}>CONTINUE <span>→</span></button>}
         {saved.step === "quick-feedback" && <button onClick={() => go("method")}>SEE WHERE WE ARE NOW <span>→</span></button>}
