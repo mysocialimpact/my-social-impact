@@ -99,6 +99,10 @@
 .scr-quick-message{display:grid}
 .scr-quick-message>span{grid-area:1/1;min-height:2lh}
 .scr-quick-message .scr-message-size{visibility:hidden;pointer-events:none}
+.scr-quick-ready{max-width:740px;padding:clamp(24px,5vw,72px) 0 30px;border-top:2px solid var(--scr-green);animation:scr-appear .5s ease-out}
+.scr-quick-ready h1 span{color:var(--scr-green);white-space:nowrap}
+.scr-quick-ready p:first-of-type{max-width:650px;font-size:clamp(19px,2vw,24px);line-height:1.4}
+.scr-quick-ready p:last-of-type{max-width:620px;color:var(--muted)}
 .scr-confirmed{display:grid;gap:3px;margin:22px 0;padding:15px 0;border-block:1px solid var(--line)}
 .scr-confirmed p{margin:0;color:var(--scr-green);font-size:14px;font-weight:700}
 .scr-results article{display:flex;justify-content:space-between;align-items:center;gap:20px;padding:18px 0;border-top:1px solid var(--line)}
