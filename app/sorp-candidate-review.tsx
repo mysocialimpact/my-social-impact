@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { coreQuestions, answerOptions, tierLabel, type AnswerValue, type AssessmentSetup } from "./sorp-questionnaire";
 import { trackSorpEvent } from "./sorp-growth";
 import { supportPence, type SupportChoice } from "./sorp-payment-amounts";
@@ -12,10 +12,17 @@ import "./sorp-candidate-review.css";
 type Step = "intro" | "find" | "confirmation" | "homework" | "quick-generating" | "quick" | "quick-feedback" | "method" | "criterion" | "complete" | "generating" | "report" | "email-ready" | "final-feedback" | "support" | "next" | "done" | "non-sorp";
 type Correction = { answer?: AnswerValue; context: string; savedContext?: string; reviewed: boolean };
 type Saved = { sessionId: string; step: Step; query: string; research: Research | null; candidate: Candidate | null; state: unknown; intelligence: Intelligence | null; report: Report | null; email: string; emailConfirm: string; name: string; role: string; roleOther: string; criterion: number; corrections: Record<string, Correction>; reportView: number; emailSent: boolean; supportPaid: boolean; quickRating: number; quickComment: string; finalRating: number; finalComment: string };
+type ReviewLocation = Pick<Saved, "step" | "criterion" | "reportView">;
+type ReviewHistory = { past: ReviewLocation[]; current: ReviewLocation; future: ReviewLocation[] };
 const KEY = "msi-sorp-final-candidate-v1";
+const HISTORY_KEY = `${KEY}-history`;
 const BUILD = "27 SEPTEMBER 2026";
 const SORP_SOURCE = "https://www.charitysorp.org/documents/d/guest/charities-sorp-2026-1";
 const initial: Saved = { sessionId: "", step: "intro", query: "", research: null, candidate: null, state: null, intelligence: null, report: null, email: "", emailConfirm: "", name: "", role: "", roleOther: "", criterion: 0, corrections: {}, reportView: 0, emailSent: false, supportPaid: false, quickRating: 0, quickComment: "", finalRating: 0, finalComment: "" };
+const locationOf = ({ step, criterion, reportView }: Saved): ReviewLocation => ({ step, criterion, reportView });
+const sameLocation = (left: ReviewLocation, right: ReviewLocation) => left.step === right.step && left.criterion === right.criterion && left.reportView === right.reportView;
+const isLocation = (value: unknown): value is ReviewLocation => Boolean(value && typeof value === "object" && typeof (value as ReviewLocation).step === "string" && Number.isInteger((value as ReviewLocation).criterion) && Number.isInteger((value as ReviewLocation).reportView));
+const isTransient = (step: Step) => step === "quick-generating" || step === "generating";
 const phases = ["Find charity", "Public homework", "Quick review", "Current readiness", "Your report", "What next"];
 const scale = answerOptions.map(({ value, label }) => ({ value, label: label.toUpperCase() }));
 const phaseFor = (step: Step) => step === "intro" || step === "find" || step === "confirmation" ? 0 : step === "homework" ? 1 : step === "quick-generating" || step === "quick" || step === "quick-feedback" ? 2 : step === "method" || step === "criterion" || step === "complete" ? 3 : step === "generating" || step === "report" || step === "email-ready" || step === "final-feedback" ? 4 : 5;
@@ -65,7 +72,10 @@ function FeedbackPanel({ rating, comment, status, onRating, onComment, onComment
 
 export function SorpCandidateReview() {
   const [saved, setSaved] = useState<Saved>(initial);
+  const [navigation, setNavigation] = useState<ReviewHistory>({ past: [], current: locationOf(initial), future: [] });
   const [loaded, setLoaded] = useState(false);
+  const hydrated = useRef(false);
+  const previousSaved = useRef<Saved | null>(null);
   const [busy, setBusy] = useState("");
   const [error, setError] = useState("");
   const [generation, setGeneration] = useState<string[]>([]);
@@ -79,11 +89,31 @@ export function SorpCandidateReview() {
   const [feedbackStatus, setFeedbackStatus] = useState<{ quick: string; final: string }>({ quick: "", final: "" });
 
   useEffect(() => {
-    try { const stored = JSON.parse(localStorage.getItem(KEY) || "null"); setSaved(stored?.sessionId ? { ...initial, ...stored, emailConfirm: stored.emailConfirm || stored.email || "", reportView: Math.min(stored.reportView || 0, 1), corrections: Object.fromEntries(Object.entries(stored.corrections || {}).map(([id, value]) => { const correction = (value && typeof value === "object" ? value : { context: "", reviewed: false }) as Correction; return [id, { ...correction, savedContext: correction.savedContext ?? correction.context }]; })), step: stored.step === "generating" ? "complete" : stored.step === "quick-generating" ? "homework" : stored.step } : { ...initial, sessionId: crypto.randomUUID() }); }
-    catch { setSaved({ ...initial, sessionId: crypto.randomUUID() }); setError("This browser could not restore a saved review. Please keep this page open until your PDF arrives."); }
+    if (hydrated.current) return;
+    hydrated.current = true;
+    let restored: Saved;
+    try { const stored = JSON.parse(localStorage.getItem(KEY) || "null"); restored = stored?.sessionId ? { ...initial, ...stored, emailConfirm: stored.emailConfirm || stored.email || "", reportView: Math.min(stored.reportView || 0, 1), corrections: Object.fromEntries(Object.entries(stored.corrections || {}).map(([id, value]) => { const correction = (value && typeof value === "object" ? value : { context: "", reviewed: false }) as Correction; return [id, { ...correction, savedContext: correction.savedContext ?? correction.context }]; })), step: stored.step === "generating" ? "complete" : stored.step === "quick-generating" ? "homework" : stored.step } : { ...initial, sessionId: crypto.randomUUID() }; }
+    catch { restored = { ...initial, sessionId: crypto.randomUUID() }; setError("This browser could not restore a saved review. Please keep this page open until your PDF arrives."); }
+    setSaved(restored);
+    try { const history = JSON.parse(localStorage.getItem(HISTORY_KEY) || "null"); const current = locationOf(restored); setNavigation(history && isLocation(history.current) && sameLocation(history.current, current) && Array.isArray(history.past) && history.past.every(isLocation) && Array.isArray(history.future) && history.future.every(isLocation) ? history : { past: [], current, future: [] }); }
+    catch { setNavigation({ past: [], current: locationOf(restored), future: [] }); }
+    previousSaved.current = restored;
     setLoaded(true);
   }, []);
   useEffect(() => { if (loaded) { try { localStorage.setItem(KEY, JSON.stringify(saved)); } catch { setError("This browser could not save your progress. Please keep the page open until your PDF arrives."); } } }, [saved, loaded]);
+  useEffect(() => { if (loaded) { try { localStorage.setItem(HISTORY_KEY, JSON.stringify(navigation)); } catch { /* Review progress still saves independently. */ } } }, [navigation, loaded]);
+  useEffect(() => {
+    if (!loaded) return;
+    const previous = previousSaved.current;
+    previousSaved.current = saved;
+    if (isTransient(saved.step)) return;
+    const location = locationOf(saved);
+    setNavigation(history => {
+      if (!sameLocation(history.current, location)) return { past: [...history.past, history.current].slice(-100), current: location, future: [] };
+      const dataChanged = previous && sameLocation(locationOf(previous), location) && (Object.keys(saved) as (keyof Saved)[]).some(key => key !== "step" && key !== "criterion" && key !== "reportView" && saved[key] !== previous[key]);
+      return dataChanged && history.future.length ? { ...history, future: [] } : history;
+    });
+  }, [saved, loaded]);
   useEffect(() => { window.scrollTo({ top: 0, behavior: "instant" }); }, [saved.step, saved.criterion, saved.reportView]);
   useEffect(() => { if (!busy) return; setProgressClock(0); const timer = window.setInterval(() => setProgressClock(value => value + 1), 3800); return () => window.clearInterval(timer); }, [busy]);
   useEffect(() => { if (!milestone) return; const timer = window.setTimeout(() => setMilestone(""), 1800); return () => window.clearTimeout(timer); }, [milestone]);
@@ -209,26 +239,23 @@ export function SorpCandidateReview() {
   }
 
   function back() {
-    if (saved.step === "find") go("intro");
-    else if (saved.step === "confirmation") go("find");
-    else if (saved.step === "homework") go("confirmation");
-    else if (saved.step === "non-sorp") go("find");
-    else if (saved.step === "quick") go("homework");
-    else if (saved.step === "quick-feedback") go("quick");
-    else if (saved.step === "method") go("quick-feedback");
-    else if (saved.step === "criterion") { if (saved.criterion === 0) go("method"); else setSaved(state => ({ ...state, criterion: state.criterion - 1 })); }
-    else if (saved.step === "complete") go("criterion");
-    else if (saved.step === "report") { if (saved.reportView === 0) go("complete"); else setSaved(state => ({ ...state, reportView: state.reportView - 1 })); }
-    else if (saved.step === "email-ready") setSaved(state => ({ ...state, step: "report", reportView: 1 }));
-    else if (saved.step === "final-feedback") go("email-ready");
-    else if (saved.step === "support") { setCheckout(null); go("final-feedback"); }
-    else if (saved.step === "next") go("support");
-    else if (saved.step === "done") go("next");
+    const previous = navigation.past.at(-1);
+    if (!previous || busy) return;
+    setCheckout(null); setError("");
+    setNavigation(history => ({ past: history.past.slice(0, -1), current: previous, future: [history.current, ...history.future] }));
+    setSaved(state => ({ ...state, ...previous }));
+  }
+  function forward() {
+    const next = navigation.future[0];
+    if (!next || busy) return;
+    setCheckout(null); setError("");
+    setNavigation(history => ({ past: [...history.past, history.current], current: next, future: history.future.slice(1) }));
+    setSaved(state => ({ ...state, ...next }));
   }
 
   function guide() {
     if (saved.step === "intro") return <><p className="scr-kicker">WHY THIS MATTERS</p><div className="scr-sie-visual" role="img" aria-label="Social Impact Excellence: Purpose, Leadership, Data, Delivery and Communication"><svg viewBox="0 0 300 300" aria-hidden="true"><circle className="scr-sie-ring" cx="150" cy="150" r="108" /><circle className="scr-sie-ring-inner" cx="150" cy="150" r="84" /><path className="scr-sie-arc" d="M150 42 A108 108 0 0 1 252 114 M245 202 A108 108 0 0 1 166 257 M46 180 A108 108 0 0 1 79 69" /><path className="scr-sie-ticks" d="M150 26V42 M35 102L49 108 M251 108L265 102 M68 243L80 231 M220 231L232 243" /></svg><strong className="scr-sie-centre">SOCIAL IMPACT<br /><em>EXCELLENCE</em></strong><span className="scr-sie-pillar scr-sie-purpose">PURPOSE</span><span className="scr-sie-pillar scr-sie-leadership">LEADERSHIP</span><span className="scr-sie-pillar scr-sie-data">DATA</span><span className="scr-sie-pillar scr-sie-delivery">DELIVERY</span><span className="scr-sie-pillar scr-sie-communication">COMMUNICATION</span></div><p className="scr-sie-statement">Impact reporting is easier when impact is managed throughout the year.</p><p className="scr-sie-support">SORP reporting is one output of stronger impact practice, not the whole job.</p></>;
-    if (saved.step === "find") return <><p className="scr-kicker">GOOD TO KNOW</p><h2>THE RIGHT REQUIREMENTS START WITH THE RIGHT ORGANISATION.</h2><p>Legal status, accounting basis and income can determine which SORP requirements apply. We check those first so the review starts from the right place.</p><ol className="scr-requirement-flow" aria-label="How we establish the relevant requirements"><li>Legal status</li><li>Accounting basis</li><li>SORP tier</li><li>Relevant requirements</li></ol></>;
+    if (saved.step === "find") return <><p className="scr-kicker">GOOD TO KNOW</p><h2>SORP 2026 HAS THREE REPORTING TIERS.</h2><div className="scr-tier-visual" role="group" aria-label="SORP 2026 reporting tiers"><div><span>TIER 1</span><strong>£500k or less</strong></div><div><span>TIER 2</span><strong>Over £500k to £15m</strong></div><div><span>TIER 3</span><strong>Over £15m</strong></div></div><p>Your tier affects which SORP reporting requirements apply.</p></>;
     if (saved.step === "confirmation") return <><p className="scr-kicker">IDENTITY CHECK</p><h2>Is this your charity?</h2><p>Check the legal name, charity number and official sources. The website is shown to confirm identity, not used in the published-report score.</p></>;
     if (saved.step === "homework") return <><p className="scr-kicker">WHAT HAPPENS NEXT</p><h2>A published starting point.</h2><p>We’ll assess the Trustees’ Annual Report and accounts against 15 areas mapped to SORP 2026. You’ll get a quick view before telling us where things stand today.</p></>;
     if (saved.step === "quick-generating") return <><p className="scr-kicker">HOW THIS WORKS</p><h2>Sources before scores.</h2><ol className="scr-rail-flow"><li>SORP 2026</li><li>15 assessment areas</li><li>Published evidence</li><li>Fixed score</li></ol><p>The result is a historical starting point, not a verdict on current practice.</p></>;
@@ -293,7 +320,7 @@ export function SorpCandidateReview() {
         {error && <div className="scr-error" role="alert">{error}</div>}
       </section></div>
     <footer className="scr-bottom">
-      <div><button type="button" className="scr-back" disabled={saved.step === "intro" || !!busy} onClick={back}>← BACK</button>{saved.step === "find" ? <button type="button" className="scr-forward" disabled={!saved.candidate || !!busy} onClick={() => go("confirmation")}>FORWARD →</button> : <span>{saved.candidate?.name || "Published-reporting review"}</span>}</div>
+      <div><button type="button" className="scr-back" disabled={!navigation.past.length || !!busy} onClick={back}>← BACK</button><button type="button" className="scr-forward" disabled={!navigation.future.length || !!busy} onClick={forward}>FORWARD →</button></div>
       <div>
         {saved.step === "intro" && <button onClick={() => go("find")}>CHECK MY CHARITY <span>→</span></button>}
         {saved.step === "find" && <button type="submit" form="scr-find-form" disabled={!!busy || !saved.query.trim() || !!saved.research || !!saved.candidate}>FIND MY CHARITY <span>→</span></button>}
