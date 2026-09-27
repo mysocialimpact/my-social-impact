@@ -33,10 +33,10 @@ function agendaCopy(finding: Finding) {
   const plain = (text: string) => text.replace(/\bcriterion\s+\d+\s*:?\s*/gi, "this reporting area: ").replace(/\bassessment item\b/gi, "reporting area").replace(/\bfiling index(?: page)?\b/gi, "available information").replace(/\bsource page only\b/gi, "available information").replace(/\s*[—–]\s*/g, ". ");
   let title = plain(finding.action).replace(/^Open the downloadable accounts and TAR PDF and check the section on /i, "Check your ").replace(/^Review the TAR PDF for /i, "Check ").replace(/^Check the TAR narrative for /i, "Check ").replace(/\.$/, "");
   if (/^Check (?:your )?purpose[s]? and activities/i.test(title)) title = "Check your purpose and activities";
-  if (/^Check the public benefit explanation/i.test(title)) title = "Explain your public benefit";
-  if (/^Check (?:for )?stated aims, objectives and longer.term direction/i.test(title)) title = "Set out your aims and direction";
+  if (/^Check the public benefit explanation/i.test(title)) title = "Check your public benefit reporting";
+  if (/^Check (?:for )?stated aims, objectives and longer.term direction/i.test(title)) title = "Check your aims and direction";
   const sentences = plain(finding.reason).match(/[^.!?]+[.!?]+(?:\s|$)|[^.!?]+$/g) || [plain(finding.reason)];
-  const reason = (sentences.find(sentence => !/only (?:an index of|lists) filings/i.test(sentence)) || sentences[0]).trim().replace(/^This page|^The public page/i, "The reviewed information");
+  const reason = (sentences.find(sentence => !/only (?:an index of|lists) filings/i.test(sentence)) || sentences[0]).trim().replace(/^This page|^The public page|^It\b/i, "The reviewed information").replace(/No objectives section is visible on the available information/i, "The reviewed information does not show an objectives section");
   return { title, reason };
 }
 const quickSteps = ["Reading your Trustees’ Annual Report", "Finding purposes, activities and public benefit", "Looking for achievements, outcomes and impact", "Checking future plans and learning", "Mapping evidence to SORP 2026", "Assessing the 15 areas", "Calculating your published-reporting score"];

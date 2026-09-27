@@ -376,3 +376,4 @@
 .scr-agenda-review{margin-top:25px;padding:18px 0 0 20px;border-left:2px solid var(--scr-green)}
 .scr-main .scr-agenda-review h2{color:var(--scr-green)}
 @media(max-width:760px){.scr-agenda-guide .scr-agenda-cycle{display:flex;gap:18px;border-left:0;margin:20px 0}.scr-agenda-guide .scr-agenda-cycle li{padding:0;font-size:25px}.scr-agenda-cycle li::before{display:none}.scr-agenda-cycle li span{display:inline-block;padding:0 0 0 15px;transform:rotate(-90deg);font-size:18px}.scr-guide .scr-agenda-guide .scr-agenda-principle{max-width:none;font-size:18px}.scr-agenda-hand{margin:18px 0}.scr-agenda-priorities li{grid-template-columns:40px minmax(0,1fr);gap:13px;padding:20px 0}.scr-agenda-number{font-size:33px}.scr-main .scr-agenda h1{font-size:36px}}
+.scr-guide .scr-agenda-guide>.scr-kicker{display:block}
