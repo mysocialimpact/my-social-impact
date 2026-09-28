@@ -3,7 +3,14 @@ export const PUBLIC_BUILD = "PUBLIC-3 · 26 SEPTEMBER 2026";
 export const STORAGE_KEY = "msi-sorp-public-evidence-v2";
 export type Candidate = { name: string; registrationNumber: string; locality: string; jurisdiction: string; entityType: string; latestIncome: number | null; financialYearEnd: string; accountingBasis: string; accountingBasisConfidence: string; website: string; officialUrl: string; summary: string; reportUrl: string; reportTitle: string; reportPeriod: string; publicReadiness: { impactReport: { found: boolean; title: string; url: string } }; sources: { label: string; url: string; detail: string; kind: string }[] };
 export type Finding = { fieldId: number; answer: "yes" | "mostly" | "partly" | "not_yet" | "not_sure"; confidence: string; finding: string; reason: string; excerpt: string; page: string; sourceUrl: string; action: string; requirement: string; classification: string; sources: { reference: string; page: number; text: string }[] };
-export type Lens = { lens: "tar" | "wider"; readable: boolean; score: number | null; confidence: string; title: string; period: string; sourceUrl: string; accountingBasis: string; findings: Finding[]; limitation: string; diagnostics?: { pageCount: number; pagesProcessed: number; extractedTextLength: number; allChunksIndexed: boolean; assessmentRetrievalSucceeded: boolean } };
+export type Lens = { lens: "tar" | "wider"; readable: boolean; score: number | null; confidence: string; title: string; period: string; sourceUrl: string; accountingBasis: string; findings: Finding[]; limitation: string; diagnostics?: { pageCount: number; pagesProcessed: number; textExtractionSuccess: boolean; extractedTextLength: number; allChunksIndexed: boolean; assessmentRetrievalSucceeded: boolean } };
+export function verifiedTar(lens: Lens | null | undefined): lens is Lens {
+  const reading = lens?.diagnostics;
+  return lens?.lens === "tar" && lens.readable && lens.score !== null && lens.findings.length === 15
+    && !!reading && reading.pageCount > 0 && reading.pagesProcessed === reading.pageCount
+    && reading.textExtractionSuccess && reading.extractedTextLength > 0
+    && reading.allChunksIndexed && reading.assessmentRetrievalSucceeded;
+}
 export type Intelligence = { effectiveVersion: string; layers: { name: string; label: string; version: number }[] };
 export type Report = { candidate: Candidate; tar: Lens; wider: Lens; createdAt: string; intelligence: Intelligence };
 export type Research = { status: string; candidates: Candidate[]; selected: Candidate | null; query: string };
