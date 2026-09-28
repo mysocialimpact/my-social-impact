@@ -244,6 +244,14 @@
 .scr-ending-finish{border-top:2px solid var(--scr-green);padding-top:28px}
 .scr-ending-finish>.scr-kicker{color:var(--scr-green)}
 .scr-ending-finish .scr-email-celebration strong{overflow-wrap:anywhere}
+.scr-ending-finish .scr-email-celebration p{margin:0;line-height:1.5}
+.scr-email-retry{margin:0 0 24px;padding:12px 0;border:0;border-bottom:1px solid var(--ink);background:none;color:var(--ink);font-size:12px;font-weight:800;cursor:pointer}
+.scr-done-note{max-width:800px;margin-top:clamp(42px,6vw,72px);padding-top:20px;border-top:1px solid var(--line)}
+.scr-done-note .scr-kicker{margin:0 0 16px;color:var(--orange)}
+.scr-done-note h2{margin:0 0 16px;font-size:clamp(27px,3vw,42px);line-height:1.05}
+.scr-done-note p{max-width:650px;margin:0 0 12px;line-height:1.65}
+.scr-done-note a{display:inline-block;overflow-wrap:anywhere;margin-top:4px;color:var(--ink);text-decoration:underline;text-underline-offset:4px}
+.scr-done-legal{max-width:800px;margin-top:clamp(42px,6vw,72px);padding-top:18px;border-top:1px solid var(--line);color:var(--muted);font-size:11px;line-height:1.5}
 .scr-score-comparison{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:15px;align-items:stretch;max-width:900px;margin:25px 0;border-block:1px solid var(--ink)}
 .scr-score-comparison>div{min-width:0;padding:20px 0}
 .scr-score-comparison>span{align-self:center;color:var(--muted);font-size:12px;font-weight:800}

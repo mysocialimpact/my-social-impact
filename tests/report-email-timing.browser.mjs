@@ -24,10 +24,12 @@ try {
   await page.goto(`${origin}/are-you-sorp-ready/review`);
   const rejected = await page.request.post(`${origin}/api/readiness/review-report-email`, { data: { deliveryStage: 'report-ready' } });
   assert.equal(rejected.status(), 409);
+  const legacy = await page.request.post(`${origin}/api/readiness/report-email`, { headers: { referer: `${origin}/are-you-sorp-ready/review` }, data: {} });
+  assert.equal(legacy.status(), 409);
   await page.evaluate(({ key }) => {
     const candidate = { name: 'MSI email timing verification (test)', registrationNumber: '', latestIncome: 100000, entityType: 'registered_charity', sources: [], publicReadiness: { impactReport: { found: false } } };
     const findings = Array.from({ length: 15 }, (_, index) => ({ fieldId: index + 1, answer: 'mostly', confidence: 'HIGH', finding: `Email timing test criterion ${index + 1}`, reason: 'Synthetic fixture used only to verify report email timing.', excerpt: 'Test evidence', page: '1', sourceUrl: '', action: 'Test priority', requirement: 'Test requirement', classification: 'SHOULD', sources: [] }));
-    const tar = { lens: 'tar', readable: true, score: 75, confidence: 'HIGH', title: 'Email timing test fixture', period: '2025', sourceUrl: '', accountingBasis: 'accruals', findings, limitation: 'Synthetic test; not a charity assessment.', diagnostics: { allChunksIndexed: true, assessmentRetrievalSucceeded: true } };
+    const tar = { lens: 'tar', readable: true, score: 75, confidence: 'HIGH', title: 'Email timing test fixture', period: '2025', sourceUrl: '', accountingBasis: 'accruals', findings, limitation: 'Synthetic test; not a charity assessment.', diagnostics: { pageCount: 2, pagesProcessed: 2, textExtractionSuccess: true, extractedTextLength: 2000, allChunksIndexed: true, assessmentRetrievalSucceeded: true } };
     const report = { candidate, tar, wider: { ...tar, lens: 'wider', score: null, findings: [], limitation: 'Not assessed' }, createdAt: new Date().toISOString(), intelligence: { effectiveVersion: 'test', layers: [] } };
     localStorage.setItem(key, JSON.stringify({ sessionId: crypto.randomUUID(), step: 'criterion', candidate, report, email: 'marcus@mysocialimpact.org', emailConfirm: 'marcus@mysocialimpact.org', name: 'Email timing verification', criterion: 14, corrections: Object.fromEntries(Array.from({ length: 14 }, (_, i) => [i + 1, { reviewed: true, context: '' }])), reportView: 0, emailSent: false }));
   }, { key });
@@ -38,6 +40,7 @@ try {
   await click('BUILD MY PERSONALISED REPORT');
   await page.getByRole('button', { name: 'VIEW MY PERSONALISED REPORT' }).waitFor({ timeout: 30000 });
   assert.equal(sends, 0);
+  assert.equal(await page.getByText('YOUR REPORT HAS BEEN EMAILED ✓').count(), 0);
   await click('VIEW MY PERSONALISED REPORT');
   assert.equal(sends, 0);
   await click('SEE MY PRIORITIES');
@@ -49,20 +52,22 @@ try {
   assert.equal(sends, 0);
   await click('SKIP TO FINISH');
   await page.getByRole('heading', { name: 'YOUR REVIEW IS COMPLETE.' }).waitFor();
+  await page.getByText('BUILT BY THE IDEAS SHED', { exact: true }).waitFor();
+  await page.getByRole('heading', { name: 'SORP 2026 FOR ACCOUNTANTS' }).waitFor();
   if (!live) {
-    await page.waitForFunction(() => document.body.textContent.includes('EMAIL DELIVERY IS NOT YET CONFIRMED'));
-    assert.equal(await page.getByText('YOUR PERSONALISED REPORT HAS BEEN EMAILED TO:').count(), 0);
+    await page.getByText('SENDING YOUR PERSONALISED REPORT…').waitFor();
+    assert.equal(await page.getByText('YOUR REPORT HAS BEEN EMAILED ✓').count(), 0);
     while (!releaseSend) await new Promise(resolve => setTimeout(resolve, 20));
     releaseSend();
   }
-  await page.getByText('YOUR PERSONALISED REPORT HAS BEEN EMAILED TO:').waitFor({ timeout: 60000 });
+  await page.getByText('YOUR REPORT HAS BEEN EMAILED ✓').waitFor({ timeout: 60000 });
   assert.equal(sends, 1);
   assert.equal(sentStage, 'done');
   await page.reload();
-  await page.getByText('YOUR PERSONALISED REPORT HAS BEEN EMAILED TO:').waitFor();
+  await page.getByText('YOUR REPORT HAS BEEN EMAILED ✓').waitFor();
   await click('← BACK');
   await click('FORWARD →');
-  await page.getByText('YOUR PERSONALISED REPORT HAS BEEN EMAILED TO:').waitFor();
+  await page.getByText('YOUR REPORT HAS BEEN EMAILED ✓').waitFor();
   assert.equal(sends, 1);
   console.log(JSON.stringify({ origin, live, earlySends: 0, finalSends: sends, sentStage, confirmationAfterSuccess: true, refreshAndHistoryDeduplicated: true, earlyEndpointRejected: true }));
 } finally { await browser.close(); }
