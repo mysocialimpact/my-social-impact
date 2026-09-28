@@ -194,6 +194,25 @@
 .scr-context-actions span{color:var(--scr-green);font-size:12px;font-weight:800}
 .scr-current-view{max-width:790px;margin:16px 0;padding:12px 16px;border-left:3px solid var(--scr-green);background:#f1f5ef}
 .scr-current-view p{margin:4px 0;font-size:13px}
+.scr-extra-screening{display:grid;gap:0;max-width:790px;margin:24px 0;border-top:1px solid var(--line)}
+.scr-page--additional .scr-main h1{max-width:830px;font-size:clamp(37px,4vw,54px);line-height:1.04}
+.scr-extra-screening fieldset{min-width:0;margin:0;padding:14px 0;border:0;border-bottom:1px solid var(--line)}
+.scr-extra-screening legend{padding:0;font-family:var(--font-serif);font-size:20px;line-height:1.25}
+.scr-extra-screening small{display:block;margin:5px 0 10px;color:var(--muted);font-size:12px;line-height:1.4}
+.scr-extra-screening fieldset>div{display:flex;flex-wrap:wrap;gap:6px}
+.scr-extra-screening button{min-height:36px;padding:6px 13px;background:transparent;font-size:11px;font-weight:800}
+.scr-extra-screening button[aria-pressed="true"]{background:var(--ink);color:var(--white)}
+.scr-extra-title{margin-top:-4px;color:var(--orange);font-size:12px!important;font-weight:800;letter-spacing:.06em;text-transform:uppercase}
+.scr-extra-explanation{display:grid;gap:0;max-width:790px;margin:25px 0;border-top:1px solid var(--line)}
+.scr-extra-explanation>div{padding:13px 0;border-bottom:1px solid var(--line)}
+.scr-extra-explanation strong{font-size:11px;letter-spacing:.06em}
+.scr-extra-explanation p{margin:5px 0 0;font-size:14px;line-height:1.5}
+.scr-extra-optional{color:var(--muted);font-size:10px;font-weight:500;letter-spacing:0;text-transform:none}
+.scr-extra-warning{max-width:790px;margin:15px 0!important;padding:12px 15px;border-left:3px solid var(--orange);background:#f8eee8;color:var(--ink)!important;font-size:14px!important;line-height:1.5}
+.scr-additional-status li.is-must-gap{border-left:3px solid var(--orange);padding-left:12px}
+.scr-additional-status li div{display:grid;gap:3px;min-width:0}
+.scr-additional-status li small{color:var(--muted);font-size:11px;line-height:1.4}
+.scr-additional-status li a{font-size:11px}
 .scr-report-vision h2{font-size:clamp(29px,3vw,42px);line-height:1.12;letter-spacing:-.035em}
 .scr-report-support{margin-top:48px;padding-top:20px;border-top:1px solid var(--line)}
 .scr-report-support h3{font-family:var(--font-sans);font-size:11px;letter-spacing:.08em}
