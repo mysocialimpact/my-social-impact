@@ -4,9 +4,11 @@ import test from "node:test";
 import {
   coreQuestions,
   eligibilityFor,
+  readinessAreas,
   readinessStages,
   relevantAdditionalChecks,
   scoreForAnswer,
+  scoreReadinessAreas,
   stageForQuestion,
   tierFromSetup,
   tierLabel,
@@ -67,6 +69,20 @@ test("the main score always uses the same 15 core answers", () => {
   assert.equal(calculate(allNotSure), 0);
   assert.equal(calculate(allClear), 100);
   assert.equal(coreQuestions.length, 15);
+});
+
+test("four deterministic area scores use the existing 15 answers without changing the overall score", () => {
+  assert.deepEqual(readinessAreas.map(({ title, label, first, last }) => [title, label, first, last]), [
+    ["PURPOSE", "Objectives & activities", 1, 4],
+    ["PERFORMANCE", "Achievements & performance", 5, 10],
+    ["LEARNING", "Plans for future periods", 11, 13],
+    ["REPORTING", "Trustees’ Annual Report readiness", 14, 15],
+  ]);
+  const answerBySection = { objectives: "yes", achievements: "mostly", learning: "partly", reporting: "not_yet" };
+  const answers = Object.fromEntries(coreQuestions.map(question => [question.id, answerBySection[question.section]]));
+  assert.deepEqual(scoreReadinessAreas(answers).map(area => area.score), [100, 75, 50, 25]);
+  assert.equal(Math.round(coreQuestions.reduce((total, question) => total + scoreForAnswer(answers[question.id]), 0) / 60 * 100), 70);
+  assert.equal(relevantAdditionalChecks(baseSetup).length, 0);
 });
 
 test("the Snapshot and conversation share the eight visible readiness stages", () => {

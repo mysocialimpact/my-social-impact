@@ -54,6 +54,21 @@ export const sectionLabels = {
   reporting: "Trustees’ Annual Report readiness",
 } as const;
 
+export const readinessAreas = [
+  { section: "objectives", title: "PURPOSE", label: sectionLabels.objectives, first: 1, last: 4 },
+  { section: "achievements", title: "PERFORMANCE", label: sectionLabels.achievements, first: 5, last: 10 },
+  { section: "learning", title: "LEARNING", label: sectionLabels.learning, first: 11, last: 13 },
+  { section: "reporting", title: "REPORTING", label: sectionLabels.reporting, first: 14, last: 15 },
+] as const;
+
+export function scoreReadinessAreas(answers: Readonly<Record<number, AnswerValue | undefined>>) {
+  return readinessAreas.map((area) => {
+    const questions = coreQuestions.filter((question) => question.section === area.section);
+    const points = questions.reduce((total, question) => total + scoreForAnswer(answers[question.id]), 0);
+    return { ...area, score: Math.round(points / (questions.length * answerOptions[0].score) * 100) };
+  });
+}
+
 export const readinessStages = [
   "Your charity & SORP context",
   "Quick Readiness Review",

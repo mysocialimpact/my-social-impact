@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Footer, RevealObserver, SiteHeader } from "./site-shell";
+import { readinessAreas } from "./sorp-questionnaire";
 
 const conversationUrl = "/are-you-sorp-ready/review?entry=intro";
 
@@ -23,13 +24,7 @@ const readinessLanguage = [
   ["Judgement", "It depends.", "Our additional MSI label for areas where context, evidence, materiality and proportionality genuinely matter."],
 ] as const;
 
-const readinessAreas = [
-  ["Purpose", "82"],
-  ["Evidence", "61"],
-  ["Impact", "72"],
-  ["Learning", "54"],
-  ["Reporting", "69"],
-] as const;
+const illustrativeAreaScores = [82, 61, 72, 54] as const;
 
 function SorpNavigation() {
   const [active, setActive] = useState("why-now");
@@ -191,8 +186,9 @@ export function SorpReadyPage() {
         <section className="sorp-result sorp-section" id="result">
           <SectionHeading number="08" eyebrow="What your free report shows" title={<>A clear picture.<br />Useful next steps.</>} copy={<p>Your personalised report brings together the published starting point and your current self-reported view, keeping the distinction clear. The preview below is illustrative.</p>} />
           <div className="sorp-result-card" data-reveal>
-            <header><div><p>Your SORP 2026</p><h3>Impact readiness</h3></div><strong>68 <span>/ 100</span></strong></header>
-            <div className="sorp-result-bars">{readinessAreas.map(([name, score]) => <div key={name}><span>{name}</span><i><b style={{ width: `${score}%` }} /></i><strong>{score}</strong></div>)}</div>
+            <header><div><p>Your SORP 2026</p><h3>Current readiness</h3></div><strong>68 <span>/ 100</span></strong></header>
+            <div className="sorp-result-bars">{readinessAreas.map((area, index) => <div key={area.section}><span><strong>{area.title}</strong><small>{area.label}</small></span><i><b style={{ width: `${illustrativeAreaScores[index]}%` }} /></i><strong>{illustrativeAreaScores[index]}</strong></div>)}</div>
+            <div className="sorp-result-additional"><strong>ADDITIONAL SORP CHECKS</strong><span>Separate status checks · not a fifth scored area</span></div>
             <div className="sorp-result-findings">{["What looks strong", "What needs attention", "MUST requirements to address", "SHOULD opportunities", "MAY options", "Areas requiring judgement"].map((item, index) => <span key={item}><b>0{index + 1}</b>{item}</span>)}</div>
             <small>Illustrative front-end preview · not an assessment result</small>
           </div>
