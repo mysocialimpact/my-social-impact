@@ -377,3 +377,17 @@
 .scr-main .scr-agenda-review h2{color:var(--scr-green)}
 @media(max-width:760px){.scr-agenda-guide .scr-agenda-cycle{display:flex;gap:18px;border-left:0;margin:20px 0}.scr-agenda-guide .scr-agenda-cycle li{padding:0;font-size:25px}.scr-agenda-cycle li::before{display:none}.scr-agenda-cycle li span{display:inline-block;padding:0 0 0 15px;transform:rotate(-90deg);font-size:18px}.scr-guide .scr-agenda-guide .scr-agenda-principle{max-width:none;font-size:18px}.scr-agenda-hand{margin:18px 0}.scr-agenda-priorities li{grid-template-columns:40px minmax(0,1fr);gap:13px;padding:20px 0}.scr-agenda-number{font-size:33px}.scr-main .scr-agenda h1{font-size:36px}}
 .scr-guide .scr-agenda-guide>.scr-kicker{display:block}
+.scr-page--intro .scr-intro-vision>.scr-kicker{display:block;color:var(--orange);margin:8px 0 23px}
+.scr-page--intro .scr-intro-vision h2{max-width:390px;margin:0;font-size:clamp(30px,3.1vw,43px);line-height:1.14;letter-spacing:-.045em;text-wrap:pretty}
+.scr-vision-motion{width:100%;max-width:390px;aspect-ratio:2;margin:25px 0 22px;overflow:hidden}
+.scr-vision-motion svg{display:block;width:100%;height:100%;overflow:visible}
+.scr-vision-contour{stroke:var(--ink);stroke-width:1;opacity:.22}
+.scr-vision-contour--soft{opacity:.09}
+.scr-vision-current{stroke:var(--orange);stroke-width:1.8;stroke-linecap:round;stroke-dasharray:12 88;animation:scr-vision-flow 18s linear infinite}
+.scr-vision-node{fill:var(--paper);stroke:var(--ink);stroke-width:1;opacity:.6}
+.scr-vision-end{fill:var(--orange)}
+.scr-vision-halo{fill:var(--orange);opacity:.08;transform-box:fill-box;transform-origin:center;animation:scr-vision-breathe 8s ease-in-out infinite}
+.scr-page--intro .scr-guide .scr-intro-vision-context{display:block;max-width:365px;margin:0;font-size:14px;line-height:1.7}
+@keyframes scr-vision-flow{from{stroke-dashoffset:0}to{stroke-dashoffset:-100}}
+@keyframes scr-vision-breathe{0%,100%{transform:scale(.8);opacity:.06}50%{transform:scale(1.15);opacity:.12}}
+@media(prefers-reduced-motion:reduce){.scr-vision-current,.scr-vision-halo{animation:none}}
