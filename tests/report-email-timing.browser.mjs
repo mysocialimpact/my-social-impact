@@ -8,12 +8,14 @@ const browser = await chromium.launch({ headless: true, channel: 'chrome' });
 try {
   const page = await browser.newPage();
   let sends = 0;
+  let feedbackEmails = 0;
   let sentStage;
   page.on('request', request => {
     if (request.method() === 'POST' && /\/api\/readiness\/(review-)?report-email$/.test(request.url())) {
       sends++;
       sentStage = request.postDataJSON().deliveryStage;
     }
+    if (request.method() === 'POST' && /\/api\/published-review$/.test(request.url()) && request.postDataJSON()?.operation === 'feedback') feedbackEmails++;
   });
   await page.route('**/api/growth-event', route => route.fulfill({ json: { ok: true } }));
   let releaseSend;
@@ -31,10 +33,21 @@ try {
     const findings = Array.from({ length: 15 }, (_, index) => ({ fieldId: index + 1, answer: 'mostly', confidence: 'HIGH', finding: `Email timing test criterion ${index + 1}`, reason: 'Synthetic fixture used only to verify report email timing.', excerpt: 'Test evidence', page: '1', sourceUrl: '', action: 'Test priority', requirement: 'Test requirement', classification: 'SHOULD', sources: [] }));
     const tar = { lens: 'tar', readable: true, score: 75, confidence: 'HIGH', title: 'Email timing test fixture', period: '2025', sourceUrl: '', accountingBasis: 'accruals', findings, limitation: 'Synthetic test; not a charity assessment.', diagnostics: { pageCount: 2, pagesProcessed: 2, textExtractionSuccess: true, extractedTextLength: 2000, allChunksIndexed: true, assessmentRetrievalSucceeded: true } };
     const report = { candidate, tar, wider: { ...tar, lens: 'wider', score: null, findings: [], limitation: 'Not assessed' }, createdAt: new Date().toISOString(), intelligence: { effectiveVersion: 'test', layers: [] } };
-    localStorage.setItem(key, JSON.stringify({ sessionId: crypto.randomUUID(), step: 'criterion', candidate, report, email: 'marcus@mysocialimpact.org', emailConfirm: 'marcus@mysocialimpact.org', name: 'Email timing verification', criterion: 14, corrections: Object.fromEntries(Array.from({ length: 14 }, (_, i) => [i + 1, { reviewed: true, context: '' }])), reportView: 0, emailSent: false }));
+    const screened = ['volunteers', 'grant_making', 'social_investment', 'fundraising', 'audited_fundraising', 'investments', 'group', 'material_deficit', 'designated_funds', 'going_concern', 'pension', 'legacy'];
+    localStorage.setItem(key, JSON.stringify({ sessionId: crypto.randomUUID(), step: 'intro', candidate, report, email: 'marcus@mysocialimpact.org', emailConfirm: 'marcus@mysocialimpact.org', name: 'Email timing verification', criterion: 14, corrections: Object.fromEntries(Array.from({ length: 14 }, (_, i) => [i + 1, { reviewed: true, context: '' }])), additionalScreening: Object.fromEntries(screened.map(id => [id, 'no'])), reportView: 0, emailSent: false }));
   }, { key });
-  await page.reload();
+  for (const step of ['intro', 'homework', 'quick', 'quick-feedback', 'method', 'criterion']) {
+    await page.evaluate(({ key, step }) => { const review = JSON.parse(localStorage.getItem(key)); review.step = step; localStorage.setItem(key, JSON.stringify(review)); }, { key, step });
+    await page.reload();
+    if (step === 'quick-feedback') {
+      await page.getByRole('button', { name: '5 out of 5' }).click();
+      assert.equal(await page.evaluate(key => JSON.parse(localStorage.getItem(key)).quickRating, key), 5);
+    }
+    assert.equal(sends, 0, `No report email before final page: ${step}`);
+    assert.equal(feedbackEmails, 0, `No feedback email before final page: ${step}`);
+  }
   const click = name => page.getByRole('button', { name, exact: false }).click();
+  await click('REVIEW ADDITIONAL SORP CHECKS');
   await click('COMPLETE MY CURRENT READINESS');
   assert.equal(sends, 0);
   await click('BUILD MY PERSONALISED REPORT');
@@ -45,6 +58,8 @@ try {
   assert.equal(sends, 0);
   await click('SEE MY PRIORITIES');
   await click('FINISH MY REVIEW');
+  await page.getByRole('button', { name: '4 out of 5' }).click();
+  assert.equal(feedbackEmails, 0);
   await click('CONTINUE');
   await click('NOT NOW');
   await click('YES — TELL ME A LITTLE MORE');
@@ -69,5 +84,5 @@ try {
   await click('FORWARD →');
   await page.getByText('YOUR REPORT HAS BEEN EMAILED ✓').waitFor();
   assert.equal(sends, 1);
-  console.log(JSON.stringify({ origin, live, earlySends: 0, finalSends: sends, sentStage, confirmationAfterSuccess: true, refreshAndHistoryDeduplicated: true, earlyEndpointRejected: true }));
+  console.log(JSON.stringify({ origin, live, earlySends: 0, feedbackEmails, finalSends: sends, sentStage, confirmationAfterSuccess: true, refreshAndHistoryDeduplicated: true, earlyEndpointRejected: true }));
 } finally { await browser.close(); }

@@ -214,9 +214,10 @@ export function SorpCandidateReview() {
   function event(type: string, extra = {}) { void trackSorpEvent(saved.sessionId, type, { organisation: saved.candidate?.name, readinessScore: saved.report?.tar.score ?? undefined, ...extra }, false); }
   async function saveFeedback(phase: "quick" | "final", rating: number, comment: string) {
     if (!rating && !comment.trim()) return;
-    setFeedbackStatus(current => ({ ...current, [phase]: "saving" }));
-    try { await post("/api/published-review", { operation: "feedback", sessionId: saved.sessionId, organisation: saved.candidate?.name, rating, comment, phase }); setFeedbackStatus(current => ({ ...current, [phase]: "saved" })); event(phase === "quick" ? "quick_review_feedback_submitted" : "full_review_feedback_submitted", { rating }); }
-    catch { setFeedbackStatus(current => ({ ...current, [phase]: "error" })); }
+    // Feedback is already retained with the review in local state. Do not
+    // invoke the shared published-review email operation before the final page.
+    setFeedbackStatus(current => ({ ...current, [phase]: "saved" }));
+    event(phase === "quick" ? "quick_review_feedback_submitted" : "full_review_feedback_submitted", { rating });
   }
   function go(step: Step) { setError(""); setSaved(current => ({ ...current, step })); }
   const report = saved.report;
