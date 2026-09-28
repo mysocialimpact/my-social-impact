@@ -426,7 +426,7 @@ export function SorpCandidateReview() {
   }
 
   if (!loaded) return <main className="sorp-conversation-page scr-page"><p className="scr-loading">Opening your SORP review…</p></main>;
-  return <main className={`sorp-conversation-page scr-page${saved.step === "benefits" ? " scr-page--benefits" : saved.step === "intro" ? " scr-page--intro" : saved.step === "find" ? " scr-page--find" : saved.step === "quick" ? " scr-page--quick" : saved.step === "quick-feedback" ? " scr-page--quick-feedback" : saved.step === "method" ? " scr-page--method" : ""}`}>
+  return <main className={`sorp-conversation-page scr-page${saved.step === "benefits" ? " scr-page--benefits" : saved.step === "intro" ? " scr-page--intro" : saved.step === "find" ? " scr-page--find" : saved.step === "quick" ? " scr-page--quick" : saved.step === "quick-feedback" ? " scr-page--quick-feedback" : saved.step === "method" ? " scr-page--method" : saved.step === "help" ? " scr-page--help" : ""}`}>
     <header className="sorp-workspace-brand"><Link href="/are-you-sorp-ready"><span>My Social Impact</span><strong>Are You SORP Ready?</strong></Link><div className="sorp-workspace-brand-meta"><p>SORP is the requirement.<br /><strong>Better impact is the opportunity.</strong></p></div></header>
     <div className="scr-top">{saved.step !== "intro" && saved.step !== "find" && <div><small>{BUILD}</small><h2>{saved.step === "done" ? "You’re done" : phases[phase]}</h2></div>}<nav aria-label="Review progress">{phases.map((label, index) => <span key={label} className={saved.step === "done" || index < phase ? "is-complete" : index === phase ? "is-current" : ""}><i>{saved.step === "done" || index < phase ? "✓" : index + 1}</i><b>{label}</b></span>)}</nav></div>
     <div key={["intro", "benefits", "find"].includes(saved.step) ? saved.step : "assessment"} className={`scr-workspace${["intro", "benefits", "find"].includes(saved.step) ? " scr-opening-enter" : ""}`}><aside className="scr-guide">{guide()}</aside>
@@ -505,7 +505,11 @@ export function SorpCandidateReview() {
         {saved.step === "email-ready" && <button onClick={() => go("final-feedback")}>CONTINUE <span>→</span></button>}
         {saved.step === "final-feedback" && <button onClick={() => { go("support"); event("support_ask_viewed"); }}>CONTINUE <span>→</span></button>}
         {saved.step === "support" && (saved.supportPaid ? <button onClick={() => go("before-go")}>SEE WHAT COMES NEXT <span>→</span></button> : <><button className="is-secondary" onClick={() => { setCheckout(null); go("before-go"); }}>NOT NOW <span>→</span></button>{!checkout && <button disabled={!!busy || !supportPence(support, custom)} onClick={() => void contribute()}>{busy === "support" ? "OPENING PAYMENT…" : "CONTRIBUTE"}<span>→</span></button>}</>)}
-        {["next", "help"].includes(saved.step) && <button className="is-secondary" onClick={() => go("done")}>SKIP TO FINISH <span>→</span></button>}
+        {saved.step === "next" && <button className="is-secondary" onClick={() => go("done")}>SKIP TO FINISH <span>→</span></button>}
+        {saved.step === "help" && <div className="scr-booking-actions">
+          {[["10 MIN — FREE", "BOOK FREE CALL"], ["30 MIN — £50", "BOOK £50 REVIEW"], ["60 MIN — £100", "BOOK £100 REVIEW"]].map(([label, action], index) => <button type="button" className="scr-booking-choice" key={label} onClick={() => document.querySelectorAll<HTMLButtonElement>(".sorp-meetings-options .sorp-meeting-book")[index]?.click()}><small>{label}</small><strong>{action} →</strong></button>)}
+          <button type="button" className="is-secondary scr-booking-skip" onClick={() => go("done")}>SKIP TO FINISH →</button>
+        </div>}
         {saved.step === "before-go" && <button onClick={() => go("next")}>YES — TELL ME A LITTLE MORE <span>→</span></button>}
         {saved.step === "next" && <button onClick={() => go("help")}>HOW CAN YOU HELP US? <span>→</span></button>}
         {saved.step === "non-sorp" && <button onClick={() => go("find")}>SEARCH ANOTHER CHARITY <span>→</span></button>}
