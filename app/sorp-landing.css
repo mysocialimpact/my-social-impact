@@ -69,11 +69,55 @@
 .sorp-ready-page .sorp-final { background: #fff; border-top: 1px solid var(--line); }
 .sorp-ready-page .sorp-final h2 { font-size: clamp(3rem, 5.8vw, 7rem); line-height: 1.03; }
 .sorp-ready-page .sorp-final h2 em { color: var(--sorp-orange); }
+@media (max-width: 1250px) {
+  .sorp-ready-page .sorp-ready-nav > div { display: flex; }
+  .sorp-ready-page .sorp-ready-nav a { flex: 0 0 auto; min-width: max-content; }
+  .sorp-ready-page .sorp-section-heading,
+  .sorp-ready-page .sorp-date-statement { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .sorp-ready-page .sorp-section-label,
+  .sorp-ready-page .sorp-date-statement > span { grid-column: 1 / -1; }
+  .sorp-ready-page .sorp-ready-scope { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .sorp-ready-page .sorp-ready-scope strong { grid-column: 1 / -1; }
+  .sorp-ready-page .sorp-landing-journey,
+  .sorp-ready-page .sorp-accounts-grid,
+  .sorp-ready-page .sorp-tiers > div,
+  .sorp-ready-page .sorp-review-pricing,
+  .sorp-ready-page .sorp-next-grid,
+  .sorp-ready-page .sorp-judgement-factors { grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); }
+  .sorp-ready-page .sorp-result-findings { grid-template-columns: repeat(auto-fit, minmax(min(100%, 330px), 1fr)); }
+  .sorp-ready-page .sorp-language-grid,
+  .sorp-ready-page .sorp-path-stages,
+  .sorp-ready-page .sorp-review-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .sorp-ready-page .sorp-review-intro { grid-column: 1 / -1; }
+}
 @media (max-width: 1000px) {
   .sorp-ready-page .sorp-section-heading { grid-template-columns: 1fr 1fr; }
   .sorp-ready-page .sorp-section-label { grid-column: 1 / -1; }
   .sorp-ready-page .sorp-date-statement { grid-template-columns: 1fr 1fr; }
   .sorp-ready-page .sorp-date-statement > span { grid-column: 1 / -1; }
+}
+@media (max-width: 960px) {
+  .sorp-ready-page .sorp-ready-hero-grid,
+  .sorp-ready-page .sorp-section-heading,
+  .sorp-ready-page .sorp-date-statement,
+  .sorp-ready-page .sorp-ready-scope,
+  .sorp-ready-page .sorp-jurisdiction-grid,
+  .sorp-ready-page .sorp-applicability-grid,
+  .sorp-ready-page .sorp-opportunity-grid,
+  .sorp-ready-page .sorp-path-stages,
+  .sorp-ready-page .sorp-continue,
+  .sorp-ready-page .sorp-review-grid,
+  .sorp-ready-page .sorp-review-scope,
+  .sorp-ready-page .sorp-booking-state,
+  .sorp-ready-page .sorp-final > div { grid-template-columns: minmax(0, 1fr); }
+  .sorp-ready-page .sorp-section-copy,
+  .sorp-ready-page .sorp-date-statement > span,
+  .sorp-ready-page .sorp-ready-scope strong,
+  .sorp-ready-page .sorp-review-intro { grid-column: auto; }
+  .sorp-ready-page .sorp-result-card > header { align-items: flex-start; flex-direction: column; }
+}
+@media (max-width: 760px) {
+  .sorp-ready-page .sorp-language-grid { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 700px) {
   .sorp-ready-page .sorp-ready-hero-grid,
