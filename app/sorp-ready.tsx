@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Footer, RevealObserver, SiteHeader } from "./site-shell";
 
-const conversationUrl = "/are-you-sorp-ready/conversation";
+const conversationUrl = "/are-you-sorp-ready/review";
 
 const sectionLinks = [
   ["why-now", "Why now"],

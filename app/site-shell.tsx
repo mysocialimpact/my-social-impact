@@ -128,7 +128,7 @@ const products: Product[] = [
     lead: "A completely free way for charities and advisers to understand SORP 2026 impact readiness.",
     copy: "Ask questions, explore what applies to your situation and receive a practical readiness report at the end.",
     href: "/are-you-sorp-ready",
-    secondaryHref: "/are-you-sorp-ready/conversation",
+    secondaryHref: "/are-you-sorp-ready/review",
     secondaryLabel: "Start your free SORP conversation",
   },
   {

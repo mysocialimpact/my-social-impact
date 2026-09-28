@@ -41,7 +41,7 @@ export default function AssessmentsPage() {
               <p>Ask SORP questions, understand what applies to your situation and receive a practical readiness report at the end. No card and no surprise paywall.</p>
             </div>
             <div className="assessment-choice-actions">
-              <Link className="is-primary" href="/are-you-sorp-ready/conversation">Start your free SORP conversation <span>→</span></Link>
+              <Link className="is-primary" href="/are-you-sorp-ready/review">Start your free SORP conversation <span>→</span></Link>
               <Link href="/are-you-sorp-ready">Explore SORP Readiness <span>→</span></Link>
             </div>
           </article>
