@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Footer, RevealObserver, SiteHeader } from "./site-shell";
 
-const conversationUrl = "/are-you-sorp-ready/review";
+const conversationUrl = "/are-you-sorp-ready/review?entry=intro";
 
 const sectionLinks = [
   ["why-now", "Why now"],
@@ -86,16 +86,16 @@ export function SorpReadyPage() {
           </div>
           <div className="sorp-ready-hero-grid">
             <div className="sorp-ready-title" data-reveal>
-              <span className="sorp-ready-number">02</span>
+              <span className="sorp-ready-number">A clearer starting point</span>
               <h1>Are you<br />SORP ready?</h1>
             </div>
             <div className="sorp-ready-intro" data-reveal>
-              <p className="sorp-ready-position">A completely free SORP 2026 readiness tool.</p>
-              <p className="sorp-ready-lead">Talk through what SORP 2026 means for your charity—and receive a practical readiness report at the end.</p>
-              <p>Ask questions in your own words. My Social Impact Intelligence will help make the requirements relevant to your situation, whether you work for a charity or advise one.</p>
-              <div className="sorp-ready-excitement"><strong>No payment. No surprise paywall.</strong><span>The guided conversation and your readiness report are completely free. You only pay if you later choose an optional human review.</span></div>
+              <p className="sorp-ready-position">A free SORP 2026 readiness review.</p>
+              <p className="sorp-ready-lead">Know where your reporting stands.<br />See what comes next.</p>
+              <p>Start with your latest published Trustees’ Annual Report and accounts. Add what has changed today. Receive a personalised report with strengths, gaps and priorities.</p>
+              <div className="sorp-ready-excitement"><strong>No card. No surprise paywall.</strong><span>Your starting point, current-readiness review and personalised report are free. Professional My Social Impact support is optional afterwards.</span></div>
               <div className="sorp-ready-actions">
-                <Link className="sorp-ready-action is-primary" href={conversationUrl}>Start your free readiness conversation <span>→</span></Link>
+                <Link className="sorp-ready-action is-primary" href={conversationUrl}>Start the free review <span>→</span></Link>
               </div>
             </div>
           </div>
@@ -119,19 +119,17 @@ export function SorpReadyPage() {
         </section>
 
         <section className="sorp-free sorp-section">
-          <SectionHeading number="02" eyebrow="Specialist guidance. Relevant answers." title={<>A conversation shaped<br />around your organisation.</>} copy={<><p>You’ll talk to My Social Impact Intelligence: specialist guidance built from MSI’s SORP and social impact expertise.</p><p>Ask whatever you need. It can explain requirements in plain English, explore what they mean for your situation and help identify what looks strong, missing or uncertain.</p><p><strong>Where there is a clear answer, it will give one. Where human judgement matters, it will say so.</strong></p></>} />
+          <SectionHeading number="02" eyebrow="Specialist guidance. Relevant answers." title={<>A review shaped<br />around your organisation.</>} copy={<><p>My Social Impact Intelligence brings together SORP 2026 and your charity’s published evidence.</p><p>The Quick Review gives a historical starting point. Your current answers and comments add what the published information cannot tell us.</p><p><strong>Where there is a clear answer, we make it clear. Where human judgement matters, we say so.</strong></p></>} />
         </section>
 
         <section className="sorp-assessment sorp-section" id="assessment">
-          <SectionHeading number="03" eyebrow="One place to begin" title={<>One free assessment.<br />Answer your way.</>} />
-          <div className="sorp-route-grid is-single">
-            <article className="sorp-route is-conversation is-primary-route" data-reveal>
-              <div className="sorp-route-top"><span>Free guided assessment</span><strong>Ask questions<br />as you go</strong></div>
-              <h3>Talk it<br />through</h3>
-              <p>Explore what SORP means for your organisation, ask whatever you need and receive a free readiness report at the end.</p>
-              <Link href={conversationUrl}>Start your free conversation <span>→</span></Link>
-            </article>
-          </div>
+          <SectionHeading number="03" eyebrow="What you’ll get — all free" title={<>Your evidence.<br />Your current view.<br />Your next steps.</>} />
+          <ol className="sorp-landing-journey">{[
+            ["Your SORP starting point", "We review your latest published Trustees’ Annual Report and accounts against SORP 2026 to give you a historical published starting point."],
+            ["Your current readiness", "Review the assessment and add what has changed: your current answers, comments and knowledge."],
+            ["Your personalised report", "Bring the published starting point together with your current self-reported position to see strengths, gaps and priorities."],
+          ].map(([title, copy], index) => <li key={title} data-reveal><span>0{index + 1}</span><h3>{title}</h3><p>{copy}</p></li>)}</ol>
+          <div className="sorp-landing-journey-end"><p>Use the results yourself, or choose an optional professional review with My Social Impact afterwards.</p><Link href={conversationUrl}>Start the free review <span>→</span></Link></div>
 
         </section>
 
@@ -167,7 +165,7 @@ export function SorpReadyPage() {
         </section>
 
         <section className="sorp-opportunity sorp-section">
-          <SectionHeading number="06" eyebrow="Beyond compliance" title={<>We’re not really excited about compliance.<br />We’re excited about impact.</>} copy={<><p>SORP 2026 gives charities another reason to understand what they are trying to change, collect useful evidence, review performance, learn, improve and explain their impact credibly.</p><p>The point is not simply to write a better annual report. It is to make impact part of how the charity is actually managed.</p></>} />
+          <SectionHeading number="06" eyebrow="Beyond compliance" title={<>SORP is the requirement.<br /><em>Better impact is the opportunity.</em></>} copy={<><p>SORP 2026 raises the bar for impact reporting. It gives charities another reason to understand what they are trying to change, collect useful evidence, review performance, learn, improve and explain their impact credibly.</p><p>The point is not simply to write a better annual report. It is to make impact part of how the charity is actually managed.</p></>} />
           <div className="sorp-opportunity-grid">
             <div data-reveal><p>Charities increasingly need to explain:</p>{["What they are trying to change", "What they actually did", "What happened", "What evidence supports that conclusion", "What they learned", "What they will do differently"].map((item, index) => <span key={item}><b>0{index + 1}</b>{item}</span>)}</div>
             <div data-reveal><p>This increasingly matters to:</p>{["Trustees", "Funders", "Commissioners", "Donors", "Partners"].map((item) => <span key={item}>{item}</span>)}</div>
@@ -191,28 +189,27 @@ export function SorpReadyPage() {
         </section>
 
         <section className="sorp-result sorp-section" id="result">
-          <SectionHeading number="08" eyebrow="What your free report shows" title={<>A clear picture.<br />Useful next steps.</>} copy={<p>This is an illustrative example. Your own free report is created at the end of the guided assessment.</p>} />
+          <SectionHeading number="08" eyebrow="What your free report shows" title={<>A clear picture.<br />Useful next steps.</>} copy={<p>Your personalised report brings together the published starting point and your current self-reported view, keeping the distinction clear. The preview below is illustrative.</p>} />
           <div className="sorp-result-card" data-reveal>
             <header><div><p>Your SORP 2026</p><h3>Impact readiness</h3></div><strong>68 <span>/ 100</span></strong></header>
             <div className="sorp-result-bars">{readinessAreas.map(([name, score]) => <div key={name}><span>{name}</span><i><b style={{ width: `${score}%` }} /></i><strong>{score}</strong></div>)}</div>
             <div className="sorp-result-findings">{["What looks strong", "What needs attention", "MUST requirements to address", "SHOULD opportunities", "MAY options", "Areas requiring judgement"].map((item, index) => <span key={item}><b>0{index + 1}</b>{item}</span>)}</div>
             <small>Illustrative front-end preview · not an assessment result</small>
           </div>
-          <div className="sorp-continue" data-reveal><div><p>Want to explore your result?</p><h3>Continue with the SORP assistant.</h3><span>Ask questions and add context wherever it would help.</span></div><Link href={conversationUrl}>Start my free SORP readiness check <span>→</span></Link></div>
+          <div className="sorp-continue" data-reveal><div><p>A starting point you can use</p><h3>Turn your review into priorities.</h3><span>Use your report with colleagues or trustees, or as the starting point for a professional review.</span></div><Link href={conversationUrl}>Start the free review <span>→</span></Link></div>
         </section>
 
         <section className="sorp-review sorp-section" id="review">
-          <div className="sorp-review-heading" data-reveal><p><span>09</span>Optional paid human review</p><h2>SORP 2026<br />Impact Readiness Review</h2><div><strong>60</strong><span>minutes</span></div></div>
-          <p className="sorp-review-free-line" data-reveal><strong>Your guided assessment and readiness report are completely free.</strong> You pay only if you choose to have Marcus and the MSI team review the result with you afterwards.</p>
-          <p className="sorp-review-session" data-reveal>60-minute SORP 2026 Impact Readiness Review with My Social Impact.</p>
-          <div className="sorp-review-pricing" data-reveal>{[["Small charity", "Up to £500,000 income", "£50"], ["Medium charity", "£500,000–£15 million income", "£100"], ["Large charity", "Over £15 million income", "£200"]].map(([size, income, price]) => <article key={size}><span>{size}</span><p>{income}</p><strong>{price}</strong></article>)}</div>
+          <div className="sorp-review-heading" data-reveal><p><span>09</span>Optional afterwards</p><h2>Want to talk<br />it through?</h2></div>
+          <p className="sorp-review-free-line" data-reveal><strong>Your review and personalised report are completely free.</strong> Professional My Social Impact support is a separate, optional next step.</p>
+          <div className="sorp-review-pricing" data-reveal>{[["Quick question / fit check", "10 minutes · no pre-read", "Free"], ["SORP Readiness Review", "30 minutes · preparation included", "£50"], ["SORP + Wider Evidence Review", "60 minutes · preparation and one wider-evidence source", "£100"]].map(([name, detail, price]) => <article key={name}><span>{name}</span><p>{detail}</p><strong>{price}</strong></article>)}</div>
           <div className="sorp-review-grid">
-            <div className="sorp-review-intro" data-reveal><p>We review your readiness result, discuss areas requiring judgement and consider your existing reporting where supplied.</p><p>You can optionally send your latest Trustees’ Annual Report and/or latest Impact Report. If you do not have either yet, that is completely fine.</p></div>
+            <div className="sorp-review-intro" data-reveal><p>For a paid review, we read your completed assessment and comments beforehand, then work through the gaps, judgement areas and priorities with you.</p><p>The £100 session also includes a light-touch review of one Impact Report or key wider-evidence source supplied before the meeting.</p></div>
             <div className="sorp-review-list" data-reveal><h3>During the session we will:</h3>{["Review your readiness result", "Consider your existing reporting", "Discuss what looks strong", "Identify areas that may need attention", "Talk through genuine judgement calls", "Identify practical next steps", "Explore where going beyond minimum compliance may strengthen the charity"].map((item, index) => <p key={item}><span>0{index + 1}</span>{item}</p>)}</div>
-            <div className="sorp-review-output" data-reveal><h3>After the meeting, you receive a short written summary covering:</h3>{["What looks strong", "What needs attention", "Areas requiring judgement", "Your three priority actions", "Opportunities beyond compliance"].map((item) => <span key={item}>{item}</span>)}</div>
+            <div className="sorp-review-output" data-reveal><h3>A practical discussion about:</h3>{["What looks strong", "What needs attention", "Areas requiring judgement", "Your priority actions", "Opportunities beyond compliance"].map((item) => <span key={item}>{item}</span>)}</div>
           </div>
-          <div className="sorp-review-credit" data-reveal>If we subsequently work together on a My Social Impact project, we’ll credit the cost of your review against that work.</div>
-          <Link className="sorp-book-button" href={conversationUrl}>Get my free result first <span>→</span></Link>
+          <div className="sorp-review-credit" data-reveal>If the session leads directly to a larger My Social Impact engagement, we can credit the session fee against that work.</div>
+          <Link className="sorp-book-button" href={conversationUrl}>Start the free review <span>→</span></Link>
           <p className="sorp-review-after-result" data-reveal>Secure payment for the optional review appears only after your free assessment and personalised report are complete.</p>
           <p className="sorp-review-barrier" data-reveal><strong>Cost genuinely a barrier?</strong> Email <a href="mailto:marcus@mysocialimpact.org">marcus@mysocialimpact.org</a>. We don’t want cost to prevent a smaller charity getting useful help.</p>
           <div className="sorp-review-scope" data-reveal><strong>This is an impact-reporting readiness review.</strong><p>It is focused on the impact and narrative aspects of SORP 2026. It is not a statutory audit, an audit opinion on the financial statements, a complete assessment of every accounting requirement in SORP, or certification by the Charity Commission or SORP-making body.</p></div>
@@ -229,10 +226,10 @@ export function SorpReadyPage() {
           ].map(([name, copy, href], index) => href.startsWith("/") ? <Link href={href} key={name} data-reveal><span>0{index + 1}</span><h3>{name}</h3><p>{copy}</p><strong>Explore <b>→</b></strong></Link> : <a href={href} key={name} data-reveal><span>0{index + 1}</span><h3>{name}</h3><p>{copy}</p><strong>Talk to us <b>→</b></strong></a>)}</div>
         </section>
 
-        <section className="sorp-final" data-reveal><p>SORP 2026 · Free SORP readiness report</p><h2>This looks useful.<br /><em>I should probably deal with this now.</em></h2><div><Link href={conversationUrl}>Start my free readiness conversation <span>→</span></Link></div></section>
+        <section className="sorp-final" data-reveal><p>SORP 2026 · Free SORP readiness report</p><h2>This looks useful.<br /><em>I should probably deal with this now.</em></h2><div><Link href={conversationUrl}>Start the free review <span>→</span></Link></div></section>
       </main>
       <Footer />
-      <div className="sorp-landing-cta"><Link href={conversationUrl}>Start my free SORP readiness check <span aria-hidden="true">→</span></Link></div>
+      <div className="sorp-landing-cta"><Link href={conversationUrl}>Start the free review <span aria-hidden="true">→</span></Link></div>
     </>
   );
 }

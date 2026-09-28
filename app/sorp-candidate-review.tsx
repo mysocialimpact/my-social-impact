@@ -169,6 +169,13 @@ export function SorpCandidateReview() {
     let restored: Saved;
     try { const stored = JSON.parse(localStorage.getItem(KEY) || "null"); restored = stored?.sessionId ? { ...initial, ...stored, emailConfirm: stored.emailConfirm || stored.email || "", reportView: Math.min(stored.reportView || 0, 1), corrections: Object.fromEntries(Object.entries(stored.corrections || {}).map(([id, value]) => { const correction = (value && typeof value === "object" ? value : { context: "", reviewed: false }) as Correction; return [id, { ...correction, savedContext: correction.savedContext ?? correction.context }]; })), step: stored.step === "email-ready" ? "final-feedback" : stored.step === "generating" ? "complete" : stored.step === "quick-generating" ? "homework" : stored.step } : { ...initial, sessionId: crypto.randomUUID() }; if (restored.report && !verifiedTar(restored.report.tar)) restored = { ...restored, report: null, verifiedTar: null, emailSent: false, step: "homework", reportView: 0 }; if (!verifiedTar(restored.verifiedTar)) restored.verifiedTar = verifiedTar(restored.report?.tar) ? restored.report!.tar : null; }
     catch { restored = { ...initial, sessionId: crypto.randomUUID() }; setError("This browser could not restore a saved review. Please keep this page open until your PDF arrives."); }
+    // Public landing-page starts always show the introduction, retaining saved answers.
+    const entryUrl = new URL(window.location.href);
+    if (entryUrl.searchParams.get("entry") === "intro") {
+      restored = { ...restored, step: "intro" };
+      entryUrl.searchParams.delete("entry");
+      window.history.replaceState(window.history.state, "", entryUrl.pathname + entryUrl.search + entryUrl.hash);
+    }
     setSaved(restored);
     try { const history = JSON.parse(localStorage.getItem(HISTORY_KEY) || "null"); const current = locationOf(restored); setNavigation(history && isLocation(history.current) && sameLocation(history.current, current) && Array.isArray(history.past) && history.past.every(isLocation) && Array.isArray(history.future) && history.future.every(isLocation) ? history : { past: [], current, future: [] }); }
     catch { setNavigation({ past: [], current: locationOf(restored), future: [] }); }
