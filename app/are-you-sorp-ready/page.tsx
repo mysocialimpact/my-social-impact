@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
-import { SorpPublicReview } from "../sorp-public-review";
+import { SorpReadyPage } from "../sorp-ready";
+import "../sorp-ready.css";
 
 export const metadata: Metadata = {
   title: "Are You SORP Ready?",
-  description: "A free SORP 2026 published-evidence readiness review: your statutory reporting, wider evidence, source-grounded findings and practical priorities.",
+  description: "A free SORP 2026 impact-readiness tool for charities from My Social Impact.",
 };
 
 export default function Page() {
-  return <SorpPublicReview />;
+  return <SorpReadyPage />;
 }
