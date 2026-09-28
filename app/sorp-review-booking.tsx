@@ -36,6 +36,7 @@ export function SorpReviewBooking({ shared = false, onSelect }: { shared?: boole
   const [confirmation, setConfirmation] = useState<Confirmation | null>(null);
   const [copied, setCopied] = useState("");
   const panel = useRef<HTMLElement>(null);
+  const detailsPanel = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     queueMicrotask(() => {
@@ -61,6 +62,15 @@ export function SorpReviewBooking({ shared = false, onSelect }: { shared?: boole
       void jsonRequest(`/api/booking/availability?service=${selected}`).then((result) => setSlots(result.slots || [])).catch((cause) => setError(cause instanceof Error ? cause.message : "Availability could not be checked.")).finally(() => setBusy(""));
     });
   }, [selected]);
+
+  useEffect(() => {
+    if (!slot) return;
+    const frame = requestAnimationFrame(() => {
+      detailsPanel.current?.focus({ preventScroll: true });
+      detailsPanel.current?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [slot]);
 
   const offer = bookingServices.find((item) => item.id === selected) || null;
   const sharePath = (id: BookingServiceId) => `/are-you-sorp-ready/review/booking?session=${id}`;
@@ -124,7 +134,7 @@ export function SorpReviewBooking({ shared = false, onSelect }: { shared?: boole
     {offer && <section className="sorp-meeting-calendar" ref={panel} aria-label="Book your selected session"><div className="sorp-meeting-calendar-heading"><div><p className="scr-kicker">SELECT A DATE</p><h2>{offer.name}</h2><p>{offer.duration} minutes · {offer.priceMinor ? `£${offer.priceMinor / 100} — payment required` : "Free"} · Europe/London time</p></div><button type="button" className="sorp-meeting-close" onClick={() => setSelected(null)}>CLOSE ×</button></div>
       {busy === "availability" && <p role="status" className="sorp-meeting-loading">Checking Marcus’s live Calendar…</p>}{!busy && !slots.length && !error && <p>No selected appointment times are currently free. Please check again later.</p>}
       {!!grouped.length && <div className="sorp-slot-days">{grouped.map(([date, dateSlots]) => <div className="sorp-slot-day" key={date}><h3>{date}</h3><div>{dateSlots.map((item) => <button type="button" key={item.start} aria-pressed={slot?.start === item.start} onClick={() => { setSlot(item); setCheckout(null); setConfirmation(null); }}>{formatTime(item.start)}</button>)}</div></div>)}</div>}
-      {slot && !confirmation && <div className="sorp-booking-details"><p className="scr-kicker">YOUR BOOKING DETAILS</p><p>{formatDate(slot.start)} · {formatTime(slot.start)} · Europe/London</p><div className="sorp-booking-fields"><label>NAME<input autoComplete="name" value={details.name} onChange={(event) => setDetails((value) => ({ ...value, name: event.target.value }))}/></label><label>EMAIL<input type="email" autoComplete="email" value={details.email} onChange={(event) => setDetails((value) => ({ ...value, email: event.target.value }))}/></label><label>CHARITY / ORGANISATION<input autoComplete="organization" value={details.organisation} onChange={(event) => setDetails((value) => ({ ...value, organisation: event.target.value }))}/></label></div>
+      {slot && !confirmation && <div className="sorp-booking-details" ref={detailsPanel} tabIndex={-1} aria-labelledby="sorp-booking-details-title"><p className="scr-kicker" id="sorp-booking-details-title">YOUR BOOKING DETAILS</p><div className="sorp-booking-selection"><strong>{formatDate(slot.start)} · {formatTime(slot.start)}</strong><span>{offer.duration} MINUTES · {offer.priceMinor ? `£${offer.priceMinor / 100}` : "FREE"}</span><small>EUROPE/LONDON TIME</small></div><div className="sorp-booking-fields"><label>NAME<input autoComplete="name" value={details.name} onChange={(event) => setDetails((value) => ({ ...value, name: event.target.value }))}/></label><label>EMAIL<input type="email" autoComplete="email" value={details.email} onChange={(event) => setDetails((value) => ({ ...value, email: event.target.value }))}/></label><label>CHARITY / ORGANISATION<input autoComplete="organization" value={details.organisation} onChange={(event) => setDetails((value) => ({ ...value, organisation: event.target.value }))}/></label></div>
         {offer.supportingEvidence && <div className="sorp-meeting-evidence"><h3>IMPACT REPORT / KEY WIDER-EVIDENCE SOURCE</h3><p>If you send this before the meeting, we’ll review it in advance and bring the key strengths and gaps into the session.</p><label className="sorp-evidence-upload">UPLOAD ONE DOCUMENT<input type="file" accept=".pdf,.doc,.docx" disabled={evidenceBusy} onChange={(event) => void uploadEvidence(event.target.files?.[0])}/></label><span>OR</span><label>PASTE ONE LINK<input type="url" placeholder="https://…" value={evidence.startsWith("http") ? evidence : ""} onChange={(event) => setEvidence(event.target.value)}/></label>{evidenceBusy && <p role="status">Reading the document securely…</p>}{evidence && !evidence.startsWith("http") && <p role="status">✓ {evidence.split(" — ")[0]} is ready for preparation.</p>}<small>No separate full written Impact Report audit is included. You can book without supplying this now.</small></div>}
         {!checkout && <button className="sorp-meeting-confirm" type="button" disabled={!!busy || !validDetails()} onClick={() => void beginBooking()}>{busy === "booking" ? "CHECKING YOUR TIME…" : offer.priceMinor ? `CONTINUE TO SECURE £${offer.priceMinor / 100} PAYMENT →` : "CONFIRM MY FREE CALL →"}</button>}
         {checkout && <div className="sorp-booking-payment"><h3>SECURE INLINE PAYMENT</h3><p>Your selected time is re-checked before any authorised payment is captured.</p><InlineStripeCheckout clientSecret={checkout.clientSecret} onComplete={finalisePaid}/>{busy === "finalising" && <p role="status">Confirming payment and creating your Calendar invitation…</p>}<button type="button" className="sorp-meeting-close" onClick={() => setCheckout(null)}>CLOSE PAYMENT</button></div>}
