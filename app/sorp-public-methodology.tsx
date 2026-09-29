@@ -444,6 +444,18 @@ export function SorpPublicMethodology() {
       <div className="scr-public-method-tier-examples"><p><strong>IMPACT</strong> The explicit requirement to explain the impact the charity is making applies to Tier 2 and Tier 3. Tier 1 still has achievements and beneficiary-difference requirements, but they are not identical.</p><p><strong>SUSTAINABILITY</strong> Tier 1: MAY · Tier 2: MAY · Tier 3: MUST.</p></div>
     </section>
 
+    <section className="scr-public-method-framework" aria-labelledby="scr-method-framework">
+      <h2 id="scr-method-framework">ONE FRAMEWORK. DIFFERENT REQUIREMENTS.</h2>
+      <p>This review methodology is built from 19 atomic impact and sustainability reporting tests mapped back to SORP 2026.</p>
+      <p>Every charity will ultimately see and answer the full framework.</p>
+      <p>A charity’s tier determines what SORP requires of it — it does not determine which questions are visible.</p>
+      <p>That means a Tier 1 charity can still see and consider areas that become mandatory at Tier 2 or Tier 3.</p>
+      <p>This is deliberate.</p>
+      <p>SORP itself encourages Tier 1 charities to include additional higher-tier information where trustees consider it relevant to users.</p>
+      <p className="scr-public-method-framework-rule">YOUR TIER DETERMINES THE REQUIREMENT.<br />IT DOES NOT HIDE THE QUESTION.</p>
+      <p>A charity must not be treated as failing a SORP requirement simply because it has not met a requirement that does not apply to its tier.</p>
+    </section>
+
     <section className="scr-public-method-language" aria-labelledby="scr-method-language">
       <h2 id="scr-method-language">THE LANGUAGE WE USE</h2>
       <dl><div><dt>MUST</dt><dd>Required for SORP compliance.</dd></div><div><dt>SHOULD</dt><dd>A SORP good-practice recommendation; not following it is not itself a SORP departure.</dd></div><div><dt>MAY</dt><dd>Optional for the charity to adopt.</dd></div><div><dt>GUIDANCE</dt><dd>Explanation or illustration, not itself a MUST / SHOULD / MAY requirement.</dd></div><div><dt>MSI METHODOLOGY</dt><dd>Our separately labelled evidence or quality judgement, not an official SORP category.</dd></div></dl>
@@ -459,6 +471,30 @@ export function SorpPublicMethodology() {
           return <section className="scr-public-method-detail-group" key={group.title}>
             <h2>{group.title}</h2>
             {"introduction" in group && <p>{group.introduction}</p>}
+            {group.title === "A. HOW THE SCOPE IS DEFINED" && <div className="scr-public-method-framework-detail">
+              <h3>HOW THE 19-TEST FRAMEWORK WORKS</h3>
+              <p>The canonical MSI methodology contains 19 atomic assessment tests:</p>
+              <ul><li>7 under Objectives and activities</li><li>7 under Achievements and performance</li><li>3 under Learning and future direction</li><li>2 under Sustainability</li></ul>
+              <p>The number 19 was not chosen as a target.</p>
+              <p>It emerged from mapping the in-scope impact and sustainability provisions of SORP 2026 into distinct tests while avoiding duplication and double-counting.</p>
+              <p>Each atomic test is kept separate in the underlying methodology so that a SORP requirement is not lost inside a broad combined question.</p>
+              <p>Every charity will ultimately see and answer all 19 questions.</p>
+              <h3>TIERING CHANGES THE REQUIREMENT — NOT VISIBILITY</h3>
+              <p>The methodology does not hide Tier 2 or Tier 3 questions from a Tier 1 charity.</p>
+              <p>Instead, each question will make clear what SORP says for the charity’s own tier.</p>
+              <p>For example:</p>
+              <ul><li>a question may be a MUST for Tier 2 and Tier 3</li><li>but not required at Tier 1</li><li>or MAY be optional for Tier 1 and Tier 2 but MUST for Tier 3</li></ul>
+              <p>A Tier 1 charity can therefore understand both:</p>
+              <ul><li>what it is required to do now</li><li>what stronger or higher-tier reporting looks like</li></ul>
+              <p>Are You SORP Ready? is not intended merely to encourage minimum compliance.</p>
+              <p>It is also intended to help charities strengthen their impact and sustainability reporting beyond the minimum requirements that apply to their current tier.</p>
+              <p>A charity must never be penalised in its SORP requirement status for failing to meet a requirement that does not apply to its tier.</p>
+              <h3>TWO DIFFERENT QUESTIONS</h3>
+              <p>The review will ultimately distinguish between:</p>
+              <p><strong>SORP REQUIREMENT STATUS</strong><br />Is the charity meeting the impact and sustainability reporting requirements and recommendations that apply to its tier?</p>
+              <p><strong>IMPACT &amp; SUSTAINABILITY READINESS</strong><br />How strong is the charity across the wider 19-question framework, including areas where it could go beyond the minimum requirements for its tier?</p>
+              <p>These are related, but they are not the same thing.</p>
+            </div>}
             {group.title === "C. SUBSTANTIVE AREAS" && <ObjectivesAndActivitiesDetail />}
             {group.title === "C. SUBSTANTIVE AREAS" && <AchievementsAndPerformanceDetail />}
             {group.title === "C. SUBSTANTIVE AREAS" && <LearningAndFutureDirectionDetail />}
