@@ -537,6 +537,7 @@
 .scr-main .scr-public-method h3{margin:0 0 4px;font-size:13px;letter-spacing:.035em;line-height:1.45}
 .scr-public-method-focus li p,.scr-public-method-detail-body li p{margin:0;line-height:1.55}
 .scr-public-method-note{max-width:750px;margin:16px 0 0;color:var(--muted);font-size:13px;line-height:1.55}
+.scr-public-method-crosscut p{max-width:750px;margin:0;line-height:1.6}
 .scr-public-method-tier-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-block:1px solid var(--line)}
 .scr-public-method-tier-grid>div{display:grid;gap:6px;padding:14px 16px;border-right:1px solid var(--line)}
 .scr-public-method-tier-grid>div:first-child{padding-left:0}
@@ -560,6 +561,9 @@
 .scr-public-method-detail[open] .scr-public-method-detail-mark{transform:rotate(45deg)}
 .scr-public-method-detail-body{padding:10px 0 25px;border-top:1px solid var(--line)}
 .scr-public-method-detail-body>p:not(.scr-kicker){max-width:740px;line-height:1.6}
+.scr-public-method-detail-group{margin-top:28px}
+.scr-public-method-detail-group>h2{padding-top:13px;border-top:1px solid var(--ink)}
+.scr-public-method-detail-group>p{max-width:740px;margin:0 0 17px;line-height:1.6}
 .scr-public-method-detail-body li{padding-block:19px}
 .scr-public-method-detail-body li p{max-width:730px}
 .scr-public-method-labels{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
