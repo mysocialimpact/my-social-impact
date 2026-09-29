@@ -1,4 +1,5 @@
-// The approved V1.0 definition is generated from Cow Console's immutable record.
+// GENERATED FROM COW CONSOLE CANONICAL METHODOLOGY V1.0. DO NOT EDIT DIRECTLY.
+// This adapter contains only deterministic product mechanics, not an editable rubric.
 import definition from "./sorp-methodology-v1.generated.json" with { type: "json" };
 
 export type Tier = { status: string; weight: number };
@@ -17,9 +18,11 @@ export const answerScores = definition.answerScores;
 export type CanonicalAnswer = keyof typeof answerScores | "not_applicable";
 export const crossCuttingPrinciples = definition.crossCuttingPrinciples;
 export const confidenceDefinitions = definition.confidenceDefinitions;
+export const assessmentProtocol = definition.protocol;
 export const methodologyV1 = definition;
 
 export type MethodologyTier = "tier1" | "tier2" | "tier3";
+export type ApplicabilityFacts = { s2SeparateSustainabilityReporting?: boolean | null };
 export type CanonicalResult = {
   methodologyVersion: typeof methodologyVersion;
   score: number;
@@ -34,8 +37,10 @@ export function requirementFor(test: Test, tier: MethodologyTier, jurisdiction =
   return test.jurisdictionOverrides?.[jurisdiction] || result;
 }
 
-export function scoreCanonical(answersById: Readonly<Record<string, CanonicalAnswer | undefined>>, tier: MethodologyTier, jurisdiction = ""): CanonicalResult | null {
+export function scoreCanonical(answersById: Readonly<Record<string, CanonicalAnswer | undefined>>, tier: MethodologyTier, jurisdiction = "", facts: ApplicabilityFacts = {}): CanonicalResult | null {
   if (tests.some(test => !answersById[test.id] || answersById[test.id] === "not_applicable" && !test.na)) return null;
+  if (!["ew", "england", "wales", "ni", "northern_ireland", "scotland", "roi", "elsewhere"].includes(jurisdiction)) return null;
+  if (answersById.S2 === "not_applicable" && facts.s2SeparateSustainabilityReporting !== false) return null;
   let points = 0;
   let maximum = 0;
   const mandatory = { applicable: 0, demonstrated: 0, attention: 0, gaps: 0, unconfirmed: 0 };

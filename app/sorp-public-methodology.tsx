@@ -1,4 +1,4 @@
-import { answers, groups, reportingStrengthBands, sorpSource, tests, type Test } from "./sorp-methodology-v1";
+import { answers, assessmentProtocol, groups, reportingStrengthBands, sorpSource, tests, type Test } from "./sorp-methodology-v1";
 export function SorpMethodologyGuide() {
   return <div className="scr-public-method-guide">
     <p className="scr-kicker">OUR METHODOLOGY</p>
@@ -104,8 +104,13 @@ export function SorpPublicMethodology() {
         </section>
 
         <section className="scr-public-method-detail-group"><h2>E. HISTORICAL EVIDENCE AND CURRENT POSITION</h2>
+          <h3>{assessmentProtocol.title}</h3>
+          <p>{assessmentProtocol.historicalAssessment.pipeline.join(" → ")}</p>
+          <ol className="scr-public-method-v1-rules">{assessmentProtocol.historicalAssessment.steps.map(step => <li key={step.title}><strong>{step.title}</strong> — {step.rule}</li>)}</ol>
+          <h3>APPLICABILITY BEFORE SCORING</h3><p>{assessmentProtocol.applicability.requiredFacts.join(", ")}. {assessmentProtocol.applicability.unknownFact} {assessmentProtocol.applicability.oa2} {assessmentProtocol.applicability.s2}</p>
           <h3>LAYER 1 — HISTORICAL TAR</h3><p>This assesses what the latest validated published Trustees’ Annual Report actually demonstrates: <strong>HISTORICAL TAR REPORTING STRENGTH %</strong> and <strong>HISTORICAL MANDATORY SORP STATUS</strong>. Each historical finding should retain the question ID, answer, exact source excerpt, page or section, SORP paragraph, reasoning and confidence. Later user input must not rewrite this historical result.</p>
           <p>If a complete readable TAR has been properly assessed and relevant reporting is materially absent, NOT YET can be appropriate. If the document cannot reliably be assessed, use NOT SURE / NOT ASSESSABLE rather than inventing failure. A website or separate Impact Report cannot retrospectively make the historic TAR compliant.</p>
+          <h3>CORRECTING A HISTORICAL FINDING</h3><p>{assessmentProtocol.historicalCorrection.distinction} {assessmentProtocol.historicalCorrection.rule}</p>
           <h3>LAYER 2 — CURRENT POSITION</h3><p>This combines the historical assessment with explicit current information supplied or confirmed by the charity. Every one of the 19 questions must be explicitly reviewed or updated by the user. It can explain what has changed since the TAR, evidence now collected, new measures, new systems and improvements in progress. The results are <strong>CURRENT REPORTING STRENGTH %</strong> and <strong>CURRENT SORP READINESS STATUS</strong>.</p>
           <p>The current position may include information supplied by the charity that MSI has not independently verified. It is therefore a readiness assessment, not an audit or assurance opinion.</p>
           <p>An old historical answer must not silently become the current answer because the user clicked through. The user should explicitly confirm or update the current position. Comments form part of the current evidence trail.</p>
@@ -117,7 +122,10 @@ export function SorpPublicMethodology() {
 
         <section className="scr-public-method-detail-group"><h2>F. CONFIDENCE AND MSI JUDGEMENT</h2>
           <h3>CONFIDENCE</h3><p>Confidence does not change numeric points. It answers: how confident are we in this finding? Keep answer and confidence separate.</p>
+          <p>{assessmentProtocol.confidenceEscalation.mustRule} {assessmentProtocol.confidenceEscalation.presentation}</p>
           <dl className="scr-public-method-v1-status"><div><dt>HIGH</dt><dd>Clear, directly relevant evidence in a fully validated source.</dd></div><div><dt>MEDIUM</dt><dd>Relevant evidence exists but interpretation or completeness is less certain.</dd></div><div><dt>LOW</dt><dd>Evidence is ambiguous, incomplete or weak.</dd></div><div><dt>NOT ASSESSABLE</dt><dd>The source itself does not permit a reliable judgement.</dd></div></dl>
+          <h3>CONFLICTING EVIDENCE</h3><p>{assessmentProtocol.evidenceConflict}</p>
+          <h3>CALCULATION AND REPRODUCIBILITY</h3><p>{assessmentProtocol.calculation.formula} {assessmentProtocol.calculation.precision}</p><p>{assessmentProtocol.reproducibility}</p>
           <h3>MSI JUDGEMENT</h3><p>MSI may provide insight around evidence strength, attribution versus contribution, proportionality of claims, limitations, overclaiming and confidence. These are not secret extra SORP requirements.</p>
           <p><strong>SORP determines WHAT is required. MSI helps judge and explain HOW convincingly the available information demonstrates it.</strong> Where MSI goes beyond the literal SORP test, label it MSI INSIGHT / IMPROVEMENT OPPORTUNITY. Do not change a formal SORP result because of an unrelated MSI preference.</p>
         </section>

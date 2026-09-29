@@ -709,5 +709,111 @@
     "wider": "Evidence outside the historical TAR is recorded separately and has no third percentage; it does not retrospectively raise the historical score or automatically satisfy a SORP requirement.",
     "antiDoubleCounting": "The four cross-cutting principles inform reasoning and recommendations but never add questions, scores or hidden penalties."
   },
-  "sorpSource": "https://www.charitysorp.org/documents/d/guest/charities-sorp-2026-1"
+  "sorpSource": "https://www.charitysorp.org/documents/d/guest/charities-sorp-2026-1",
+  "protocol": {
+    "methodologyId": "ARE_YOU_SORP_READY",
+    "methodologyVersion": "1.0",
+    "status": "APPROVED_ACTIVE",
+    "title": "HOW THE HISTORICAL TAR IS ASSESSED",
+    "historicalAssessment": {
+      "pipeline": [
+        "CANONICAL QUESTION",
+        "RETRIEVE EVIDENCE",
+        "COMPARE WITH CANONICAL RUBRIC",
+        "ASSIGN ANSWER",
+        "RECORD EVIDENCE + REASONING + CONFIDENCE",
+        "DETERMINISTIC SCORING"
+      ],
+      "steps": [
+        {
+          "title": "IDENTIFY THE APPLICABLE CANONICAL QUESTION",
+          "rule": "Supply the exact question, rubric, SORP paragraph, charity tier and applicability/status. The AI does not decide the standard."
+        },
+        {
+          "title": "SEARCH THE RELEVANT SOURCE",
+          "rule": "Search the complete validated TAR/accounts for evidence relevant to each question, including supporting, materially contradictory and qualifying evidence. Do not select only the most favourable passage."
+        },
+        {
+          "title": "EXTRACT EVIDENCE",
+          "rule": "Retain exact excerpts, pages or sections, source and question ID, including multiple passages where needed to explain the judgement."
+        },
+        {
+          "title": "CHECK SOURCE SUFFICIENCY",
+          "rule": "Substantive absence in a complete, reliably searched source may support NOT YET. Missing pages, unreliable parsing or an incomplete or unsearchable source require NOT SURE / NOT ASSESSABLE. Never manufacture failure from source uncertainty."
+        },
+        {
+          "title": "COMPARE WITH THE EXACT CANONICAL RUBRIC",
+          "rule": "Assign exactly one canonical answer: YES, CLEARLY; MOSTLY; PARTLY; LIMITED; NOT YET; NOT SURE; or N/A only where explicitly permitted. The canonical rubric defines what good looks like; AI judges the evidence against it and cannot introduce hidden criteria."
+        },
+        {
+          "title": "RETURN STRUCTURED REASONING",
+          "rule": "Return methodologyVersion, questionId, answer, exact evidence excerpts and pages/sections, concise rubric-based reasoning, confidence, applicability/status, source sufficiency and optional separately labelled MSI insight."
+        },
+        {
+          "title": "DETERMINISTIC CODE CALCULATES THE RESULT",
+          "rule": "Product code alone applies canonical weights, denominator, Reporting Strength percentage, score band and mandatory requirement status. AI returns no numeric result."
+        }
+      ]
+    },
+    "applicability": {
+      "requiredFacts": [
+        "reporting period",
+        "charity tier",
+        "jurisdiction",
+        "applicable SORP status",
+        "conditional requirements",
+        "genuine N/A conditions"
+      ],
+      "unknownFact": "Flag for confirmation; do not silently assume.",
+      "oa2": "Apply the canonical jurisdictional override. Do not treat an unknown jurisdiction as a confirmed MUST or confirmed exception.",
+      "s2": "N/A is permitted only when it is established that no separate sustainability reporting exists to signpost to. Otherwise keep the question in the denominator or flag the applicability fact for confirmation.",
+      "decisionOwner": "Deterministic product rules and known charity facts; AI must not invent applicability."
+    },
+    "historicalCorrection": {
+      "distinction": "A corrected interpretation of evidence in the historical TAR is not a change in the charity's current position since that TAR.",
+      "auditFields": [
+        "original automated finding",
+        "original evidence/reasoning",
+        "corrected finding",
+        "corrected evidence",
+        "reason for correction",
+        "reviewer or human confirmation",
+        "timestamp where supported"
+      ],
+      "rule": "Retain the original finding and a human-confirmed correction as separate audit records. Do not silently overwrite the historical result or treat the correction as a current-position improvement."
+    },
+    "confidenceEscalation": {
+      "scoreEffect": "Confidence never changes numerical points.",
+      "mustRule": "LOW-confidence or NOT ASSESSABLE applicable MUST findings are visibly flagged for human review.",
+      "presentation": "LOW confidence is not independently assured fact. Source incompleteness must not become confident NOT YET. Answer and confidence remain separate fields."
+    },
+    "evidenceConflict": "Consider all materially conflicting or qualifying TAR evidence. Do not score from the strongest isolated passage; record contradictions that affect the rubric judgement.",
+    "calculation": {
+      "formula": "Raw earned weighted points divided by maximum applicable weighted points, multiplied by 100.",
+      "precision": "Retain raw weighted points and maximum internally; round only the displayed headline percentage to the nearest whole point. Determine the MSI band from the same calculated percentage in web and PDF/report.",
+      "resultRecord": "Store methodologyVersion 1.0 and enough structured answers, applicability and evidence to reproduce the result."
+    },
+    "reproducibility": "The same source under the same methodology version follows fixed questions, applicability, rubrics, answer vocabulary, scoring, weights and bands. AI semantic judgement may vary at borderline cases and may require human review; reproducibility means fixed methodology, transparent evidence, explicit rubric reasoning, confidence and a human-review path, not an unsupported claim that AI can never vary.",
+    "aiBoundary": {
+      "may": [
+        "retrieve evidence",
+        "judge evidence against the supplied rubric",
+        "explain reasoning",
+        "assign confidence",
+        "surface contradictory evidence",
+        "produce separately labelled MSI insight"
+      ],
+      "mayNot": [
+        "change question wording",
+        "alter rubrics or tier status",
+        "alter weights or score bands",
+        "invent N/A or hidden criteria",
+        "exclude a question without a canonical rule",
+        "turn SHOULD into MUST",
+        "mutate approved V1.0 during assessment"
+      ]
+    },
+    "legacy": "Pre-V1.0 and 15-question assessments retain their original methodology identity and are never reinterpreted as Canonical V1.0."
+  },
+  "generatedFrom": "GENERATED FROM COW CONSOLE CANONICAL METHODOLOGY V1.0 — DO NOT EDIT DIRECTLY"
 }

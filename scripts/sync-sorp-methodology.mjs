@@ -17,15 +17,22 @@ const response = localApprovedFile
       if (!result.ok) throw new Error(`Cow Console's approved methodology export failed: HTTP ${result.status}`);
       return result.json();
     })();
-const definition = response.definition || response;
+const exported = response.definition || response;
+const localProtocol = process.env.COW_METHODOLOGY_PROTOCOL_FILE
+  ? JSON.parse(await readFile(process.env.COW_METHODOLOGY_PROTOCOL_FILE, "utf8"))
+  : null;
+const definition = localProtocol ? { ...exported, protocol: localProtocol, generatedFrom: "GENERATED FROM COW CONSOLE CANONICAL METHODOLOGY V1.0 — DO NOT EDIT DIRECTLY" } : exported;
 if (definition.methodologyId !== "ARE_YOU_SORP_READY" || definition.methodologyVersion !== "1.0" || !Array.isArray(definition.tests) || definition.tests.length !== 19 || new Set(definition.tests.map(test => test.id)).size !== 19) {
   throw new Error("Cow Console did not provide the approved canonical V1.0 definition.");
+}
+if (definition.protocol?.methodologyId !== definition.methodologyId || definition.protocol?.methodologyVersion !== definition.methodologyVersion || definition.protocol?.status !== "APPROVED_ACTIVE") {
+  throw new Error("Cow Console did not provide the approved V1.0 assessment protocol.");
 }
 if (response.contentHash && response.contentHash !== createHash("sha256").update(JSON.stringify(definition)).digest("hex")) throw new Error("The Cow Console methodology export failed its content-hash check.");
 await writeFile(siteManifest, `${JSON.stringify(definition, null, 2)}\n`);
 const moduleCode = ts.transpileModule(await readFile(source, "utf8"), {
   compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 },
 }).outputText;
-await writeFile(executable, `// Generated from Cow Console's approved ARE_YOU_SORP_READY V1.0 record and the deterministic product scorer. Do not edit.\n${moduleCode}`);
+await writeFile(executable, `// GENERATED FROM COW CONSOLE CANONICAL METHODOLOGY V1.0. DO NOT EDIT DIRECTLY.\n${moduleCode}`);
 await writeFile(manifest, `${JSON.stringify(definition, null, 2)}\n`);
 console.info(`Generated Cow-owned V1.0 copies for the public site and assessment service.`);
