@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { bookingServices, BOOKING_TIME_ZONE, type BookingServiceId } from "./booking-config";
 import { InlineStripeCheckout } from "./inline-stripe-checkout";
 import "./sorp-review-booking.css";
@@ -21,7 +21,7 @@ async function jsonRequest(url: string, body?: unknown) {
   return result;
 }
 
-export function SorpReviewBooking({ shared = false, onSelect }: { shared?: boolean; onSelect?: () => void }) {
+export function SorpReviewBooking({ shared = false, onSelect, humanIntroduction }: { shared?: boolean; onSelect?: () => void; humanIntroduction?: ReactNode }) {
   const [selected, setSelected] = useState<BookingServiceId | null>(null);
   const [sharedOffer, setSharedOffer] = useState<BookingServiceId | null>(null);
   const [askSorp, setAskSorp] = useState(false);
@@ -159,6 +159,7 @@ export function SorpReviewBooking({ shared = false, onSelect }: { shared?: boole
 
   return <div className="sorp-meetings">
     {askSorp ? <><h1>BOOK YOUR CONVERSATION</h1><p>Choose a time with Marcus Warry to talk through your SORP or impact-reporting question and the right next step.</p><p>For detailed charity accounting or financial-statement advice, we’ll be clear where your accountant or another specialist should be involved.</p></> : <><h1>WANT TO TALK THROUGH YOUR RESULTS?</h1><p>SORP readiness is a useful starting point.</p><p>The bigger opportunity is to make impact something your organisation defines, measures, learns from and improves throughout the year.</p><p>My Social Impact can review your results with you and help you decide what matters next.</p><p className="sorp-meetings-limited">LIMITED REVIEW SLOTS AVAILABLE EACH WEEK.</p></>}
+    {humanIntroduction}
     <div className="sorp-meetings-options">{bookingServices.filter((item) => !sharedOffer || item.id === sharedOffer).map((item) => <article key={item.id} className={`sorp-meeting-option${item.id === "readiness" ? " is-preferred" : ""}`}>
       <div className="sorp-meeting-badge">{item.label || "\u00a0"}</div><p className="sorp-meeting-price">{item.duration} MINUTES — {item.priceMinor ? `£${item.priceMinor / 100}` : "FREE"}</p><h2>{askSorp ? ({ free: "QUICK CONVERSATION", readiness: "SORP OR IMPACT QUESTION", wider: "DEEPER WORKING SESSION" }[item.id]) : item.name}</h2><p>{askSorp ? ({ free: "A quick conversation to work out what you need or point you in the right direction.", readiness: "Talk through an impact-reporting or SORP question and identify sensible next steps.", wider: "A deeper working session on impact, evidence, narrative reporting or SORP readiness." }[item.id]) : item.description}</p>{!askSorp && item.includes.length > 0 && <details><summary>WHAT’S INCLUDED <span aria-hidden="true">+</span></summary><ul>{item.includes.map((line) => <li key={line}>{line}</li>)}</ul></details>}{!askSorp && <p className="sorp-meeting-fee">{item.fee}</p>}<button type="button" className="sorp-meeting-book" aria-pressed={selected === item.id} onClick={() => { setSelected(item.id); onSelect?.(); }}>{selected === item.id ? "SELECT A TIME BELOW ↓" : item.cta}</button>
     </article>)}</div>{!askSorp && <p className="sorp-meeting-credit">For paid sessions: if the session leads directly to a larger My Social Impact engagement, we can credit the session fee against that work.</p>}
