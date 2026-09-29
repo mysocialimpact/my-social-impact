@@ -1,4 +1,5 @@
 import { createBookingEvent, slotIsFree, validatedSlot, validEmail } from "../../../booking-google";
+import { recordAskSorpBooking } from "../../../booking-growth";
 
 export const runtime = "nodejs";
 
@@ -14,6 +15,7 @@ export async function POST(request: Request) {
   try {
     if (!(await slotIsFree(slot.start, slot.end))) return Response.json({ error: "That time has just been taken. Please choose another available slot." }, { status: 409 });
     await createBookingEvent(slot.service, slot.start, slot.end, { name, email, organisation }, idempotencyKey, true);
+    await recordAskSorpBooking(input, slot.service.id, slot.start, idempotencyKey);
     return Response.json({ ok: true, session: slot.service.name, start: slot.start, end: slot.end, priceMinor: 0, invitationSent: true });
   } catch (error) {
     return Response.json({ error: error instanceof Error ? error.message : "The booking could not be completed." }, { status: 502 });

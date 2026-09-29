@@ -1,4 +1,5 @@
 import { bookingService } from "../../../../booking-config";
+import { recordAskSorpBooking } from "../../../../booking-growth";
 import { confirmBookingEvent, createBookingEvent, deleteBookingEvent, slotIsFree, validatedSlot, validEmail } from "../../../../booking-google";
 
 export const runtime = "nodejs";
@@ -34,6 +35,7 @@ export async function POST(request: Request) {
     await createBookingEvent(service, slot.start, slot.end, { name, email, organisation, evidence }, status.idempotencyKey, false);
     if (status.status !== "paid") await payment("capture", sessionId);
     await confirmBookingEvent(service, slot.start, { name, email, organisation, evidence });
+    await recordAskSorpBooking(input, service.id, slot.start, sessionId);
     return Response.json({ ok: true, session: service.name, start: slot.start, end: slot.end, priceMinor: service.priceMinor, paid: true, invitationSent: true });
   } catch (error) {
     if (status.status !== "paid") { try { await payment("cancel", sessionId); await deleteBookingEvent(service, slot.start); } catch { /* Preserve the original failure. */ } }
