@@ -581,6 +581,11 @@
 .scr-public-method-achievements>p{margin:0 0 12px;line-height:1.6}
 .scr-public-method-achievements>ul{margin:0 0 15px;padding-left:20px}
 .scr-public-method-detail-body .scr-public-method-achievements>ul li{display:list-item;padding:2px 0;border:0;line-height:1.5}
+.scr-public-method-learning{max-width:750px;margin:0 0 28px}
+.scr-main .scr-public-method-learning>h3{margin:21px 0 12px;font-family:var(--font-serif);font-size:clamp(24px,2.4vw,31px);font-weight:500;letter-spacing:-.02em}
+.scr-public-method-learning>p{margin:0 0 12px;line-height:1.6}
+.scr-public-method-learning>ul{margin:0 0 15px;padding-left:20px}
+.scr-public-method-detail-body .scr-public-method-learning>ul li{display:list-item;padding:2px 0;border:0;line-height:1.5}
 .scr-public-method-detail-body li{padding-block:19px}
 .scr-public-method-detail-body li p{max-width:730px}
 .scr-public-method-labels{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}

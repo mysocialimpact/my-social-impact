@@ -303,6 +303,67 @@ function AchievementsAndPerformanceDetail() {
   </div>;
 }
 
+const learningAndFutureDirectionTests = [
+  {
+    code: "LF1",
+    title: "FUTURE PLANS",
+    basis: "Paragraph 1.47",
+    applies: "Tier 1 · Tier 2 · Tier 3",
+    status: "MUST",
+    question: "Can the charity explain what it plans to do next?",
+    why: "Impact reporting should connect what has happened with what the charity intends to do in the future.",
+  },
+  {
+    code: "LF2",
+    title: "FUTURE AIMS AND ACTIVITIES",
+    basis: "Paragraph 1.48",
+    applies: "Tier 2 · Tier 3",
+    status: "MUST",
+    question: "Can the charity explain its future aims and objectives and the activities it plans to undertake to achieve them?",
+    why: "This creates continuity between the change the charity is trying to make, what it has learned so far and what it intends to do next.",
+  },
+  {
+    code: "LF3",
+    title: "LEARNING → FUTURE DIRECTION",
+    basis: "Paragraph 1.49",
+    applies: "Tier 2 · Tier 3",
+    status: "SHOULD",
+    question: "Can the charity explain how experience and lessons learned have influenced future plans, future decisions and how resources will be allocated?",
+    why: "This is the clearest SORP link between learning and future decision-making. A credible impact story should show not only what happened, but how experience is influencing what the charity does next.",
+  },
+];
+
+function LearningAndFutureDirectionDetail() {
+  return <div className="scr-public-method-learning">
+    <h3>LEARNING AND FUTURE DIRECTION</h3>
+    <p>“Learning and future direction” is an MSI methodology grouping, not a formal SORP 2026 heading. “Plans for future periods” is the official SORP terminology.</p>
+    <p>We use this grouping to bring together the impact-relevant parts of SORP’s “Plans for future periods” requirements, supported by SORP’s wider emphasis on learning and reflection. Impact reporting should not stop at explaining what happened. It should also help users understand:</p>
+    <ul>
+      <li>what the charity plans to do next</li>
+      <li>how future aims and activities are developing</li>
+      <li>what has been learned</li>
+      <li>how that learning is influencing future decisions and use of resources</li>
+    </ul>
+    <div className="scr-public-method-oa-tests">
+      {learningAndFutureDirectionTests.map((test) => <article key={test.code}>
+        <h4><span>{test.code}</span> {test.title}</h4>
+        <p><strong>SORP BASIS</strong> {test.basis}</p>
+        <p><strong>APPLIES</strong> {test.applies}</p>
+        <p><strong>STATUS</strong> {test.status}</p>
+        <p><strong>PLAIN ENGLISH</strong> {test.question}</p>
+        <p><strong>WHY THIS IS INCLUDED</strong> {test.why}</p>
+        {test.code === "LF1" && <p><strong>SCOPE BOUNDARY</strong> Paragraph 1.47 says it may be helpful to consider reserves and going concern when considering future plans. This Impact &amp; Sustainability review does not assess reserves or going concern; those belong in the wider full-SORP review.</p>}
+      </article>)}
+    </div>
+    <div className="scr-public-method-oa-note">
+      <h4>SUPPORTING SORP MATERIAL — DO NOT DOUBLE-SCORE</h4>
+      <p>Paragraph 1.9 describes the Trustees’ Annual Report as an opportunity to reflect on successes, failures and learnings and help users understand future plans. It is already included in MSI’s cross-cutting “Learning and reflection” principle and creates no score here.</p>
+      <p>Paragraph 1.32 recommends explaining significant positive and negative factors affecting results and, where relevant, how they influenced future plans. It is already captured under AP7 — Factors affecting results, and is not scored again here.</p>
+    </div>
+    <p>These are three atomic methodology tests, not necessarily three separate user-facing screens. The methodology preserves each distinct SORP test so requirements are not lost or double-counted. The eventual UX may group related tests, but the underlying methodology retains them separately.</p>
+  </div>;
+}
+
 export function SorpMethodologyGuide() {
   return <div className="scr-public-method-guide">
     <p className="scr-kicker">OUR METHODOLOGY</p>
@@ -363,6 +424,7 @@ export function SorpPublicMethodology() {
             {"introduction" in group && <p>{group.introduction}</p>}
             {group.title === "C. SUBSTANTIVE AREAS" && <ObjectivesAndActivitiesDetail />}
             {group.title === "C. SUBSTANTIVE AREAS" && <AchievementsAndPerformanceDetail />}
+            {group.title === "C. SUBSTANTIVE AREAS" && <LearningAndFutureDirectionDetail />}
             <ol start={preceding + 1}>{group.areas.map((area, index) => <li key={area.title}><span>{String(preceding + index + 1).padStart(2, "0")}</span><div><h3>{area.title}</h3><p>{area.text}</p>{area.title === "SORP REQUIREMENT VS MSI JUDGEMENT" && <div className="scr-public-method-labels"><span>SORP REQUIREMENT</span><span>MSI METHODOLOGY</span></div>}</div></li>)}</ol>
           </section>;
         })}
