@@ -2,11 +2,19 @@ export const PUBLIC_BUILD = "PUBLIC-3 · 26 SEPTEMBER 2026";
 // Do not reuse pre-validation trial results after the source-corpus guard.
 export const STORAGE_KEY = "msi-sorp-public-evidence-v2";
 export type Candidate = { name: string; registrationNumber: string; locality: string; jurisdiction: string; entityType: string; latestIncome: number | null; financialYearEnd: string; accountingBasis: string; accountingBasisConfidence: string; website: string; officialUrl: string; summary: string; reportUrl: string; reportTitle: string; reportPeriod: string; publicReadiness: { impactReport: { found: boolean; title: string; url: string } }; sources: { label: string; url: string; detail: string; kind: string }[] };
-export type Finding = { fieldId: number; answer: "yes" | "mostly" | "partly" | "not_yet" | "not_sure"; confidence: string; finding: string; reason: string; excerpt: string; page: string; sourceUrl: string; action: string; requirement: string; classification: string; sources: { reference: string; page: number; text: string }[] };
-export type Lens = { lens: "tar" | "wider"; readable: boolean; score: number | null; confidence: string; title: string; period: string; sourceUrl: string; accountingBasis: string; findings: Finding[]; limitation: string; diagnostics?: { pageCount: number; pagesProcessed: number; textExtractionSuccess: boolean; extractedTextLength: number; allChunksIndexed: boolean; assessmentRetrievalSucceeded: boolean } };
+export type Finding = { fieldId: number; questionId?: string; answer: "yes" | "mostly" | "partly" | "limited" | "not_yet" | "not_sure" | "not_applicable"; confidence: string; finding: string; reason: string; excerpt: string; page: string; sourceUrl: string; action: string; requirement: string; classification: string; sources: { reference: string; page: number; text: string }[] };
+export type Lens = { lens: "tar" | "wider"; methodologyVersion?: string; tier?: string; mandatory?: { applicable: number; demonstrated: number; attention: number; gaps: number; unconfirmed: number }; readable: boolean; score: number | null; confidence: string; title: string; period: string; sourceUrl: string; accountingBasis: string; findings: Finding[]; limitation: string; diagnostics?: { pageCount: number; pagesProcessed: number; textExtractionSuccess: boolean; extractedTextLength: number; allChunksIndexed: boolean; assessmentRetrievalSucceeded: boolean } };
 export function verifiedTar(lens: Lens | null | undefined): lens is Lens {
   const reading = lens?.diagnostics;
   return lens?.lens === "tar" && lens.readable && lens.score !== null && lens.findings.length === 15
+    && !!reading && reading.pageCount > 0 && reading.pagesProcessed === reading.pageCount
+    && reading.textExtractionSuccess && reading.extractedTextLength > 0
+    && reading.allChunksIndexed && reading.assessmentRetrievalSucceeded;
+}
+export function verifiedCanonicalTar(lens: Lens | null | undefined): lens is Lens {
+  const reading = lens?.diagnostics;
+  return lens?.methodologyVersion === "1.0" && lens.lens === "tar" && lens.readable && lens.score !== null
+    && lens.findings.length === 19 && lens.findings.every((finding, index) => finding.fieldId === index + 1 && !!finding.questionId)
     && !!reading && reading.pageCount > 0 && reading.pagesProcessed === reading.pageCount
     && reading.textExtractionSuccess && reading.extractedTextLength > 0
     && reading.allChunksIndexed && reading.assessmentRetrievalSucceeded;
@@ -15,8 +23,8 @@ export type Intelligence = { effectiveVersion: string; layers: { name: string; l
 export type Report = { candidate: Candidate; tar: Lens; wider: Lens; createdAt: string; intelligence: Intelligence };
 export type Research = { status: string; candidates: Candidate[]; selected: Candidate | null; query: string };
 export type Turn = { role: "assistant" | "user"; content: string; promptId?: number; citations?: { reference: string; extract: string }[] };
-export const weights = { yes: 4, mostly: 3, partly: 2, not_yet: 1, not_sure: 0 };
-export const answerLabels = { yes: "Clearly evidenced", mostly: "Mostly evidenced", partly: "Partly evidenced", not_yet: "Not yet in place", not_sure: "Not established" };
+export const weights = { yes: 4, mostly: 3, partly: 2, limited: 1, not_yet: 1, not_sure: 0, not_applicable: 0 };
+export const answerLabels = { yes: "Clearly evidenced", mostly: "Mostly evidenced", partly: "Partly evidenced", limited: "Limited", not_yet: "Not yet in place", not_sure: "Not established", not_applicable: "Not applicable" };
 export const classificationLabel = (value: string) => ["JUDGEMENT", "MSI_READINESS"].includes(value) ? "MSI JUDGEMENT" : value;
 export const band = (score: number | null) => score === null ? "Not enough evidence" : score >= 75 ? "Looking strong" : score >= 50 ? "Getting ready" : "Needs attention";
 export const methodology = "This is a retrospective published-evidence review of narrative and impact-reporting readiness, not a full accounts audit or a compliance certificate. SORP 2026 is the source of truth. The same 15 equally weighted fields and existing 0–4 response scale are used separately for each lens: clearly evidenced 4, mostly 3, partly 2, positively not yet in place 1, not established 0. Each lens totals up to 60 points, expressed as a rounded percentage. Unestablished evidence reduces the evidence-readiness score; it does not prove that a practice is absent. No score is given when the source cannot be read or nothing can be established. Wider evidence never changes the TAR score. Tier-specific classifications use latest published income, not a prediction of next-period income. Current unpublished practice requires separate evidence and human judgement.";
