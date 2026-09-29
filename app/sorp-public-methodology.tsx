@@ -72,7 +72,7 @@ const detailGroups = [
       },
       {
         title: "SUSTAINABILITY",
-        text: "Tier 1 and Tier 2 trustees MAY explain how the charity responds to and manages environmental, governance and social matters. For Tier 3, a summary is a MUST. SORP examples include climate measures, privacy, cyber and data security, business ethics, employee wellbeing, board diversity and local-community support. These are examples, not a universal mandatory checklist.",
+        text: "“Sustainability” is an official SORP 2026 Module 1 reporting category. SORP addresses how charities are responding to and managing environmental, governance and social matters. The requirement is tiered: Tier 1 and Tier 2 reporting is optional under paragraph 1.60; for Tier 3, paragraph 1.61 requires the Trustees’ Annual Report to provide a summary.",
       },
     ],
   },
@@ -364,6 +364,43 @@ function LearningAndFutureDirectionDetail() {
   </div>;
 }
 
+function SustainabilityDetail() {
+  return <div className="scr-public-method-sustainability">
+    <div className="scr-public-method-oa-tests">
+      <article>
+        <h4><span>S1</span> SUSTAINABILITY RESPONSE</h4>
+        <p><strong>SORP BASIS</strong> Paragraphs 1.60 and 1.61</p>
+        <p><strong>APPLIES / STATUS</strong> Tier 1: MAY · Tier 2: MAY · Tier 3: MUST</p>
+        <p><strong>PLAIN ENGLISH</strong> Can the charity explain how it is responding to and managing environmental, governance and social matters?</p>
+        <p><strong>WHY THIS IS INCLUDED</strong> SORP 2026 explicitly includes sustainability within Module 1 of the Trustees’ Annual Report. The level of requirement depends on the charity’s tier.</p>
+        <p><strong>TIER DISTINCTION</strong> For Tier 1 and Tier 2, trustees MAY choose to report in this area. For Tier 3, the report MUST provide a summary. Choosing not to report under paragraph 1.60 must not itself be treated as failure to meet a SORP requirement. This is a methodology principle; it does not change assessment scoring code here.</p>
+      </article>
+      <article>
+        <h4><span>S2</span> SIGNPOSTING TO OTHER SUSTAINABILITY REPORTING</h4>
+        <p><strong>SORP BASIS</strong> Paragraph 1.64</p>
+        <p><strong>APPLIES</strong> Tier 3</p>
+        <p><strong>STATUS</strong> SHOULD</p>
+        <p><strong>PLAIN ENGLISH</strong> If the charity already reports its environmental, governance or social information somewhere other than the Trustees’ Annual Report, does the report tell users where they can find it, for example through a website link or another published report?</p>
+        <p><strong>WHY THIS IS INCLUDED</strong> SORP recognises that detailed sustainability reporting may already exist elsewhere. Where that happens, it recommends signposting users to that information.</p>
+      </article>
+    </div>
+    <div className="scr-public-method-oa-note">
+      <h4>EXAMPLES — NOT A MANDATORY CHECKLIST</h4>
+      <p>SORP paragraphs 1.62 and 1.63 give examples of matters sustainability reporting might cover:</p>
+      <p><strong>ENVIRONMENTAL</strong> Climate-related risks and opportunities, relevant targets and key performance indicators.</p>
+      <p><strong>GOVERNANCE</strong> Privacy, cyber security, data security and business ethics.</p>
+      <p><strong>SOCIAL</strong> Employee engagement and wellbeing, board diversity and inclusion, and support for the local community.</p>
+      <p>These are SORP examples, not a universal mandatory checklist. They do not each become a separate requirement, question or score. Relevant matters depend on the charity and its circumstances.</p>
+    </div>
+    <div className="scr-public-method-oa-note">
+      <h4>ADDITIONAL LEGAL REQUIREMENTS MAY APPLY</h4>
+      <p>Paragraph 1.65 flags that some charitable companies may also be subject to separate statutory sustainability, energy, carbon or climate-related disclosure requirements. This review does not determine full compliance with those regimes. Where relevant, the charity should check the requirements that apply to its legal form and jurisdiction.</p>
+      <p>This is a conditional legal / applicability flag, not another generic sustainability score or atomic test in this review. It belongs in a future full-SORP or wider compliance assessment where appropriate.</p>
+    </div>
+    <p>Sustainability contains two atomic assessment tests: S1 — Sustainability response and S2 — Signposting to other sustainability reporting. Paragraph 1.65 adds one conditional legal flag. The examples in paragraphs 1.62–1.63 create no extra tests.</p>
+  </div>;
+}
+
 export function SorpMethodologyGuide() {
   return <div className="scr-public-method-guide">
     <p className="scr-kicker">OUR METHODOLOGY</p>
@@ -425,7 +462,7 @@ export function SorpPublicMethodology() {
             {group.title === "C. SUBSTANTIVE AREAS" && <ObjectivesAndActivitiesDetail />}
             {group.title === "C. SUBSTANTIVE AREAS" && <AchievementsAndPerformanceDetail />}
             {group.title === "C. SUBSTANTIVE AREAS" && <LearningAndFutureDirectionDetail />}
-            <ol start={preceding + 1}>{group.areas.map((area, index) => <li key={area.title}><span>{String(preceding + index + 1).padStart(2, "0")}</span><div><h3>{area.title}</h3><p>{area.text}</p>{area.title === "SORP REQUIREMENT VS MSI JUDGEMENT" && <div className="scr-public-method-labels"><span>SORP REQUIREMENT</span><span>MSI METHODOLOGY</span></div>}</div></li>)}</ol>
+            <ol start={preceding + 1}>{group.areas.map((area, index) => <li key={area.title}><span>{String(preceding + index + 1).padStart(2, "0")}</span><div><h3>{area.title}</h3><p>{area.text}</p>{area.title === "SUSTAINABILITY" && <SustainabilityDetail />}{area.title === "SORP REQUIREMENT VS MSI JUDGEMENT" && <div className="scr-public-method-labels"><span>SORP REQUIREMENT</span><span>MSI METHODOLOGY</span></div>}</div></li>)}</ol>
           </section>;
         })}
         <section className="scr-public-method-register"><h3>REQUIREMENT-BY-REQUIREMENT METHODOLOGY</h3><p>We map every assessment question back to its SORP paragraph, applicable tier and requirement status. The detailed requirement mapping will appear here.</p></section>

@@ -586,6 +586,8 @@
 .scr-public-method-learning>p{margin:0 0 12px;line-height:1.6}
 .scr-public-method-learning>ul{margin:0 0 15px;padding-left:20px}
 .scr-public-method-detail-body .scr-public-method-learning>ul li{display:list-item;padding:2px 0;border:0;line-height:1.5}
+.scr-public-method-sustainability{max-width:750px;margin-top:15px}
+.scr-public-method-sustainability>p{margin:16px 0 0;line-height:1.6}
 .scr-public-method-detail-body li{padding-block:19px}
 .scr-public-method-detail-body li p{max-width:730px}
 .scr-public-method-labels{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
