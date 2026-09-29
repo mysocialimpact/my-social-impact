@@ -7,6 +7,7 @@ const answers = (answer) => Object.fromEntries(tests.map(item => [item.id, answe
 
 test("canonical V1.0 is exactly the approved 19-question structure", () => {
   assert.equal(methodologyV1.methodologyVersion, "1.0");
+  assert.equal(methodologyV1.methodologyId, "ARE_YOU_SORP_READY");
   assert.equal(tests.length, 19);
   assert.equal(new Set(tests.map(item => item.id)).size, 19);
   assert.deepEqual(["OA", "AP", "LF", "S"].map(prefix => tests.filter(item => item.id.startsWith(prefix)).length), [7, 7, 3, 2]);
@@ -42,14 +43,20 @@ test("mandatory status is separate from Reporting Strength and tier/jurisdiction
   assert.equal(methodologyV1.reportingStrengthBands.at(-1).label, "LEADING PRACTICE");
 });
 
-test("public methodology, live review and assessment service consume the canonical source", async () => {
-  const [page, review, backend] = await Promise.all([
+test("Cow Console's approved record generates the public methodology and assessment-service copies", async () => {
+  const [page, review, backend, cow, site, backendModule] = await Promise.all([
     readFile(new URL("../app/sorp-public-methodology.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/sorp-candidate-review.tsx", import.meta.url), "utf8"),
-    readFile(new URL("../../sorp2026/app/lib/sorp-methodology-v1.generated.json", import.meta.url), "utf8"),
+    readFile(new URL("../../sorp2026/app/lib/sorp-methodology-v1.generated.json", import.meta.url), "utf8").catch(() => null),
+    readFile(new URL("../../../g-p-6a7b081ad5688191af04c9280e01bea2/cow-console/app/intelligence/methodologies/are-you-sorp-ready/1.0.approved.json", import.meta.url), "utf8").catch(() => null),
+    readFile(new URL("../app/sorp-methodology-v1.generated.json", import.meta.url), "utf8"),
+    readFile(new URL("../../sorp2026/app/lib/sorp-methodology-v1.generated.mjs", import.meta.url), "utf8").catch(() => null),
   ]);
   assert.match(page, /from "\.\/sorp-methodology-v1"/);
   assert.match(review, /from "\.\/sorp-methodology-v1"/);
   assert.match(review, /verifiedCanonicalTar/);
-  assert.deepEqual(JSON.parse(backend), methodologyV1);
+  assert.deepEqual(JSON.parse(site), methodologyV1);
+  if (cow) assert.deepEqual(JSON.parse(site), JSON.parse(cow));
+  if (backend) assert.deepEqual(JSON.parse(backend), methodologyV1);
+  if (backendModule) assert.match(backendModule, /Generated from Cow Console's approved/);
 });
