@@ -166,8 +166,8 @@ const tests: Test[] = [
     question: "If you report on these matters somewhere else, does your Trustees’ Annual Report tell readers where they can find that information?",
     why: "When detailed sustainability information exists elsewhere, readers should be able to find it from the TAR.",
     tiers: [nr, nr, should],
-    rubric: ["TAR clearly identifies where the external sustainability information can be found, with usable reference/link.", "External source is clearly identifiable but signposting could be more precise.", "External reporting is mentioned but route to it is incomplete/unclear.", "Vague reference without a practical way to locate it.", "Separate reporting exists but TAR provides no meaningful signpost."],
-    notSure: "Cannot establish whether/how signposting is provided.",
+    rubric: ["TAR clearly identifies where the external sustainability information can be found, with a clear and usable signpost or reference.", "The external source is clearly identifiable, but the signposting could be more precise.", "External reporting is mentioned, but the route to it is incomplete or unclear.", "There is only a vague reference to other reporting, with no practical way for the reader to locate it.", "Separate sustainability reporting exists, but the TAR provides no meaningful signpost."],
+    notSure: "Cannot establish whether or how signposting is provided. Needs confirmation.",
     na: "No separate sustainability reporting exists to signpost to. Exclude this question from the denominator.",
   },
 ];
@@ -203,7 +203,7 @@ function Question({ test }: { test: Test }) {
     {test.na && <p className="scr-public-method-v1-scope"><strong>NOT APPLICABLE</strong> {test.na}</p>}
     <details className="scr-public-method-v1-rubric"><summary>SEE THE FULL EVIDENCE RUBRIC <span aria-hidden="true">+</span></summary>
       <ol>{test.rubric.map((description, index) => <li key={index}><strong>{4 - index} — {answers[index]}</strong><span>{description}</span></li>)}</ol>
-      <p><strong>NOT SURE</strong> {test.notSure}</p>
+      <p><strong>{test.id === "S2" ? "NOT SURE — 0 FOR SCORING" : "NOT SURE"}</strong> {test.notSure}</p>
       {test.na && <p><strong>NOT APPLICABLE</strong> {test.na}</p>}
     </details>
   </article>;
