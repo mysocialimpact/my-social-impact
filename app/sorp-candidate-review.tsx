@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { tierFromSetup, tierLabel, type AssessmentSetup } from "./sorp-questionnaire";
-import { answerScores, groups, methodologyVersion, reportingStrengthBands, requirementFor, scoreCanonical, tests, type CanonicalAnswer, type MethodologyTier } from "./sorp-methodology-v1";
+import { answers, answerScores, groups, methodologyVersion, reportingStrengthBands, requirementFor, scoreCanonical, tests, type CanonicalAnswer, type MethodologyTier } from "./sorp-methodology-v1";
 import { trackSorpEvent } from "./sorp-growth";
 import { supportPence, type SupportChoice } from "./sorp-payment-amounts";
 import { SorpPublicSupportCheckout } from "./sorp-public-support-checkout";
@@ -34,9 +34,7 @@ const normaliseLocation = (location: ReviewLocation): ReviewLocation => location
 const isTransient = (step: Step) => step === "quick-generating" || step === "generating";
 const phases = ["Introduction", "Find charity", "Public homework", "Historical snapshot", "Current readiness", "Your report", "What next"];
 const scale: { value: CanonicalAnswer; label: string }[] = [
-  { value: "yes", label: "YES, CLEARLY" }, { value: "mostly", label: "MOSTLY" },
-  { value: "partly", label: "PARTLY" }, { value: "limited", label: "LIMITED" },
-  { value: "not_yet", label: "NOT YET" }, { value: "not_sure", label: "NOT SURE" },
+  ...Object.keys(answerScores).map((value, index) => ({ value: value as CanonicalAnswer, label: answers[index] || value.replaceAll("_", " ").toUpperCase() })),
   { value: "not_applicable", label: "NOT APPLICABLE" },
 ];
 const coreQuestions = tests.map((test, index) => ({ id: index + 1, code: test.id, title: test.title,
