@@ -91,6 +91,218 @@ const detailGroups = [
   },
 ];
 
+const objectivesAndActivitiesTests = [
+  {
+    code: "OA1",
+    title: "PURPOSE AND MAIN ACTIVITIES",
+    basis: "Paragraph 1.19",
+    applies: "Tier 1 · Tier 2 · Tier 3",
+    status: "MUST",
+    question: "Can the charity clearly explain why it exists and the main activities it undertakes in pursuit of those purposes?",
+    why: "Impact starts with purpose. A charity cannot credibly explain the difference it is making unless it is clear about what it exists to achieve and what it actually does.",
+  },
+  {
+    code: "OA2",
+    title: "PUBLIC BENEFIT",
+    basis: "Paragraph 1.20 — substantive public-benefit explanation",
+    applies: "England, Wales and Northern Ireland · Tier 1 · Tier 2 · Tier 3",
+    status: "MUST where the SORP requirement applies",
+    question: "Can the charity explain how its main activities further its charitable purposes for public benefit?",
+    why: "Public benefit is closely connected to impact because impact concerns the effect or influence a charity has on beneficiaries and wider society.",
+  },
+  {
+    code: "OA3",
+    title: "REPORTING-PERIOD AND LONGER-TERM AIMS",
+    basis: "Paragraph 1.23, supported by paragraph 1.24",
+    applies: "Tier 2 · Tier 3",
+    status: "MUST",
+    question: "Are the charity’s aims and objectives for the reporting period clear? Are its longer-term aims clear? Is the relationship between the short-term and longer-term aims understandable?",
+    why: "Impact often develops over time. SORP specifically requires Tier 2 and Tier 3 charities to explain short- and longer-term aims and how they relate. There is no universal timeframe: it depends on the charity, its work and the change it seeks to create.",
+  },
+  {
+    code: "OA4",
+    title: "ACTIVITIES → AIMS",
+    basis: "Paragraph 1.24",
+    applies: "Tier 2 · Tier 3",
+    status: "MUST",
+    question: "Can the charity explain its significant programmes, projects or services and how they contribute to its stated aims and objectives?",
+    why: "An activity list is not enough. The charity should be able to explain how what it does connects to what it is trying to achieve.",
+  },
+  {
+    code: "OA5",
+    title: "CHANGE SOUGHT",
+    basis: "Paragraph 1.24",
+    applies: "Tier 2 · Tier 3",
+    status: "MUST",
+    question: "Can the charity clearly explain the change or difference it is trying to make through its activities?",
+    why: "This is one of the clearest links between SORP and impact reporting. It establishes the intended change before the review later considers what change was actually achieved.",
+  },
+  {
+    code: "OA6",
+    title: "STRATEGY",
+    basis: "Paragraph 1.24",
+    applies: "Tier 2 · Tier 3",
+    status: "MUST",
+    question: "Can the charity explain its strategy for achieving its stated aims and objectives?",
+    why: "Impact reporting should not only describe activities. The charity should be able to explain how its approach is intended to lead towards its aims.",
+  },
+  {
+    code: "OA7",
+    title: "MEASURES OF SUCCESS",
+    basis: "Paragraph 1.24",
+    applies: "Tier 2 · Tier 3",
+    status: "MUST",
+    question: "Has the charity defined the criteria or measures it uses to assess success in the reporting period?",
+    why: "A charity needs some basis for judging whether it has achieved what it intended to achieve. This becomes important later when the review considers actual performance and impact.",
+  },
+];
+
+function ObjectivesAndActivitiesDetail() {
+  return <div className="scr-public-method-objectives">
+    <h3>OBJECTIVES AND ACTIVITIES</h3>
+    <p>“Objectives and activities” is an official SORP 2026 Module 1 reporting category.</p>
+    <p>For this Impact &amp; Sustainability Reporting review, we include the parts of this category that establish:</p>
+    <ul>
+      <li>why the charity exists</li>
+      <li>what it does</li>
+      <li>the public benefit it seeks to create</li>
+      <li>its short- and longer-term aims</li>
+      <li>how its activities contribute to those aims</li>
+      <li>the change or difference it seeks to make</li>
+      <li>its strategy</li>
+      <li>how it defines success</li>
+    </ul>
+    <p>These form the foundation of an impact story: before a charity can explain what difference it has made, it needs to be clear about the change it is trying to create.</p>
+    <div className="scr-public-method-oa-tests">
+      {objectivesAndActivitiesTests.map((test) => <article key={test.code}>
+        <h4><span>{test.code}</span> {test.title}</h4>
+        <p><strong>SORP BASIS</strong> {test.basis}</p>
+        <p><strong>APPLIES</strong> {test.applies}</p>
+        <p><strong>STATUS</strong> {test.status}</p>
+        <p><strong>PLAIN ENGLISH</strong> {test.question}</p>
+        <p><strong>WHY THIS IS INCLUDED</strong> {test.why}</p>
+        {test.code === "OA2" && <p><strong>SCOPE BOUNDARY</strong> Paragraph 1.20 also includes a formal statement about whether trustees had regard to Charity Commission public-benefit guidance. That administrative statement is not assessed in this Impact &amp; Sustainability review; it belongs in the wider full-SORP / TAR compliance review. The public-benefit MUST is not universal outside the jurisdictions where it applies.</p>}
+      </article>)}
+    </div>
+    <div className="scr-public-method-oa-note">
+      <h4>AVOIDING DOUBLE-COUNTING</h4>
+      <p>The first question in paragraph 1.24 also asks how the charity performed against its aims and objectives. We do not score that performance element again here. Paragraph 1.28, under “Achievements and performance”, explicitly requires Tier 2 and Tier 3 charities to explain the extent to which their achievements met their aims and objectives. Objectives and activities assesses whether the aims are defined; Achievements and performance assesses what actually happened against those aims. Both paragraphs may support the later performance test, but the same requirement must not be scored twice.</p>
+    </div>
+    <div className="scr-public-method-oa-note">
+      <h4>NOT EVERYTHING IN “OBJECTIVES AND ACTIVITIES” IS INCLUDED IN THIS IMPACT REVIEW.</h4>
+      <p>Wider Module 1 requirements outside this tool’s scope as standalone assessment requirements are 1.21 — volunteer reporting, 1.25 — grant-making and social-investment disclosures, and 1.26 — additional volunteer information. Paragraph 1.22 is already incorporated into MSI’s cross-cutting principle NARRATIVE–RESOURCE COHERENCE; it does not create another standalone score here.</p>
+    </div>
+    <p>These are seven atomic methodology tests, not necessarily seven separate user-facing screens. The methodology preserves each distinct SORP test so requirements are not lost or double-counted. The eventual UX may group related tests, but the underlying methodology retains them separately.</p>
+  </div>;
+}
+
+const achievementsAndPerformanceTests = [
+  {
+    code: "AP1",
+    title: "MAIN ACHIEVEMENTS",
+    basis: "Paragraph 1.27",
+    applies: "Tier 1 · Tier 2 · Tier 3",
+    status: "MUST",
+    question: "Can the charity clearly summarise its main achievements during the reporting period?",
+    why: "Impact reporting needs to explain what was actually achieved, not simply what activities took place.",
+  },
+  {
+    code: "AP2",
+    title: "DIFFERENCE TO BENEFICIARIES / WIDER SOCIETY",
+    basis: "Paragraph 1.27",
+    applies: "Tier 1 · Tier 2 · Tier 3",
+    status: "SHOULD CONSIDER",
+    question: "Can the charity explain how its work made a difference to the circumstances of its beneficiaries and whether its work provided any wider benefits to society?",
+    why: "SORP explicitly asks trustees to consider the difference their work has made to beneficiaries and wider society. This is directly relevant to impact reporting, even though it is not expressed in paragraph 1.27 as the same MUST as the requirement to summarise main achievements.",
+  },
+  {
+    code: "AP3",
+    title: "PERFORMANCE AGAINST AIMS",
+    basis: "Paragraph 1.28",
+    applies: "Tier 2 · Tier 3",
+    status: "MUST",
+    question: "Can the charity explain how well it carried out its activities and the extent to which its achievements met the aims and objectives set for the reporting period?",
+    why: "This is where the assessment compares what the charity intended to achieve with what actually happened.",
+  },
+  {
+    code: "AP4",
+    title: "IMPACT MADE",
+    basis: "Paragraph 1.30",
+    applies: "Tier 2 · Tier 3",
+    status: "MUST",
+    question: "Can the charity explain the impact it is making?",
+    why: "SORP describes impact as, arguably, the ultimate expression of a charity’s performance. This is one of the core explicit impact-reporting requirements in SORP 2026.",
+  },
+  {
+    code: "AP5",
+    title: "LONGER-TERM EFFECTS",
+    basis: "Paragraph 1.30",
+    applies: "Tier 2 · Tier 3",
+    status: "MUST CONSIDER",
+    question: "Has the charity considered the longer-term effect of its activities on individual beneficiaries and society as a whole?",
+    why: "SORP explicitly requires Tier 2 and Tier 3 charities to consider longer-term effects. The report MUST explain the impact the charity is making and MUST consider the long-term effect of its activities; this is not a requirement for a separate full long-term impact report.",
+  },
+  {
+    code: "AP6",
+    title: "OUTPUTS ACHIEVED",
+    basis: "Paragraph 1.31",
+    applies: "Tier 2 · Tier 3",
+    status: "SHOULD",
+    question: "Can the charity explain the outputs achieved by its activities, particularly where numerical targets were set?",
+    why: "SORP recommends explaining what was actually delivered. This supports the distinction between activities, outputs, outcomes and impact already included in MSI’s SORP-grounded cross-cutting principles.",
+  },
+  {
+    code: "AP7",
+    title: "FACTORS AFFECTING RESULTS",
+    basis: "Paragraph 1.32",
+    applies: "Tier 2 · Tier 3",
+    status: "SHOULD",
+    question: "Can the charity explain the significant positive and negative factors that affected achievement of its objectives, including factors outside its control? Where relevant, can it explain how those factors influenced future plans?",
+    why: "Credible impact reporting should explain not only what happened, but the important factors that helped or hindered results.",
+  },
+];
+
+function AchievementsAndPerformanceDetail() {
+  return <div className="scr-public-method-achievements">
+    <h3>ACHIEVEMENTS AND PERFORMANCE</h3>
+    <p>“Achievements and performance” is an official SORP 2026 Module 1 reporting category.</p>
+    <p>This is the heart of the impact-reporting assessment. It looks at:</p>
+    <ul>
+      <li>what the charity actually achieved</li>
+      <li>whether its work made a difference</li>
+      <li>how performance compared with its aims</li>
+      <li>the impact it is making</li>
+      <li>longer-term effects</li>
+      <li>outputs achieved</li>
+      <li>significant positive and negative factors affecting results</li>
+    </ul>
+    <div className="scr-public-method-oa-tests">
+      {achievementsAndPerformanceTests.map((test) => <article key={test.code}>
+        <h4><span>{test.code}</span> {test.title}</h4>
+        <p><strong>SORP BASIS</strong> {test.basis}</p>
+        <p><strong>APPLIES</strong> {test.applies}</p>
+        <p><strong>STATUS</strong> {test.status}</p>
+        <p><strong>PLAIN ENGLISH</strong> {test.question}</p>
+        <p><strong>WHY THIS IS INCLUDED</strong> {test.why}</p>
+        {test.code === "AP3" && <p><strong>AVOIDING DOUBLE-COUNTING</strong> This performance element overlaps with paragraph 1.24 and is assessed here, not again under Objectives and Activities. That section assesses whether the aims were defined; this one assesses what actually happened against them. The same requirement must not be scored twice.</p>}
+      </article>)}
+    </div>
+    <div className="scr-public-method-oa-note">
+      <h4>SUPPORTING SORP MATERIAL — DO NOT DOUBLE-SCORE</h4>
+      <p>Paragraph 1.31 also recommends a summary of measures or indicators used to assess performance, and information on activities, outputs and outcomes or impacts in the context of their contribution to aims and objectives. Measures and indicators are already substantively captured under OA7 — Measures of Success. Activities → outputs → outcomes → impact is already incorporated into MSI’s SORP-grounded cross-cutting principles. These provisions support the methodology without creating duplicate scores.</p>
+    </div>
+    <div className="scr-public-method-oa-note">
+      <h4>NOT EVERYTHING IN “ACHIEVEMENTS AND PERFORMANCE” IS INCLUDED IN THIS IMPACT REVIEW.</h4>
+      <p>Paragraph 1.29 — investment performance — and paragraph 1.33 — Tier 3 fundraising performance and related fundraising expenditure — remain relevant to full SORP reporting but are outside this Impact &amp; Sustainability Reporting assessment.</p>
+    </div>
+    <div className="scr-public-method-oa-note">
+      <h4>MSI METHODOLOGY BOUNDARY</h4>
+      <p>MSI may provide additional quality and evidence insights around evidence strength, attribution versus contribution, proportionality of claims, limitations and confidence. These are MSI methodology and improvement insights. They do not create extra SORP requirements, score penalties or points unless they map directly to an explicit in-scope SORP requirement. The SORP readiness score is driven by mapped SORP requirements and recommendations, not by extra MSI thinking.</p>
+    </div>
+    <p>These are seven atomic methodology tests, not necessarily seven separate user-facing screens. The methodology preserves each distinct SORP test so requirements are not lost or double-counted. The eventual UX may group related tests, but the underlying methodology retains them separately.</p>
+  </div>;
+}
+
 export function SorpMethodologyGuide() {
   return <div className="scr-public-method-guide">
     <p className="scr-kicker">OUR METHODOLOGY</p>
@@ -149,6 +361,8 @@ export function SorpPublicMethodology() {
           return <section className="scr-public-method-detail-group" key={group.title}>
             <h2>{group.title}</h2>
             {"introduction" in group && <p>{group.introduction}</p>}
+            {group.title === "C. SUBSTANTIVE AREAS" && <ObjectivesAndActivitiesDetail />}
+            {group.title === "C. SUBSTANTIVE AREAS" && <AchievementsAndPerformanceDetail />}
             <ol start={preceding + 1}>{group.areas.map((area, index) => <li key={area.title}><span>{String(preceding + index + 1).padStart(2, "0")}</span><div><h3>{area.title}</h3><p>{area.text}</p>{area.title === "SORP REQUIREMENT VS MSI JUDGEMENT" && <div className="scr-public-method-labels"><span>SORP REQUIREMENT</span><span>MSI METHODOLOGY</span></div>}</div></li>)}</ol>
           </section>;
         })}
