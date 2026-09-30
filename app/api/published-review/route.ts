@@ -1,5 +1,19 @@
 export const runtime = "nodejs";
 export const maxDuration = 300;
+export async function GET(request: Request) {
+  const sessionId = new URL(request.url).searchParams.get("sessionId") || "";
+  const since = new URL(request.url).searchParams.get("since") || "";
+  if (!/^[a-zA-Z0-9-]{8,160}$/.test(sessionId)) return Response.json({ events: [] }, { status: 400 });
+  const base = process.env.SORP_READINESS_API_URL || "https://sorp2026.mysocialimpact.org/api/readiness";
+  try {
+    const url = new URL("/api/published-review/status", base);
+    url.searchParams.set("sessionId", sessionId);
+    if (since) url.searchParams.set("since", since);
+    const response = await fetch(url, { cache: "no-store", signal: AbortSignal.timeout(5000) });
+    if (!response.ok) throw new Error("Status unavailable");
+    return new Response(await response.text(), { headers: { "content-type": "application/json", "cache-control": "no-store" } });
+  } catch { return Response.json({ events: [] }, { headers: { "cache-control": "no-store" } }); }
+}
 export async function POST(request: Request) {
   try {
     const multipart = request.headers.get("content-type")?.startsWith("multipart/form-data") || false;

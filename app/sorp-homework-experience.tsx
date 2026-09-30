@@ -4,9 +4,11 @@ import { useEffect, useState } from "react";
 import type { Candidate } from "./sorp-public-model";
 import { homeworkMessageAt, homeworkMessages } from "./sorp-homework-timing";
 
-export function SorpHomeworkExperience({ candidate, tier, verified, waiting, startedAt }: { candidate: Candidate | null; tier: string; verified: boolean; waiting: boolean; startedAt: number }) {
+export function SorpHomeworkExperience({ candidate, tier, verified, waiting, startedAt, sessionId }: { candidate: Candidate | null; tier: string; verified: boolean; waiting: boolean; startedAt: number; sessionId: string }) {
   const [elapsed, setElapsed] = useState(0);
   const [revealed, setRevealed] = useState<number[]>([]);
+  const [liveStage, setLiveStage] = useState<{ stage: string; message: string; source?: string; httpStatus?: number | null; contentType?: string } | null>(null);
+  const [attemptSince] = useState(() => new Date(Date.now() - 2000).toISOString());
   useEffect(() => {
     if (!waiting) return;
     const update = () => setElapsed(Math.max(0, performance.now() - startedAt));
@@ -14,6 +16,21 @@ export function SorpHomeworkExperience({ candidate, tier, verified, waiting, sta
     const timer = window.setInterval(update, 250);
     return () => window.clearInterval(timer);
   }, [waiting, startedAt]);
+  useEffect(() => {
+    if (!waiting || !sessionId) return;
+    let active = true;
+    const check = async () => {
+      try {
+        const response = await fetch(`/api/published-review?sessionId=${encodeURIComponent(sessionId)}&since=${encodeURIComponent(attemptSince)}`, { cache: "no-store" });
+        if (!response.ok) return;
+        const body = await response.json() as { events?: Array<{ stage: string; message: string; source?: string; httpStatus?: number | null; contentType?: string }> };
+        if (active && body.events?.[0]) setLiveStage(body.events[0]);
+      } catch { /* The normal progress remains usable if live diagnostics are temporarily unavailable. */ }
+    };
+    void check();
+    const timer = window.setInterval(() => void check(), 1800);
+    return () => { active = false; window.clearInterval(timer); };
+  }, [waiting, sessionId, attemptSince]);
   const checks: [string, boolean][] = [
     ["Finding the latest published accounts", verified],
     ["Finding the Trustees’ Annual Report", verified],
@@ -36,7 +53,7 @@ export function SorpHomeworkExperience({ candidate, tier, verified, waiting, sta
   const messageIndex = homeworkMessageAt(elapsed).index;
   return <div className="scr-homework-experience">
     <p className="scr-kicker">{waiting ? "BUILDING YOUR HISTORICAL SNAPSHOT…" : verified ? "PUBLIC HOMEWORK COMPLETE ✓" : "PUBLIC HOMEWORK"}</p>
-    {waiting ? <div className="scr-homework-messages" aria-live="polite" aria-atomic="true">{homeworkMessages.map((message, index) => <div key={message.title} className={index === messageIndex ? "is-current" : ""} aria-hidden={index !== messageIndex}><h1>{message.title}</h1><p>{message.copy}</p></div>)}</div> : <h1>{verified ? "We found what we need." : "Let’s finish the public homework."}</h1>}
+    {waiting && verified ? <div className="scr-homework-delay" role="status"><h1>THE FULL REPORT HAS BEEN READ ✓</h1><p>All pages passed the reading and validation checks. We’re completing this screen before you build your Historical Snapshot.</p></div> : waiting ? elapsed >= 10000 ? <div className="scr-homework-delay" role="status"><h1>WE’RE STILL WORKING ON IT.</h1><p><strong>Current stage:</strong> {liveStage?.message || "The report-reading operation has not yet returned a diagnostic result, so we cannot identify a more specific cause yet."}</p>{liveStage?.stage && <small>STAGE: {liveStage.stage}{liveStage.httpStatus ? ` · RESPONSE: ${liveStage.httpStatus}` : ""}{liveStage.contentType ? ` · ${liveStage.contentType}` : ""}</small>}<p>We’re continuing the current step. If it cannot be completed, we’ll offer a retry or report upload. Your completed checks are saved on this device; no score is produced before full validation.</p></div> : elapsed >= 5000 ? <div className="scr-homework-delay" role="status"><h1>SORRY — THIS IS TAKING A LITTLE LONGER THAN USUAL.</h1><p>{candidate ? `We’ve confirmed ${candidate.name} and the public reporting details available so far.` : "We’re still confirming the charity’s public reporting details."} {liveStage?.message || "We’re still trying to retrieve and read the Trustees’ Annual Report."}</p></div> : <div className="scr-homework-messages" aria-live="polite" aria-atomic="true">{homeworkMessages.map((message, index) => <div key={message.title} className={index === messageIndex ? "is-current" : ""} aria-hidden={index !== messageIndex}><h1>{message.title}</h1><p>{message.copy}</p></div>)}</div> : <h1>{verified ? "We found what we need." : "Let’s finish the public homework."}</h1>}
     <ol className="scr-progress-sequence scr-evidence-checklist" aria-label="Public evidence checks">{checks.map(([label, established], index) => {
       const done = established && (!waiting || revealed.includes(index));
       const checking = waiting && !done && active === index;

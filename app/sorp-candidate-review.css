@@ -69,6 +69,9 @@
 .scr-website-preview img{display:block;width:100%;height:100%;object-fit:cover;object-position:top;opacity:0}
 .scr-website-preview.is-ready img{opacity:1}
 .scr-homework-messages{display:grid;max-width:780px;margin:22px 0 26px;padding-bottom:24px;border-bottom:1px solid var(--line)}
+.scr-homework-delay{max-width:780px;min-height:180px;margin:22px 0 26px;padding-bottom:24px;border-bottom:1px solid var(--line)}
+.scr-homework-delay h1{margin:0 0 18px;font-size:clamp(30px,3.7vw,52px);line-height:1.08}.scr-homework-delay p{max-width:690px;line-height:1.55}.scr-homework-delay small,.scr-failure-detail{display:block;color:var(--muted);font-size:12px;letter-spacing:.04em;line-height:1.5}
+.scr-homework-failure{max-width:760px}.scr-homework-failure h1{font-size:clamp(31px,4vw,55px);line-height:1.08}.scr-homework-failure p{line-height:1.55}.scr-failure-detail{padding:12px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}.scr-recovery-actions{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-top:24px}.scr-recovery-actions>button{min-height:52px;padding:12px 18px;border:1px solid var(--ink);background:transparent;color:var(--ink);font-size:12px;font-weight:800;cursor:pointer}.scr-recovery-actions .scr-upload-report{margin:0}
 .scr-homework-messages>div{grid-area:1/1;visibility:hidden;opacity:0;transition:opacity .45s ease}
 .scr-homework-messages>div.is-current{visibility:visible;opacity:1}
 .scr-homework-experience .scr-homework-messages h1{margin:0 0 20px;font-size:clamp(32px,3.8vw,54px);line-height:1.06;letter-spacing:-.035em;white-space:pre-line;text-wrap:balance}
