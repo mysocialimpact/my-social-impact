@@ -24,32 +24,44 @@ function ImpactSignal() {
   </svg></div>;
 }
 
+function ProductMarks() {
+  return <div className="si-product-marks"><Image src="/assets/social-impact-excellence-transparent.png" alt="Social Impact Excellence" width={150} height={150} /><Image src="/assets/social-impact-claims-code-transparent.png" alt="Social Impact Claims Code" width={150} height={150} /></div>;
+}
+
+function EvidenceVisual() {
+  return <svg className="si-evidence-visual" viewBox="0 0 620 140" fill="none" aria-hidden="true">
+    <g stroke="currentColor" strokeWidth="1"><path d="M15 20H90L112 42V120H15Z M90 20V42H112" />{[55,70,85,100].map(y => <path key={y} d={`M32 ${y}H85`} opacity=".3" />)}<path d="M112 70H205 M415 70H500" opacity=".25" /></g>
+    <path className="si-evidence-travel" d="M112 70H205 M415 70H500" stroke="var(--orange)" strokeWidth="3" pathLength="100" />
+    {Array.from({length:19},(_,i)=><rect key={i} className="si-evidence-cell" x={210+(i%7)*28} y={29+Math.floor(i/7)*28} width="19" height="19" rx="2" style={{animationDelay:`${i*.12}s`}} />)}
+    <g stroke="currentColor"><circle cx="545" cy="70" r="38" opacity=".15" /><circle className="si-evidence-ring" cx="545" cy="70" r="38" stroke="var(--orange)" pathLength="100" /><path d="M528 70L540 82L562 57" strokeWidth="2" /></g>
+  </svg>;
+}
+
 function Scope() {
   return <>
-    <header className="si-scope-heading"><p className="si-eyebrow">FREE SORP 2026</p><h1>ARE YOU SORP READY?</h1><p className="si-proposition">IMPACT &amp; SUSTAINABILITY READINESS REVIEW</p></header>
+    <div className="si-human-hero"><header className="si-scope-heading"><p className="si-eyebrow">FREE SORP 2026</p><h1>ARE YOU<br /> SORP READY?</h1><p className="si-proposition">IMPACT &amp; SUSTAINABILITY READINESS REVIEW</p><ProductMarks /></header><aside className="si-founder"><div className="si-founder-image"><svg viewBox="0 0 320 320" fill="none" aria-hidden="true"><circle cx="160" cy="160" r="143" /><path className="si-founder-signal" pathLength="100" d="M17 160A143 143 0 0 1 303 160A143 143 0 0 1 17 160" /><path d="M0 240H320M40 0V320" opacity=".3" /></svg><Image src="/images/marcus-warry-msi.webp" alt="Marcus Warry" width={1122} height={1402} priority /></div><p className="si-eyebrow">BUILT BY PEOPLE WHO WORK WITH CHARITIES</p><strong>Marcus Warry ACA</strong><span>Chartered Accountant &amp; social impact consultant</span><span>Co-founder, My Social Impact</span></aside></div>
     <div className="si-scope-promise"><p className="si-lead">This free tool helps you understand how ready your charity is for the impact and sustainability reporting elements of SORP 2026.</p><div className="si-free"><strong>FREE TO USE.<br /> NO OBLIGATION.</strong><p>At the end, we’ll ask whether you’d like My Social Impact to review the results with you. That is entirely optional.</p></div></div>
     <p className="si-boundary">THIS IS NOT A FULL SORP 2026 COMPLIANCE REVIEW.</p>
     <div className="si-scope-summary"><section><h2>WHAT THIS CHECKS</h2><ul>{["purpose and aims", "achievements and performance", "outputs, outcomes and impact", "evidence and learning", "sustainability reporting"].map(text => <li key={text}>{text}</li>)}</ul></section><section><h2>WHAT THIS DOES NOT CHECK</h2><ul>{["full financial statement requirements", "all accounting disclosures", "every governance / administrative requirement", "specialist SORP modules"].map(text => <li key={text}>{text}</li>)}</ul></section></div>
     <details className="si-expander"><summary>WHAT EXACTLY DOES THIS COVER? <span aria-hidden="true">+</span></summary><div className="si-expanded"><SorpScopeIntro /></div></details>
-    <MarcusSignature />
   </>;
 }
 
 function Methodology() {
   return <>
     <header className="si-method-heading"><h1>SORP 2026 IS OUR<br /> SOURCE OF TRUTH.</h1><p className="si-lead">We assess your published Trustees’ Annual Report and accounts against a defined methodology mapped to SORP 2026.</p></header>
+    <div className="si-method-visual"><EvidenceVisual /></div>
     <div className="si-method-principles"><div className="si-question-count"><strong>19</strong><span>QUESTIONS.</span></div><ul><li>TIER-AWARE REQUIREMENTS.</li><li>PUBLISHED EVIDENCE.</li><li>FIXED SCORING.</li><li>HUMAN JUDGEMENT CLEARLY LABELLED.</li></ul></div>
     <div className="si-definitions" aria-label="Official SORP 2026 definitions"><section><h2>IMPACT</h2><blockquote>“Impact is the effect or influence that a charity has on its beneficiaries and wider society.”</blockquote></section><section><h2>SUSTAINABILITY REPORTING</h2><blockquote>“Sustainability Reporting is the practice of disclosing performance across environmental, social and governance areas, sometimes referred to as ESG.”</blockquote></section></div>
-    <MarcusSignature methodology />
-    <details className="si-expander"><summary>READ THE FULL METHODOLOGY <span aria-hidden="true">+</span></summary><div className="si-expanded"><SorpPublicMethodology expanded /></div></details>
+    <details className="si-expander"><summary>READ THE FULL METHODOLOGY <span aria-hidden="true">+</span></summary><div className="si-expanded"><MarcusSignature methodology /><SorpPublicMethodology expanded /></div></details>
   </>;
 }
 
 function Vision() {
   return <>
     <div className="si-vision-spread"><section className="si-vision"><p className="si-eyebrow">OUR VISION</p><h2>Imagine a world where social impact was taken as seriously as financial performance.</h2><ImpactSignal /></section><section className="si-brand-story"><p className="si-eyebrow">WHY MY SOCIAL IMPACT BUILT THIS</p><h1>Beyond the<br />annual report.</h1><div className="si-philosophy">SORP IS THE REQUIREMENT.<br /><strong>BETTER IMPACT IS THE OPPORTUNITY.</strong></div><p>SORP 2026 raises the bar for reporting. We see an opportunity to understand what is working, where evidence is thin and what can improve.</p><p>Better reporting grows from better evidence, learning and decisions throughout the year.</p></section></div>
-    <div className="si-expertise"><section><h2>SOCIAL IMPACT EXCELLENCE</h2><p>Purpose · Leadership · Data · Delivery · Communication</p></section><section><h2>SOCIAL IMPACT CLAIMS CODE</h2><p>Evidence · Proportion · Transparency · Balance · Learning</p></section></div>
-    <details className="si-expander"><summary>MORE ABOUT MY SOCIAL IMPACT <span aria-hidden="true">+</span></summary><div className="si-expanded si-brand-detail"><p>That is the thinking behind our Social Impact Excellence approach, across Purpose, Leadership, Data, Delivery and Communication. Our Social Impact Claims Code helps keep the resulting claims proportionate and credible.</p><p>My Social Impact specialises in helping organisations understand, evidence, improve and communicate the difference they make.</p></div></details>
+    <div className="si-expertise"><section><Image src="/assets/social-impact-excellence-transparent.png" alt="Social Impact Excellence" width={150} height={150} /><div><h2>SOCIAL IMPACT EXCELLENCE</h2><p>Manage impact throughout the year.</p><p>Purpose · Leadership · Data · Delivery · Communication</p></div></section><section><Image src="/assets/social-impact-claims-code-transparent.png" alt="Social Impact Claims Code" width={150} height={150} /><div><h2>SOCIAL IMPACT CLAIMS CODE</h2><p>Make claims your evidence can support.</p><p>Evidence · Proportion · Transparency · Balance · Learning</p></div></section></div>
+    <details className="si-expander"><summary>MORE ABOUT MY SOCIAL IMPACT <span aria-hidden="true">+</span></summary><div className="si-expanded si-brand-detail"><section><h2>Social Impact Excellence</h2><p>Our flagship methodology treats social impact as a management discipline—not an annual reporting exercise. It connects five parts of an organisation:</p><dl><dt>Purpose</dt><dd>Be clear about the change you exist to create.</dd><dt>Leadership</dt><dd>Make impact part of governance, accountability and everyday decisions.</dd><dt>Data</dt><dd>Gather useful evidence and measure what matters.</dd><dt>Delivery</dt><dd>Turn purpose into programmes and services capable of meaningful change.</dd><dt>Communication</dt><dd>Tell the story clearly, credibly and transparently.</dd></dl><p>From a maturity assessment and diagnostic to a blueprint, practical roadmap and continuous improvement, the approach helps organisations act on what they learn.</p><a href="/social-impact-excellence" target="_blank" rel="noreferrer">EXPLORE SOCIAL IMPACT EXCELLENCE ↗</a></section><section><h2>Social Impact Claims Code</h2><p>A practical framework for measuring, interpreting and communicating impact responsibly. Its central discipline: make the strongest claim the evidence allows. No stronger.</p><dl><dt>Evidence</dt><dd>Know what supports the claim; distinguish activity, outputs, outcomes and impact.</dd><dt>Proportion</dt><dd>Do not turn contribution into causation or uncertainty into certainty.</dd><dt>Transparency</dt><dd>Show the sources, methods, assumptions and limitations.</dd><dt>Balance</dt><dd>Include what did not work and who did not benefit—not just the best story.</dd><dt>Learning</dt><dd>Use the evidence to decide what to keep, change, stop or test next.</dd></dl><a href="/social-impact-claims-code" target="_blank" rel="noreferrer">EXPLORE THE SOCIAL IMPACT CLAIMS CODE ↗</a></section></div></details>
   </>;
 }
 
