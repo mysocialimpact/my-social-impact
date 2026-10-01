@@ -27,7 +27,7 @@ function Question({ test }: { test: Test }) {
   </article>;
 }
 
-export function SorpPublicMethodology() {
+export function SorpPublicMethodology({ expanded = false }: { expanded?: boolean } = {}) {
   return <div className="scr-public-method scr-public-method-v1">
     <header>
       <p className="scr-kicker">OUR METHODOLOGY · QUICK READ</p>
@@ -64,7 +64,7 @@ export function SorpPublicMethodology() {
       <div><dt>MUST</dt><dd>Required for SORP compliance.</dd></div><div><dt>SHOULD</dt><dd>SORP good practice. Not following a SHOULD is not itself a departure from SORP.</dd></div><div><dt>MAY</dt><dd>Optional.</dd></div><div><dt>GUIDANCE</dt><dd>Explanation or illustration, not automatically a MUST / SHOULD / MAY requirement.</dd></div><div><dt>NOT SPECIFICALLY REQUIRED AT THIS TIER</dt><dd>Not a formal requirement at that tier; this is not the same as MAY. The charity may still choose stronger or higher-tier practice.</dd></div><div><dt>MSI METHODOLOGY</dt><dd>MSI’s separately labelled organisation, scoring, evidence and quality methodology.</dd></div>
     </dl></section>
 
-    <details className="scr-public-method-detail"><summary><span><small>WANT TO SEE EXACTLY HOW THE REVIEW IS BUILT?</small><strong>READ THE DETAILED METHODOLOGY</strong></span><span className="scr-public-method-detail-mark" aria-hidden="true">+</span></summary>
+    <details className="scr-public-method-detail" open={expanded}><summary><span><small>WANT TO SEE EXACTLY HOW THE REVIEW IS BUILT?</small><strong>READ THE DETAILED METHODOLOGY</strong></span><span className="scr-public-method-detail-mark" aria-hidden="true">+</span></summary>
       <div className="scr-public-method-detail-body"><p className="scr-kicker">THE DETAIL · CANONICAL MSI METHODOLOGY V1.0</p>
         <section className="scr-public-method-detail-group"><h2>A. SOURCE, SCOPE AND STRUCTURE</h2>
           <h3>WHY MODULE 1?</h3><p>Module 1 — Trustees’ Annual Report — contains the narrative requirements relevant to purposes, aims, activities, achievements, performance, impact, future plans and sustainability. Other SORP material is used only where needed to interpret Module 1, including tiering, MUST / SHOULD / MAY, glossary definitions and relevant terminology.</p>
