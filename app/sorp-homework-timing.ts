@@ -1,9 +1,9 @@
-export const homeworkMinimumMs = 15000;
+export const homeworkMinimumMs = 20000;
 export const homeworkMessages = [
-  { title: "WHAT DID YOUR LAST PUBLISHED REPORT ALREADY SHOW?", copy: "We’re reviewing your latest Trustees’ Annual Report and accounts against SORP 2026 to see what your published reporting already demonstrates and where there may be gaps." },
-  { title: "A LOOK BACK, NOT A VERDICT ON WHERE YOU ARE TODAY.", copy: "Your published report may be months old. Next, you’ll tell us what has changed and where things stand now." },
-  { title: "WHY START WITH PUBLISHED EVIDENCE?", copy: "It gives us a consistent historical view before we add your current knowledge and context." },
-  { title: "SORP IS THE REQUIREMENT.\nBETTER IMPACT IS THE OPPORTUNITY.", copy: "Good evidence should help trustees and managers make better decisions throughout the year, not just write the annual report." },
+  { title: "SORP 2026 IS OUR SOURCE OF TRUTH.", copy: "" },
+  { title: "EVIDENCE FIRST. JUDGEMENT EXPLAINED. SCORING FIXED.", copy: "" },
+  { title: "WE’RE ONLY LOOKING BACK HERE. YOU’LL BRING THE PICTURE UP TO DATE NEXT.", copy: "" },
+  { title: "NO REPORT READ = NO SCORE.", copy: "" },
 ] as const;
 
 export const homeworkMessageDuration = (message: typeof homeworkMessages[number]) =>

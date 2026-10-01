@@ -11,9 +11,9 @@ test('homework messages have readable dwell times and finish after the minimum w
     elapsed += duration;
   });
   assert.equal(homeworkMessageAt(elapsed).index, 0);
-  for (const finish of [0, 1000, 14999, 15000, 28000, 65000]) {
+  for (const finish of [0, 1000, 19999, 20000, 28000, 65000]) {
     const readyAt = finish + homeworkFinishDelay(finish);
-    assert.ok(readyAt >= 15000 && readyAt >= finish);
+    assert.ok(readyAt >= 20000 && readyAt >= finish);
     assert.equal(homeworkMessageAt(readyAt - 1).endAt, readyAt);
   }
 });
