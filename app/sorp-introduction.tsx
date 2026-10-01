@@ -2,6 +2,7 @@ import Image from "next/image";
 import { SorpScopeIntro } from "./sorp-scope-intro";
 import { SorpPublicMethodology } from "./sorp-public-methodology";
 import "./sorp-introduction.css";
+import "./sorp-welcome.css";
 
 export const introductionScreens = ["scope", "public-methodology", "intro", "benefits"] as const;
 export type IntroductionScreen = typeof introductionScreens[number];
@@ -24,10 +25,6 @@ function ImpactSignal() {
   </svg></div>;
 }
 
-function ProductMarks() {
-  return <div className="si-product-marks"><Image src="/assets/social-impact-excellence-transparent.png" alt="Social Impact Excellence" width={150} height={150} /><Image src="/assets/social-impact-claims-code-transparent.png" alt="Social Impact Claims Code" width={150} height={150} /></div>;
-}
-
 function EvidenceVisual() {
   return <svg className="si-evidence-visual" viewBox="0 0 620 140" fill="none" aria-hidden="true">
     <g stroke="currentColor" strokeWidth="1"><path d="M15 20H90L112 42V120H15Z M90 20V42H112" />{[55,70,85,100].map(y => <path key={y} d={`M32 ${y}H85`} opacity=".3" />)}<path d="M112 70H205 M415 70H500" opacity=".25" /></g>
@@ -38,13 +35,27 @@ function EvidenceVisual() {
 }
 
 function Scope() {
-  return <>
-    <div className="si-human-hero"><header className="si-scope-heading"><p className="si-eyebrow">FREE SORP 2026</p><h1>ARE YOU<br /> SORP READY?</h1><p className="si-proposition">IMPACT &amp; SUSTAINABILITY READINESS REVIEW</p><ProductMarks /></header><aside className="si-founder"><div className="si-founder-image"><svg viewBox="0 0 320 320" fill="none" aria-hidden="true"><circle cx="160" cy="160" r="143" /><path className="si-founder-signal" pathLength="100" d="M17 160A143 143 0 0 1 303 160A143 143 0 0 1 17 160" /><path d="M0 240H320M40 0V320" opacity=".3" /></svg><Image src="/images/marcus-warry-msi.webp" alt="Marcus Warry" width={1122} height={1402} priority /></div><p className="si-eyebrow">BUILT BY PEOPLE WHO WORK WITH CHARITIES</p><strong>Marcus Warry ACA</strong><span>Chartered Accountant &amp; social impact consultant</span><span>Co-founder, My Social Impact</span></aside></div>
-    <div className="si-scope-promise"><p className="si-lead">This free tool helps you understand how ready your charity is for the impact and sustainability reporting elements of SORP 2026.</p><div className="si-free"><strong>FREE TO USE.<br /> NO OBLIGATION.</strong><p>At the end, we’ll ask whether you’d like My Social Impact to review the results with you. That is entirely optional.</p></div></div>
-    <p className="si-boundary">THIS IS NOT A FULL SORP 2026 COMPLIANCE REVIEW.</p>
-    <div className="si-scope-summary"><section><h2>WHAT THIS CHECKS</h2><ul>{["purpose and aims", "achievements and performance", "outputs, outcomes and impact", "evidence and learning", "sustainability reporting"].map(text => <li key={text}>{text}</li>)}</ul></section><section><h2>WHAT THIS DOES NOT CHECK</h2><ul>{["full financial statement requirements", "all accounting disclosures", "every governance / administrative requirement", "specialist SORP modules"].map(text => <li key={text}>{text}</li>)}</ul></section></div>
-    <details className="si-expander"><summary>WHAT EXACTLY DOES THIS COVER? <span aria-hidden="true">+</span></summary><div className="si-expanded"><SorpScopeIntro /></div></details>
-  </>;
+  return <div className="si-welcome">
+    <header className="si-welcome-heading">
+      <p className="si-eyebrow">FREE SORP 2026</p>
+      <h1>ARE YOU SORP READY?</h1>
+      <p className="si-welcome-subtitle">Impact &amp; Sustainability Readiness Review</p>
+    </header>
+    <div className="si-welcome-rule" aria-hidden="true">
+      <svg viewBox="0 0 1160 20" preserveAspectRatio="none" fill="none"><path d="M0 10H1160"/><path className="si-welcome-signal" d="M0 10H1160" pathLength="100"/></svg>
+    </div>
+    <div className="si-welcome-promise">
+      <p className="si-welcome-free"><strong>FREE TO USE.</strong> <strong>NO OBLIGATION.</strong></p>
+      <p className="si-welcome-lead">This free tool helps you understand what your latest published reporting already demonstrates, then bring the picture up to date.</p>
+      <p className="si-welcome-optional">At the end, we’ll ask whether you’d like My Social Impact to review the results with you. That is entirely optional.</p>
+    </div>
+    <p className="si-welcome-boundary">THIS IS NOT A FULL SORP 2026 COMPLIANCE REVIEW.</p>
+    <details className="si-expander"><summary>WHAT DOES THIS REVIEW COVER? <span aria-hidden="true">+</span></summary><div className="si-expanded"><SorpScopeIntro /></div></details>
+    <div className="si-welcome-signature">
+      <Image src="/images/marcus-warry-msi.webp" alt="Marcus Warry" width={1122} height={1402} sizes="56px" />
+      <div><small>DEVELOPED BY</small><strong>Marcus Warry ACA</strong><span>Chartered Accountant &amp; social impact consultant</span><span>Co-founder, My Social Impact</span></div>
+    </div>
+  </div>;
 }
 
 function Methodology() {
