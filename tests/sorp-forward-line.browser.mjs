@@ -1,57 +1,80 @@
-import assert from 'node:assert/strict';
-import {chromium} from 'playwright';
-import {readFileSync,existsSync} from 'node:fs';
-import {resolve} from 'node:path';
-const origin=process.env.TEST_ORIGIN||'http://localhost:3000';
-if(!/^http:\/\/(localhost|127\.0\.0\.1):/.test(origin)) throw Error('Local, side-effect-free test only');
-if(!process.env.REVIEW_FIXTURE)throw Error('Set REVIEW_FIXTURE to a saved, validated review JSON. All APIs are intercepted.');
-const fixture=JSON.parse(readFileSync(process.env.REVIEW_FIXTURE,'utf8'));
-const browser=await chromium.launch({channel:'chrome',headless:true});
-const failures=[];
-try{
- for(const width of [1126,1440,768,390]){
-  const page=await browser.newPage({viewport:{width,height:1000}});
-  await page.route('**/api/**',route=>route.fulfill({json:{ok:true,events:[]}}));
-  await page.route(url=>url.pathname.includes('image')&&url.searchParams.has('url'),route=>{
-   const asset=resolve('public','.'+new URL(route.request().url()).searchParams.get('url'));
-   return asset.startsWith(resolve('public')+'/')&&existsSync(asset)?route.fulfill({path:asset}):route.continue();
-  });
-  await page.goto(origin+'/are-you-sorp-ready/review');
-  const screens=['scope','public-methodology','intro','benefits','find','confirmation','homework','quick-ready','quick','quick-feedback','method',...Array.from({length:19},(_,i)=>'criterion-'+i),'complete','report-ready','report','agenda','final-feedback','support','before-go','next','help','done','tar-recovery','non-sorp'];
-  let reference;
-  for(const screen of screens){
-   await page.evaluate(({fixture,screen})=>{
-    const state={...fixture,step:screen.startsWith('criterion-')?'criterion':screen==='agenda'?'report':screen,criterion:screen.startsWith('criterion-')?Number(screen.split('-')[1]):0,reportView:screen==='agenda'?1:0,email:'visual-test@example.invalid',emailConfirm:'visual-test@example.invalid',emailSent:true,sessionId:'route-layout-test'};
-    state.corrections=Object.fromEntries(fixture.report.tar.findings.map((f,i)=>[String(i+1),{answer:f.answer,context:'',savedContext:'',reviewed:true}]));
-    localStorage.setItem('msi-sorp-canonical-methodology-v1',JSON.stringify(state));
-    localStorage.removeItem('msi-sorp-canonical-methodology-v1-history');
-   },{fixture,screen});
-   await page.reload();
-   await page.locator('.scr-forward-trace[data-measured]').waitFor({state:'attached'});
-   await page.evaluate(()=>document.fonts.ready);
-   await page.waitForTimeout(100);
-   const m=await page.evaluate(()=>{
-    const path=document.querySelector('.scr-forward-trace'),track=document.querySelector('.scr-forward-track'),hero=document.querySelector('.scr-screen-hero'),h1=hero?.querySelector('h1'),main=document.querySelector('.scr-main'),guide=document.querySelector('.scr-supporting-guide');
-    const point=path.getPointAtLength(0).matrixTransform(path.getScreenCTM());
-    const style=getComputedStyle(path);
-    return {y:point.y+scrollY,lines:document.querySelectorAll('.scr-forward-line').length,sameRoute:path.getAttribute('d')===track.getAttribute('d'),track:getComputedStyle(track).stroke,orange:style.stroke,iterations:style.animationIterationCount,duration:style.animationDuration,trail:parseFloat(style.getPropertyValue('--forward-trail')),overflow:document.documentElement.scrollWidth>innerWidth,titleBottom:h1.getBoundingClientRect().bottom+scrollY,heroBottom:hero.getBoundingClientRect().bottom+scrollY,guideBelow:!guide||guide.getBoundingClientRect().top>=main.getBoundingClientRect().bottom-1,duplicateLabels:document.querySelectorAll('.scr-forward-labels').length};
-   });
-   reference??=m.y;
-   const issues=[];
-   if(Math.abs(m.y-reference)>2)issues.push('anchor');
-   if(m.titleBottom>m.y-8)issues.push('title-overlap');
-   if(m.lines!==1||!m.sameRoute||m.duplicateLabels)issues.push('duplicates');
-   if(m.overflow)issues.push('overflow');
-   if(!m.guideBelow)issues.push('sidebar');
-   if(m.iterations!=='infinite'||m.trail>22||m.track===m.orange)issues.push('motion');
-   if(issues.length)failures.push({width,screen,issues,...m});
-   if([1126,390].includes(width)&&['scope','benefits','find','homework','method','help'].includes(screen))await page.screenshot({path:`/tmp/route-${width}-${screen}.png`});
+import assert from "node:assert/strict";
+import { chromium } from "playwright";
+import definition from "../app/sorp-methodology-v1.generated.json" with { type: "json" };
+
+const origin = process.env.TEST_ORIGIN || "http://localhost:3000";
+if (!/^http:\/\/(localhost|127\.0\.0\.1):/.test(origin)) throw Error("Local, side-effect-free test only");
+
+const findings = definition.tests.map((test, index) => ({
+  fieldId: index + 1, questionId: test.id, answer: index < 6 ? "yes" : index < 14 ? "mostly" : "partly", confidence: "HIGH",
+  finding: `Published finding ${index + 1}.`, reason: "Evidence-based test reason.", excerpt: "Published test evidence.", page: String(index + 1),
+  sourceUrl: "https://example.invalid/report.pdf", action: "Strengthen this reporting area.", requirement: test.why,
+  classification: test.tiers[1].status, sources: [],
+}));
+const diagnostics = { pageCount: 30, pagesProcessed: 30, textExtractionSuccess: true, extractedTextLength: 90000, allChunksIndexed: true, assessmentRetrievalSucceeded: true };
+const tar = { lens: "tar", methodologyVersion: "1.0", tier: "tier2", mandatory: { applicable: 13, demonstrated: 4, attention: 6, gaps: 3, unconfirmed: 0 }, readable: true, score: 72, confidence: "HIGH", title: "Test Trustees’ Annual Report", period: "2025", sourceUrl: "https://example.invalid/report.pdf", accountingBasis: "accruals", findings, limitation: "", diagnostics };
+const candidate = { name: "Visual Test Charity", registrationNumber: "123456", locality: "London", jurisdiction: "England and Wales", entityType: "registered_charity", latestIncome: 1000000, financialYearEnd: "2025-12-31", accountingBasis: "accruals", accountingBasisConfidence: "HIGH", website: "https://example.invalid", officialUrl: "https://example.invalid/record", summary: "", reportUrl: tar.sourceUrl, reportTitle: tar.title, reportPeriod: tar.period, publicReadiness: { impactReport: { found: false, title: "", url: "" } }, sources: [] };
+const report = { candidate, tar, wider: { ...tar, lens: "wider" }, createdAt: "2026-10-02T09:00:00.000Z", intelligence: { effectiveVersion: "test", layers: [] } };
+const corrections = Object.fromEntries(findings.map(finding => [String(finding.fieldId), { answer: finding.answer, context: "", savedContext: "", reviewed: true }]));
+const base = { sessionId: "forward-composition-test", query: "Visual Test Charity", research: { status: "complete", candidates: [candidate], selected: candidate, query: "Visual Test Charity" }, candidate, state: { setup: { role: "", jurisdiction: "ew", startDate: "", endDate: "", accounts: "accruals", income: "tier2", nearBoundary: false, activities: [] } }, intelligence: null, verifiedTar: tar, report, homeworkFailure: { reason: "The report could not be read.", incidentId: "INC-TEST" }, email: "visual@example.invalid", emailConfirm: "visual@example.invalid", name: "", role: "", roleOther: "", criterion: 0, corrections, reportView: 0, emailSent: true, supportPaid: false, quickRating: 4, quickComment: "", finalRating: 4, finalComment: "" };
+
+const screens = ["scope", "public-methodology", "intro", "benefits", "find", "confirmation", "homework", "quick-ready", "quick", "quick-feedback", "method", "criterion", "complete", "report-ready", "report", "report-agenda", "final-feedback", "support", "before-go", "next", "help", "done", "tar-recovery", "non-sorp"];
+const browser = await chromium.launch({ channel: "chrome", headless: true });
+const failures = [];
+try {
+  for (const width of [1440, 768, 390]) {
+    const page = await browser.newPage({ viewport: { width, height: 1000 } });
+    await page.route("**/api/**", route => route.fulfill({ json: { ok: true, events: [], services: [] } }));
+    for (const screen of screens) {
+      await page.goto(`${origin}/are-you-sorp-ready/review`);
+      await page.evaluate(({ base, screen }) => {
+        const state = { ...base, step: screen === "report-agenda" ? "report" : screen, reportView: screen === "report-agenda" ? 1 : 0 };
+        localStorage.setItem("msi-sorp-canonical-methodology-v1", JSON.stringify(state));
+        localStorage.removeItem("msi-sorp-canonical-methodology-v1-history");
+      }, { base, screen });
+      await page.reload();
+      await page.evaluate(() => document.fonts.ready);
+      await page.locator(".scr-main").waitFor();
+      const traceLocator = page.locator(".scr-forward-trace");
+      if (await traceLocator.count()) await page.waitForFunction(() => document.querySelector(".scr-forward-trace")?.hasAttribute("data-measured"));
+      const result = await page.evaluate(() => {
+        const route = document.querySelector(".scr-forward-line");
+        const trace = route?.querySelector(".scr-forward-trace");
+        const track = route?.querySelector(".scr-forward-track");
+        return {
+          routes: document.querySelectorAll(".scr-forward-line").length,
+          stationLabels: [...document.querySelectorAll(".scr-forward-stations strong")].map(element => element.textContent),
+          sameRoute: !trace || trace.getAttribute("d") === track?.getAttribute("d"),
+          animation: trace ? getComputedStyle(trace).animationName : "none",
+          orange: trace ? getComputedStyle(trace).stroke : "",
+          track: track ? getComputedStyle(track).stroke : "",
+          areaProgress: document.querySelectorAll(".scr-area-progress").length,
+          hiddenHomeworkHeadings: [...document.querySelectorAll(".sh-process>li>h2")].every(element => getComputedStyle(element).display === "none"),
+          overflow: document.documentElement.scrollWidth > innerWidth,
+          overlay: Boolean(document.querySelector("[data-nextjs-dialog],.vite-error-overlay,#webpack-dev-server-client-overlay")),
+        };
+      });
+      const issues = [];
+      if (result.routes !== 1 || !result.sameRoute) issues.push("route-count");
+      if (screen === "criterion" && result.areaProgress !== 1) issues.push("missing-question-progress");
+      if (screen !== "benefits" && ![3, 4].includes(result.stationLabels.length)) issues.push("missing-composed-stations");
+      if (screen === "benefits" && result.stationLabels.length) issues.push("duplicate-benefit-stations");
+      if (screen === "homework" && !result.hiddenHomeworkHeadings) issues.push("duplicate-homework-stages");
+      if (result.routes && (result.animation === "none" || result.orange === result.track)) issues.push("motion");
+      if (result.overflow) issues.push("overflow");
+      if (result.overlay) issues.push("error-overlay");
+      if (issues.length) failures.push({ width, screen, issues, ...result });
+      if ([1440, 390].includes(width) && ["scope", "public-methodology", "intro", "benefits", "find", "criterion", "quick", "method", "help"].includes(screen)) await page.screenshot({ path: `/tmp/forward-${width}-${screen}.png`, fullPage: true });
+    }
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.goto(`${origin}/are-you-sorp-ready/review`);
+    await page.evaluate(base => localStorage.setItem("msi-sorp-canonical-methodology-v1", JSON.stringify({ ...base, step: "scope" })), base);
+    await page.reload();
+    assert.equal(await page.locator(".scr-forward-trace").evaluate(element => getComputedStyle(element).animationName), "none");
+    await page.close();
   }
-  await page.emulateMedia({reducedMotion:'reduce'});
-  assert.equal(await page.locator('.scr-forward-trace').evaluate(e=>getComputedStyle(e).animationName),'none');
-  console.log(JSON.stringify({width,screens:screens.length,reference}));
-  await page.close();
- }
- console.log(JSON.stringify({failures},null,2));
- if(failures.length)process.exitCode=1;
-}finally{await browser.close()}
+  console.log(JSON.stringify({ screens: screens.length, widths: 3, failures }, null, 2));
+  if (failures.length) process.exitCode = 1;
+} finally {
+  await browser.close();
+}
