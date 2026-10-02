@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { tierFromSetup, tierLabel, type AssessmentSetup } from "./sorp-questionnaire";
 import { answers, answerScores, groups, methodologyVersion, reportingStrengthBands, requirementFor, scoreCanonical, tests, type CanonicalAnswer, type MethodologyTier } from "./sorp-methodology-v1";
 import { trackSorpEvent } from "./sorp-growth";
@@ -17,7 +17,7 @@ import { SorpScopeGuide } from "./sorp-scope-intro";
 import { SorpMethodologyGuide } from "./sorp-public-methodology";
 import { SorpIntroduction, introductionScreens } from "./sorp-introduction";
 import { SorpScreenContext, SorpScreenHero } from "./sorp-forward-line";
-import { historicalSnapshotInterpretation, mandatoryAnswerLabels, mandatoryAnswerOrder } from "./sorp-score-interpretation";
+import { historicalSnapshotInterpretation, mandatoryAnswerLabels, mandatoryAnswerOrder, mandatoryDistribution, mandatoryInterpretationParts, mandatoryPriorityAction, type MandatoryDistribution } from "./sorp-score-interpretation";
 import { classificationLabel, emptyLens, verifiedCanonicalTar, type Candidate, type Finding, type Intelligence, type Lens, type Report, type Research } from "./sorp-public-model";
 import "./sorp-candidate-review.css";
 import "./sorp-discovery.css";
@@ -135,11 +135,32 @@ function FeedbackPanel({ rating, comment, status, onRating, onComment, onComment
 }
 
 const quickFindingTitle = (finding: Finding) => tests.find(test => test.id === finding.questionId)?.title || tests[finding.fieldId - 1]?.title || `Assessment area ${finding.fieldId}`;
+const priorityAction = (finding: Finding) => mandatoryPriorityAction(finding, quickFindingTitle(finding));
 
 function QuickFindingLabel({ finding }: { finding: Finding }) {
   if (["MUST", "SHOULD", "MAY"].some(status => finding.classification.startsWith(status))) return <span className={`scr-quick-label scr-quick-label--${finding.classification.startsWith("MUST") ? "must" : finding.classification.toLowerCase()}`}>{finding.classification}</span>;
   if (["JUDGEMENT", "MSI_READINESS"].includes(finding.classification)) return <span className="scr-quick-judgement">JUDGEMENT REQUIRED</span>;
   return null;
+}
+
+function MandatoryStatus({ distribution, selfReported = false }: { distribution: MandatoryDistribution; selfReported?: boolean }) {
+  const applicable = mandatoryAnswerOrder.reduce((total, answer) => total + distribution[answer], 0);
+  const dominant = mandatoryAnswerOrder.reduce((leader, answer) => distribution[answer] > distribution[leader] ? answer : leader, mandatoryAnswerOrder[0]);
+  const interpretation = mandatoryInterpretationParts(distribution);
+  return <section className="hs-mandatory" data-reveal-mandatory>
+    <h2>MANDATORY SORP REQUIREMENTS</h2>
+    {applicable ? <>
+      <p className="hs-must-apply"><strong>{applicable}</strong> REQUIREMENTS APPLY</p>
+      <div className="hs-mandatory-continuum" aria-label={`${applicable} applicable mandatory requirements: ${mandatoryAnswerOrder.map(answer => `${distribution[answer]} ${mandatoryAnswerLabels[answer]}`).join(", ")}`}>
+        {mandatoryAnswerOrder.filter(answer => distribution[answer] > 0).map((answer, index) => <span key={answer} className={`hs-mandatory-segment hs-mandatory-segment--${answer}`} style={{ width: `${distribution[answer] / applicable * 100}%`, "--segment-order": index } as CSSProperties}/>) }
+      </div>
+      <div className="hs-must-distribution">
+        {mandatoryAnswerOrder.map(answer => <div key={answer} className={answer === dominant ? "is-dominant" : ""}><span>{mandatoryAnswerLabels[answer]}</span><strong>{distribution[answer]}</strong></div>)}
+      </div>
+      <div className="hs-mandatory-interpretation"><strong>{interpretation.headline}</strong>{interpretation.detail && <p>{interpretation.detail}</p>}{interpretation.confirmation && <p>{interpretation.confirmation}</p>}</div>
+    </> : <p>Mandatory status has not been established.</p>}
+    <p className="hs-status-note">{selfReported ? "Current self-reported position · not independently verified." : "Published evidence only · separate from Reporting Strength."}</p>
+  </section>;
 }
 
 function QuickReviewResult({ lens, onMethodology }: { lens: Lens; onMethodology: () => void }) {
@@ -150,10 +171,10 @@ function QuickReviewResult({ lens, onMethodology }: { lens: Lens; onMethodology:
   return <SnapshotReveal score={lens.score}>
     <div className="scr-quick-heading" data-reveal-heading><SorpScreenHero><p className="scr-kicker">PUBLISHED EVIDENCE · YOUR STARTING POINT</p><h1>YOUR HISTORICAL SNAPSHOT</h1></SorpScreenHero><p>Based on what your latest published Trustees’ Annual Report and accounts demonstrate.</p></div>
     <div className="hs-payoff">
-      <section className="hs-strength"><h2>REPORTING STRENGTH</h2><div className="hs-score" aria-label={lens.score === null ? "No score established" : `${lens.score} out of 100`}><strong data-score aria-hidden="true">{lens.score ?? "—"}</strong><span aria-hidden="true">/100</span></div><div data-reveal-band><p className="hs-band">{band(lens.score)} REPORTING STRENGTH</p><p className="hs-strength-explanation">{snapshot.reportingStrengthExplanation}</p><p className="hs-confidence">Evidence confidence: <strong>{lens.confidence}</strong></p></div></section>
-      <section className="hs-mandatory" data-reveal-mandatory><h2>MANDATORY SORP STATUS</h2>{lens.mandatory ? <><p className="hs-must-apply"><strong>{snapshot.applicable}</strong> MUST REQUIREMENTS APPLY</p><p className="hs-mandatory-count"><strong>{snapshot.clearlyDemonstrated}</strong><span>OF {snapshot.applicable}<br/>CLEARLY DEMONSTRATED</span></p><div className="hs-must-distribution" aria-label={`Distribution of ${snapshot.applicable} applicable MUST requirements`}>{mandatoryAnswerOrder.filter(answer => answer === "yes" || snapshot.distribution[answer] > 0).map(answer => <div key={answer}><strong>{snapshot.distribution[answer]}</strong><span>{mandatoryAnswerLabels[answer]}</span></div>)}</div></> : <p>Mandatory status has not been established.</p>}<p className="hs-status-note">Separate from your Reporting Strength score.</p></section>
+      <section className="hs-strength"><h2>REPORTING STRENGTH</h2><div className="hs-score" aria-label={lens.score === null ? "No score established" : `${lens.score} out of 100`}><strong data-score aria-hidden="true">{lens.score ?? "—"}</strong><span aria-hidden="true">/100</span></div><div data-reveal-band><p className="hs-band">{band(lens.score)} REPORTING STRENGTH</p><p className="hs-strength-explanation">A 0–100 view of how much strong reporting is present across the full framework.</p><p className="hs-confidence">Evidence confidence: <strong>{lens.confidence}</strong></p></div></section>
+      <MandatoryStatus distribution={snapshot.distribution}/>
     </div>
-    <section className="hs-meaning"><h2>WHAT THIS MEANS</h2><p>{snapshot.interpretation}</p><strong>{snapshot.distinction}</strong></section>
+    <section className="hs-meaning"><h2>HOW THESE TWO VIEWS WORK TOGETHER</h2><p>{snapshot.reportingStrengthExplanation}</p><strong>{snapshot.distinction}</strong><button type="button" className="scr-clear" onClick={onMethodology}>SEE HOW THIS SCORE WAS CALCULATED →</button></section>
     {lens.findings.some(finding => finding.needsHumanReview) && <p className="scr-quick-context"><strong>HUMAN REVIEW ADVISED:</strong> {lens.findings.filter(finding => finding.needsHumanReview).map(finding => finding.questionId).join(", ")} involve applicable MUST requirements with low-confidence or unassessable evidence. These are not independently assured findings.</p>}
     <SnapshotMethod onMethodology={onMethodology}/>
     <section className="scr-quick-snapshot" data-reveal-section aria-labelledby="scr-quick-snapshot-heading">
@@ -170,8 +191,9 @@ function QuickReviewResult({ lens, onMethodology }: { lens: Lens; onMethodology:
     {overlap && <p className="hs-nuance">An area can show strengths and still have room to improve. The same area may appear in both views below.</p>}
     <div className="scr-quick-findings">{[{ title: "WHAT YOUR REPORT ALREADY DOES WELL", items: strong, kind: "strong", empty: "No clear strengths could be established from the material inspected." }, { title: "WHAT WOULD STRENGTHEN IT", items: gaps, kind: "gaps", empty: "No material gaps were identified in the inspected material." }].map(section => <section data-reveal-section className={`scr-quick-findings-${section.kind}`} key={section.kind}><h2>{section.title}<span aria-hidden="true">{section.kind === "strong" ? "✓" : "↗"}</span></h2>{section.items.length ? section.items.slice(0, 3).map(finding => <article key={finding.fieldId}><QuickFindingLabel finding={finding}/><h3>{quickFindingTitle(finding)}</h3><p>{section.kind === "gaps" && strong.some(item => item.fieldId === finding.fieldId) ? finding.reason : finding.finding}</p>{section.kind === "gaps" && strong.some(item => item.fieldId === finding.fieldId) && <p className="hs-finding-nuance">Also a strength · {scale.find(item => item.value === finding.answer)?.label}</p>}</article>) : <p>{section.empty}</p>}</section>)}</div>
     <section className="scr-quick-priorities" data-reveal-section aria-labelledby="scr-quick-priorities-heading"><h2 id="scr-quick-priorities-heading">TOP PRIORITIES</h2><ol>{priorities.slice(0, 3).map((finding, index) => {
-      const needsEvidence = finding.action === "Check the source and establish what can be evidenced for the next report.";
-      return <li key={finding.fieldId}><span className="scr-quick-priority-number" aria-hidden="true">{String(index + 1).padStart(2, "0")}</span><div><QuickFindingLabel finding={finding}/><h3>{needsEvidence ? `Establish the evidence for ${quickFindingTitle(finding).toLowerCase()}.` : finding.action}</h3>{needsEvidence ? <p>Check what can be evidenced in your next Trustees’ Annual Report.</p> : <p>{finding.reason}</p>}</div></li>;
+      const action = priorityAction(finding);
+      const needsEvidence = action === "Check the source and establish what can be evidenced for the next report.";
+      return <li key={finding.fieldId}><span className="scr-quick-priority-number" aria-hidden="true">{String(index + 1).padStart(2, "0")}</span><div><QuickFindingLabel finding={finding}/><h3>{needsEvidence ? `Establish the evidence for ${quickFindingTitle(finding).toLowerCase()}.` : action}</h3>{needsEvidence ? <p>Check what can be evidenced in your next Trustees’ Annual Report.</p> : <p>{finding.reason}</p>}</div></li>;
     })}</ol>{!priorities.length && <p>No additional priorities were identified in the inspected material.</p>}</section>
     <details className="scr-details"><summary>SEE THE FULL {tests.length}-QUESTION HISTORICAL ASSESSMENT <span>+</span></summary><CanonicalFindings lens={lens}/></details>
     <div className="scr-quick-next"><span aria-hidden="true">→</span><div><h2>THIS IS THE HISTORICAL VIEW.</h2><p>Next, you’ll bring it up to date with what has changed since the report was published.</p></div></div>
@@ -188,7 +210,7 @@ function ReportHighlights({ lens }: { lens: Lens }) {
       return <div className="scr-quick-category" key={category}><span className={`scr-quick-label scr-quick-label--${category.toLowerCase()}`}>{category}</span>{findings.length ? <><p><strong>{clear}</strong> clearly evidenced</p><p><strong>{findings.length - clear}</strong> {category === "MUST" ? "need attention" : category === "SHOULD" ? "areas for stronger practice" : "optional opportunities"}</p></> : <p className="scr-quick-category-empty">No {category}-classified areas in this review.</p>}</div>;
     })}</div>{judgement.length > 0 && <div className="scr-quick-interpretation"><span className="scr-quick-judgement">JUDGEMENT REQUIRED</span><p>{judgement.map(quickFindingTitle).join(" · ")}. MSI interpretation, separate from the SORP categories.</p></div>}</section>
     <div className="scr-quick-findings">{[{ title: "WHAT LOOKS STRONG", items: strong, kind: "strong" }, { title: "IMPORTANT GAPS", items: gaps, kind: "gaps" }].map(section => <section className={`scr-quick-findings-${section.kind}`} key={section.kind}><h2>{section.title}</h2>{section.items.slice(0, 3).map(f => <article key={f.fieldId}><QuickFindingLabel finding={f}/><h3>{quickFindingTitle(f)}</h3><p>{f.finding}</p></article>)}{!section.items.length && <p>No {section.kind === "strong" ? "strengths" : "material gaps"} identified in the inspected evidence.</p>}</section>)}</div>
-    <section className="scr-quick-priorities"><h2>TOP PRIORITIES</h2><ol>{priorities.slice(0, 3).map((f, index) => <li key={f.fieldId}><span className="scr-quick-priority-number" aria-hidden="true">{String(index + 1).padStart(2, "0")}</span><div><QuickFindingLabel finding={f}/><h3>{f.action === "Check the source and establish what can be evidenced for the next report." ? `Establish the evidence for ${quickFindingTitle(f).toLowerCase()}.` : f.action.replace(/\b(?:criterion|question|item)\s+\d+\b/gi, quickFindingTitle(f).toLowerCase())}</h3><p>{f.reason}</p></div></li>)}</ol>{!priorities.length && <p>No additional priorities identified in the inspected evidence.</p>}</section>
+    <section className="scr-quick-priorities"><h2>TOP PRIORITIES</h2><ol>{priorities.slice(0, 3).map((f, index) => { const action = priorityAction(f); return <li key={f.fieldId}><span className="scr-quick-priority-number" aria-hidden="true">{String(index + 1).padStart(2, "0")}</span><div><QuickFindingLabel finding={f}/><h3>{action === "Check the source and establish what can be evidenced for the next report." ? `Establish the evidence for ${quickFindingTitle(f).toLowerCase()}.` : action.replace(/\b(?:criterion|question|item)\s+\d+\b/gi, quickFindingTitle(f).toLowerCase())}</h3><p>{f.reason}</p></div></li>; })}</ol>{!priorities.length && <p>No additional priorities identified in the inspected evidence.</p>}</section>
   </div>;
 }
 
@@ -271,9 +293,9 @@ export function SorpCandidateReview() {
   const tar = report?.tar;
   const historicalSnapshot = tar ? historicalSnapshotInterpretation(tar) : null;
   const { strong, gaps, priorities: originalPriorities } = tar ? canonicalHighlights(tar) : { strong: [], gaps: [], priorities: [] };
-  const priorityText = (finding: Finding) => finding.action === "Check the source and establish what can be evidenced for the next report."
+  const priorityText = (finding: Finding) => priorityAction(finding) === "Check the source and establish what can be evidenced for the next report."
     ? `Check what the next Trustees’ Annual Report can evidence for criterion ${finding.fieldId}: ${coreQuestions.find(question => question.id === finding.fieldId)?.question || finding.finding}`
-    : finding.action;
+    : priorityAction(finding);
   const priorities = originalPriorities.map(finding => ({ ...finding, action: priorityText(finding) }));
   const questions = coreQuestions.map(question => {
     const existing = tar?.findings.find(finding => finding.fieldId === question.id);
@@ -297,6 +319,7 @@ export function SorpCandidateReview() {
     s2SeparateSustainabilityReporting: currentAnswers.S2 === "not_applicable" ? false : null,
   }) : null;
   const currentScore = currentResult?.score ?? null;
+  const currentMandatoryDistribution = currentResult && tier ? mandatoryDistribution(questions.map(({ question, finding }) => ({ ...finding, classification: requirementFor(tests[question.id - 1], tier, setup?.jurisdiction).status, answer: saved.corrections[String(question.id)]!.answer! }))) : null;
   const currentAreaScores = currentResult && tier ? scoreReadinessAreas(Object.fromEntries(questions.map(({ question }) => [question.id, saved.corrections[String(question.id)]!.answer!])), tier, setup?.jurisdiction) : null;
   const currentArea = current ? readinessAreas.find(area => area.section === current.question.section) : null;
   const scoreDifference = currentScore !== null && tar?.score !== null && tar?.score !== undefined ? currentScore - tar.score : null;
@@ -581,10 +604,11 @@ export function SorpCandidateReview() {
               <div className="scr-readiness-bars">{currentAreaScores?.map(area => <div className="scr-readiness-bar" key={area.section}><div><strong>{area.title}</strong><span>{area.label}</span></div><i aria-hidden="true"><b style={{ width: `${area.score}%` }} /></i><strong>{area.score}<small> / 100</small></strong></div>) || <p>There are not enough reviewed current answers to calculate area scores.</p>}</div>
             </section>
             <p className="scr-readiness-comparison">Historical Reporting Strength: <strong>{tar?.score ?? "—"} / 100</strong><span aria-hidden="true"> · </span>Current self-reported readiness: <strong>{currentScore ?? "—"}{currentScore === null ? "" : " / 100"}</strong></p>
-            <p><strong>HISTORICAL TAR REPORTING STRENGTH:</strong> {tar?.score ?? "—"} / 100 · {band(tar?.score ?? null)} REPORTING STRENGTH. This is not a SORP compliance percentage. <strong>HISTORICAL MANDATORY SORP STATUS:</strong> {historicalSnapshot ? `${historicalSnapshot.clearlyDemonstrated} of ${historicalSnapshot.applicable} applicable MUST requirements clearly demonstrated.` : "Not established."}</p>
-            {historicalSnapshot && <><p><strong>MANDATORY DISTRIBUTION:</strong> {mandatoryAnswerOrder.map(answer => `${historicalSnapshot.distribution[answer]} ${mandatoryAnswerLabels[answer]}`).join(" · ")}.</p><p><strong>WHAT THIS MEANS:</strong> {historicalSnapshot.interpretation} <strong>{historicalSnapshot.distinction}</strong></p></>}
-            <p><strong>CURRENT REPORTING STRENGTH:</strong> {currentScore ?? "—"}% · {band(currentScore)}. <strong>CURRENT SORP READINESS STATUS:</strong> {currentResult ? `${currentResult.mandatory.demonstrated} of ${currentResult.mandatory.applicable} applicable MUST requirements clearly demonstrated; ${currentResult.mandatory.attention + currentResult.mandatory.gaps} need attention and ${currentResult.mandatory.unconfirmed} need confirmation.` : "Not established."} Includes current information supplied or confirmed by the charity.</p>
-            <button type="button" className="scr-clear" onClick={() => go("public-methodology")}>SEE HOW THIS SCORE WAS CALCULATED →</button>
+            <section className="scr-report-score-context"><h2>HOW THESE TWO VIEWS WORK TOGETHER</h2><p>Reporting Strength measures how much strong reporting is present across the full framework. Mandatory status asks whether each required area is evidenced clearly enough to be treated as clearly demonstrated.</p><button type="button" className="scr-clear" onClick={() => go("public-methodology")}>SEE HOW THIS SCORE WAS CALCULATED →</button></section>
+            <div className="scr-report-mandatory-grid">
+              {historicalSnapshot && <div><p className="scr-report-view-label">HISTORICAL · PUBLISHED EVIDENCE</p><MandatoryStatus distribution={historicalSnapshot.distribution}/></div>}
+              {currentMandatoryDistribution && <div><p className="scr-report-view-label">CURRENT · YOUR ANSWERS TODAY</p><MandatoryStatus distribution={currentMandatoryDistribution} selfReported/></div>}
+            </div>
             {currentScore === null ? <p className="scr-muted">There are not enough reviewed current answers to calculate a meaningful second score. We will not invent one.</p> : <p className="scr-score-explanation">{scoreDifference === null ? "The published-reporting score was unavailable, so there is no numerical comparison." : scoreDifference > 0 ? "Your current view suggests that you have moved further towards SORP readiness since the Historical Snapshot. The next challenge is making sure future reporting can evidence that progress." : scoreDifference < 0 ? "Your current view is more cautious than the Historical Snapshot. That may highlight areas where practice has changed, where gaps are now clearer, or where more work is needed before the next reporting period." : "Your current view broadly confirms the Historical Snapshot. The value now lies in identifying the strongest areas, remaining gaps and priorities before the next reporting period."}</p>}
             {tar && <ReportHighlights lens={tar}/>}
             <p><strong>WHAT HAS CHANGED:</strong> {improvedCount} stronger current answers; {worsenedCount} more cautious; {tests.length - changedAnswers.length} unchanged; {currentUnknown.length} still NOT SURE. Current changes are charity-supplied, not independently verified.</p>
