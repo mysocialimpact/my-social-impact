@@ -55,7 +55,7 @@ export function SnapshotReady() {
 export function SnapshotMethod({ onMethodology }: { onMethodology: () => void }) {
   return <div className="hs-explainers">
     <details className="scr-details"><summary>HOW DID WE ARRIVE AT THIS? <span>+</span></summary>
-      <div className="hs-method"><div><h3>SORP 2026 IS OUR SOURCE OF TRUTH.</h3><p>19 questions. Published evidence. Tier-aware requirements. Fixed scoring. Judgement clearly labelled.</p>
+      <div className="hs-method"><div><h3>SORP 2026 IS OUR SOURCE OF TRUTH.</h3><p>19 questions. Published evidence. Tier-aware requirements. Fixed scoring. Judgement clearly labelled.</p><p>Reporting Strength is the weighted assessment score produced by the fixed answer scoring. Mandatory status is shown separately: a MUST is only clearly demonstrated when the evidence reaches the top threshold. A MOSTLY or PARTLY answer contributes to Reporting Strength without classing that mandatory requirement as clearly demonstrated.</p>
         <div className="hs-human"><Image src="/images/marcus-warry-msi.webp" width={1122} height={1402} sizes="72px" alt="Marcus Warry"/><div><span>METHODOLOGY DEVELOPED BY</span><strong>Marcus Warry ACA</strong><p>Chartered Accountant and social impact consultant</p></div></div>
         <p>The assessment is automated, but the methodology, evidence rules and scoring framework are defined by My Social Impact.</p>
         <button type="button" className="scr-clear" onClick={onMethodology}>VIEW THE FULL METHODOLOGY →</button>
