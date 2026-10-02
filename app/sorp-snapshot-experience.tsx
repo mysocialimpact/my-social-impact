@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { SorpForwardLine } from "./sorp-forward-line";
+import { SorpScreenHero } from "./sorp-forward-line";
 import { useEffect, useState, type ReactNode } from "react";
 
 // Presentation timing only. Never marks an assessment operation complete.
@@ -19,17 +19,14 @@ export function SnapshotBuilding({ verified }: { verified: boolean }) {
     ["This is the historical view.", "Next, you bring it up to date."],
   ];
   return <section className="hs-building">
-    <p className="scr-kicker">BUILDING YOUR HISTORICAL SNAPSHOT…</p>
-    <div className="hs-build-message" role="status" aria-live="polite"><h1>{messages[message][0]}</h1><p>{messages[message][1]}</p></div>
-    <SorpForwardLine screen="quick-generating" working />
+    <SorpScreenHero><p className="scr-kicker">BUILDING YOUR HISTORICAL SNAPSHOT…</p><h1 role="status" aria-live="polite">{messages[message][0]}</h1></SorpScreenHero><p className="hs-build-description">{messages[message][1]}</p>
     <p className="hs-processing-status">{verified ? "✓ Report read and validated · 19-question assessment returned" : "Preparing the validated assessment"}<br/><span>Assembling your Historical Snapshot.</span></p>
   </section>;
 }
 
 export function SnapshotReady() {
   return <section className="hs-ready">
-    <p className="hs-done">DONE <span>✓</span></p>
-    <h1>YOUR HISTORICAL<br/>SNAPSHOT IS READY.</h1>
+    <SorpScreenHero><p className="hs-done">DONE <span>✓</span></p><h1>YOUR HISTORICAL{" "}SNAPSHOT IS READY.</h1></SorpScreenHero>
     <p>We’ve reviewed your published Trustees’ Annual Report and accounts against SORP 2026.</p>
     <ul><li>19 QUESTIONS ASSESSED</li><li>PUBLISHED EVIDENCE REVIEWED</li><li>SORP REQUIREMENTS MAPPED</li></ul>
   </section>;

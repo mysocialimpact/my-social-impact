@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { SorpForwardLine } from "./sorp-forward-line";
+import { SorpScreenHero } from "./sorp-forward-line";
 import type { Candidate } from "./sorp-public-model";
 import { homeworkMessageAt, homeworkMessages } from "./sorp-homework-timing";
 
@@ -79,12 +79,11 @@ export function SorpHomeworkExperience({ candidate, tier, verified, waiting, sta
   ];
   const liveGroup = liveStage ? groups.findIndex(group => group.stages.includes(liveStage.stage)) : 0;
   return <div className="scr-homework-experience">
-    <p className="scr-kicker">{waiting ? "PUBLIC HOMEWORK / BUILDING YOUR HISTORICAL SNAPSHOT" : verified ? "PUBLIC HOMEWORK COMPLETE ✓" : "PUBLIC HOMEWORK"}</p>
-    {waiting && !verified && delayed ? <div className="scr-homework-delay" role="status"><h1>{continuedDelay ? "WE’RE STILL WORKING ON IT." : "SORRY — THIS STAGE IS TAKING LONGER THAN NORMAL."}</h1><p><strong>Current stage:</strong> {liveStage?.message || "The current operation has not yet returned a more specific diagnostic result."}</p>{liveStage?.stage && <small>STAGE: {liveStage.stage}{liveStage.httpStatus ? ` · RESPONSE: ${liveStage.httpStatus}` : ""}{liveStage.contentType ? ` · ${liveStage.contentType}` : ""}</small>}<p>{recovering ? "The recovery attempt shown above is in progress. " : "We’re continuing this exact step. "}Your completed checks are saved on this device; no score is produced before full validation.</p><p className="scr-beta-delay">This tool is still in beta. Unusual delays like this help us identify where the experience needs to improve.</p></div> : <header className="sh-heading">
-      <h1>{waiting ? "We’re doing the homework." : verified ? "We found what we need." : "Let’s finish the public homework."}</h1>
+    <p className="scr-screen-eyebrow">{waiting ? "PUBLIC HOMEWORK / BUILDING YOUR HISTORICAL SNAPSHOT" : verified ? "PUBLIC HOMEWORK COMPLETE ✓" : "PUBLIC HOMEWORK"}</p>
+    {waiting && !verified && delayed ? <div className="scr-homework-delay" role="status"><SorpScreenHero><h1>{continuedDelay ? "WE’RE STILL WORKING ON IT." : "SORRY — THIS STAGE IS TAKING LONGER THAN NORMAL."}</h1></SorpScreenHero><p><strong>Current stage:</strong> {liveStage?.message || "The current operation has not yet returned a more specific diagnostic result."}</p>{liveStage?.stage && <small>STAGE: {liveStage.stage}{liveStage.httpStatus ? ` · RESPONSE: ${liveStage.httpStatus}` : ""}{liveStage.contentType ? ` · ${liveStage.contentType}` : ""}</small>}<p>{recovering ? "The recovery attempt shown above is in progress. " : "We’re continuing this exact step. "}Your completed checks are saved on this device; no score is produced before full validation.</p><p className="scr-beta-delay">This tool is still in beta. Unusual delays like this help us identify where the experience needs to improve.</p></div> : <header className="sh-heading">
+      <SorpScreenHero><h1>{waiting ? "We’re doing the homework." : verified ? "We found what we need." : "Let’s finish the public homework."}</h1></SorpScreenHero>
       {waiting && <p>We’re finding your latest published reporting, reading it properly and applying our SORP 2026 methodology.</p>}
     </header>}
-    <SorpForwardLine screen="homework" working={waiting} />
     {waiting && <>
       <ol className="sh-process" aria-label="Public Homework progress">
         {groups.map((group, index) => {
