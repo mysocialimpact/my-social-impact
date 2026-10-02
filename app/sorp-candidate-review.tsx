@@ -16,6 +16,7 @@ import { homeworkFinishDelay } from "./sorp-homework-timing";
 import { SorpScopeGuide } from "./sorp-scope-intro";
 import { SorpMethodologyGuide } from "./sorp-public-methodology";
 import { SorpIntroduction, introductionScreens } from "./sorp-introduction";
+import { SorpForwardLine } from "./sorp-forward-line";
 import { classificationLabel, emptyLens, verifiedCanonicalTar, type Candidate, type Finding, type Intelligence, type Lens, type Report, type Research } from "./sorp-public-model";
 import "./sorp-candidate-review.css";
 import "./sorp-discovery.css";
@@ -519,6 +520,7 @@ export function SorpCandidateReview() {
   return <main className={`sorp-conversation-page scr-page${snapshotScreen ? " scr-page--snapshot" : ""}${discoveryScreen ? ` scr-page--discovery scr-discovery--${saved.step}` : ""}${introScreen ? " scr-page--opening" : ""}${saved.step === "scope" ? " scr-page--scope" : saved.step === "public-methodology" ? " scr-page--public-methodology" : saved.step === "benefits" ? " scr-page--benefits" : saved.step === "intro" ? " scr-page--intro" : saved.step === "find" ? " scr-page--find" : saved.step === "quick" ? " scr-page--quick" : saved.step === "quick-feedback" ? " scr-page--quick-feedback" : saved.step === "method" ? " scr-page--method" : saved.step === "help" ? " scr-page--help" : ""}`}>
     <header className="sorp-workspace-brand"><Link href="/are-you-sorp-ready"><span>My Social Impact</span><strong>Are You SORP Ready? <small className="scr-beta-badge">BETA</small></strong></Link><div className="sorp-workspace-brand-meta"><p>SORP is the requirement.<br /><strong>Better impact is the opportunity.</strong></p></div></header>
     <div className="scr-top">{saved.step !== "scope" && saved.step !== "intro" && saved.step !== "find" && <div><small>{BUILD}</small><h2>{saved.step === "done" ? "You’re done" : phases[phase]}</h2></div>}<nav aria-label="Review progress">{phases.map((label, index) => <span key={label} className={saved.step === "done" || index < phase ? "is-complete" : index === phase ? "is-current" : ""}><i>{saved.step === "done" || index < phase ? "✓" : index + 1}</i><b>{label}</b></span>)}</nav></div>
+    <SorpForwardLine screen={saved.step} working={!!busy} />
     <div key={["scope", "public-methodology", "intro", "benefits", "find"].includes(saved.step) ? saved.step : "assessment"} className={`scr-workspace${["scope", "public-methodology", "intro", "benefits", "find"].includes(saved.step) ? " scr-opening-enter" : ""}`}>{!introScreen && !discoveryScreen && !snapshotScreen && <aside className="scr-guide">{guide()}</aside>}
       <section className="scr-main" aria-live="polite">
         {introScreen && <SorpIntroduction screen={introScreen} />}

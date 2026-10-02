@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 // Presentation timing only. Never marks an assessment operation complete.
 export const SNAPSHOT_MINIMUM_MS = 15000;
@@ -65,55 +65,7 @@ export function SnapshotMethod({ onMethodology }: { onMethodology: () => void })
   </div>;
 }
 
-/** A single presentation queue: no simultaneous focal animations, no hidden content gates. */
-export function SnapshotReveal({ score, children }: { score: number | null; children: ReactNode }) {
-  const root = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const element = root.current;
-    if (!element) return;
-    const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const number = element.querySelector<HTMLElement>("[data-score]");
-    let stopped = false;
-    let frame = 0;
-    let active: Animation | undefined;
-    let observer: IntersectionObserver | undefined;
-    const settle = () => { stopped = true; cancelAnimationFrame(frame); active?.cancel(); observer?.disconnect(); if (number) number.textContent = score === null ? "—" : String(score); };
-    const reveal = async (target: Element | null) => {
-      if (!target || stopped) return;
-      active = target.animate([{ opacity: .35, transform: "translateY(8px)" }, { opacity: 1, transform: "translateY(0)" }], { duration: 380, easing: "ease-out" });
-      await active.finished.catch(() => {});
-    };
-    if (motion.matches) return;
-    if (number && score !== null) number.textContent = "0";
-    const run = async () => {
-      await reveal(element.querySelector("[data-reveal-heading]"));
-      if (stopped) return;
-      if (number && score !== null) await new Promise<void>(resolve => {
-        const start = performance.now();
-        const count = (now: number) => {
-          if (stopped) { resolve(); return; }
-          const fraction = Math.min(1, (now - start) / 900);
-          number.textContent = String(Math.round(score * (1 - Math.pow(1 - fraction, 3))));
-          if (fraction < 1) frame = requestAnimationFrame(count); else resolve();
-        };
-        frame = requestAnimationFrame(count);
-      });
-      await reveal(element.querySelector("[data-reveal-band]"));
-      await reveal(element.querySelector("[data-reveal-mandatory]"));
-      if (stopped) return;
-      const queue: Element[] = [];
-      const seen = new WeakSet<Element>();
-      let draining = false;
-      const drain = async () => { if (draining) return; draining = true; while (queue.length && !stopped) await reveal(queue.shift()!); draining = false; };
-      observer = new IntersectionObserver(entries => {
-        for (const entry of entries) if (entry.isIntersecting && !seen.has(entry.target)) { seen.add(entry.target); queue.push(entry.target); observer?.unobserve(entry.target); }
-        void drain();
-      }, { threshold: .08 });
-      element.querySelectorAll("[data-reveal-section]").forEach(target => observer!.observe(target));
-    };
-    void run();
-    motion.addEventListener("change", settle);
-    return () => { settle(); motion.removeEventListener("change", settle); };
-  }, [score]);
-  return <div ref={root} className="scr-quick-result hs-result">{children}</div>;
+/** Show the actual result immediately; the shared Forward Line owns motion. */
+export function SnapshotReveal({ children }: { score: number | null; children: ReactNode }) {
+  return <div className="scr-quick-result hs-result">{children}</div>;
 }
