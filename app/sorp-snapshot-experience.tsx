@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { SorpForwardLine } from "./sorp-forward-line";
 import { useEffect, useState, type ReactNode } from "react";
 
 // Presentation timing only. Never marks an assessment operation complete.
@@ -20,25 +21,7 @@ export function SnapshotBuilding({ verified }: { verified: boolean }) {
   return <section className="hs-building">
     <p className="scr-kicker">BUILDING YOUR HISTORICAL SNAPSHOT…</p>
     <div className="hs-build-message" role="status" aria-live="polite"><h1>{messages[message][0]}</h1><p>{messages[message][1]}</p></div>
-    <div className="hs-process" aria-label="From report to evidence, SORP 2026, 19 questions and your Historical Snapshot">
-      <svg className="hs-process-desktop" viewBox="0 0 1000 150" fill="none" aria-hidden="true">
-        <path className="hs-process-track" d="M80 75 H920" />
-        <path className="hs-process-signal" d="M80 75 H920" pathLength="100" />
-        <g className="hs-process-symbols">
-          <path d="M62 49h25l12 12v42H62z M87 49v14h12 M70 74h20 M70 83h20 M70 92h12" />
-          <path d="M270 57h30v36h-30z M278 68h14 M278 76h14 M278 84h8" />
-          <circle cx="500" cy="75" r="26"/><path d="m488 75 8 8 17-19" />
-          {Array.from({ length: 19 }, (_, i) => <circle key={i} cx={681 + i % 5 * 9} cy={61 + Math.floor(i / 5) * 9} r="2" />)}
-          <path d="M894 49h52v52h-52z M903 85v7 M914 75v17 M925 68v24 M936 59v33" />
-        </g>
-      </svg>
-      <svg className="hs-process-mobile" viewBox="0 0 340 260" fill="none" aria-hidden="true">
-        <path className="hs-process-track" d="M32 26V234"/>
-        <path className="hs-process-signal" d="M32 26V234" pathLength="100"/>
-        {["REPORT", "EVIDENCE", "SORP 2026", "19 QUESTIONS", "HISTORICAL SNAPSHOT"].map((label, index) => <g key={label}><circle className="hs-process-symbols" cx="32" cy={26 + index * 52} r="5"/><text x="58" y={31 + index * 52} fill="currentColor">{label}</text></g>)}
-      </svg>
-      <ol>{["REPORT", "EVIDENCE", "SORP 2026", "19 QUESTIONS", "HISTORICAL SNAPSHOT"].map(label => <li key={label}>{label}</li>)}</ol>
-    </div>
+    <SorpForwardLine screen="quick-generating" working />
     <p className="hs-processing-status">{verified ? "✓ Report read and validated · 19-question assessment returned" : "Preparing the validated assessment"}<br/><span>Assembling your Historical Snapshot.</span></p>
   </section>;
 }

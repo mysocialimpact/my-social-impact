@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { SorpForwardLine } from "./sorp-forward-line";
 import type { Candidate } from "./sorp-public-model";
 import { homeworkMessageAt, homeworkMessages } from "./sorp-homework-timing";
 
@@ -83,13 +84,14 @@ export function SorpHomeworkExperience({ candidate, tier, verified, waiting, sta
       <h1>{waiting ? "We’re doing the homework." : verified ? "We found what we need." : "Let’s finish the public homework."}</h1>
       {waiting && <p>We’re finding your latest published reporting, reading it properly and applying our SORP 2026 methodology.</p>}
     </header>}
+    <SorpForwardLine screen="homework" working={waiting} />
     {waiting && <>
       <ol className="sh-process" aria-label="Public Homework progress">
         {groups.map((group, index) => {
           const done = group.checks.every(check => checks[check][1]);
           const active = !verified && !done && liveGroup === index;
           return <li key={group.name} className={done ? "is-complete" : active ? "is-active" : ""}>
-            <div className="sh-station"><span className="sh-number">0{index + 1}</span><HomeworkMotif index={index} /><span className="sh-state" aria-label={done ? "Complete" : active ? "In progress" : "Waiting"}>{done ? "✓" : active ? "●" : "○"}</span></div>
+            <div className="sh-station"><span className="sh-number">0{index + 1}</span><span className="sh-state" aria-label={done ? "Complete" : active ? "In progress" : "Waiting"}>{done ? "✓" : active ? "●" : "○"}</span></div>
             <h2>{group.name}</h2>
             <ul>{group.checks.map(check => <li key={checks[check][0]} className={checks[check][1] ? "is-complete" : ""}><span aria-hidden="true">{checks[check][1] ? "✓" : "—"}</span>{checks[check][0]}</li>)}</ul>
           </li>;
@@ -99,27 +101,4 @@ export function SorpHomeworkExperience({ candidate, tier, verified, waiting, sta
       {!delayed && <div className="sh-trust" aria-live="polite" aria-atomic="true">{homeworkMessages.map((message, index) => <p key={message.title} className={index === messageIndex ? "is-current" : ""} aria-hidden={index !== messageIndex}>{message.title}</p>)}</div>}
     </>}
   </div>;
-}
-
-function HomeworkMotif({ index }: { index: number }) {
-  return <svg className="sh-motif" viewBox="0 0 200 150" fill="none" aria-hidden="true">
-    {index === 0 ? <>
-      <path className="sh-quiet" d="M57 31V14h85l20 20v99h-17M42 22h83l21 22v97H42Z" />
-      <path d="M125 22v23h21M60 68h66M60 81h66M60 94h47M60 116h66" />
-      <path className="sh-scan" d="M34 52h120" />
-    </> : index === 1 ? <>
-      <path className="sh-quiet" d="M33 48 97 27 166 51 147 114 65 129 33 48 147 114 97 27 65 129 166 51M33 48l62 34 71-31M95 82l52 32" />
-      {[[33,48],[97,27],[166,51],[147,114],[65,129]].map(([x,y]) => <circle key={x} cx={x} cy={y} r="5" />)}
-      <circle className="sh-pulse" cx="95" cy="82" r="20" /><circle cx="95" cy="82" r="7" />
-    </> : index === 2 ? <>
-      <path className="sh-quiet" d="M24 35h152M24 75h152M24 115h152M57 15v120M142 15v120" />
-      <path d="M37 25v20M27 35h20M100 65v20M90 75h20M163 105v20M153 115h20" />
-      <path className="sh-reference" pathLength="100" d="M37 35h63v40h63v40" />
-      <circle cx="37" cy="35" r="11" /><circle cx="100" cy="75" r="11" /><circle cx="163" cy="115" r="11" />
-    </> : <>
-      <path className="sh-quiet" d="M48 18h104v119H48ZM66 52h39M66 73h62M66 94h50" />
-      <circle cx="137" cy="112" r="25" /><path className="sh-result" pathLength="100" d="m125 112 9 9 16-19" />
-      <path d="M66 32h57" />
-    </>}
-  </svg>;
 }
