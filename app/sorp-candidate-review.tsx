@@ -335,7 +335,13 @@ export function SorpCandidateReview() {
     setHomeworkStarted(started);
     setBusy("profile"); setError(""); setSaved(state => ({ ...state, homeworkFailure: null }));
     try {
-      const data = saved.state && saved.intelligence ? { candidate, state: saved.state, intelligence: saved.intelligence } : await post("/api/published-review", { operation: "profile", candidate, sessionId: saved.sessionId, intelligencePin: saved.intelligence });
+      const existingSetup = saved.state && typeof saved.state === "object" && "setup" in saved.state
+        ? (saved.state as { setup?: { income?: string } }).setup : null;
+      // A saved profile without a public-income tier cannot produce the
+      // canonical deterministic score. Refresh it instead of repeatedly
+      // reusing the same incomplete state on Retry.
+      const canReuseProfile = Boolean(saved.intelligence && saved.candidate?.latestIncome !== null && existingSetup?.income);
+      const data = canReuseProfile ? { candidate, state: saved.state, intelligence: saved.intelligence } : await post("/api/published-review", { operation: "profile", candidate, sessionId: saved.sessionId, intelligencePin: saved.intelligence });
       setSaved(state => ({ ...state, candidate: data.candidate, state: data.state, intelligence: data.intelligence, verifiedTar: null }));
       if (data.candidate.entityType !== "registered_charity") { go("non-sorp"); return; }
       const reviewed = await post("/api/published-review", { operation: "tar", methodologyVersion: "1.0", candidate: data.candidate, state: data.state, sessionId: saved.sessionId, intelligencePin: data.intelligence });
