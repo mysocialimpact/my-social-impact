@@ -44,6 +44,7 @@
 .si-method-principles ul{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:1fr 1fr;gap:14px 25px}
 .scr-main .si-method-principles li{font-size:11px;letter-spacing:.04em;font-weight:750;line-height:1.5;padding-left:13px;border-left:1px solid var(--line)}
 .si-definitions{display:grid;grid-template-columns:1fr 1fr;gap:50px}
+.si-definitions-source{grid-column:1/-1;margin:0 0 -24px;color:var(--orange);font-size:10px;font-weight:800;letter-spacing:.08em;line-height:1.4}
 .si-definitions section{min-width:0}
 .si-definitions blockquote{margin:0;font-family:var(--font-serif);font-size:clamp(18px,1.65vw,23px);line-height:1.4;letter-spacing:-.015em;max-width:510px}
 .si-spread--public-methodology .si-signature{margin:27px 0 23px}
