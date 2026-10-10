@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
-import { SorpSalesLanding } from "../sorp-sales-journey";
-import "../sorp-sales-journey.css";
+import { SorpReadyPage } from "../sorp-ready";
+import "../sorp-ready.css";
+import "../sorp-landing.css";
 
 export const metadata: Metadata = {
   title: "Are You SORP Ready?",
@@ -8,5 +9,5 @@ export const metadata: Metadata = {
 };
 
 export default function Page() {
-  return <SorpSalesLanding />;
+  return <SorpReadyPage />;
 }

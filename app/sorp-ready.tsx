@@ -1,231 +1,89 @@
-"use client";
-
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { Footer, RevealObserver, SiteHeader } from "./site-shell";
-import { readinessAreas } from "./sorp-questionnaire";
+import Image from "next/image";
+import { Footer, SiteHeader } from "./site-shell";
+import SorpFilm from "./sorp-film/sorp-film";
+import { sorpSource } from "./sorp-methodology-v1";
 
 const conversationUrl = "/are-you-sorp-ready/review?entry=intro";
 
-const sectionLinks = [
-  ["why-now", "Why now"],
-  ["assessment", "Check readiness"],
-  ["language", "Must / should / may"],
-  ["eligibility", "Does SORP apply?"],
-  ["path", "Ready → excellent"],
-  ["result", "Your result"],
-  ["review", "Human review"],
-] as const;
-
-const readinessLanguage = [
-  ["Must", "Required.", "Where SORP says something MUST be done, we make that clear."],
-  ["Should", "Recommended.", "SORP uses SHOULD for recommendations intended to advance good reporting practice."],
-  ["May", "Optional.", "SORP uses MAY where charities have a choice about whether to adopt a particular approach, treatment or disclosure."],
-  ["Judgement", "It depends.", "Our additional MSI label for areas where context, evidence, materiality and proportionality genuinely matter."],
-] as const;
-
-const illustrativeAreaScores = [82, 61, 72, 54] as const;
-
-function SorpNavigation() {
-  const [active, setActive] = useState("why-now");
-
-  useEffect(() => {
-    const update = () => {
-      const readingLine = window.innerHeight * .4;
-      const reached = sectionLinks.filter(([id]) => {
-        const section = document.getElementById(id);
-        return section ? section.getBoundingClientRect().top <= readingLine : false;
-      });
-      setActive(reached.length ? reached[reached.length - 1][0] : "why-now");
-    };
-    update();
-    window.addEventListener("scroll", update, { passive: true });
-    return () => window.removeEventListener("scroll", update);
-  }, []);
-
-  useEffect(() => {
-    const scroller = document.querySelector<HTMLElement>(".sorp-ready-nav > div");
-    const link = scroller?.querySelector<HTMLAnchorElement>(`a[href="#${active}"]`);
-    if (!scroller || !link || scroller.scrollWidth <= scroller.clientWidth) return;
-    const left = scroller.scrollLeft + link.getBoundingClientRect().left - scroller.getBoundingClientRect().left - (scroller.clientWidth - link.clientWidth) / 2;
-    scroller.scrollTo({ left, behavior: "smooth" });
-  }, [active]);
-
-  return (
-    <nav className="sorp-ready-nav" aria-label="Are You SORP Ready sections">
-      <div>{sectionLinks.map(([id, label], index) => <a key={id} className={active === id ? "is-active" : ""} href={`#${id}`}><span>0{index + 1}</span>{label}</a>)}</div>
-    </nav>
-  );
-}
-
-function SectionHeading({ number, eyebrow, title, copy }: { number: string; eyebrow: string; title: React.ReactNode; copy?: React.ReactNode }) {
-  return (
-    <header className="sorp-section-heading" data-reveal>
-      <p className="sorp-section-label"><span>{number}</span>{eyebrow}</p>
-      <h2>{title}</h2>
-      {copy && <div className="sorp-section-copy">{copy}</div>}
-    </header>
-  );
+function StartReview() {
+  return <Link className="sr-start" href={conversationUrl}>START THE FREE REVIEW <span aria-hidden="true">→</span></Link>;
 }
 
 export function SorpReadyPage() {
-  return (
-    <>
-      <RevealObserver />
-      <SiteHeader />
-      <main className="sorp-ready-page">
-        <section className="sorp-ready-hero" id="top">
-          <div className="sorp-ready-hero-bar" data-reveal>
-            <span>SORP 2026 · Impact reporting</span>
-            <strong>My Social Impact</strong>
-          </div>
-          <div className="sorp-ready-hero-grid">
-            <div className="sorp-ready-title" data-reveal>
-              <span className="sorp-ready-number">A clearer starting point</span>
-              <h1>Are you<br />SORP ready?</h1>
-            </div>
-            <div className="sorp-ready-intro" data-reveal>
-              <p className="sorp-ready-position">A free SORP 2026 readiness review.</p>
-              <p className="sorp-ready-lead">Know where your reporting stands.<br />See what comes next.</p>
-              <p>Start with your latest published Trustees’ Annual Report and accounts. Add what has changed today. Receive a personalised report with strengths, gaps and priorities.</p>
-              <div className="sorp-ready-excitement"><strong>No card. No surprise paywall.</strong><span>Your starting point, current-readiness review and personalised report are free. Professional My Social Impact support is optional afterwards.</span></div>
-              <div className="sorp-ready-actions">
-                <Link className="sorp-ready-action is-primary" href={conversationUrl}>Start the free review <span>→</span></Link>
-              </div>
-            </div>
-          </div>
-          <div className="sorp-ready-scope" data-reveal>
-            <strong>Focused on impact.</strong>
-            <p>This tool focuses specifically on the impact and narrative-reporting aspects of SORP 2026.</p>
-            <p>It is not a complete assessment of every accounting requirement in the SORP.</p>
-          </div>
-        </section>
+  return <>
+    <SiteHeader />
+    <main className="sr-story">
+      <header className="sr-hero" id="top">
+        <div><p className="sr-eyebrow">Impact &amp; Sustainability Reporting Readiness for SORP 2026</p>
+          <h1>Are you <em>SORP ready?</em></h1>
+          <p>SORP is the requirement. <strong>Better impact is the opportunity.</strong></p>
+        </div>
+        <StartReview />
+      </header>
 
-        <SorpNavigation />
+      <section className="sr-presentation" aria-label="The SORP readiness story">
+        <SorpFilm embedded startHref={conversationUrl} />
+      </section>
 
-        <section className="sorp-problem sorp-section" id="why-now">
-          <SectionHeading number="01" eyebrow="The question to ask now" title={<>SORP 2026<br />is here.</>} copy={<><p>The question is not simply whether you can write a better annual report at year-end.</p><p>The question is whether your charity is collecting, reviewing and understanding the information it will need throughout the year.</p></>} />
-          <div className="sorp-date-statement" data-reveal>
-            <p>SORP 2026 applies to reporting periods beginning on or after</p>
-            <strong>1 January<br />2026</strong>
-            <span>For a charity with a calendar financial year, the first SORP 2026 accounts cover the year ending <b>31 December 2026.</b></span>
-          </div>
-          <blockquote className="sorp-big-quote" data-reveal>Start managing it now.<br /><em>Don’t start writing it later.</em></blockquote>
-        </section>
+      <section className="sr-details" aria-labelledby="sr-detail-heading">
+        <header><p className="sr-eyebrow">THE DETAIL, WHEN YOU NEED IT</p><h2 id="sr-detail-heading">A little more certainty.</h2><p>Explore the scope, the method and the people behind your report.</p></header>
+        <div className="sr-free" id="assessment">
+          <h3>What you get for free</h3>
+          <dl>
+            <div><dt>Historical Snapshot</dt><dd>What your latest published Trustees’ Annual Report and accounts evidenced then.</dd></div>
+            <div><dt>Current Readiness</dt><dd>Your answers to 19 focused questions, comments and context bring the picture up to date.</dd></div>
+            <div><dt>Personalised Report</dt><dd>Your strengths, gaps and priorities: what to do now, improve when practical and keep doing well.</dd></div>
+          </dl>
+          <p>Free assessment. Free personalised report. No obligation.</p>
+        </div>
 
-        <section className="sorp-free sorp-section">
-          <SectionHeading number="02" eyebrow="Specialist guidance. Relevant answers." title={<>A review shaped<br />around your organisation.</>} copy={<><p>My Social Impact Intelligence brings together SORP 2026 and your charity’s published evidence.</p><p>The Quick Review gives a historical starting point. Your current answers and comments add what the published information cannot tell us.</p><p><strong>Where there is a clear answer, we make it clear. Where human judgement matters, we say so.</strong></p></>} />
-        </section>
-
-        <section className="sorp-assessment sorp-section" id="assessment">
-          <SectionHeading number="03" eyebrow="What you’ll get — all free" title={<>Your evidence.<br />Your current view.<br />Your next steps.</>} />
-          <ol className="sorp-landing-journey">{[
-            ["Your SORP starting point", "We review your latest published Trustees’ Annual Report and accounts against SORP 2026 to give you a historical published starting point."],
-            ["Your current readiness", "Review the assessment and add what has changed: your current answers, comments and knowledge."],
-            ["Your personalised report", "Bring the published starting point together with your current self-reported position to see strengths, gaps and priorities."],
-          ].map(([title, copy], index) => <li key={title} data-reveal><span>0{index + 1}</span><h3>{title}</h3><p>{copy}</p></li>)}</ol>
-          <div className="sorp-landing-journey-end"><p>Use the results yourself, or choose an optional professional review with My Social Impact afterwards.</p><Link href={conversationUrl}>Start the free review <span>→</span></Link></div>
-
-        </section>
-
-        <section className="sorp-language sorp-section" id="language">
-          <SectionHeading number="04" eyebrow="Plain English, precise meaning" title={<>What do you actually<br />need to do?</>} />
-          <div className="sorp-language-grid">
-            {readinessLanguage.map(([term, status, copy], index) => <article className={term === "Judgement" ? "is-judgement" : ""} key={term} data-reveal style={{ "--delay": `${index * 60}ms` } as React.CSSProperties}><span>0{index + 1}</span><h3>{term}</h3><strong>{status}</strong><p>{copy}</p>{term === "Judgement" && <small>Judgement is an MSI explanatory category, not an official fourth SORP term.</small>}</article>)}
-          </div>
-          <p className="sorp-language-statement" data-reveal>We use SORP’s own <strong>MUST / SHOULD / MAY</strong> language — and highlight separately where <strong>judgement</strong> is needed.</p>
-          <div className="sorp-judgement-factors" data-reveal><p>Judgement can depend on:</p>{["Circumstances", "Evidence", "Materiality", "Proportionality", "The nature of the charity", "The nature of the claim or activity"].map((item) => <span key={item}>{item}</span>)}</div>
-        </section>
-
-        <section className="sorp-eligibility sorp-section" id="eligibility">
-          <SectionHeading number="05" eyebrow="Who it applies to" title={<>Does SORP 2026<br />apply to me?</>} copy={<><p>Generally, SORP applies to UK charities preparing <strong>accruals accounts</strong>.</p><p>You should not need to be an accountant to work out where to begin.</p></>} />
-          <div className="sorp-accounts-grid" data-reveal>
-            <article><span>Accruals accounts</span><p>Income and costs are recognised when earned or incurred, rather than simply when cash moves.</p></article>
-            <article><span>Receipts & payments</span><p>A simpler cash-based approach recording money received and paid.</p><strong>SORP does not apply to receipts-and-payments accounts.</strong></article>
-            <article className="is-unsure"><span>Not sure?</span><p>That’s completely fine. The assessment is designed to help work this out rather than assuming you already know the accounting terminology.</p></article>
-          </div>
-          <div className="sorp-jurisdiction-grid" data-reveal>
-            <article><span>England &amp; Wales</span><p>Some smaller non-company charities and CIOs may be eligible to use receipts &amp; payments accounts.</p><strong>Charitable companies prepare accruals accounts.</strong></article>
-            <article><span>Scotland / Northern Ireland</span><p>Eligibility thresholds and legal forms differ, so the assessment asks enough information to help establish what is likely to apply.</p></article>
-          </div>
-          <div className="sorp-applicability-grid">
-            <article className="sorp-cic-note" data-reveal><span>What about a CIC?</span><h3>Charitable company ≠ CIC</h3><p>A Community Interest Company is a company with a community purpose, but it is not automatically a charity.</p><p>Charities SORP therefore does not apply simply because an organisation is a CIC.</p><strong>You are still welcome to use the assessment.</strong><p>The underlying questions about purpose, evidence, outcomes, impact, learning and reporting may still be useful.</p></article>
-            <article className="sorp-outside-note" data-reveal><span>Outside the UK?</span><h3>You’re still welcome.</h3><p>SORP 2026 may not apply to you.</p><p>But if you are an NGO, non-profit, social enterprise or other purpose-led organisation, you are welcome to use the tool anyway.</p><strong>We care much more about helping organisations understand and improve impact than policing compliance.</strong></article>
-          </div>
-          <div className="sorp-tiers" data-reveal>
-            <header><p>SORP tiers</p><h3>Requirements depend partly on annual gross income.</h3></header>
-            <div>{[["Tier 1", "Up to £500,000"], ["Tier 2", "Over £500,000 and up to £15 million"], ["Tier 3", "Over £15 million"]].map(([tier, income]) => <article key={tier}><span>{tier}</span><strong>{income}</strong></article>)}</div>
-            <footer><strong>Not sure yet?</strong><p>If you don’t yet know where your income will land for the year, that’s fine. We can work provisionally and explain what changes if you cross a tier threshold.</p></footer>
-          </div>
-        </section>
-
-        <section className="sorp-opportunity sorp-section">
-          <SectionHeading number="06" eyebrow="Beyond compliance" title={<>SORP is the requirement.<br /><em>Better impact is the opportunity.</em></>} copy={<><p>SORP 2026 raises the bar for impact reporting. It gives charities another reason to understand what they are trying to change, collect useful evidence, review performance, learn, improve and explain their impact credibly.</p><p>The point is not simply to write a better annual report. It is to make impact part of how the charity is actually managed.</p></>} />
-          <div className="sorp-opportunity-grid">
-            <div data-reveal><p>Charities increasingly need to explain:</p>{["What they are trying to change", "What they actually did", "What happened", "What evidence supports that conclusion", "What they learned", "What they will do differently"].map((item, index) => <span key={item}><b>0{index + 1}</b>{item}</span>)}</div>
-            <div data-reveal><p>This increasingly matters to:</p>{["Trustees", "Funders", "Commissioners", "Donors", "Partners"].map((item) => <span key={item}>{item}</span>)}</div>
-          </div>
-        </section>
-
-        <section className="sorp-path sorp-section" id="path">
-          <SectionHeading number="07" eyebrow="The bigger journey" title={<>Get ready → Get better<br />→ Get excellent.</>} />
-          <div className="sorp-path-stages">
-            <article data-reveal>
-              <header><span>01</span><p>SORP 2026</p></header><h3>Get ready</h3><p>Understand what applies, what you MUST do, what you SHOULD do, what you MAY choose to do, where judgement is required and what may currently be missing.</p>
-            </article>
-            <article data-reveal>
-              <header><span>02</span><p>Two frameworks, working together</p></header><h3>Get better</h3><div className="sorp-frameworks"><Link href="/social-impact-excellence"><strong>Social Impact Excellence</strong><small>Purpose · Leadership · Data · Delivery · Communications</small></Link><Link href="/social-impact-claims-code"><strong>Social Impact Claims Code</strong><small>Evidence · Proportion · Transparency · Balance · Learning</small></Link></div><p>Social Impact Excellence strengthens the organisation behind the reporting. The Social Impact Claims Code strengthens the credibility of the evidence, interpretation and claims.</p>
-            </article>
-            <article data-reveal>
-              <header><span>03</span><p>A management discipline</p></header><h3>Get excellent</h3><p>Embed impact into strategy, planning, KPIs, dashboards, management information, meetings, resource allocation, programme decisions, learning and continuous improvement.</p>
-            </article>
-          </div>
-          <blockquote className="sorp-path-quote" data-reveal>Don’t build an impact system just for SORP.<br /><em>Build a good impact system — and SORP becomes much easier.</em><small>When impact information is already part of how the charity is managed, annual reporting becomes an output of good management rather than a year-end scramble.</small></blockquote>
-        </section>
-
-        <section className="sorp-result sorp-section" id="result">
-          <SectionHeading number="08" eyebrow="What your free report shows" title={<>A clear picture.<br />Useful next steps.</>} copy={<p>Your personalised report brings together the published starting point and your current self-reported view, keeping the distinction clear. The preview below is illustrative.</p>} />
-          <div className="sorp-result-card" data-reveal>
-            <header><div><p>Your SORP 2026</p><h3>Current readiness</h3></div><strong>68 <span>/ 100</span></strong></header>
-            <div className="sorp-result-bars">{readinessAreas.map((area, index) => <div key={area.section}><span><strong>{area.title}</strong><small>{area.label}</small></span><i><b style={{ width: `${illustrativeAreaScores[index]}%` }} /></i><strong>{illustrativeAreaScores[index]}</strong></div>)}</div>
-            <div className="sorp-result-additional"><strong>ADDITIONAL SORP CHECKS</strong><span>Separate status checks · not a fifth scored area</span></div>
-            <div className="sorp-result-findings">{["What looks strong", "What needs attention", "MUST requirements to address", "SHOULD opportunities", "MAY options", "Areas requiring judgement"].map((item, index) => <span key={item}><b>0{index + 1}</b>{item}</span>)}</div>
-            <small>Illustrative front-end preview · not an assessment result</small>
-          </div>
-          <div className="sorp-continue" data-reveal><div><p>A starting point you can use</p><h3>Turn your review into priorities.</h3><span>Use your report with colleagues or trustees, or as the starting point for a professional review.</span></div><Link href={conversationUrl}>Start the free review <span>→</span></Link></div>
-        </section>
-
-        <section className="sorp-review sorp-section" id="review">
-          <div className="sorp-review-heading" data-reveal><p><span>09</span>Optional afterwards</p><h2>Want to talk<br />it through?</h2></div>
-          <p className="sorp-review-free-line" data-reveal><strong>Your review and personalised report are completely free.</strong> Professional My Social Impact support is a separate, optional next step.</p>
-          <div className="sorp-review-pricing" data-reveal>{[["Quick question / fit check", "10 minutes · no pre-read", "Free"], ["SORP Readiness Review", "30 minutes · preparation included", "£50"], ["SORP + Wider Evidence Review", "60 minutes · preparation and one wider-evidence source", "£100"]].map(([name, detail, price]) => <article key={name}><span>{name}</span><p>{detail}</p><strong>{price}</strong></article>)}</div>
-          <div className="sorp-review-grid">
-            <div className="sorp-review-intro" data-reveal><p>For a paid review, we read your completed assessment and comments beforehand, then work through the gaps, judgement areas and priorities with you.</p><p>The £100 session also includes a light-touch review of one Impact Report or key wider-evidence source supplied before the meeting.</p></div>
-            <div className="sorp-review-list" data-reveal><h3>During the session we will:</h3>{["Review your readiness result", "Consider your existing reporting", "Discuss what looks strong", "Identify areas that may need attention", "Talk through genuine judgement calls", "Identify practical next steps", "Explore where going beyond minimum compliance may strengthen the charity"].map((item, index) => <p key={item}><span>0{index + 1}</span>{item}</p>)}</div>
-            <div className="sorp-review-output" data-reveal><h3>A practical discussion about:</h3>{["What looks strong", "What needs attention", "Areas requiring judgement", "Your priority actions", "Opportunities beyond compliance"].map((item) => <span key={item}>{item}</span>)}</div>
-          </div>
-          <div className="sorp-review-credit" data-reveal>If the session leads directly to a larger My Social Impact engagement, we can credit the session fee against that work.</div>
-          <Link className="sorp-book-button" href={conversationUrl}>Start the free review <span>→</span></Link>
-          <p className="sorp-review-after-result" data-reveal>Secure payment for the optional review appears only after your free assessment and personalised report are complete.</p>
-          <p className="sorp-review-barrier" data-reveal><strong>Cost genuinely a barrier?</strong> Email <a href="mailto:marcus@mysocialimpact.org">marcus@mysocialimpact.org</a>. We don’t want cost to prevent a smaller charity getting useful help.</p>
-          <div className="sorp-review-scope" data-reveal><strong>This is an impact-reporting readiness review.</strong><p>It is focused on the impact and narrative aspects of SORP 2026. It is not a statutory audit, an audit opinion on the financial statements, a complete assessment of every accounting requirement in SORP, or certification by the Charity Commission or SORP-making body.</p></div>
-        </section>
-
-        <section className="sorp-next sorp-section">
-          <SectionHeading number="10" eyebrow="Where next?" title={<>Support when it<br />genuinely helps.</>} />
-          <div className="sorp-next-grid">{[
-            ["SORP impact diagnostic", "A deeper evidence-based review of impact-reporting readiness.", "mailto:marcus@mysocialimpact.org?subject=SORP%20impact%20diagnostic"],
-            ["Charity Impact Report", "Bring strategy, evidence, outcomes and stories together into credible reporting.", "/social-impact-report"],
-            ["Social Impact Excellence", "Strengthen Purpose, Leadership, Data, Delivery and Communications.", "/social-impact-excellence"],
-            ["Social Impact Claims Code", "Strengthen Evidence, Proportion, Transparency, Balance and Learning.", "/social-impact-claims-code"],
-            ["Data & measurement", "Improve KPIs, evidence collection, dashboards and management information.", "mailto:marcus@mysocialimpact.org?subject=Data%20and%20measurement"],
-          ].map(([name, copy, href], index) => href.startsWith("/") ? <Link href={href} key={name} data-reveal><span>0{index + 1}</span><h3>{name}</h3><p>{copy}</p><strong>Explore <b>→</b></strong></Link> : <a href={href} key={name} data-reveal><span>0{index + 1}</span><h3>{name}</h3><p>{copy}</p><strong>Talk to us <b>→</b></strong></a>)}</div>
-        </section>
-
-        <section className="sorp-final" data-reveal><p>SORP 2026 · Free SORP readiness report</p><h2>This looks useful.<br /><em>I should probably deal with this now.</em></h2><div><Link href={conversationUrl}>Start the free review <span>→</span></Link></div></section>
-      </main>
-      <Footer />
-      <div className="sorp-landing-cta"><Link href={conversationUrl}>Start the free review <span aria-hidden="true">→</span></Link></div>
-    </>
-  );
+        <details id="scope"><summary>What does the review cover?</summary><div className="sr-expanded">
+          <p>Impact and sustainability reporting aspects of SORP 2026, focused on Module 1 — the Trustees’ Annual Report. We distinguish published evidence from your current, self-reported position.</p>
+          <h3>What it does not cover</h3><p>This is not a full SORP compliance review, statutory audit, audit opinion, assessment of every accounting requirement, or certification by a regulator or the SORP-making body.</p>
+        </div></details>
+        <details id="language"><summary>MUST / SHOULD / MAY — what do they mean?</summary><div className="sr-expanded">
+          <dl><dt>MUST · Required</dt><dd>A requirement where it applies to your charity.</dd><dt>SHOULD · Recommended</dt><dd>A recommendation intended to advance good reporting practice.</dd><dt>MAY · Optional</dt><dd>A choice about adopting an approach, treatment or disclosure.</dd></dl>
+          <p>MSI’s evidence judgements are labelled separately. “Judgement” is not an official fourth SORP term.</p>
+        </div></details>
+        <details id="eligibility"><summary>Does SORP apply, and which tier am I in?</summary><div className="sr-expanded">
+          <p>SORP generally applies to UK charities preparing accruals accounts, not receipts-and-payments accounts. Legal form and jurisdiction matter; a CIC is not automatically a charity.</p>
+          <p>SORP 2026 applies to reporting periods beginning on or after 1 January 2026. Requirements depend partly on annual gross income:</p>
+          <dl><dt>Tier 1</dt><dd>Up to £500,000.</dd><dt>Tier 2</dt><dd>Over £500,000 and up to £15 million.</dd><dt>Tier 3</dt><dd>Over £15 million.</dd></dl>
+          <p>Unsure? The review helps establish your public reporting context. Where income is provisional, we explain what a tier change would mean. Organisations outside SORP can still find the impact questions useful.</p>
+        </div></details>
+        <details id="methodology"><summary>How does the methodology work?</summary><div className="sr-expanded">
+          <p>The Historical Snapshot maps exact published evidence to applicable SORP requirements and a defined assessment rubric. Reporting Strength reflects that evidence; it is not proof of the charity’s real-world effectiveness.</p>
+          <p>Your 19 answers and comments add your current position. The personalised report keeps THEN and NOW distinct and explains the evidence, reasoning and result behind each conclusion.</p>
+          <p>Requirements are tier-aware. MUST, SHOULD and MAY retain their SORP meanings; MSI methodology and human judgement are identified separately.</p>
+          <p><Link href={conversationUrl}>Read the full methodology in the review introduction →</Link></p>
+          <p><a href={sorpSource} target="_blank" rel="noreferrer">Read the authoritative SORP 2026 source ↗</a></p>
+        </div></details>
+        <details id="path"><summary>Why My Social Impact? What comes beyond readiness?</summary><div className="sr-expanded">
+          <p>We believe social impact should be taken as seriously as financial performance. Better reporting grows from better evidence, learning and decisions throughout the year.</p>
+          <h3>Get ready → Get better → Get excellent</h3><p>Start with SORP readiness. Strengthen measurement, data and learning. Then embed impact in how your organisation is managed.</p>
+          <h3>Social Impact Excellence</h3><dl><dt>Purpose</dt><dd>Be clear about the change you exist to create.</dd><dt>Leadership</dt><dd>Make impact part of governance and decisions.</dd><dt>Data</dt><dd>Gather useful evidence and measure what matters.</dd><dt>Delivery</dt><dd>Use learning to improve programmes and services.</dd><dt>Communication</dt><dd>Explain your impact clearly and credibly.</dd></dl>
+          <Link href="/social-impact-excellence">Explore Social Impact Excellence →</Link>
+        </div></details>
+        <details id="review"><summary>Optional human support — what does it cost?</summary><div className="sr-expanded">
+          <p>Your assessment and personalised report are free. Afterwards, you can choose to discuss them with Marcus.</p>
+          <dl><dt>10-minute initial conversation · Free</dt><dd>Discuss whether further help would be useful.</dd><dt>30-minute review · £50</dt><dd>Review the findings and agree practical priorities.</dd><dt>60-minute review · £100</dt><dd>A wider discussion, including a light-touch review of one Impact Report or key wider-evidence source supplied beforehand.</dd><dt>Implementation support · From £250</dt><dd>Practical help where appropriate, agreed through a human conversation.</dd></dl>
+          <p>The assessment does not prescribe consultancy. Marcus discusses what help, if any, you need. Paid booking remains optional after the free report.</p>
+          <p>If a review leads directly to a larger MSI engagement, its fee can be credited against that work. If cost is a barrier, <a href="mailto:marcus@mysocialimpact.org">contact Marcus</a>.</p>
+        </div></details>
+        <details id="about"><summary>Who is accountable for this review?</summary><div className="sr-expanded sr-marcus">
+          <Image src="/images/marcus-warry-msi.webp" alt="Marcus Warry" width={112} height={140} />
+          <div><h3>Marcus Warry ACA</h3><p>Chartered Accountant · Social Impact Consultant<br />Co-founder, My Social Impact</p><p>Marcus brings accounting and social impact expertise to the review and its optional human support.</p><a href="mailto:marcus@mysocialimpact.org">marcus@mysocialimpact.org</a></div>
+        </div></details>
+        <details id="faq"><summary>A few practical questions</summary><div className="sr-expanded">
+          <h3>Is there a paywall for my report?</h3><p>No. The assessment and personalised report are free, with no card and no obligation to buy support.</p>
+          <h3>Why answer questions after you have read our report?</h3><p>A published report is historical evidence. Your answers explain what has changed, what exists elsewhere and what is still being developed.</p>
+          <h3>What if our latest report cannot be found?</h3><p>The review provides a report-recovery step so you can help supply the correct published report. Missing evidence is not proof that your charity does no impact work.</p>
+          <h3>Does a strong result certify compliance or impact?</h3><p>No. It describes the reporting evidence and your current readiness within this review’s scope. It is neither full SORP certification nor independent verification of your impact.</p>
+        </div></details>
+      </section>
+      <section className="sr-final"><div><p className="sr-eyebrow">YOUR NEXT STEP</p><h2>Find your charity.<br /><em>Know what to do next.</em></h2><p>No card. No surprise paywall. No obligation.</p></div><StartReview /></section>
+    </main>
+    <Footer />
+  </>;
 }
