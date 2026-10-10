@@ -1,10 +1,53 @@
-import { exchangeOauthCode, validOauthState } from "../../../../booking-google";
+import { exchangeOauthCode, exchangeReadinessAccountOauthCode, readinessAccountPassword, validOauthState, validReadinessAccountOauthState } from "../../../../booking-google";
 
 export const runtime = "nodejs";
+
+const ACCOUNT_UNAVAILABLE = "Google verified your identity, but the secure account service did not complete the sign-in. Your assessment is still safe on this device. Please try Google sign-in again.";
+
+async function callReadinessAccount(endpoint: string, key: string, body: Record<string, unknown>) {
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
+    try {
+      const response = await fetch(endpoint, { method: "POST", headers: { "content-type": "application/json", authorization: `Bearer ${key}` }, body: JSON.stringify(body), cache: "no-store", signal: AbortSignal.timeout(12_000) });
+      const raw = await response.text();
+      let payload: Record<string, unknown>;
+      try { payload = raw ? JSON.parse(raw) as Record<string, unknown> : {}; }
+      catch {
+        if (attempt < 3) continue;
+        return { response: null, payload: { error: ACCOUNT_UNAVAILABLE } as Record<string, unknown> };
+      }
+      if (attempt < 3 && (response.status === 429 || response.status >= 500)) continue;
+      return { response, payload };
+    } catch {
+      if (attempt < 3) continue;
+    }
+  }
+  return { response: null, payload: { error: ACCOUNT_UNAVAILABLE } as Record<string, unknown> };
+}
+
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const code = url.searchParams.get("code") || "";
   const state = url.searchParams.get("state") || "";
+  if (code && validReadinessAccountOauthState(state)) {
+    const publicOrigin = process.env.SORP2026_PUBLIC_ORIGIN || "https://sorp2026.org";
+    try {
+      const profile = await exchangeReadinessAccountOauthCode(code);
+      const endpoint = (process.env.COW_GROWTH_EVENT_URL || "").replace(/\/events\/?(?:\?.*)?$/, "/accounts");
+      const key = process.env.COW_GROWTH_EVENT_KEY;
+      if (!endpoint || !key) throw new Error("The secure account service is not configured.");
+      const password = readinessAccountPassword(profile.subject);
+      let account = await callReadinessAccount(endpoint, key, { action: "login", email: profile.email, password });
+      if (account.response?.status === 401) {
+        account = await callReadinessAccount(endpoint, key, { action: "signup", name: profile.name, position: "TO CONFIRM", email: profile.email, password, progress: null });
+        if (account.response?.status === 409) account = await callReadinessAccount(endpoint, key, { action: "login", email: profile.email, password });
+      }
+      if (!account.response?.ok || typeof account.payload.sessionToken !== "string") throw new Error(typeof account.payload.error === "string" ? account.payload.error : ACCOUNT_UNAVAILABLE);
+      const cookie = `msi_sorp_session=${account.payload.sessionToken}; Path=/; Max-Age=${60 * 60 * 24 * 30}; HttpOnly; Secure; SameSite=Lax`;
+      return new Response(null, { status: 302, headers: { location: `${publicOrigin}/are-you-sorp-ready/review/?account=google`, "set-cookie": cookie, "cache-control": "no-store" } });
+    } catch (error) {
+      return new Response(null, { status: 302, headers: { location: `${publicOrigin}/are-you-sorp-ready/review/?account_error=${encodeURIComponent(error instanceof Error ? error.message : "Google sign-in did not complete.")}`, "cache-control": "no-store" } });
+    }
+  }
   if (!code || !validOauthState(state)) return new Response("Google authorisation could not be verified.", { status: 400 });
   try {
     const token = await exchangeOauthCode(code);
