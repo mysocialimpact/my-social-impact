@@ -17,6 +17,9 @@ const allowed = new Set([
   "snapshot_feedback_rating", "guided_conversation_started", "guided_prompt_completed", "guided_conversation_completed", "guided_conversation_skipped", "full_report_generation_started",
   "full_report_viewed", "pdf_email_sent", "final_feedback_rating", "support_ask_viewed",
   "deep_dive_offer_viewed", "deep_dive_clicked", "ten_minute_call_clicked", "stage_viewed", "non_sorp_identified",
+  "email_review_30_clicked", "email_review_60_clicked",
+  "account_step_viewed", "account_created", "account_signed_in", "google_sign_in_started", "core_questions_completed",
+  "maturity_assessment_clicked", "social_impact_report_review_clicked", "implementation_support_clicked", "monthly_impact_director_clicked",
   // Retained for older live sessions while the new completion journey rolls out.
   "free_assessment_completed", "result_viewed", "review_cta_clicked", "voluntary_support_shown", "voluntary_support_no_thanks",
 ]);

@@ -17,6 +17,10 @@ function googleConfig() {
   return { clientId, clientSecret, refreshToken, redirectUri };
 }
 
+function readinessRedirectUri() {
+  return process.env.GOOGLE_READINESS_REDIRECT_URI || "https://sorp2026.org/api/booking/google/callback";
+}
+
 async function accessToken(): Promise<string> {
   const config = googleConfig();
   if (!config.refreshToken) throw new Error("Google Calendar authorisation is not complete.");
@@ -157,6 +161,41 @@ export function oauthUrl() {
   const state = `${issued}.${signature}`;
   const params = new URLSearchParams({ client_id: clientId, redirect_uri: redirectUri, response_type: "code", access_type: "offline", prompt: "consent", include_granted_scopes: "true", state, scope: "https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/calendar.events.freebusy" });
   return `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
+}
+
+export function readinessAccountOauthUrl() {
+  const { clientId, clientSecret } = googleConfig();
+  const issued = Math.floor(Date.now() / 1000).toString();
+  const signature = createHmac("sha256", clientSecret).update(`readiness-account:${issued}`).digest("hex");
+  const state = `readiness-account.${issued}.${signature}`;
+  const params = new URLSearchParams({ client_id: clientId, redirect_uri: readinessRedirectUri(), response_type: "code", access_type: "online", prompt: "select_account", state, scope: "openid email profile" });
+  return `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
+}
+
+export function validReadinessAccountOauthState(state: string) {
+  const [flow, issued, supplied] = state.split(".");
+  const secret = process.env.GOOGLE_CLIENT_SECRET || "";
+  const age = Date.now() / 1000 - Number(issued);
+  if (flow !== "readiness-account" || !issued || !supplied || !secret || !Number.isFinite(age) || age < 0 || age > 900) return false;
+  const expected = createHmac("sha256", secret).update(`readiness-account:${issued}`).digest("hex");
+  return supplied.length === expected.length && timingSafeEqual(Buffer.from(supplied), Buffer.from(expected));
+}
+
+export async function exchangeReadinessAccountOauthCode(code: string) {
+  const { clientId, clientSecret } = googleConfig();
+  const response = await fetch("https://oauth2.googleapis.com/token", { method: "POST", headers: { "content-type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({ code, client_id: clientId, client_secret: clientSecret, redirect_uri: readinessRedirectUri(), grant_type: "authorization_code" }), cache: "no-store" });
+  const result = await response.json() as { access_token?: string };
+  if (!response.ok || !result.access_token) throw new Error("Google sign-in did not return a verified identity token.");
+  const profileResponse = await fetch("https://openidconnect.googleapis.com/v1/userinfo", { headers: { authorization: `Bearer ${result.access_token}` }, cache: "no-store" });
+  const profile = await profileResponse.json() as { sub?: string; email?: string; email_verified?: boolean; name?: string };
+  if (!profileResponse.ok || !profile.sub || !profile.email || !profile.email_verified) throw new Error("Google did not confirm a verified email address.");
+  return { subject: profile.sub, email: profile.email.trim().toLowerCase(), name: profile.name?.trim() || profile.email.split("@")[0] };
+}
+
+export function readinessAccountPassword(subject: string) {
+  const secret = process.env.GOOGLE_CLIENT_SECRET || "";
+  if (!secret || !subject) throw new Error("Google sign-in is not configured.");
+  return createHmac("sha256", secret).update(`msi-readiness-account:${subject}`).digest("base64url");
 }
 
 export function validOauthState(state: string) {
