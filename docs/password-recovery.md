@@ -11,3 +11,5 @@ This change preserves the existing account endpoint, `COW_GROWTH_EVENT_URL` and 
 - Existing signup/login/save/logout and session handling are otherwise unchanged.
 
 Verification: eight mocked route tests pass using `node --experimental-strip-types --test tests/password-recovery.test.mjs`. Focused ESLint and TypeScript pass. Local `npm run vercel-build` was blocked by this cloud's Google Fonts network policy, not a changed font or source error; a Vercel preview build is used separately to validate the normal hosting environment. No real customer emails, passwords or production sessions were changed. Actual reset delivery requires the Cow deployment/sender prerequisites and an explicitly approved test recipient/account.
+
+Vercel preview build confirmed **Ready**, deployment `dpl_AMV96UNZ7BNykuwtumnaBkW22qaG`: https://my-social-impact-8r8w2b2ih-marcuswarry.vercel.app. Cow implementation: https://github.com/mysocialimpact/cow/pull/2.
