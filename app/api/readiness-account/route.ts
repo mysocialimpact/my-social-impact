@@ -43,7 +43,10 @@ async function callCow(body: Record<string, unknown>) {
     console.error("[readiness-account] account service configuration is missing", { endpointConfigured: Boolean(endpoint), keyConfigured: Boolean(key) });
     return { response: null, payload: { code: "ACCOUNT_SERVICE_UNAVAILABLE", error: ACCOUNT_UNAVAILABLE } as Record<string, unknown> };
   }
-  for (let attempt = 1; attempt <= 2; attempt += 1) {
+  // Do not retry a reset mutation: an upstream timeout may follow a completed
+  // send or password change. The person can explicitly retry if necessary.
+  const maxAttempts = ["request-reset", "reset-password"].includes(String(body.action)) ? 1 : 2;
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
     try {
       const response = await fetch(endpoint, {
         method: "POST",
@@ -58,17 +61,17 @@ async function callCow(body: Record<string, unknown>) {
         payload = raw ? JSON.parse(raw) as Record<string, unknown> : {};
       } catch {
         console.error("[readiness-account] account service returned an unreadable response", { status: response.status, contentType: response.headers.get("content-type"), attempt });
-        if (attempt === 1 && [502, 503, 504].includes(response.status)) continue;
+        if (attempt < maxAttempts && [502, 503, 504].includes(response.status)) continue;
         return { response: null, payload: { code: "ACCOUNT_SERVICE_BAD_RESPONSE", error: ACCOUNT_UNAVAILABLE } as Record<string, unknown> };
       }
-      if (attempt === 1 && [502, 503, 504].includes(response.status)) {
+      if (attempt < maxAttempts && [502, 503, 504].includes(response.status)) {
         console.warn("[readiness-account] retrying temporary account service failure", { status: response.status });
         continue;
       }
       return { response, payload };
     } catch (error) {
       console.error("[readiness-account] account service request failed", { attempt, error: error instanceof Error ? error.name : "unknown" });
-      if (attempt === 1) continue;
+      if (attempt < maxAttempts) continue;
     }
   }
   return { response: null, payload: { code: "ACCOUNT_SERVICE_UNAVAILABLE", error: ACCOUNT_UNAVAILABLE } as Record<string, unknown> };
@@ -80,6 +83,10 @@ function publicPayload(payload: Record<string, unknown>) {
 }
 
 export async function GET(request: Request) {
+  if (new URL(request.url).searchParams.get("feature") === "password-reset") {
+    const { response, payload } = await callCow({ action: "reset-status" });
+    return Response.json({ available: response?.ok === true && payload.available === true }, { headers: { "Cache-Control": "no-store" } });
+  }
   const token = cookieValue(request);
   if (!token) return Response.json({ signedIn: false }, { headers: { "Cache-Control": "no-store" } });
   const { response, payload } = await callCow({ action: "load", sessionToken: token });
@@ -91,7 +98,26 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   let input: Record<string, unknown>;
   try { input = await request.json(); } catch { return Response.json({ error: "We could not read the account details sent by this browser. Please refresh the page and try again; your assessment is still safe on this device." }, { status: 400 }); }
+  if (!input || typeof input !== "object" || Array.isArray(input)) return Response.json({ error: "Send account details as a JSON object." }, { status: 400 });
   const action = String(input.action || "");
+  if (["request-reset", "reset-password"].includes(action)) {
+    const origin = request.headers.get("origin");
+    if ((origin && origin !== new URL(request.url).origin) || request.headers.get("sec-fetch-site") === "cross-site") return Response.json({ error: "Cross-site requests are not accepted." }, { status: 403 });
+    if (!request.headers.get("content-type")?.startsWith("application/json")) return Response.json({ error: "Send recovery details as JSON." }, { status: 415 });
+    if (JSON.stringify(input).length > 4096) return Response.json({ error: "The recovery request is too large." }, { status: 413 });
+    // Never trust a body-supplied IP, token destination or email template.
+    const clientIp = (request.headers.get("x-forwarded-for") || "unknown").split(",")[0].trim().slice(0, 128);
+    const body = action === "request-reset" ? { action, email: input.email, clientIp } : { action, token: input.token, password: input.password, clientIp };
+    const { response, payload } = await callCow(body);
+    if (!response) return Response.json({ error: "Password reset could not be reached. Please try again shortly." }, { status: 503, headers: { "Cache-Control": "no-store" } });
+    const headers: Record<string, string> = { "Cache-Control": "no-store" };
+    if (action === "reset-password" && response.ok && payload.ok === true) headers["Set-Cookie"] = clearCookie();
+    const result: Record<string, unknown> = {};
+    for (const field of ["ok", "available", "message", "error"]) {
+      if (typeof payload[field] === "boolean" || typeof payload[field] === "string") result[field] = payload[field];
+    }
+    return Response.json(result, { status: response.status, headers });
+  }
   if (!["signup", "login", "save", "logout"].includes(action)) return Response.json({ error: "Unsupported account action." }, { status: 400 });
   if ((action === "signup" || action === "login") && tooManyAttempts(request, input.email)) {
     return Response.json({ error: "We have paused sign-in attempts for 15 minutes to protect your account. Your assessment is still safe on this device. Please wait and then try again." }, { status: 429, headers: { "Cache-Control": "no-store" } });
