@@ -118,7 +118,7 @@ export async function POST(request: Request) {
     }
     return Response.json(result, { status: response.status, headers });
   }
-  if (!["signup", "login", "save", "logout"].includes(action)) return Response.json({ error: "Unsupported account action." }, { status: 400 });
+  if (!["signup", "login", "save", "logout", "load-product", "save-product", "list-report-reviews", "create-report-upload"].includes(action)) return Response.json({ error: "Unsupported account action." }, { status: 400 });
   if ((action === "signup" || action === "login") && tooManyAttempts(request, input.email)) {
     return Response.json({ error: "We have paused sign-in attempts for 15 minutes to protect your account. Your assessment is still safe on this device. Please wait and then try again." }, { status: 429, headers: { "Cache-Control": "no-store" } });
   }
