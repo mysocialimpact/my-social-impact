@@ -43,3 +43,30 @@ test('older Cow capability responses fail closed without exposing upstream accou
   configure(t);t.mock.method(globalThis,'fetch',async()=>Response.json({error:'Unsupported account action.',account:{email:'private'}},{status:400}));
   assert.deepEqual(await(await GET(new Request('https://mysocialimpact.org/api/readiness-account?feature=password-reset'))).json(),{available:false});
 });
+
+test('product progress falls back to the existing private account record on an older Cow deployment',async t=>{
+  configure(t);const calls=[];t.mock.method(globalThis,'fetch',async(_url,init)=>{
+    const body=JSON.parse(init.body);calls.push(body);
+    if(body.action==='load-product'||body.action==='save-product')return Response.json({error:'Unsupported account action.'},{status:400});
+    if(body.action==='load')return Response.json({account:{id:'account-1'},progress:{state:{currentStage:2},__sorpPlatformProducts:{}}});
+    if(body.action==='save')return Response.json({account:{id:'account-1'}});
+    throw Error(`unexpected ${body.action}`);
+  });
+  const result=await POST(request({action:'save-product',productId:'social-impact-excellence',status:'in_progress',data:{answers:[1,2,3]}},{cookie:'msi_sorp_session=session-token'}));
+  assert.equal(result.status,200);assert.deepEqual((await result.json()).productProgress.data,{answers:[1,2,3]});
+  assert.deepEqual(calls.map(call=>call.action),['save-product','load','save']);
+  assert.deepEqual(calls[2].progress.state,{currentStage:2});
+  assert.deepEqual(calls[2].progress.__sorpPlatformProducts['social-impact-excellence'].data,{answers:[1,2,3]});
+});
+
+test('ordinary readiness saves retain compatibility-stored platform progress',async t=>{
+  configure(t);const calls=[];t.mock.method(globalThis,'fetch',async(_url,init)=>{
+    const body=JSON.parse(init.body);calls.push(body);
+    if(body.action==='load')return Response.json({progress:{__sorpPlatformProducts:{'social-impact-excellence':{status:'complete',data:{score:4}}}}});
+    if(body.action==='save')return Response.json({account:{id:'account-1'}});
+    throw Error(`unexpected ${body.action}`);
+  });
+  const result=await POST(request({action:'save',progress:{state:{currentStage:4}}},{cookie:'msi_sorp_session=session-token'}));
+  assert.equal(result.status,200);assert.deepEqual(calls.map(call=>call.action),['load','save']);
+  assert.deepEqual(calls[1].progress.__sorpPlatformProducts['social-impact-excellence'].data,{score:4});
+});

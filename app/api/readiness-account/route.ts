@@ -5,6 +5,9 @@ const COOKIE = "msi_sorp_session";
 const MAX_AGE = 60 * 60 * 24 * 30;
 const attempts = new Map<string, { count: number; resetAt: number }>();
 const ACCOUNT_UNAVAILABLE = "The secure account-saving service did not complete the request. Your assessment is still safe on this device and nothing has been lost. Please wait a moment and try again. If it still will not save, email marcus@mysocialimpact.org and we will help.";
+const LEGACY_PRODUCTS_KEY = "__sorpPlatformProducts";
+const PLATFORM_PRODUCTS = new Set(["social-impact-excellence", "charity-impact-reports"]);
+const PRODUCT_STATUSES = new Set(["not_started", "in_progress", "complete", "awaiting_payment", "paid", "in_review", "feedback_ready", "closed"]);
 
 function tooManyAttempts(request: Request, email: unknown) {
   const ip = (request.headers.get("x-forwarded-for") || "unknown").split(",")[0].trim();
@@ -82,6 +85,49 @@ function publicPayload(payload: Record<string, unknown>) {
   return safe;
 }
 
+function record(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
+}
+
+function unsupportedAction(response: Response | null, payload: Record<string, unknown>) {
+  return response?.status === 400 && payload.error === "Unsupported account action.";
+}
+
+async function legacyProductAction(action: string, input: Record<string, unknown>, sessionToken: string) {
+  const productId = String(input.productId || "");
+  if (!PLATFORM_PRODUCTS.has(productId)) return { response: new Response(null, { status: 400 }), payload: { error: "Unknown platform product." } as Record<string, unknown> };
+  const loaded = await callCow({ action: "load", sessionToken });
+  if (!loaded.response?.ok) return loaded;
+  const progress = record(loaded.payload.progress);
+  const products = record(progress[LEGACY_PRODUCTS_KEY]);
+  if (action === "load-product") {
+    return {
+      response: new Response(null, { status: 200 }),
+      payload: { account: loaded.payload.account, productId, productProgress: record(products[productId]).status ? products[productId] : null },
+    };
+  }
+  const data = record(input.data);
+  const encoded = JSON.stringify(data);
+  if (encoded.length > 750_000) return { response: new Response(null, { status: 400 }), payload: { error: "Product progress is too large to save." } as Record<string, unknown> };
+  const status = String(input.status || "in_progress");
+  if (!PRODUCT_STATUSES.has(status)) return { response: new Response(null, { status: 400 }), payload: { error: "Unknown product status." } as Record<string, unknown> };
+  const previous = record(products[productId]);
+  const now = new Date().toISOString();
+  const productProgress = { status, data, createdAt: previous.createdAt || now, updatedAt: now };
+  const saved = await callCow({ action: "save", sessionToken, progress: { ...progress, [LEGACY_PRODUCTS_KEY]: { ...products, [productId]: productProgress } } });
+  if (!saved.response?.ok) return saved;
+  return { response: saved.response, payload: { account: saved.payload.account, productId, productProgress } as Record<string, unknown> };
+}
+
+async function preserveLegacyProducts(input: Record<string, unknown>, sessionToken: string) {
+  const progress = record(input.progress);
+  if (progress[LEGACY_PRODUCTS_KEY]) return input;
+  const loaded = await callCow({ action: "load", sessionToken });
+  if (!loaded.response?.ok) return input;
+  const legacyProducts = record(loaded.payload.progress)[LEGACY_PRODUCTS_KEY];
+  return legacyProducts ? { ...input, progress: { ...progress, [LEGACY_PRODUCTS_KEY]: legacyProducts } } : input;
+}
+
 export async function GET(request: Request) {
   if (new URL(request.url).searchParams.get("feature") === "password-reset") {
     const { response, payload } = await callCow({ action: "reset-status" });
@@ -123,7 +169,11 @@ export async function POST(request: Request) {
     return Response.json({ error: "We have paused sign-in attempts for 15 minutes to protect your account. Your assessment is still safe on this device. Please wait and then try again." }, { status: 429, headers: { "Cache-Control": "no-store" } });
   }
   const token = cookieValue(request);
-  const { response, payload } = await callCow({ ...input, sessionToken: token });
+  const forwarded = action === "save" ? await preserveLegacyProducts(input, token) : input;
+  let { response, payload } = await callCow({ ...forwarded, sessionToken: token });
+  if (["load-product", "save-product"].includes(action) && unsupportedAction(response, payload)) {
+    ({ response, payload } = await legacyProductAction(action, input, token));
+  }
   if (!response) return Response.json(payload, { status: 503, headers: { "Cache-Control": "no-store" } });
   const headers: Record<string, string> = { "Cache-Control": "no-store" };
   if ((action === "signup" || action === "login") && typeof payload.sessionToken === "string") headers["Set-Cookie"] = sessionCookie(payload.sessionToken);
