@@ -81,7 +81,8 @@ async function callCow(body: Record<string, unknown>) {
 }
 
 function publicPayload(payload: Record<string, unknown>) {
-  const { sessionToken: _sessionToken, ...safe } = payload;
+  const safe = { ...payload };
+  delete safe.sessionToken;
   return safe;
 }
 
@@ -164,7 +165,8 @@ export async function POST(request: Request) {
     }
     return Response.json(result, { status: response.status, headers });
   }
-  if (!["signup", "login", "save", "logout", "load-product", "save-product", "list-report-reviews", "create-report-upload", "list-product-files", "create-product-file-upload"].includes(action)) return Response.json({ error: "Unsupported account action." }, { status: 400 });
+  if (!["signup", "login", "save", "logout", "load-product", "save-product", "list-report-reviews", "create-report-upload", "list-product-files", "create-product-file-upload", "team-workspace", "team-invite", "team-update-round", "team-remove-invite", "team-response-open", "team-response-save", "team-response-submit"].includes(action)) return Response.json({ error: "Unsupported account action." }, { status: 400 });
+  if (action.startsWith("team-response-") && JSON.stringify(input).length > 12_000) return Response.json({ error: "That assessment response is too large." }, { status: 413 });
   if ((action === "signup" || action === "login") && tooManyAttempts(request, input.email)) {
     return Response.json({ error: "We have paused sign-in attempts for 15 minutes to protect your account. Your assessment is still safe on this device. Please wait and then try again." }, { status: 429, headers: { "Cache-Control": "no-store" } });
   }
