@@ -33,6 +33,23 @@ test('reset email failures and password mutations are not retried',async t=>{
 test('existing unauthenticated session behaviour is unchanged',async()=>{
   assert.deepEqual(await(await GET(new Request('https://mysocialimpact.org/api/readiness-account'))).json(),{signedIn:false});
 });
+test('invitation preview reaches the existing account service without requiring a session',async t=>{
+  configure(t);t.mock.method(globalThis,'fetch',async(url,init)=>{
+    assert.equal(String(url),'https://cow.example.invalid/api/growth/accounts');
+    assert.deepEqual(JSON.parse(init.body),{action:'invitation-preview',invitationToken:'a'.repeat(64),sessionToken:''});
+    return Response.json({invitation:{email:'invitee@example.org',organisationName:'FLUID',status:'sent'}});
+  });
+  const result=await POST(request({action:'invitation-preview',invitationToken:'a'.repeat(64)}));
+  assert.equal(result.status,200);assert.equal((await result.json()).invitation.organisationName,'FLUID');
+});
+test('invitation acceptance preserves the signed-in session and a wrong-account rejection',async t=>{
+  configure(t);t.mock.method(globalThis,'fetch',async(_url,init)=>{
+    assert.deepEqual(JSON.parse(init.body),{action:'invitation-accept',invitationToken:'b'.repeat(64),sessionToken:'founder-session'});
+    return Response.json({error:'This invitation was sent to invitee@example.org. Sign in with that address to accept it.'},{status:403});
+  });
+  const result=await POST(request({action:'invitation-accept',invitationToken:'b'.repeat(64)},{cookie:'msi_sorp_session=founder-session'}));
+  assert.equal(result.status,403);assert.match((await result.json()).error,/invitee@example\.org/);assert.equal(result.headers.get('set-cookie'),null);
+});
 test('invalid JSON object shapes and oversize reset payloads are rejected before calling Cow',async t=>{
   configure(t);const fetch=t.mock.method(globalThis,'fetch',async()=>{throw Error('must not reach');});
   for(const body of [null,[],"string"])assert.equal((await POST(request(body))).status,400);
