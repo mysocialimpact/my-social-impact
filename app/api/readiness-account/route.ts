@@ -1,3 +1,5 @@
+import { isDeepStrictEqual } from "node:util";
+
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
@@ -129,6 +131,65 @@ async function preserveLegacyProducts(input: Record<string, unknown>, sessionTok
   return legacyProducts ? { ...input, progress: { ...progress, [LEGACY_PRODUCTS_KEY]: legacyProducts } } : input;
 }
 
+/** Enforce the organisation policy at the existing account broker as well as the
+ * SORP website. COW remains the private persistence service; no new identity
+ * or product store is created here. */
+async function guardExcellenceAction(input: Record<string, unknown>, sessionToken: string, cookie: string) {
+  const action = String(input.action || "").trim();
+  const products = action === "save" ? record(input.progress)[LEGACY_PRODUCTS_KEY] : undefined;
+  const relevant = String(input.productId || "").trim() === "social-impact-excellence" &&
+    ["save-product", "create-product-file-upload", "list-product-files"].includes(action);
+  if (!relevant && products === undefined) return null;
+  if (!sessionToken) return Response.json({ error: "Sign in before continuing." }, { status: 401 });
+
+  if (action === "save") {
+    let loaded = await callCow({ action: "load-product", productId: "social-impact-excellence", sessionToken });
+    if (unsupportedAction(loaded.response, loaded.payload)) loaded = await legacyProductAction("load-product", { productId: "social-impact-excellence" }, sessionToken);
+    if (!loaded.response?.ok) return Response.json({ error: "Your saved assessment could not be checked." }, { status: loaded.response?.status === 401 ? 401 : 503 });
+    const supplied = record(products)["social-impact-excellence"] || null;
+    if (!isDeepStrictEqual(supplied, loaded.payload.productProgress || null))
+      return Response.json({ error: "Use the protected Social Impact Excellence assessment to update this work." }, { status: 403 });
+    return null;
+  }
+
+  let access: Record<string, unknown>;
+  try {
+    const response = await fetch("https://sorp2026.org/api/excellence-access/", {
+      headers: { cookie }, cache: "no-store", redirect: "error", signal: AbortSignal.timeout(15_000),
+    });
+    if (!response.ok) return Response.json({ error: "Your organisation access could not be verified." }, { status: response.status === 401 ? 401 : 503 });
+    access = await response.json() as Record<string, unknown>;
+  } catch {
+    return Response.json({ error: "Your organisation access could not be verified." }, { status: 503 });
+  }
+  const stages = record(record(access.access).stages), pillars = record(access.pillars);
+  const purpose = String(input.purpose || "").trim();
+  if (["create-product-file-upload", "list-product-files"].includes(action)) {
+    const pillar = ["purpose", "leadership", "data", "delivery", "communications"].find(key => purpose === `${key}-evidence`);
+    if (!pillar) return Response.json({ error: "Unknown Social Impact Excellence evidence area." }, { status: 400 });
+    if (pillar && record(pillars[pillar]).available !== true)
+      return Response.json({ error: "This deep dive is not yet available for your organisation." }, { status: 403 });
+    return null;
+  }
+
+  let loaded = await callCow({ action: "load-product", productId: "social-impact-excellence", sessionToken });
+  if (unsupportedAction(loaded.response, loaded.payload)) loaded = await legacyProductAction("load-product", { productId: "social-impact-excellence" }, sessionToken);
+  if (!loaded.response?.ok) return Response.json({ error: "Your saved assessment could not be checked." }, { status: loaded.response?.status === 401 ? 401 : 503 });
+  const currentProduct = loaded.payload.productProgress || null;
+  if (action !== "save-product") return null;
+  const next = record(input.data), current = record(record(currentProduct).data);
+  for (const pillar of ["purpose", "leadership", "data", "delivery", "communications"]) {
+    if (record(pillars[pillar]).available !== true && !isDeepStrictEqual(next[pillar] ?? null, current[pillar] ?? null))
+      return Response.json({ error: "Complete your Maturity Assessment and wait for this deep dive to be activated." }, { status: 403 });
+  }
+  if (stages.maturity !== true) {
+    const baseline = ["answers", "result", "requestId", "route", "index", "startedAt", "updatedAt", "completedAt", "migration"];
+    if (baseline.some(field => !isDeepStrictEqual(next[field] ?? null, current[field] ?? null)))
+      return Response.json({ error: "The Maturity Assessment is locked for your organisation." }, { status: 403 });
+  }
+  return null;
+}
+
 export async function GET(request: Request) {
   if (new URL(request.url).searchParams.get("feature") === "password-reset") {
     const { response, payload } = await callCow({ action: "reset-status" });
@@ -171,6 +232,8 @@ export async function POST(request: Request) {
     return Response.json({ error: "We have paused sign-in attempts for 15 minutes to protect your account. Your assessment is still safe on this device. Please wait and then try again." }, { status: 429, headers: { "Cache-Control": "no-store" } });
   }
   const token = cookieValue(request);
+  const blocked = await guardExcellenceAction(input, token, request.headers.get("cookie") || "");
+  if (blocked) return blocked;
   const forwarded = action === "save" ? await preserveLegacyProducts(input, token) : input;
   let { response, payload } = await callCow({ ...forwarded, sessionToken: token });
   if (["load-product", "save-product"].includes(action) && unsupportedAction(response, payload)) {

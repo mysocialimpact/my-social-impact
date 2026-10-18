@@ -62,7 +62,8 @@ test('older Cow capability responses fail closed without exposing upstream accou
 });
 
 test('product progress falls back to the existing private account record on an older Cow deployment',async t=>{
-  configure(t);const calls=[];t.mock.method(globalThis,'fetch',async(_url,init)=>{
+  configure(t);const calls=[];t.mock.method(globalThis,'fetch',async(url,init)=>{
+    if(String(url)==='https://sorp2026.org/api/excellence-access/')return Response.json({access:{stages:{maturity:true}},pillars:{purpose:{available:false},leadership:{available:false},data:{available:false},delivery:{available:false},communications:{available:false}}});
     const body=JSON.parse(init.body);calls.push(body);
     if(body.action==='load-product'||body.action==='save-product')return Response.json({error:'Unsupported account action.'},{status:400});
     if(body.action==='load')return Response.json({account:{id:'account-1'},progress:{state:{currentStage:2},__sorpPlatformProducts:{}}});
@@ -71,9 +72,24 @@ test('product progress falls back to the existing private account record on an o
   });
   const result=await POST(request({action:'save-product',productId:'social-impact-excellence',status:'in_progress',data:{answers:[1,2,3]}},{cookie:'msi_sorp_session=session-token'}));
   assert.equal(result.status,200);assert.deepEqual((await result.json()).productProgress.data,{answers:[1,2,3]});
-  assert.deepEqual(calls.map(call=>call.action),['save-product','load','save']);
-  assert.deepEqual(calls[2].progress.state,{currentStage:2});
-  assert.deepEqual(calls[2].progress.__sorpPlatformProducts['social-impact-excellence'].data,{answers:[1,2,3]});
+  assert.deepEqual(calls.map(call=>call.action),['load-product','load','save-product','load','save']);
+  assert.deepEqual(calls[4].progress.state,{currentStage:2});
+  assert.deepEqual(calls[4].progress.__sorpPlatformProducts['social-impact-excellence'].data,{answers:[1,2,3]});
+});
+
+test('direct account broker cannot save a locked pillar or submit evidence',async t=>{
+  configure(t);const calls=[];t.mock.method(globalThis,'fetch',async(url,init)=>{
+    if(String(url)==='https://sorp2026.org/api/excellence-access/')return Response.json({access:{stages:{maturity:true}},pillars:{purpose:{available:false},leadership:{available:false},data:{available:false},delivery:{available:false},communications:{available:false}}});
+    const body=JSON.parse(init.body);calls.push(body);
+    if(body.action==='load-product')return Response.json({account:{id:'account-1'},productProgress:{status:'in_progress',data:{answers:[1]}}});
+    throw Error(`unexpected ${body.action}`);
+  });
+  const headers={cookie:'msi_sorp_session=session-token'};
+  const locked=await POST(request({action:'save-product',productId:'social-impact-excellence',data:{answers:[1],purpose:{status:'complete'}}},headers));
+  assert.equal(locked.status,403);
+  const upload=await POST(request({action:'create-product-file-upload',productId:'social-impact-excellence',purpose:'purpose-evidence'},headers));
+  assert.equal(upload.status,403);
+  assert.deepEqual(calls.map(call=>call.action),['load-product']);
 });
 
 test('ordinary readiness saves retain compatibility-stored platform progress',async t=>{
