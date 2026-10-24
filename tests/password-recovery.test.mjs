@@ -33,6 +33,36 @@ test('reset email failures and password mutations are not retried',async t=>{
 test('existing unauthenticated session behaviour is unchanged',async()=>{
   assert.deepEqual(await(await GET(new Request('https://mysocialimpact.org/api/readiness-account'))).json(),{signedIn:false});
 });
+test('signup, login, session load and logout retain the Cow broker contract',async t=>{
+  configure(t);
+  const actions=[];
+  t.mock.method(globalThis,'fetch',async(_url,init)=>{
+    const body=JSON.parse(init.body);actions.push(body.action);
+    if(body.action==='signup'||body.action==='login')return Response.json({ok:true,sessionToken:'synthetic-session',account:{id:'synthetic-account'}});
+    if(body.action==='load'){
+      assert.equal(body.sessionToken,'synthetic-session');
+      return Response.json({account:{id:'synthetic-account'},sessionToken:'must-remain-private'});
+    }
+    if(body.action==='logout'){
+      assert.equal(body.sessionToken,'synthetic-session');
+      return Response.json({ok:true});
+    }
+    throw Error(`unexpected action ${body.action}`);
+  });
+  for(const action of ['signup','login']){
+    const response=await POST(request({action,email:'synthetic-account@example.invalid',password:'synthetic-password'}));
+    assert.equal(response.status,200);
+    assert.match(response.headers.get('set-cookie'),/^msi_sorp_session=synthetic-session;.*HttpOnly; Secure; SameSite=Lax$/);
+    assert.equal((await response.json()).sessionToken,undefined);
+  }
+  const session=await GET(new Request('https://mysocialimpact.org/api/readiness-account',{headers:{cookie:'msi_sorp_session=synthetic-session'}}));
+  assert.equal(session.status,200);
+  assert.deepEqual(await session.json(),{signedIn:true,account:{id:'synthetic-account'}});
+  const logout=await POST(request({action:'logout'},{cookie:'msi_sorp_session=synthetic-session'}));
+  assert.equal(logout.status,200);
+  assert.match(logout.headers.get('set-cookie'),/Max-Age=0/);
+  assert.deepEqual(actions,['signup','login','load','logout']);
+});
 test('invitation preview reaches the existing account service without requiring a session',async t=>{
   configure(t);t.mock.method(globalThis,'fetch',async(url,init)=>{
     assert.equal(String(url),'https://cow.example.invalid/api/growth/accounts');
