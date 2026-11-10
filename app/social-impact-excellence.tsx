@@ -65,7 +65,7 @@ function SectionLead({ number, eyebrow, title, children }: { number?: string; ey
 }
 
 function AssessmentAction({ children = "Start your Social Impact Maturity Assessment" }: { children?: React.ReactNode }) {
-  return <a className="sie-action" href="https://platform.mysocialimpact.org/snapshot" target="_blank" rel="noreferrer"><span><strong>{children}</strong><small>Start today · your first step takes about 10–15 minutes</small></span><b aria-hidden="true">↗</b></a>;
+  return <a className="sie-action" href="https://socialimpactexcellence.org/" target="_blank" rel="noreferrer"><span><strong>{children}</strong><small>Start today · your first step takes about 10–15 minutes</small></span><b aria-hidden="true">↗</b></a>;
 }
 
 function PillarIcon({ pillar, compact = false, iconOnly = false }: { pillar: typeof pillars[number]; compact?: boolean; iconOnly?: boolean }) {

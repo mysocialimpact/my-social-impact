@@ -29,20 +29,19 @@ export default function AssessmentsPage() {
               <ul><li>Purpose</li><li>Leadership</li><li>Data</li><li>Delivery</li><li>Communications</li></ul>
             </div>
             <div className="assessment-choice-actions">
-              <Link className="is-primary" href="/social-impact-excellence">Explore Social Impact Excellence <span>→</span></Link>
+              <Link className="is-primary" href="https://socialimpactexcellence.org/">Explore Social Impact Excellence <span>→</span></Link>
             </div>
           </article>
 
           <article className="assessment-choice is-sorp" data-reveal>
             <header><span>02</span><p>SORP 2026 Impact Readiness</p></header>
-            <h2>Are you SORP ready?</h2>
+            <h2>SORP 2026</h2>
             <div className="assessment-choice-copy">
-              <p>A completely free guided conversation for charities and the accountants and advisers who support them.</p>
-              <p>Ask SORP questions, understand what applies to your situation and receive a practical readiness report at the end. No card and no surprise paywall.</p>
+              <p>A dedicated place for charities, accountants and advisers preparing for SORP 2026.</p>
+              <p>Explore guidance, impact reporting and practical support in one place.</p>
             </div>
             <div className="assessment-choice-actions">
-              <Link className="is-primary" href="/are-you-sorp-ready/review">Start your free SORP conversation <span>→</span></Link>
-              <Link href="/are-you-sorp-ready">Explore SORP Readiness <span>→</span></Link>
+              <Link className="is-primary" href="https://sorp2026.org/">Visit Sorp2026.org <span>↗</span></Link>
             </div>
           </article>
         </section>

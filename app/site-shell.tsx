@@ -105,7 +105,7 @@ const products: Product[] = [
     className: "flagship",
     lead: "A practical framework for organisations that want to get better at social impact, not simply report more of it.",
     copy: "Bringing purpose, leadership, evidence, delivery and communication together in one approach.",
-    href: "/social-impact-excellence",
+    href: "https://socialimpactexcellence.org/",
   },
   {
     name: "Social Impact Claims Code",
@@ -120,16 +120,14 @@ const products: Product[] = [
     href: "/social-impact-claims-code",
   },
   {
-    name: "Are You SORP Ready?",
-    kicker: "Free SORP 2026 · Impact readiness",
-    textLogo: "ARE YOU\nSORP READY?",
+    name: "SORP 2026",
+    kicker: "SORP 2026 · Charity impact reporting",
+    textLogo: "SORP\n2026",
     logoClass: "logo-sorp",
     className: "sorp-product",
-    lead: "A completely free way for charities and advisers to understand SORP 2026 impact readiness.",
-    copy: "Ask questions, explore what applies to your situation and receive a practical readiness report at the end.",
-    href: "/are-you-sorp-ready",
-    secondaryHref: "/are-you-sorp-ready/review",
-    secondaryLabel: "Start your free SORP conversation",
+    lead: "A dedicated place for charities and advisers preparing for SORP 2026.",
+    copy: "Explore SORP 2026 guidance, impact reporting and practical support in one place.",
+    href: "https://sorp2026.org/",
   },
   {
     name: "Purpose Works",
@@ -166,8 +164,8 @@ const products: Product[] = [
     lead: "A clearer way for charities to explain the difference they make.",
     copy: "Credible, accessible impact reporting that brings together strategy, evidence, outcomes and stories.",
     href: "/social-impact-report",
-    secondaryHref: "/are-you-sorp-ready",
-    secondaryLabel: "Are you SORP ready?",
+    secondaryHref: "https://sorp2026.org/",
+    secondaryLabel: "Explore SORP 2026",
   },
 ];
 
@@ -237,9 +235,9 @@ export function SiteHeader() {
   }, [open]);
 
   const featuredNavigation = [
-    { href: "/social-impact-excellence", desktopLabel: "Social Impact Excellence", mobileLabel: "Social Impact Excellence" },
+    { href: "https://socialimpactexcellence.org/", desktopLabel: "Social Impact Excellence", mobileLabel: "Social Impact Excellence" },
     { href: "/social-impact-claims-code", desktopLabel: "Claims Code", mobileLabel: "Social Impact Claims Code" },
-    { href: "/are-you-sorp-ready", desktopLabel: "SORP Ready?", mobileLabel: "Are You SORP Ready?" },
+    { href: "https://sorp2026.org/", desktopLabel: "Sorp2026.org", mobileLabel: "Sorp2026.org" },
   ];
   const moreProducts = [
     { href: "/purpose-works", label: "Purpose Works" },
@@ -419,7 +417,7 @@ function ProductCard({ product, index }: { product: typeof products[number]; ind
             <Image src={product.logo!} alt={`${product.name} logo`} width={product.logoWidth!} height={product.logoHeight!} unoptimized />
           </div>}
         </div>
-        <div className="product-summary"><p className="product-lead">{product.lead}</p><p>{product.copy}</p>{index === 0 ? <div className="product-card-actions"><Link className="product-link" href={product.href}>Explore Social Impact Excellence <b>→</b></Link><a className="product-link product-start-link" href="https://platform.mysocialimpact.org/snapshot" target="_blank" rel="noreferrer"><span>Start your Social Impact Maturity Assessment today<small>About 10–15 minutes</small></span><b>↗</b></a></div> : product.secondaryHref ? <div className="product-card-actions"><Link className="product-link" href={product.href}>Explore {product.name} <b>→</b></Link><Link className="product-link product-start-link" href={product.secondaryHref}>{product.secondaryLabel} <b>→</b></Link></div> : product.href && <span className="product-link">Explore {product.name.replace("™", "")} <b>→</b></span>}</div>
+        <div className="product-summary"><p className="product-lead">{product.lead}</p><p>{product.copy}</p>{index === 0 ? <div className="product-card-actions"><Link className="product-link" href={product.href}>Explore Social Impact Excellence <b>→</b></Link><a className="product-link product-start-link" href="https://socialimpactexcellence.org/" target="_blank" rel="noreferrer"><span>Start your Social Impact Maturity Assessment today<small>About 10–15 minutes</small></span><b>↗</b></a></div> : product.secondaryHref ? <div className="product-card-actions"><Link className="product-link" href={product.href}>Explore {product.name} <b>→</b></Link><Link className="product-link product-start-link" href={product.secondaryHref}>{product.secondaryLabel} <b>→</b></Link></div> : product.href && <span className="product-link">Explore {product.name.replace("™", "")} <b>→</b></span>}</div>
       </div>
     </>
   );

@@ -180,7 +180,7 @@ export function CommunityMappingPage() {
 
     <section className="cm-impact-link">
       <div data-reveal><p className="cm-section-number">08 / THE SOCIAL IMPACT CONNECTION</p><h2>Understand the community before deciding how to change it.</h2><div className="cm-impact-questions">{["WHO is affected?", "WHAT already exists?", "WHAT do people need?", "WHERE are the gaps?", "WHO should be involved?", "WHERE does trust sit?", "WHAT could realistically change?"].map((item) => <span key={item}>{item}</span>)}</div></div>
-      <div className="cm-impact-journey" data-reveal><span>UNDERSTAND</span><b>↓</b><span>DESIGN</span><b>↓</b><span>ACT</span><b>↓</b><span>MEASURE</span><b>↓</b><span>LEARN</span><p>Community Mapping can be an important starting point for social impact strategy. Before designing a programme, partnership or intervention, organisations need to understand the community around it.</p><Link href="/social-impact-excellence">Explore Social Impact Excellence <b>→</b></Link></div>
+      <div className="cm-impact-journey" data-reveal><span>UNDERSTAND</span><b>↓</b><span>DESIGN</span><b>↓</b><span>ACT</span><b>↓</b><span>MEASURE</span><b>↓</b><span>LEARN</span><p>Community Mapping can be an important starting point for social impact strategy. Before designing a programme, partnership or intervention, organisations need to understand the community around it.</p><Link href="https://socialimpactexcellence.org/">Explore Social Impact Excellence <b>→</b></Link></div>
     </section>
 
     <section className="cm-extensions">

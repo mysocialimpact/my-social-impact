@@ -36,13 +36,14 @@ test("server-renders the My Social Impact homepage", async () => {
   assert.ok(html.indexOf('id="consultancy"') > html.indexOf('id="vision"'));
   assert.ok(html.indexOf('id="consultancy"') < html.indexOf('id="introduction"'));
   assert.match(html, /href="\/social-impact-claims-code"/i);
-  assert.match(html, /href="\/social-impact-excellence"/i);
-  assert.match(html, /href="\/are-you-sorp-ready"/i);
-  assert.match(html, /Are You SORP Ready/i);
+  assert.match(html, /href="https:\/\/socialimpactexcellence\.org\/"/i);
+  assert.match(html, /href="https:\/\/sorp2026\.org\/"/i);
+  assert.doesNotMatch(html, /href="\/are-you-sorp-ready"/i);
+  assert.doesNotMatch(html, /href="https:\/\/platform\.mysocialimpact\.org/i);
   const productHtml = html.slice(html.indexOf('id="products"'), html.indexOf('id="values"'));
   assert.ok(productHtml.indexOf("Social Impact Excellence") < productHtml.indexOf("Social Impact Claims Code"));
-  assert.ok(productHtml.indexOf("Social Impact Claims Code") < productHtml.indexOf("Are You SORP Ready"));
-  assert.ok(productHtml.indexOf("Are You SORP Ready") < productHtml.indexOf("Purpose Works"));
+  assert.ok(productHtml.indexOf("Social Impact Claims Code") < productHtml.indexOf("SORP 2026"));
+  assert.ok(productHtml.indexOf("SORP 2026") < productHtml.indexOf("Purpose Works"));
   assert.ok(productHtml.indexOf("Purpose Works") < productHtml.indexOf("Community Mapping"));
   assert.ok(productHtml.indexOf("Community Mapping") < productHtml.indexOf("Charity Impact Reports"));
   assert.doesNotMatch(productHtml, /Festival Impact Reports/i);
@@ -57,7 +58,7 @@ test("server-renders the My Social Impact homepage", async () => {
   assert.match(html, /Start your Social Impact Maturity Assessment today/i);
   assert.match(html, /Explore Assessments/i);
   assert.match(html, /href="\/assessments"/i);
-  assert.match(html, /href="https:\/\/platform\.mysocialimpact\.org\/snapshot"/i);
+  assert.match(html, /href="https:\/\/socialimpactexcellence\.org\/"/i);
   assert.doesNotMatch(html, /id="ecosystem"/i);
   assert.doesNotMatch(html, /Good Numbers/i);
   assert.doesNotMatch(html, />Ecosystem</i);
@@ -482,12 +483,12 @@ test("server-renders the simple assessment hub", async () => {
   assert.match(html, /<title>Explore Assessments \| My Social Impact<\/title>/i);
   assert.match(html, /Which assessment[\s\S]*is right for you/i);
   assert.match(html, /Social Impact Maturity Assessment/i);
-  assert.match(html, /Are you SORP ready/i);
+  assert.match(html, /SORP 2026/i);
   assert.match(html, /Explore Social Impact Excellence/i);
-  assert.match(html, /Start your free SORP conversation/i);
-  assert.match(html, /Explore SORP Readiness/i);
-  assert.match(html, /href="\/social-impact-excellence"/i);
-  assert.match(html, /href="\/are-you-sorp-ready"/i);
+  assert.match(html, /Visit Sorp2026\.org/i);
+  assert.match(html, /href="https:\/\/socialimpactexcellence\.org\/"/i);
+  assert.match(html, /href="https:\/\/sorp2026\.org\/"/i);
+  assert.doesNotMatch(html, /href="\/are-you-sorp-ready"/i);
   assert.doesNotMatch(html, /href="https:\/\/platform\.mysocialimpact\.org\/snapshot"/i);
   assert.doesNotMatch(html, /href="\/are-you-sorp-ready\/snapshot"/i);
 });
@@ -677,7 +678,7 @@ test("server-renders the Community Mapping product page", async () => {
   assert.match(html, /mailto:marcus@mysocialimpact\.org/i);
   assert.match(html, /mailto:chris@mysocialimpact\.org/i);
   assert.match(html, /\/assets\/community-mapping-network\.png/i);
-  assert.match(html, /href="\/social-impact-excellence"/i);
+  assert.match(html, /href="https:\/\/socialimpactexcellence\.org\/"/i);
 });
 
 test("server-renders the Purpose Works page", async () => {
@@ -715,7 +716,7 @@ test("server-renders the Purpose Works page", async () => {
   assert.match(html, /Social impact accounting asks whether impact can be substantiated/i);
   assert.match(html, /constructive critical friend/i);
   assert.match(html, /\/assets\/ideas-shed-logo-approved\.png/i);
-  assert.match(html, /href="\/social-impact-excellence"/i);
+  assert.match(html, /href="https:\/\/socialimpactexcellence\.org\/"/i);
   assert.match(html, /mailto:marcus@mysocialimpact\.org/i);
   assert.match(html, /mailto:chris@mysocialimpact\.org/i);
   assert.match(html, /Message us to request our showreel/i);
@@ -736,7 +737,7 @@ test("server-renders the Social Impact Claims Code page", async () => {
   assert.match(html, /Five principles for trustworthy impact claims/i);
   assert.match(html, /Make the strongest claim the evidence allows/i);
   assert.match(html, /mailto:chris@mysocialimpact.org/i);
-  assert.match(html, /href="\/social-impact-excellence"/i);
+  assert.match(html, /href="https:\/\/socialimpactexcellence\.org\/"/i);
 });
 
 test("server-renders the Social Impact Excellence page", async () => {
@@ -752,5 +753,5 @@ test("server-renders the Social Impact Excellence page", async () => {
   assert.match(html, /five-star journey/i);
   assert.match(html, /Start your Maturity Assessment today/i);
   assert.match(html, /10–15 minutes/i);
-  assert.match(html, /href="https:\/\/platform\.mysocialimpact\.org\/snapshot"/i);
+  assert.match(html, /href="https:\/\/socialimpactexcellence\.org\/"/i);
 });
