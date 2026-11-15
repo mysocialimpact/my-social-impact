@@ -2,11 +2,23 @@
 
 Evidence-grounded reviews of impact reports against the Social Impact Claims Code and Social Impact Excellence frameworks. This is a standalone Next.js application in the `my-social-impact` repository; the parent website has a separate deployment. Its TypeScript and ESLint configurations narrowly exclude this independent app. Existing website runtime code and deployment settings are unchanged.
 
+## Large report uploads
+
+PDFs up to 50 MB use authenticated three-megabyte transfers through `/api/uploads`. Transfers stay below Vercel's request-body cap. Parts are private, bound to the visitor's browser identity, checked by length and SHA-256, and assembled only after every expected part is present. Retrying a part is idempotent; completion is fenced and repeated completion returns the existing review. Temporary parts are removed once the report is created; unfinished uploads expire after one hour and scheduled cleanup removes them. Original-report downloads are streamed so the response does not hit the platform's buffered-body cap. Migration 003 expands the existing private report constraint and adds the isolated staging tables, with explicit runtime grants.
+
+Rejections and transfer failures now apologise, explain the problem and link to working feedback with upload context. They preserve the selected file, permission and successfully transferred parts for retry. Unit metadata-boundary checks, a real-database 12 MB transfer/isolation/expiry test, and a browser interruption/retry contract cover this path. The browser contract mocks responses; the deployed upload is verified separately.
+
 ## Campaign redesign
 
 The current redesign leads with the product and its first free job: a navy product identity beside an electric-orange report-upload area. The homepage has four sections, with established framework logos, concise professional offers, one purpose statement and a compact branded footer. The opening includes a native file-picker shortcut on mobile. Top navigation and a measured, permanent bottom bar remain accessible; the bar follows real review progress and changes to saving/expert help when results are ready. It reserves its own space on every viewport.
 
 `/feedback` accepts anonymous ratings and comments without collecting contact details or sharing report findings. `/api/feedback` validates the origin, browser identity, rating and local page path, enforces fair-use limits, and stores messages in the existing founder enquiry inbox. Founders can search and manage feedback there. No database migration is required for this redesign. `scripts/campaign-pixels.mjs` captures laptop, large desktop and phone views; `campaign-qa.mjs` checks the first-screen action, native picker, responsive menus, fixed controls, footer clearance and feedback retry behavior. Browser transport mocks are explicitly labelled; deployed persistence and real assessments are checked separately.
+
+## Upload fix release
+
+The 50 MB uploader is deployed in `dpl_4y1g432qTfUTC2ZzVYEymagMtKGw`, application commit `7c72921`. A 12,001,126-byte engineering PDF was submitted through the actual mobile production form without registration and downloaded byte-for-byte intact from the streaming source endpoint. Parsing and initial model stages advanced successfully; the later assessment queued at a temporary provider HTTP 429. This verifies the larger transfer and preservation of the original, not a completed model assessment of the engineering fixture. Temporary transfer parts were removed after report creation. The public over-limit apology and prefilled feedback route were also tested. The build, type checking, unit tests, dedicated large-upload database checks, existing database regression suite and mocked browser retry checks pass.
+
+The Vercel connector refused creation of a Blob store (403), and no authenticated CLI fallback was available. No Blob store or new storage credential was created. The implementation instead uses bounded transfers into the existing private application database. All new tables are restricted to the app's runtime roles. No dependency or billing-plan change was needed.
 
 ## Release status
 
@@ -45,7 +57,7 @@ Use Node.js 24 and `npm ci`. Copy `.env.example` to a private `.env.local`; neve
 | `RESEND_API_KEY` | Server-only application email credential |
 | `EMAIL_FROM` | Verified sender address accepted by Resend |
 
-Run both migrations in filename order using a database owner connection, then grant the restricted runtime role SELECT, INSERT, UPDATE and DELETE on the four new tables: `access_sessions`, `email_links`, `review_grants` and `daily_metrics`. Migration 002 is additive and preserves existing reports and accounts. Then switch to the restricted runtime connection. Never grant runtime migrations or administrative roles. `npm run dev` starts the app; `npm run build` creates the production build. In a nested checkout the app’s `postcss.config.mjs` deliberately avoids inheriting parent Tailwind configuration.
+Run all migrations in filename order using a database owner connection, then grant the restricted runtime role SELECT, INSERT, UPDATE and DELETE on the application tables including `access_sessions`, `email_links`, `review_grants`, `daily_metrics`, `uploads` and `upload_parts`. Migration 002 is additive and preserves existing reports and accounts. Then switch to the restricted runtime connection. Never grant runtime migrations or administrative roles. `npm run dev` starts the app; `npm run build` creates the production build. In a nested checkout the app’s `postcss.config.mjs` deliberately avoids inheriting parent Tailwind configuration.
 
 ## Verification
 

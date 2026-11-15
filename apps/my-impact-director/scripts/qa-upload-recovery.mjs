@@ -15,13 +15,11 @@ try {
       }),
       page = await context.newPage();
     await page.goto(base, { waitUntil: "networkidle" });
-    await page
-      .locator("input[type=file]")
-      .setInputFiles({
-        name: "too-large.pdf",
-        mimeType: "application/pdf",
-        buffer: Buffer.alloc(50_000_001),
-      });
+    await page.locator("input[type=file]").setInputFiles({
+      name: "too-large.pdf",
+      mimeType: "application/pdf",
+      buffer: Buffer.alloc(50_000_001),
+    });
     await page.locator(".upload-failure").waitFor();
     assert.match(
       await page.locator(".upload-failure").innerText(),
@@ -74,13 +72,11 @@ try {
       }
       return r.fulfill({ json: { ok: true } });
     });
-    await page
-      .locator("input[type=file]")
-      .setInputFiles({
-        name: "large-report.pdf",
-        mimeType: "application/pdf",
-        buffer: file,
-      });
+    await page.locator("input[type=file]").setInputFiles({
+      name: "large-report.pdf",
+      mimeType: "application/pdf",
+      buffer: file,
+    });
     await page.getByRole("checkbox", { name: /I have permission/ }).check();
     await page
       .getByRole("button", { name: "Review my report — free", exact: true })
