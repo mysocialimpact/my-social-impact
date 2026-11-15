@@ -11,7 +11,14 @@ import {
   type SetStateAction,
 } from "react";
 import { usePathname } from "next/navigation";
-type ReportAction = { id: string; status: string; stage: number } | null;
+type ReportAction = {
+  primaryLabel?: string;
+  primaryHref?: string;
+  onPrimary?: () => void;
+  id: string;
+  status: string;
+  stage: number;
+} | null;
 const ReportContext = createContext<Dispatch<SetStateAction<ReportAction>>>(
   () => {},
 );
@@ -41,26 +48,30 @@ export function ActionShell({ children }: { children: React.ReactNode }) {
   const source = !!review?.[2];
   const complete = active?.status === "complete";
   const processing = active && !["complete", "failed"].includes(active.status);
-  const href = review
-    ? source
-      ? `/reviews/${review[1]}`
-      : active
-        ? complete
-          ? "#keep-review"
-          : "#review-progress"
-        : "/reviews"
-    : "/#upload";
-  const label = review
-    ? source
-      ? "Back to my review"
-      : complete
-        ? "Keep your full report"
-        : processing
-          ? "View review progress"
-          : active
-            ? "Review needs attention"
-            : "Open my saved reports"
-    : "Review your impact report — FREE";
+  const href =
+    active?.primaryHref ||
+    (review
+      ? source
+        ? `/reviews/${review[1]}`
+        : active
+          ? complete
+            ? "#keep-review"
+            : "#review-progress"
+          : "/reviews"
+      : "/#upload");
+  const label =
+    active?.primaryLabel ||
+    (review
+      ? source
+        ? "Back to my review"
+        : complete
+          ? "Keep your full report"
+          : processing
+            ? "View review progress"
+            : active
+              ? "Review needs attention"
+              : "Open my saved reports"
+      : "Review your impact report — FREE");
   return (
     <ReportContext.Provider value={setReport}>
       {children}
@@ -91,7 +102,11 @@ export function ActionShell({ children }: { children: React.ReactNode }) {
             </>
           )}
         </div>
-        <Link className="action-primary" href={href}>
+        <Link
+          className="action-primary"
+          href={href}
+          onClick={() => active?.onPrimary?.()}
+        >
           {label}
           <span aria-hidden="true">
             <Arrow diagonal />

@@ -1559,3 +1559,256 @@ select,
   font-size: 13px;
   margin: 12px 0 0;
 }
+.review-product-heading {
+  display: flex;
+  gap: 28px;
+  align-items: center;
+  margin-bottom: 30px;
+}
+.review-product-heading h1 {
+  font-size: clamp(34px, 5vw, 64px);
+}
+.review-product-heading img {
+  object-fit: contain;
+}
+.review-product-heading p {
+  margin: 0 0 10px;
+}
+.review-choice h1 {
+  font-size: clamp(44px, 6vw, 86px);
+  margin-bottom: 25px;
+}
+.review-disclosure {
+  font-size: 15px;
+  margin: 16px 0;
+  line-height: 1.5;
+}
+.review-choices {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+  margin: 35px 0;
+}
+.review-choices section {
+  padding: 30px 0;
+  border-top: 3px solid var(--orange);
+}
+.review-choices img {
+  object-fit: contain;
+}
+.review-choices h2 {
+  font-size: 35px;
+  margin: 22px 0;
+}
+.honest-status {
+  padding: 20px;
+  background: var(--soft);
+  margin-bottom: 28px;
+}
+.honest-status button {
+  border: 0;
+  background: var(--orange);
+  padding: 12px;
+  margin-left: 10px;
+  font-weight: 700;
+}
+.methodology-lesson {
+  background: var(--navy);
+  color: #fff;
+  padding: 45px;
+  animation: lesson-reveal 0.25s ease-out;
+}
+.methodology-lesson.lesson-2,
+.methodology-lesson.lesson-4,
+.methodology-lesson.lesson-6 {
+  background: var(--orange);
+  color: var(--ink);
+}
+.lesson-position {
+  display: flex;
+  justify-content: space-between;
+  font-size: 18px;
+}
+.methodology-lesson h2 {
+  font-size: clamp(42px, 6.5vw, 88px);
+  line-height: 1.02;
+  margin: 30px 0;
+}
+.lesson-explanation {
+  font-size: 22px;
+  max-width: 850px;
+  line-height: 1.5;
+}
+.methodology-lesson blockquote {
+  font-size: 23px;
+  font-family: var(--serif);
+  border-left: 3px solid currentColor;
+  padding-left: 24px;
+  margin: 28px 0;
+}
+.methodology-lesson nav {
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  border-top: 1px solid currentColor;
+  padding-top: 24px;
+  margin-top: 35px;
+}
+.methodology-lesson nav span {
+  font-size: 13px;
+  flex: 1;
+}
+.methodology-lesson button {
+  color: inherit;
+  background: transparent;
+  border: 1px solid currentColor;
+  padding: 12px 16px;
+  font-size: 16px;
+}
+.lesson-jump {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 24px 0;
+}
+.lesson-jump button {
+  font-size: 13px;
+}
+.lesson-jump button[aria-current] {
+  background: #fff;
+  color: var(--ink);
+}
+.methodology-lesson > a {
+  display: inline-block;
+  margin: 12px 20px 12px 0;
+}
+.review-email {
+  margin: 35px 0;
+  background: var(--navy);
+  color: #fff;
+  padding: 35px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 35px;
+}
+.review-email h2 {
+  font-size: 40px;
+  margin-bottom: 20px;
+}
+.review-email p {
+  font-size: 17px;
+}
+.review-email .fine-print,
+.review-email .email-unavailable {
+  color: #d9deec;
+}
+.review-email button {
+  margin-top: 15px;
+}
+.review-email input {
+  color: var(--ink);
+  background: #fff;
+}
+.snapshot-heading {
+  font-size: clamp(38px, 5vw, 65px);
+  margin: 30px 0;
+}
+.two-review .score-card {
+  max-width: 780px;
+}
+.snapshot-copy {
+  padding: 35px 0;
+}
+.snapshot-copy h2 {
+  margin-bottom: 25px;
+}
+.snapshot-copy article {
+  border-top: 1px solid var(--line);
+  padding: 22px 0;
+}
+.snapshot-copy h3 {
+  font-size: 28px;
+  margin: 24px 0 16px;
+}
+.full-review-details {
+  padding: 25px 0;
+}
+.full-review-details > summary {
+  font-size: 24px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.next-methodology {
+  background: var(--orange);
+  padding: 35px;
+  margin: 35px 0;
+}
+.next-methodology h2 {
+  font-size: 42px;
+  margin-bottom: 25px;
+}
+.next-methodology h3 {
+  font-size: 30px;
+  margin-bottom: 20px;
+}
+.bigger-conversation {
+  border-top: 3px solid var(--ink);
+  padding: 35px 0;
+}
+.bigger-conversation h2 {
+  font-size: 45px;
+  margin-bottom: 24px;
+}
+@keyframes lesson-reveal {
+  from {
+    opacity: 0.5;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (max-width: 700px) {
+  .review-choices,
+  .review-email {
+    grid-template-columns: 1fr;
+  }
+  .methodology-lesson {
+    padding: 25px 20px;
+  }
+  .lesson-explanation {
+    font-size: 18px;
+  }
+  .methodology-lesson nav {
+    flex-wrap: wrap;
+  }
+  .methodology-lesson nav span {
+    order: 3;
+    flex-basis: 100%;
+  }
+  .review-product-heading {
+    gap: 15px;
+    align-items: flex-start;
+  }
+  .review-product-heading img {
+    width: 70px;
+    height: 70px;
+  }
+  .review-email,
+  .next-methodology {
+    padding: 25px 20px;
+  }
+  .review-email h2,
+  .next-methodology h2 {
+    font-size: 34px;
+  }
+  .review-product-heading h1 {
+    font-size: 32px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .methodology-lesson {
+    animation: none;
+  }
+}

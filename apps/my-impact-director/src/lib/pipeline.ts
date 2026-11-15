@@ -53,6 +53,7 @@ export const STAGES = [
   "Review complete",
 ];
 type Job = {
+  framework: "document" | Framework | null;
   error_code: string | null;
   id: string;
   report_id: string;
@@ -67,6 +68,8 @@ type Job = {
   findings: Criterion[];
 };
 type Document = {
+  understanding_context: z.infer<typeof contextSchema> | null;
+  understanding_claims: Claim[] | null;
   pages: Page[] | null;
   file_bytes: Buffer;
   title: string;
@@ -77,10 +80,8 @@ export type ReviewResult = {
   assessedAt: string;
   context: z.infer<typeof contextSchema>;
   claims: Claim[];
-  scores: {
-    claims: ReturnType<typeof scoreFramework>;
-    excellence: ReturnType<typeof scoreFramework>;
-  };
+  framework?: Framework;
+  scores: Partial<Record<Framework, ReturnType<typeof scoreFramework>>>;
   actions: Actions;
   limitations: string[];
 };
@@ -101,7 +102,7 @@ export async function processOne(id?: string) {
     const {
       rows: [j],
     } = await c.query<Job>(
-      `WITH candidate AS (SELECT id FROM director.reviews WHERE ($1::uuid IS NULL OR id=$1) AND next_attempt_at<=now() AND stage_attempts<3 AND attempts<80 AND (status='queued' OR status='running' AND lease_until<now()) ORDER BY created_at FOR UPDATE SKIP LOCKED LIMIT 1) UPDATE director.reviews v SET status='running',lease_token=$2,lease_until=now()+interval '4 minutes',stage_attempts=stage_attempts+1,attempts=attempts+1,updated_at=now() FROM candidate c WHERE v.id=c.id RETURNING v.*`,
+      `WITH candidate AS (SELECT id FROM director.reviews WHERE (framework IS NULL OR framework='document' OR EXISTS(SELECT 1 FROM director.reports r WHERE r.id=reviews.report_id AND r.understanding_ready)) AND ($1::uuid IS NULL OR id=$1) AND next_attempt_at<=now() AND stage_attempts<3 AND attempts<80 AND (status='queued' OR status='running' AND lease_until<now()) ORDER BY created_at FOR UPDATE SKIP LOCKED LIMIT 1) UPDATE director.reviews v SET status='running',lease_token=$2,lease_until=now()+interval '4 minutes',stage_attempts=stage_attempts+1,attempts=attempts+1,updated_at=now() FROM candidate c WHERE v.id=c.id RETURNING v.*`,
       [id || null, token],
     );
     return j;
@@ -115,14 +116,14 @@ export async function processOne(id?: string) {
       throw new AIError("DAILY_COST_LIMIT", false);
     if (job.stage > 0) await rateLimit("ai-stage:global", 240, 86400);
     const [doc] = await query<Document>(
-      "SELECT pages,file_bytes,title,extraction_notes FROM director.reports WHERE id=$1",
+      "SELECT pages,file_bytes,title,extraction_notes,understanding_context,understanding_claims FROM director.reports WHERE id=$1",
       [job.report_id],
     );
     if (!doc) return false;
     let pages = doc.pages,
       notes = doc.extraction_notes,
-      context = job.context,
-      claims = job.claims,
+      context = job.context || doc.understanding_context,
+      claims = job.claims || doc.understanding_claims,
       findings = job.findings,
       result: ReviewResult | null = null,
       next = job.stage + 1,
@@ -209,23 +210,20 @@ export async function processOne(id?: string) {
         ...findings.filter((f) => !validated.some((v) => v.id === f.id)),
         ...validated,
       ];
+      if (job.framework === "claims" && job.stage === 8) next = 14;
     } else if (job.stage === 14) {
-      const cf = validateFindings(
-        findings.filter((f) => f.id.startsWith("claims.")),
-        "claims",
-        pages!,
-        claims!,
-      );
-      const ef = validateFindings(
-        findings.filter((f) => f.id.startsWith("excellence.")),
-        "excellence",
-        pages!,
-        claims!,
-      );
-      const scores = {
-        claims: scoreFramework(cf, "claims"),
-        excellence: scoreFramework(ef, "excellence"),
-      };
+      const scores: ReviewResult["scores"] = {};
+      for (const framework of (job.framework
+        ? [job.framework]
+        : ["claims", "excellence"]) as Framework[]) {
+        const checked = validateFindings(
+          findings.filter((f) => f.id.startsWith(framework + ".")),
+          framework,
+          pages!,
+          claims!,
+        );
+        scores[framework] = scoreFramework(checked, framework);
+      }
       const r = await structured(
         actionSchema,
         "Write a concise executive summary and specific prioritised action plan using ONLY validated findings. Each action must cite existing criterion IDs and say what to change, why, and how. Distinguish quick wording changes, important evidence/reporting improvements, and longer-term measurement/management improvements. Do not invent achievements, comparisons, benchmarks or new source facts. If evidence is weak, a strength may be a clearly qualified useful starting point. Do not describe provisional assessments as definitive scores.",
@@ -239,6 +237,9 @@ export async function processOne(id?: string) {
       )
         throw new Error("Unknown recommendation criterion.");
       result = {
+        ...(job.framework && job.framework !== "document"
+          ? { framework: job.framework }
+          : {}),
         version: VERSION,
         assessedAt: new Date().toISOString(),
         context: context!,
@@ -255,6 +256,7 @@ export async function processOne(id?: string) {
         ],
       };
     }
+    const ingested = job.framework === "document" && job.stage === 3;
     await transaction(async (c) => {
       const { rowCount } = await c.query(
         "SELECT id FROM director.reviews WHERE id=$1 AND lease_token=$2 AND lease_until>now() FOR UPDATE",
@@ -272,6 +274,11 @@ export async function processOne(id?: string) {
           context?.title,
         ],
       );
+      if (ingested)
+        await c.query(
+          "UPDATE director.reports SET understanding_ready=true,understanding_context=$2,understanding_claims=$3 WHERE id=$1",
+          [job.report_id, JSON.stringify(context), JSON.stringify(claims)],
+        );
       await c.query(
         `UPDATE director.reviews SET stage=$3,visual_cursor=$4,status=$5,stage_attempts=0,lease_until=NULL,lease_token=NULL,next_attempt_at=now(),context=$6,claims=$7,findings=$8,result=$9,cost_usd=cost_usd+$10,error_code=NULL,error_message=NULL,updated_at=now() WHERE id=$1 AND lease_token=$2`,
         [
@@ -279,7 +286,7 @@ export async function processOne(id?: string) {
           token,
           next,
           cursor,
-          result ? "complete" : "queued",
+          result || ingested ? "complete" : "queued",
           JSON.stringify(context),
           JSON.stringify(claims),
           JSON.stringify(findings),
@@ -287,6 +294,11 @@ export async function processOne(id?: string) {
           usage?.cost || 0,
         ],
       );
+      if (result)
+        await c.query(
+          "INSERT INTO director.report_deliveries(review_id,owner_id,email) SELECT $1,owner_id,email FROM director.report_subscriptions WHERE report_id=$2 ON CONFLICT DO NOTHING",
+          [job.id, job.report_id],
+        );
       if (result)
         await c.query(
           "INSERT INTO director.daily_metrics(event,count) VALUES('review_completed',1) ON CONFLICT(day,event) DO UPDATE SET count=daily_metrics.count+1",

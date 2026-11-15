@@ -68,6 +68,7 @@ export async function POST(req: Request) {
       input.consent,
       input.qualityConsent,
       f.url,
+      true,
     );
     after(() => drain(r.id));
     return Response.json(r, { status: 201 });

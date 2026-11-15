@@ -15,10 +15,10 @@ export function AccessLink() {
   }, []);
   return (
     <div className="account-card">
-      <h2>Welcome back.</h2>
+      <h2>Confirm your email.</h2>
       <p>
-        Open your private review. This one-time link confirms access to your
-        saved report.
+        Confirm this address to receive your detailed review when it is ready,
+        and return securely to your report.
       </p>
       <button
         className="button primary"
@@ -38,7 +38,7 @@ export function AccessLink() {
           }
         }}
       >
-        {busy ? "Opening your review…" : "Open my saved review"}
+        {busy ? "Opening your review…" : "Confirm email & open review"}
       </button>
       {!token && (
         <p className="fine-print">

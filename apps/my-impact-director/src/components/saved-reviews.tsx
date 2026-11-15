@@ -6,6 +6,7 @@ import { Account } from "./account";
 import { SaveReview } from "./save-review";
 import { Arrow, DocumentIcon } from "./icons";
 type Row = {
+  framework?: string;
   id: string;
   title: string;
   organisation: string;
@@ -82,7 +83,15 @@ export function SavedReviews() {
           {rows.map((r) => (
             <Link href={"/reviews/" + r.id} className="review-item" key={r.id}>
               <div>
-                <span className={"badge " + r.status}>{r.status}</span>
+                <span className={"badge " + r.status}>
+                  {r.framework === "document"
+                    ? r.status === "complete"
+                      ? "Document understood — choose or return to a review"
+                      : "Reading your document"
+                    : r.framework
+                      ? `${r.framework === "claims" ? "Claims Code" : "Excellence"} · ${r.status}`
+                      : r.status}
+                </span>
                 <h3>{r.title}</h3>
                 <p>
                   {r.organisation || "Getting to know the report"} ·{" "}

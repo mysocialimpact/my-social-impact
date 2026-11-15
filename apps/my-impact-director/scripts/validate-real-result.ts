@@ -15,7 +15,7 @@ const review = JSON.parse(
 const result = review.result as ReviewResult;
 const claims = validateClaims({ claims: result.claims }, review.pages);
 for (const framework of ["claims", "excellence"] as const) {
-  const tests = result.scores[framework].principles.flatMap((p) => p.tests);
+  const tests = result.scores[framework]!.principles.flatMap((p) => p.tests);
   const checked = validateFindings(tests, framework, review.pages, claims);
   assert.deepEqual(
     scoreFramework(checked, framework),
@@ -39,7 +39,7 @@ assert.match(content, /Social Impact Excellence/);
 assert.match(content, /Methodology/);
 assert.match(content, /PDF p\./);
 for (const framework of ["claims", "excellence"] as const)
-  for (const p of result.scores[framework].principles)
+  for (const p of result.scores[framework]!.principles)
     for (const f of p.tests)
       assert.ok(
         normalise(content).includes(
@@ -70,8 +70,8 @@ const checks = {
   sourcePages: review.pages.length,
   claims: claims.length,
   validatedTests: 40,
-  claimsScore: result.scores.claims.overall,
-  excellenceScore: result.scores.excellence.overall,
+  claimsScore: result.scores.claims!.overall,
+  excellenceScore: result.scores.excellence!.overall,
   pdfPages: pages.length,
   cost: review.cost_usd,
   attempts: review.attempts,

@@ -44,6 +44,8 @@ export async function POST(req: Request) {
       file.name,
       form.get("consent") === "true",
       form.get("qualityConsent") === "true",
+      null,
+      true,
     );
     after(() => drain(review.id));
     return Response.json(review, { status: 201 });

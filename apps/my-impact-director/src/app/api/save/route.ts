@@ -1,3 +1,5 @@
+import { after } from "next/server";
+import { sendPendingReports } from "@/lib/report-delivery";
 import { z } from "zod";
 import {
   emailEnabled,
@@ -22,6 +24,7 @@ export async function POST(req: Request) {
         .strict()
         .parse(input);
       const result = await redeemEmailLink(data.token);
+      after(() => sendPendingReports());
       return Response.json(
         { destination: result.destination },
         {

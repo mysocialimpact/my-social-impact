@@ -3,7 +3,7 @@ import type { ReviewResult } from "@/lib/pipeline";
 import type { Criterion, Scores } from "@/lib/assessment";
 import { criteria, frameworkNames, type Framework } from "@/lib/rubric";
 import { Arrow } from "./icons";
-function ScoreCard({
+export function ScoreCard({
   framework,
   score,
 }: {
@@ -160,9 +160,11 @@ export function ReviewResults({
         Methodology {result.version}
       </div>
       <div className="results-grid">
-        {(["claims", "excellence"] as Framework[]).map((f) => (
-          <ScoreCard key={f} framework={f} score={result.scores[f]} />
-        ))}
+        {(["claims", "excellence"] as Framework[])
+          .filter((f) => !!result.scores[f])
+          .map((f) => (
+            <ScoreCard key={f} framework={f} score={result.scores[f]!} />
+          ))}
       </div>
       <div className="summary-box">
         <h2>The evidence at a glance</h2>
@@ -249,46 +251,51 @@ export function ReviewResults({
           ))}
         </div>
       </section>
-      {(["claims", "excellence"] as Framework[]).map((framework) => (
-        <section className="result-section" id={framework} key={framework}>
-          <p className="eyebrow">
-            {framework === "claims"
-              ? "01 · Credibility & integrity"
-              : "02 · Understanding, managing & communicating"}
-          </p>
-          <h2>{frameworkNames[framework]} Review</h2>
-          <p>
-            {framework === "claims"
-              ? "How responsibly the report makes and supports its material impact claims."
-              : "What the report demonstrates about impact management. This is not the full organisational maturity assessment."}
-          </p>
-          {result.scores[framework].principles.map((p) => (
-            <div className="principle" key={p.name}>
-              <h3>
-                {p.name}{" "}
-                <span className="badge">
-                  {p.score === null ? "Unassessable" : `${p.score}/20`} ·{" "}
-                  {p.coverage}/4 tests
-                </span>
-              </h3>
-              {p.tests.map((f) => (
-                <Finding
-                  key={f.id}
-                  f={f}
-                  framework={framework}
-                  id={id}
-                  admin={admin}
-                />
-              ))}
-            </div>
-          ))}
-          {framework === "excellence" && (
-            <a className="text-link" href="https://socialimpactexcellence.org">
-              Explore the full maturity assessment <Arrow diagonal />
-            </a>
-          )}
-        </section>
-      ))}
+      {(["claims", "excellence"] as Framework[])
+        .filter((f) => !!result.scores[f])
+        .map((framework) => (
+          <section className="result-section" id={framework} key={framework}>
+            <p className="eyebrow">
+              {framework === "claims"
+                ? "01 · Credibility & integrity"
+                : "02 · Understanding, managing & communicating"}
+            </p>
+            <h2>{frameworkNames[framework]} Review</h2>
+            <p>
+              {framework === "claims"
+                ? "How responsibly the report makes and supports its material impact claims."
+                : "What the report demonstrates about impact management. This is not the full organisational maturity assessment."}
+            </p>
+            {result.scores[framework]!.principles.map((p) => (
+              <div className="principle" key={p.name}>
+                <h3>
+                  {p.name}{" "}
+                  <span className="badge">
+                    {p.score === null ? "Unassessable" : `${p.score}/20`} ·{" "}
+                    {p.coverage}/4 tests
+                  </span>
+                </h3>
+                {p.tests.map((f) => (
+                  <Finding
+                    key={f.id}
+                    f={f}
+                    framework={framework}
+                    id={id}
+                    admin={admin}
+                  />
+                ))}
+              </div>
+            ))}
+            {framework === "excellence" && (
+              <a
+                className="text-link"
+                href="https://socialimpactexcellence.org"
+              >
+                Explore the full maturity assessment <Arrow diagonal />
+              </a>
+            )}
+          </section>
+        ))}
       <section className="result-section" id="claims-register">
         <p className="eyebrow">Look behind the headline</p>
         <h2>Your material claims register</h2>

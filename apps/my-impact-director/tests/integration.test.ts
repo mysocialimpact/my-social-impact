@@ -1,3 +1,6 @@
+import { sendPendingReports } from "../src/lib/report-delivery";
+import { GET as reviewGet } from "../src/app/api/reviews/[id]/route";
+import { GET as exportGet } from "../src/app/api/reviews/[id]/export/route";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
@@ -8,7 +11,7 @@ import {
 } from "../src/lib/access";
 import { requestEmailSave, redeemEmailLink } from "../src/lib/email-save";
 import { visitor } from "../src/lib/auth";
-import { randomUUID, randomBytes } from "node:crypto";
+import { randomUUID, randomBytes, createHash } from "node:crypto";
 import { PDFDocument, StandardFonts } from "pdf-lib";
 import { database, query } from "../src/lib/db";
 import {
@@ -17,6 +20,8 @@ import {
   sourceFile,
   deleteReview,
   retryReview,
+  startFramework,
+  reviewAccess,
 } from "../src/lib/reviews";
 import { processOne } from "../src/lib/pipeline";
 import { exportPdf } from "../src/lib/export";
@@ -40,6 +45,22 @@ test(
       "/my_impact_director_validation",
       "Tests require the dedicated validation database.",
     );
+    // Mock model calls must not consume or inherit the validation branch's real AI budget.
+    const stageKey = createHash("sha256")
+      .update("ai-stage:global")
+      .digest("hex");
+    const isolatedKeys = [stageKey, "ai-provider-backoff"];
+    const priorLimits = await query<{
+      key: string;
+      count: number;
+      reset_at: string;
+    }>(
+      "SELECT key,count,reset_at FROM director.rate_limits WHERE key=ANY($1::text[])",
+      [isolatedKeys],
+    );
+    await query("DELETE FROM director.rate_limits WHERE key=ANY($1::text[])", [
+      isolatedKeys,
+    ]);
     const originalFetch = globalThis.fetch;
     process.env.REVIEWS_ENABLED = "true";
     process.env.AI_GATEWAY_API_KEY = "synthetic-contract-test-only";
@@ -50,7 +71,7 @@ test(
     const user = {
         id: uid,
         name: "Synthetic QA",
-        email: "qa@example.invalid",
+        email: uid + "@example.invalid",
         founder: false,
       },
       otherUser = { ...user, id: other };
@@ -148,21 +169,21 @@ test(
                 title: "Qualify the wording",
                 detail:
                   "Describe attendance as reach, not proof of improved income.",
-                criterionIds: ["claims.1.1"],
+                criterionIds: [p.findings[0].id],
               },
               {
                 priority: "important",
                 title: "Add follow-up evidence",
                 detail:
                   "Report household income at baseline and follow-up with response rates.",
-                criterionIds: ["excellence.3.1"],
+                criterionIds: [p.findings[1].id],
               },
               {
                 priority: "longer_term",
                 title: "Establish a learning cycle",
                 detail:
                   "Ask the board to review follow-up evidence at each reporting cycle.",
-                criterionIds: ["claims.5.2"],
+                criterionIds: [p.findings[2].id],
               },
             ],
           };
@@ -284,8 +305,8 @@ test(
           await mkdir("artifacts", { recursive: true });
           await writeFile("artifacts/synthetic-review.json", JSON.stringify(r));
           const result = r.result as ReviewResult;
-          assert.equal(result.scores.claims.overall, 75);
-          assert.equal(result.scores.excellence.overall, 75);
+          assert.equal(result.scores.claims!.overall, 75);
+          assert.equal(result.scores.excellence!.overall, 75);
           assert.equal(result.claims.length, 1);
           assert.ok(aiCalls >= 13);
           assert.equal(result.version, "1.0.0");
@@ -308,6 +329,186 @@ test(
           assert.match(text, /Social Impact Excellence/);
           assert.match(text, /Methodology/);
           assert.match(text, /PDF p\. 1/);
+        },
+      );
+      await t.test(
+        "two selected methodologies reuse understanding and keep details behind verified access",
+        async () => {
+          for (const framework of ["claims", "excellence"] as const) {
+            const selected = await startFramework(user, id, framework);
+            assert.equal(
+              (await startFramework(user, id, framework)).id,
+              selected.id,
+            );
+            assert.equal(
+              (await getReview(user, selected.id)).stage,
+              framework === "claims" ? 4 : 9,
+            );
+            for (
+              let i = 0;
+              i < 7 &&
+              (await getReview(user, selected.id)).status !== "complete";
+              i++
+            )
+              assert.equal(await processOne(selected.id), true);
+            const done = await getReview(user, selected.id),
+              result = done.result as ReviewResult;
+            assert.equal(done.status, "complete");
+            assert.deepEqual(Object.keys(result.scores), [framework]);
+            assert.equal(
+              result.scores[framework]!.principles.flatMap((p) => p.tests)
+                .length,
+              20,
+            );
+            assert.equal(await reviewAccess(user, done), false);
+            const response = await reviewGet(
+              req("/api/reviews/" + selected.id),
+              { params: Promise.resolve({ id: selected.id }) },
+            );
+            const snapshot = await response.json();
+            assert.equal(snapshot.findings, undefined);
+            assert.equal(snapshot.pages, null);
+            assert.equal(
+              snapshot.result.scores[framework].principles.flatMap(
+                (p: any) => p.tests,
+              ).length,
+              0,
+            );
+            assert.equal(
+              (
+                await exportGet(
+                  req("/api/reviews/" + selected.id + "/export"),
+                  { params: Promise.resolve({ id: selected.id }) },
+                )
+              ).status,
+              403,
+            );
+            await assert.rejects(() => getReview(otherUser, selected.id), {
+              status: 404,
+            });
+            await writeFile(
+              "artifacts/" + framework + "-review.json",
+              JSON.stringify({ ...done, full: false, siblings: [] }, null, 2),
+            );
+          }
+        },
+      );
+      await t.test(
+        "verified delivery can be requested during processing and reused by the second review",
+        async () => {
+          process.env.EMAIL_ENABLED = "true";
+          process.env.EMAIL_FROM = "QA <qa@example.invalid>";
+          process.env.RESEND_API_KEY = "synthetic-contract-only";
+          const selected = await startFramework(user, id, "claims"),
+            savedResult = (await getReview(user, selected.id)).result;
+          await query(
+            "UPDATE director.reviews SET status='queued',result=NULL WHERE id=$1",
+            [selected.id],
+          );
+          const recipient = uid + "-during@example.invalid";
+          await requestEmailSave(req("/api/save"), {
+            email: recipient,
+            reviewId: selected.id,
+          });
+          assert.equal(emails.length, 1);
+          assert.equal(emails[0].attachments, undefined);
+          const token = emails[0].text.match(/access#([A-Za-z0-9_-]{43})/)![1];
+          const redeemed = await redeemEmailLink(token);
+          const verified = await visitor(
+            new Request("https://test.example/api/account", {
+              headers: { cookie: redeemed.cookie.split(";")[0] },
+            }),
+          );
+          assert.equal(
+            await reviewAccess(
+              verified,
+              await getReview(verified, selected.id),
+            ),
+            true,
+          );
+          await sendPendingReports();
+          assert.equal(
+            emails.length,
+            2,
+            "Already-complete Excellence is delivered immediately",
+          );
+          assert.match(emails[1].subject, /Excellence/);
+          await query(
+            "UPDATE director.reviews SET status='complete',result=$2 WHERE id=$1",
+            [selected.id, JSON.stringify(savedResult)],
+          );
+          await query(
+            "INSERT INTO director.report_deliveries(review_id,owner_id,email) VALUES($1,$2,$3) ON CONFLICT DO NOTHING",
+            [selected.id, verified.id, recipient],
+          );
+          await sendPendingReports();
+          assert.equal(emails.length, 3);
+          assert.ok(emails[2].attachments[0].content);
+          const second = await startFramework(
+            verified,
+            selected.id,
+            "excellence",
+          );
+          assert.equal(
+            await reviewAccess(verified, await getReview(verified, second.id)),
+            true,
+          );
+          await sendPendingReports();
+          assert.equal(emails.length, 3, "Delivery retries are idempotent");
+          await query("DELETE FROM director.email_links WHERE email=$1", [
+            recipient,
+          ]);
+          await query("DELETE FROM director.users WHERE id=$1", [verified.id]);
+          emails.length = 0;
+        },
+      );
+      await t.test(
+        "a new document is ingested once and stops before either assessment",
+        async () => {
+          const pdf = await PDFDocument.create();
+          pdf.addPage().drawText(text + " Another report.", {
+            size: 10,
+            x: 40,
+            y: 700,
+            maxWidth: 500,
+          });
+          const doc = await createReview(
+            user,
+            Buffer.from(await pdf.save()),
+            "new-document.pdf",
+            true,
+            false,
+            null,
+            true,
+          );
+          ids.push(doc.id);
+          for (
+            let i = 0;
+            i < 6 && (await getReview(user, doc.id)).status !== "complete";
+            i++
+          )
+            assert.equal(await processOne(doc.id), true);
+          const done = await getReview(user, doc.id);
+          assert.equal(done.framework, "document");
+          assert.equal(done.stage, 4);
+          assert.equal(done.result, null);
+          assert.equal(done.understanding_ready, true);
+          const events = await query<{ stage: number }>(
+            "SELECT stage FROM director.processing_events WHERE review_id=$1",
+            [doc.id],
+          );
+          assert.ok(events.every((e) => e.stage < 4));
+          const selected = await startFramework(user, doc.id, "excellence");
+          assert.equal((await getReview(user, selected.id)).stage, 9);
+          await writeFile(
+            "artifacts/document-review.json",
+            JSON.stringify({
+              ...done,
+              full: false,
+              siblings: [],
+              emailEnabled: false,
+            }),
+          );
         },
       );
       await t.test(
@@ -391,13 +592,21 @@ test(
           });
           assert.equal(emails.length, 1);
           assert.equal(
-            Buffer.from(emails[0].attachments[0].content, "base64")
+            emails[0].attachments,
+            undefined,
+            "No report is sent to an unverified address",
+          );
+          const token = emails[0].text.match(/access#([A-Za-z0-9_-]{43})/)![1];
+          const redeemed = await redeemEmailLink(token);
+          await sendPendingReports();
+          assert.equal(
+            Buffer.from(emails[1].attachments[0].content, "base64")
               .subarray(0, 5)
               .toString(),
             "%PDF-",
           );
-          const token = emails[0].text.match(/access#([A-Za-z0-9_-]{43})/)![1];
-          const redeemed = await redeemEmailLink(token);
+          await sendPendingReports();
+          assert.equal(emails.length, 2, "Delivery is idempotent");
           assert.equal(redeemed.destination, "/reviews/" + guestReview.id);
           const savedReq = guestReq(redeemed.cookie.split(";")[0]);
           const saved = await visitor(savedReq);
@@ -645,6 +854,15 @@ test(
       );
     } finally {
       globalThis.fetch = originalFetch;
+      await query(
+        "DELETE FROM director.rate_limits WHERE key=ANY($1::text[])",
+        [isolatedKeys],
+      );
+      for (const row of priorLimits)
+        await query(
+          "INSERT INTO director.rate_limits(key,count,reset_at) VALUES($1,$2,$3) ON CONFLICT(key) DO UPDATE SET count=$2,reset_at=$3",
+          [row.key, row.count, row.reset_at],
+        );
       for (const id of ids) {
         await query(
           "DELETE FROM director.reports WHERE id IN (SELECT report_id FROM director.reviews WHERE id=$1)",

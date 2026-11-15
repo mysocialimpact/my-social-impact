@@ -345,6 +345,10 @@ export function Intake({
           {find ? "Upload a PDF instead" : "Find a published report"}
         </button>
       </div>
+      <p className="review-disclosure">
+        Choose either free methodology after upload. Headline results need no
+        email. Full detailed reports are free with verified email delivery .
+      </p>
       <p className="upload-privacy">
         Private to this browser for 7 days. Download or save after your review.
       </p>

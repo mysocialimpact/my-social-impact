@@ -5,6 +5,13 @@ import { Account } from "./account";
 import { ReviewResults } from "./review-results";
 import type { ReviewResult } from "@/lib/pipeline";
 type AdminData = {
+  deliveries?: {
+    email: string;
+    title: string;
+    framework: string;
+    delivered_at: string | null;
+    attempts: number;
+  }[];
   usage: { event: string; count: string }[];
   metrics: Record<string, string>;
   users: {
@@ -22,6 +29,7 @@ type AdminData = {
     organisation: string;
     email: string;
     source_url: string | null;
+    framework?: string;
     error_code: string | null;
     quality_consent: boolean;
     cost_usd: string;
@@ -152,6 +160,12 @@ export function Admin() {
                 ["result_viewed", "Results opened"],
                 ["email_saved", "Email links used"],
                 ["enquiry_created", "Enquiries sent"],
+                ["selected_claims", "Claims Code selected"],
+                ["selected_excellence", "Excellence selected"],
+                ["snapshot_viewed", "Snapshots opened"],
+                ["email_requested", "Verification emails requested"],
+                ["email_saved", "Email verified"],
+                ["full_report_delivered", "Full reports delivered"],
                 ["feedback_created", "Feedback received"],
               ].map(([event, label]) => (
                 <div className="metric" key={event}>
@@ -173,7 +187,9 @@ export function Admin() {
               <table className="admin-table">
                 <thead>
                   <tr>
-                    <th>Report / account</th>
+                    <th>
+                      Report / account · organisation affiliation unverified
+                    </th>
                     <th>Status</th>
                     <th>Scores</th>
                     <th>Cost</th>
@@ -185,6 +201,7 @@ export function Admin() {
                     <tr key={r.id}>
                       <td>
                         <strong>{r.title}</strong>
+                        <p>{r.framework || "Legacy combined review"}</p>
                         <p>{r.organisation}</p>
                         <p>{r.email}</p>
                         <small>
@@ -200,7 +217,7 @@ export function Admin() {
                       </td>
                       <td>
                         {r.scores
-                          ? `Claims ${r.scores.claims.overall ?? "provisional"} · Excellence ${r.scores.excellence.overall ?? "provisional"}`
+                          ? `Claims ${r.scores.claims?.overall ?? "provisional"} · Excellence ${r.scores.excellence?.overall ?? "provisional"}`
                           : "Not yet assessed"}
                       </td>
                       <td>${Number(r.cost_usd).toFixed(3)}</td>
@@ -290,6 +307,20 @@ export function Admin() {
               )}
             </div>
           )}
+          <section className="result-section">
+            <h2>Verified report delivery</h2>
+            <p>
+              Report organisations are extracted from documents. They do not
+              establish the visitor’s organisational affiliation.
+            </p>
+            {data.deliveries?.map((d, i) => (
+              <p key={i}>
+                {d.email} · {d.title} · {d.framework} ·{" "}
+                {d.delivered_at ? "Delivered" : "Queued"} · {d.attempts}{" "}
+                attempts
+              </p>
+            ))}
+          </section>
           <section className="result-section">
             <h2>Enquiries & product feedback</h2>
             <div className="table-scroll">

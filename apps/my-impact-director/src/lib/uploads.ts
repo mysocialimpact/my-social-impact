@@ -158,6 +158,8 @@ export async function finishUpload(
       upload.title,
       input.consent,
       input.qualityConsent,
+      null,
+      true,
     );
     await transaction(async (c) => {
       await c.query(

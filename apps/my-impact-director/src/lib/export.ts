@@ -18,7 +18,9 @@ export async function exportPdf(result: ReviewResult) {
     return `${id} · PDF p. ${page}`;
   }
   const pdf = await PDFDocument.create();
-  pdf.setTitle(`${result.context.organisation} — Impact report review`);
+  pdf.setTitle(
+    `${result.context.organisation} — ${result.framework ? frameworkNames[result.framework] : "Impact report review"}`,
+  );
   pdf.setAuthor("My Social Impact");
   pdf.registerFontkit(fontkit);
   const [regular, bold, serif] = await Promise.all(
@@ -126,8 +128,10 @@ export async function exportPdf(result: ReviewResult) {
   );
   heading("Executive summary");
   write(result.actions.summary, 11);
-  for (const key of ["claims", "excellence"] as Framework[]) {
-    const s = result.scores[key];
+  for (const key of (["claims", "excellence"] as Framework[]).filter(
+    (f) => !!result.scores[f],
+  )) {
+    const s = result.scores[key]!;
     write(
       `${frameworkNames[key]}: ${s.provisional ? "Provisional - no overall score" : s.overall + "/100"} · ${s.coverage}/20 tests assessed`,
       12,
@@ -138,10 +142,12 @@ export async function exportPdf(result: ReviewResult) {
   result.actions.strengths.forEach((s) => write("- " + s));
   heading("Opportunities");
   result.actions.opportunities.forEach((s) => write("- " + s));
-  for (const framework of ["claims", "excellence"] as Framework[]) {
+  for (const framework of (["claims", "excellence"] as Framework[]).filter(
+    (f) => !!result.scores[f],
+  )) {
     newPage();
     write(frameworkNames[framework], 26, "serif");
-    for (const p of result.scores[framework].principles) {
+    for (const p of result.scores[framework]!.principles) {
       heading(
         `${p.name} · ${p.score === null ? "Unassessable" : p.score + "/20"} · ${p.coverage}/4 tests`,
       );

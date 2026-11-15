@@ -39,14 +39,13 @@ export async function requestEmailSave(req: Request, input: unknown) {
   if (reviewId) {
     const user = await visitor(req),
       review = await getReview(user, reviewId);
-    if (review.status !== "complete" || !review.result)
+    if (!review.framework && (review.status !== "complete" || !review.result))
       throw new AppError(
         409,
         "Your review needs to finish before it can be emailed.",
       );
     await rateLimit(`email-save:${user.id}`, 5, 86400);
     ownerId = user.id;
-    attachment = await exportPdf(review.result as ReviewResult);
   } else {
     const existing = await query(
       "SELECT id FROM director.users WHERE id=$1 AND is_anonymous=false",
@@ -81,9 +80,9 @@ export async function requestEmailSave(req: Request, input: unknown) {
         to: [email],
         reply_to: "marcus@mysocialimpact.org",
         subject: reviewId
-          ? "Your My Impact Director review"
+          ? "Confirm your email for your free detailed review"
           : "Return to your saved impact reviews",
-        text: `${reviewId ? "Your full impact report review is attached. Open this private link to keep it in your saved reviews for 180 days:" : "Open this private link to return to your saved reviews:"}\n\n${destination.href}\n\nThis single-use link expires in 30 minutes. You have not been subscribed to marketing. If you did not request this email, you can ignore it.`,
+        text: `${reviewId ? (attachment ? "Your full impact report review is attached. Open this private link to keep it in your saved reviews for 180 days:" : "Confirm your email to receive your free detailed report when it is ready:") : "Open this private link to return to your saved reviews:"}\n\n${destination.href}\n\nThis single-use link expires in 30 minutes. You have not been subscribed to marketing. If you did not request this email, you can ignore it.`,
         ...(attachment
           ? {
               attachments: [
@@ -144,7 +143,7 @@ export async function redeemEmailLink(token: string) {
     );
     if (link.review_id) {
       const { rowCount } = await c.query(
-        "SELECT v.id FROM director.reviews v JOIN director.reports r ON r.id=v.report_id WHERE v.id=$1 AND r.expires_at>now() AND v.status='complete'",
+        "SELECT v.id FROM director.reviews v JOIN director.reports r ON r.id=v.report_id WHERE v.id=$1 AND r.expires_at>now() ",
         [link.review_id],
       );
       if (!rowCount)
@@ -156,6 +155,16 @@ export async function redeemEmailLink(token: string) {
       await c.query(
         "UPDATE director.reports r SET expires_at=GREATEST(expires_at,now()+interval '180 days') FROM director.reviews v WHERE v.report_id=r.id AND v.id=$1",
         [link.review_id],
+      );
+    }
+    if (link.review_id) {
+      await c.query(
+        "INSERT INTO director.report_subscriptions(report_id,owner_id,email) SELECT report_id,$2,$3 FROM director.reviews WHERE id=$1 ON CONFLICT DO NOTHING",
+        [link.review_id, id, link.email],
+      );
+      await c.query(
+        "INSERT INTO director.report_deliveries(review_id,owner_id,email) SELECT v.id,$2,$3 FROM director.reviews v WHERE v.report_id=(SELECT report_id FROM director.reviews WHERE id=$1) AND (v.framework IN ('claims','excellence') OR v.id=$1) AND v.status='complete' AND v.result IS NOT NULL ON CONFLICT DO NOTHING",
+        [link.review_id, id, link.email],
       );
     }
     await c.query(

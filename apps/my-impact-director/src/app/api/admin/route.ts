@@ -10,14 +10,14 @@ export async function GET(req: Request) {
       q = (url.searchParams.get("q") || "").slice(0, 150),
       status = url.searchParams.get("status") || "";
     const [metrics] = await query(
-      `SELECT (SELECT count(*) FROM director.users WHERE is_anonymous=false) AS users,(SELECT count(DISTINCT organisation) FROM director.reports WHERE organisation<>'') AS organisations,(SELECT count(*) FROM director.reviews) AS reviews,(SELECT count(*) FROM director.reviews WHERE status='complete') AS completed,(SELECT count(*) FROM director.reviews WHERE status='failed') AS failed,(SELECT count(*) FROM director.reviews WHERE status IN ('running','queued')) AS pending,(SELECT count(*) FROM director.enquiries) AS enquiries,(SELECT count(DISTINCT owner_id) FROM director.enquiries) AS enquirers,(SELECT count(DISTINCT r.owner_id) FROM director.reports r JOIN director.reviews v ON v.report_id=r.id WHERE v.status='complete') AS reviewed_users,(SELECT COALESCE(sum(cost_usd),0) FROM director.reviews) AS cost_usd`,
+      `SELECT (SELECT count(*) FROM director.users WHERE is_anonymous=false) AS users,(SELECT count(DISTINCT organisation) FROM director.reports WHERE organisation<>'') AS organisations,(SELECT count(*) FROM director.reviews WHERE framework IS DISTINCT FROM 'document') AS reviews,(SELECT count(*) FROM director.reviews WHERE status='complete' AND framework IS DISTINCT FROM 'document') AS completed,(SELECT count(*) FROM director.reviews WHERE status='failed') AS failed,(SELECT count(*) FROM director.reviews WHERE status IN ('running','queued')) AS pending,(SELECT count(*) FROM director.enquiries) AS enquiries,(SELECT count(DISTINCT owner_id) FROM director.enquiries) AS enquirers,(SELECT count(DISTINCT r.owner_id) FROM director.reports r JOIN director.reviews v ON v.report_id=r.id WHERE v.status='complete') AS reviewed_users,(SELECT COALESCE(sum(cost_usd),0) FROM director.reviews) AS cost_usd`,
     );
     const users = await query(
       `SELECT id,name,email,organisation,created_at,last_seen FROM director.users WHERE is_anonymous=false AND (email ILIKE $1 OR name ILIKE $1) ORDER BY last_seen DESC LIMIT 100`,
       ["%" + q + "%"],
     );
     const reviews = await query(
-      `SELECT v.id,v.status,v.stage,v.created_at,v.error_code,v.cost_usd,v.result->'scores' AS scores,r.title,r.organisation,r.source_url,r.quality_consent,u.email FROM director.reviews v JOIN director.reports r ON r.id=v.report_id JOIN director.users u ON u.id=r.owner_id WHERE ($1='' OR v.status=$1) AND (r.title ILIKE $2 OR r.organisation ILIKE $2 OR u.email ILIKE $2) ORDER BY v.created_at DESC LIMIT 100`,
+      `SELECT v.id,v.framework,v.status,v.stage,v.created_at,v.error_code,v.cost_usd,v.result->'scores' AS scores,r.title,r.organisation,r.source_url,r.quality_consent,u.email FROM director.reviews v JOIN director.reports r ON r.id=v.report_id JOIN director.users u ON u.id=r.owner_id WHERE ($1='' OR v.status=$1) AND (r.title ILIKE $2 OR r.organisation ILIKE $2 OR u.email ILIKE $2) ORDER BY v.created_at DESC LIMIT 100`,
       [status, "%" + q + "%"],
     );
     const enquiries = await query(
@@ -27,8 +27,11 @@ export async function GET(req: Request) {
     const usage = await query(
       "SELECT event,sum(count)::text AS count FROM director.daily_metrics WHERE day>=CURRENT_DATE-30 GROUP BY event",
     );
+    const deliveries = await query(
+      "SELECT d.email,d.attempts,d.delivered_at,r.title,v.framework FROM director.report_deliveries d JOIN director.reviews v ON v.id=d.review_id JOIN director.reports r ON r.id=v.report_id ORDER BY d.next_attempt_at DESC LIMIT 100",
+    );
     return Response.json(
-      { metrics, users, reviews, enquiries, usage },
+      { metrics, users, reviews, enquiries, usage, deliveries },
       { headers: { "cache-control": "no-store" } },
     );
   } catch (e) {

@@ -51,8 +51,8 @@ export default function Home() {
               <span>£0</span>
             </div>
             <p>
-              Upload your PDF. Get two evidence-based assessments and practical
-              recommendations.
+              Upload your PDF. Choose either of two evidence-based reviews, with
+              practical recommendations.
             </p>
           </div>
           <Intake enabled={ready()} hero />

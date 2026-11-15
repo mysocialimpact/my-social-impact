@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { ReviewExperience, type ExperienceReview } from "./review-experience";
 import { Arrow } from "./icons";
 import { useEffect, useState } from "react";
 import { api, useSession } from "./session";
@@ -9,6 +10,7 @@ import { ReviewResults } from "./review-results";
 import type { ReviewResult } from "@/lib/pipeline";
 import type { Page } from "@/lib/assessment";
 type Review = {
+  framework?: ExperienceReview["framework"];
   id: string;
   title: string;
   organisation: string;
@@ -60,7 +62,10 @@ export function ReviewView({
         if (stopped) return;
         setReview(d);
         setError("");
-        if (!["complete", "failed"].includes(d.status))
+        if (
+          !["complete", "failed"].includes(d.status) ||
+          (d.framework && !d.full)
+        )
           timer = setTimeout(refresh, 5000);
       } catch (e) {
         if (!stopped)
@@ -74,7 +79,7 @@ export function ReviewView({
     };
   }, [user, id, busy]);
   useEffect(() => {
-    if (review)
+    if (review && !review.framework)
       setReportAction({ id, status: review.status, stage: review.stage });
   }, [id, review, setReportAction]);
   useEffect(() => () => setReportAction(null), [id, setReportAction]);
@@ -99,6 +104,8 @@ export function ReviewView({
       </div>
     );
   if (!review) return <p role="status">Loading your review…</p>;
+  if (review.framework && sourcePage === undefined)
+    return <ReviewExperience review={review as unknown as ExperienceReview} />;
   async function remove() {
     if (!window.confirm("Delete this report and its assessments permanently?"))
       return;

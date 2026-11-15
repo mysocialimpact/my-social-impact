@@ -79,7 +79,7 @@ export function SaveReview({
             <p>
               {returning
                 ? "If this email has saved reviews, a private sign-in link is on its way."
-                : "Your review and a private return link have been accepted by our email service. Open the link within 30 minutes to save your review for 180 days."}
+                : "Confirm your address using the private link within 30 minutes. Your detailed report will then be delivered and retained for 180 days."}
             </p>
           </div>
         ) : enabled ? (

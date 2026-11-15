@@ -3,7 +3,7 @@ export default function Privacy() {
   return (
     <section className="section">
       <PageIntro
-        label="Privacy notice · Version 2.0 · 15 November 2026"
+        label="Privacy notice · Version 3.0 · 15 November 2026"
         title="Your report stays yours."
       />
       <div className="content-prose">
@@ -27,11 +27,16 @@ export default function Privacy() {
         </p>
         <p>
           Essential, secure cookies keep guest reviews available in the same
-          browser for seven days. Optional email saving, where available, sends
-          a PDF copy and a single-use link valid for 30 minutes. Opening it
-          gives you a 30-day saved-review session. Existing My Social Impact /
-          SORP accounts remain supported; we do not store their passwords. We do
-          not add advertising trackers or subscribe you to marketing.
+          browser for seven days. Optional email delivery sends a verification
+          link valid for 30 minutes. Once you confirm your address, we associate
+          it with your report and send the selected detailed assessment when it
+          is ready. Delivery uses a background queue with retries. Headline
+          snapshots require no email; new full reports require email
+          verification. Previously completed combined reviews retain their
+          existing access. Opening it gives you a 30-day saved-review session.
+          Existing My Social Impact / SORP accounts remain supported; we do not
+          store their passwords. We do not add advertising trackers or subscribe
+          you to marketing.
         </p>
         <p>
           Larger uploads are transferred in private parts to the same protected
@@ -71,11 +76,12 @@ export default function Privacy() {
         <h2>Usage and security</h2>
         <p>
           We count daily totals for review starts, completions, first result
-          views, email saves, enquiries and feedback. These aggregate counts
-          contain no visitor identifiers. To enforce fair-use limits we store
-          keyed, rotating hashes of network addresses, never raw network
-          addresses in our application rate-limit records. Hosting providers may
-          keep their own security logs.
+          views, methodology selections, snapshots, email verification and
+          delivery, enquiries and feedback. These aggregate counts contain no
+          visitor identifiers. To enforce fair-use limits we store keyed,
+          rotating hashes of network addresses, never raw network addresses in
+          our application rate-limit records. Hosting providers may keep their
+          own security logs.
         </p>
         <h2>Who can see your report</h2>
         <p>

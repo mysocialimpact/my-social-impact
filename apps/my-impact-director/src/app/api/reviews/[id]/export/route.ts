@@ -1,5 +1,5 @@
 import { visitor } from "@/lib/auth";
-import { getReview } from "@/lib/reviews";
+import { getReview, reviewAccess } from "@/lib/reviews";
 import { failure, AppError } from "@/lib/security";
 import { exportPdf } from "@/lib/export";
 import type { ReviewResult } from "@/lib/pipeline";
@@ -8,7 +8,13 @@ export async function GET(
   ctx: { params: Promise<{ id: string }> },
 ) {
   try {
-    const review = await getReview(await visitor(req), (await ctx.params).id);
+    const user = await visitor(req);
+    const review = await getReview(user, (await ctx.params).id);
+    if (!(await reviewAccess(user, review)))
+      throw new AppError(
+        403,
+        "Confirm your email to receive the full detailed report, free.",
+      );
     if (review.status !== "complete" || !review.result)
       throw new AppError(409, "The review is still being prepared.");
     return new Response(

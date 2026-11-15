@@ -1,3 +1,4 @@
+import { sendPendingReports } from "@/lib/report-delivery";
 import { query } from "@/lib/db";
 import { drain } from "@/lib/pipeline";
 import { secretMatches } from "@/lib/security";
@@ -53,5 +54,6 @@ export async function GET(req: Request) {
   if (reviewId && !z.uuid().safeParse(reviewId).success)
     return Response.json({ error: "Invalid review" }, { status: 400 });
   await drain(reviewId || undefined);
+  await sendPendingReports();
   return Response.json({ ok: true });
 }
