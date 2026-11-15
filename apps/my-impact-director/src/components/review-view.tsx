@@ -134,7 +134,7 @@ export function ReviewView({
       <Link href="/reviews" className="breadcrumb">
         ← My saved reviews
       </Link>
-      <div className="page-intro">
+      <div className="page-intro review-heading">
         <p className="eyebrow">Your impact report review</p>
         <h1>{review.organisation || "A fresh perspective is on its way."}</h1>
         <p className="intro-copy">{review.title}</p>

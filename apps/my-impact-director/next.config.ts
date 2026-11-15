@@ -3,8 +3,14 @@ const config: NextConfig = {
   poweredByHeader: false,
   serverExternalPackages: ["pg", "unpdf"],
   outputFileTracingIncludes: {
-    "/api/reviews/*/export": ["./assets/fonts/*.ttf"],
-    "/api/save": ["./assets/fonts/*.ttf"],
+    "/api/reviews/*/export": [
+      "./assets/fonts/*.ttf",
+      "./public/brand/my-impact-director.png",
+    ],
+    "/api/save": [
+      "./assets/fonts/*.ttf",
+      "./public/brand/my-impact-director.png",
+    ],
   },
   async headers() {
     return [

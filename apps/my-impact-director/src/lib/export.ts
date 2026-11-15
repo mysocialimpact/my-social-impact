@@ -88,8 +88,17 @@ export async function exportPdf(result: ReviewResult) {
     y -= 14;
     write(s, 19, "serif");
   };
-  write("MY IMPACT DIRECTOR", 11, "bold", accent);
-  y -= 25;
+  const logo = await pdf.embedPng(
+    await readFile(join(process.cwd(), "public/brand/my-impact-director.png")),
+  );
+  const logoHeight = (220 * logo.height) / logo.width;
+  page.drawImage(logo, {
+    x: 55,
+    y: 795 - logoHeight,
+    width: 220,
+    height: logoHeight,
+  });
+  y = 770 - logoHeight;
   write("Your impact report,\nreviewed.", 34, "serif");
   y -= 15;
   write(result.context.organisation, 20, "bold");
@@ -126,7 +135,7 @@ export async function exportPdf(result: ReviewResult) {
       );
       for (const f of p.tests) {
         write(
-          criteria(framework).find((c) => c.id === f.id)!.question,
+          `${f.id} · ${criteria(framework).find((c) => c.id === f.id)!.question}`,
           11,
           "bold",
         );

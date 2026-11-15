@@ -196,7 +196,11 @@ export function ReviewResults({
               .slice(0, 3)
               .map((c) => (
                 <li key={c.id}>
-                  <blockquote>“{c.text}”</blockquote>
+                  <strong>{c.outcome}</strong>
+                  <details className="source-excerpt">
+                    <summary>Read the exact source passage</summary>
+                    <blockquote>“{c.text}”</blockquote>
+                  </details>
                   <p>{c.defensibleWording || c.outcome}</p>
                   <SourceLink id={id} page={c.page} admin={admin} />
                 </li>
@@ -210,6 +214,41 @@ export function ReviewResults({
         <a href="#claims-register">Material claims</a>
         <a href="#actions">Your action plan</a>
       </nav>
+      <section className="result-section" id="actions">
+        <p className="eyebrow">From insight to action</p>
+        <h2>Your next, better report starts here.</h2>
+        <div className="actions-grid">
+          {[
+            ["quick", "Quick improvements"],
+            ["important", "Important reporting improvements"],
+            ["longer_term", "Longer-term improvements"],
+          ].map(([key, name]) => (
+            <div className="action-group" key={key}>
+              <h3>{name}</h3>
+              {result.actions.actions
+                .filter((a) => a.priority === key)
+                .map((a, i) => (
+                  <article key={i}>
+                    <h4>{a.title}</h4>
+                    <p>{a.detail}</p>
+                    <small>
+                      Related tests:{" "}
+                      {a.criterionIds.map((c, i) => (
+                        <span key={c}>
+                          {i > 0 ? ", " : ""}
+                          <a href={"#" + c}>{c}</a>
+                        </span>
+                      ))}
+                    </small>
+                  </article>
+                ))}
+              {!result.actions.actions.some((a) => a.priority === key) && (
+                <p>No specific actions in this group.</p>
+              )}
+            </div>
+          ))}
+        </div>
+      </section>
       {(["claims", "excellence"] as Framework[]).map((framework) => (
         <section className="result-section" id={framework} key={framework}>
           <p className="eyebrow">
@@ -266,7 +305,10 @@ export function ReviewResults({
           <details className="finding" key={c.id}>
             <summary>
               <span>
-                {c.id} · “{c.text}”
+                {c.id} ·{" "}
+                {c.outcome.length > 150
+                  ? c.outcome.slice(0, 147) + "…"
+                  : c.outcome}
               </span>
               <small>{c.exaggerationRisk} risk</small>
             </summary>
@@ -277,6 +319,7 @@ export function ReviewResults({
                 {c.causal ? "asserted" : "not asserted"}
               </p>
               <p>{c.outcome}</p>
+              <blockquote>“{c.text}”</blockquote>
               <SourceLink id={id} page={c.page} admin={admin} />
               {c.evidence.map((e, i) => (
                 <div className="citation" key={i}>
@@ -303,41 +346,6 @@ export function ReviewResults({
             </div>
           </details>
         ))}
-      </section>
-      <section className="result-section" id="actions">
-        <p className="eyebrow">From insight to action</p>
-        <h2>Your next, better report starts here.</h2>
-        <div className="actions-grid">
-          {[
-            ["quick", "Quick improvements"],
-            ["important", "Important reporting improvements"],
-            ["longer_term", "Longer-term improvements"],
-          ].map(([key, name]) => (
-            <div className="action-group" key={key}>
-              <h3>{name}</h3>
-              {result.actions.actions
-                .filter((a) => a.priority === key)
-                .map((a, i) => (
-                  <article key={i}>
-                    <h4>{a.title}</h4>
-                    <p>{a.detail}</p>
-                    <small>
-                      Related tests:{" "}
-                      {a.criterionIds.map((c, i) => (
-                        <span key={c}>
-                          {i > 0 ? ", " : ""}
-                          <a href={"#" + c}>{c}</a>
-                        </span>
-                      ))}
-                    </small>
-                  </article>
-                ))}
-              {!result.actions.actions.some((a) => a.priority === key) && (
-                <p>No specific actions in this group.</p>
-              )}
-            </div>
-          ))}
-        </div>
       </section>
       <details className="finding">
         <summary>
