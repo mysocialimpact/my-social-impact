@@ -43,6 +43,7 @@ export async function POST(req: Request) {
     const input = schema.parse(await readJson(req));
     if (input.action === "search") {
       await rateLimit(`search:${user.id}`, 5, 86400);
+      await rateLimit("search:global", 200, 86400);
       return Response.json({
         candidates: await discoverReports(user.id, input.organisation),
       });

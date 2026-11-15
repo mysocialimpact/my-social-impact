@@ -1590,7 +1590,7 @@ progress {
     padding: 13px 20px;
   }
   .art-orbit {
-    right: 4px;
+    display: none;
   }
   .trust-strip {
     padding: 22px 20px;

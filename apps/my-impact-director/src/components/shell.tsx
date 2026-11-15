@@ -9,11 +9,11 @@ export function Header() {
       <div className="parent-line">
         A product brought to you by{" "}
         <a href="https://mysocialimpact.org">
-          My Social Impact <span aria-hidden="true">↗</span>
+          My Social Impact <Arrow diagonal />
         </a>
       </div>
       <header className="header">
-        <Link href="/" className="brand" aria-label="My Impact Director home">
+        <Link href="/" className="brand">
           <Mark />
           <span>
             my impact
@@ -53,9 +53,14 @@ export function Footer() {
       <div className="footer-links">
         <div>
           Developed by{" "}
-          <a href="https://mysocialimpact.org">My Social Impact ↗</a>
+          <a href="https://mysocialimpact.org">
+            My Social Impact <Arrow diagonal />
+          </a>
           <br />
-          Built by <a href="https://www.theideasshed.com/">The Ideas Shed ↗</a>
+          Built by{" "}
+          <a href="https://www.theideasshed.com/">
+            The Ideas Shed <Arrow diagonal />
+          </a>
         </div>
         <nav aria-label="Footer navigation">
           <Link href="/methodology">Methodology</Link>

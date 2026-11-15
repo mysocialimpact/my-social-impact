@@ -1,13 +1,30 @@
-import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
+import { PDFDocument, rgb, type PDFFont } from "pdf-lib";
+import fontkit from "@pdf-lib/fontkit";
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
 import type { ReviewResult } from "./pipeline";
 import { criteria, frameworkNames, ANCHORS, type Framework } from "./rubric";
 export async function exportPdf(result: ReviewResult) {
   const pdf = await PDFDocument.create();
   pdf.setTitle(`${result.context.organisation} — Impact report review`);
   pdf.setAuthor("My Social Impact");
-  const regular = await pdf.embedFont(StandardFonts.Helvetica),
-    bold = await pdf.embedFont(StandardFonts.HelveticaBold),
-    serif = await pdf.embedFont(StandardFonts.TimesRoman);
+  pdf.registerFontkit(fontkit);
+  const [regular, bold, serif] = await Promise.all(
+    ["DejaVuSans.ttf", "DejaVuSans-Bold.ttf", "DejaVuSerif.ttf"].map(
+      async (name) =>
+        pdf.embedFont(
+          await readFile(join(process.cwd(), "assets/fonts", name)),
+          { subset: true },
+        ),
+    ),
+  );
+  const glyphs = new Map(
+    [regular, bold, serif].map((font) => [
+      font,
+      new Set(font.getCharacterSet()),
+    ]),
+  );
+  let substitutedCharacters = false;
   let page = pdf.addPage([595, 842]),
     y = 780;
   const ink = rgb(0.1, 0.2, 0.18),
@@ -17,12 +34,15 @@ export async function exportPdf(result: ReviewResult) {
     page = pdf.addPage([595, 842]);
     y = 780;
   }
-  function safe(s: string) {
-    return s
-      .replace(/[‘’]/g, "'")
-      .replace(/[“”]/g, '"')
-      .replace(/[–—]/g, "-")
-      .replace(/[^\x20-\x7E\xA0-\xFF\n]/g, "");
+  function safe(s: string, font: PDFFont) {
+    return [...s]
+      .map((char) => {
+        if (/\s/.test(char) || glyphs.get(font)!.has(char.codePointAt(0)!))
+          return char;
+        substitutedCharacters = true;
+        return `[U+${char.codePointAt(0)!.toString(16).toUpperCase()}]`;
+      })
+      .join("");
   }
   function write(
     s: string,
@@ -32,7 +52,21 @@ export async function exportPdf(result: ReviewResult) {
   ) {
     const font =
       weight === "bold" ? bold : weight === "serif" ? serif : regular;
-    const words = safe(s).split(/\s+/);
+    // Split unusually long tokens too, so URLs and identifiers cannot overflow.
+    const words = safe(s, font)
+      .split(/\s+/)
+      .flatMap((word) => {
+        const chunks: string[] = [];
+        let chunk = "";
+        for (const char of word) {
+          if (chunk && font.widthOfTextAtSize(chunk + char, size) > 475) {
+            chunks.push(chunk);
+            chunk = "";
+          }
+          chunk += char;
+        }
+        return [...chunks, chunk];
+      });
     let line = "";
     const lines: string[] = [];
     for (const word of words) {
@@ -150,6 +184,11 @@ export async function exportPdf(result: ReviewResult) {
   );
   ANCHORS.forEach((a, i) => write(`${i}: ${a}`, 9));
   result.limitations.forEach((l) => write(l, 9));
+  if (substitutedCharacters)
+    write(
+      "Some characters are unavailable in the PDF fonts and appear as Unicode code points, for example [U+4E2D]. Consult the original report and online review for their exact appearance.",
+      9,
+    );
   write(
     "The Excellence review describes the report. It is separate from the full maturity assessment at socialimpactexcellence.org.",
     9,

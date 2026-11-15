@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { PDFDocument, StandardFonts } from "pdf-lib";
 import { extractPages, validatePdf } from "../src/lib/documents";
 import { publicUrl, assertPublicAddress } from "../src/lib/public-fetch";
-import { sameOrigin, secretMatches } from "../src/lib/security";
+import { sameOrigin, secretMatches, readJson } from "../src/lib/security";
 import { verifyCandidate } from "../src/lib/discovery";
 test("real generated PDF extracts physical pages in order", async () => {
   const d = await PDFDocument.create(),
@@ -111,5 +111,35 @@ test("forged and expired discovery confirmations fail closed", () => {
       token: "0".repeat(64),
       expires: Date.now() - 1,
     }),
+  );
+});
+
+test("JSON body limit counts streamed UTF-8 bytes before parsing", async () => {
+  assert.deepEqual(
+    await readJson(
+      new Request("https://example.com", {
+        method: "POST",
+        body: '{"ok":true}',
+      }),
+    ),
+    { ok: true },
+  );
+  await assert.rejects(
+    () =>
+      readJson(
+        new Request("https://example.com", {
+          method: "POST",
+          body: JSON.stringify("é".repeat(10)),
+        }),
+        15,
+      ),
+    /too large/,
+  );
+  await assert.rejects(
+    () =>
+      readJson(
+        new Request("https://example.com", { method: "POST", body: "invalid" }),
+      ),
+    /check the information/,
   );
 });

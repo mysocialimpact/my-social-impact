@@ -61,7 +61,9 @@ export default function Home() {
                 <strong>Can your claims stand up?</strong>
                 <p>Social Impact Claims Code</p>
               </div>
-              <span className="small-arrow">↗</span>
+              <span className="small-arrow">
+                <Arrow diagonal />
+              </span>
             </div>
             <div className="sheet-framework">
               <span className="framework-number">02</span>
@@ -69,7 +71,9 @@ export default function Home() {
                 <strong>What does your report show?</strong>
                 <p>Social Impact Excellence</p>
               </div>
-              <span className="small-arrow">↗</span>
+              <span className="small-arrow">
+                <Arrow diagonal />
+              </span>
             </div>
             <div className="sheet-bottom">
               <span className="tiny-check">✓</span> Evidence first. Insight you
@@ -132,7 +136,7 @@ export default function Home() {
           <article>
             <span>03 / IMPROVE</span>
             <div className="step-symbol" aria-hidden="true">
-              ↗
+              <Arrow diagonal />
             </div>
             <h3>Know what to do next</h3>
             <p>

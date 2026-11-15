@@ -35,21 +35,36 @@ export function verifyCandidate(
     );
   publicUrl(c.url);
 }
+// Bound concurrency and total time without weakening per-source access checks.
+async function mapSources<T, R>(
+  items: T[],
+  fn: (item: T) => Promise<R>,
+): Promise<R[]> {
+  const output: R[] = [];
+  for (let i = 0; i < items.length; i += 3)
+    output.push(...(await Promise.all(items.slice(i, i + 3).map(fn))));
+  return output;
+}
 export async function discoverReports(
   owner: string,
   organisation: string,
 ): Promise<Candidate[]> {
   const citations = await searchWeb(organisation);
-  const candidates: { url: string; title: string }[] = [];
-  for (const link of citations.slice(0, 7)) {
-    try {
-      const fetched = await publicFetch(link.url);
-      if (fetched.status !== 200) continue;
-      if (fetched.bytes.subarray(0, 5).toString() === "%PDF-") {
-        validatePdf(fetched.bytes, "report.pdf");
-        candidates.push({ url: fetched.url, title: link.title });
-      } else if (fetched.type.includes("html")) {
-        const $ = load(fetched.bytes.toString());
+  const signal = AbortSignal.timeout(140000);
+  type Found = { url: string; title: string; verified: boolean };
+  const groups = await mapSources(
+    citations.slice(0, 7),
+    async (link): Promise<Found[]> => {
+      try {
+        const fetched = await publicFetch(link.url, 4_000_000, 0, true, signal);
+        if (fetched.status !== 200) return [];
+        if (fetched.bytes.subarray(0, 5).toString() === "%PDF-") {
+          validatePdf(fetched.bytes, "report.pdf");
+          return [{ url: fetched.url, title: link.title, verified: true }];
+        }
+        if (!fetched.type.includes("html")) return [];
+        const $ = load(fetched.bytes.toString()),
+          found: Found[] = [];
         $("a[href]").each((_, a) => {
           try {
             const url = publicUrl(
@@ -60,33 +75,54 @@ export async function discoverReports(
               /\.pdf(?:$|\?)/i.test(url.href) &&
               /impact|annual|report|review|20\d{2}/i.test(title + url.pathname)
             )
-              candidates.push({ url: url.href, title: title || link.title });
-          } catch {}
+              found.push({
+                url: url.href,
+                title: title || link.title,
+                verified: false,
+              });
+          } catch {
+            /* Exclude invalid links. */
+          }
         });
+        return found.slice(0, 8);
+      } catch {
+        return [];
       }
-    } catch {
-      /* Restricted or unavailable sources are excluded, never bypassed. */
-    }
-  }
-  const verified: Candidate[] = [];
-  for (const c of [
-    ...new Map(candidates.map((c) => [c.url, c])).values(),
-  ].slice(0, 8)) {
-    try {
-      const f = await publicFetch(c.url);
-      if (f.status !== 200) continue;
-      validatePdf(f.bytes, "report.pdf");
-      const expires = Date.now() + 1800000;
-      verified.push({
-        organisation,
-        title: c.title.slice(0, 220),
-        year: (c.title.match(/\b20\d{2}(?:[–/-]\d{2,4})?\b/) || [])[0] || null,
-        url: f.url,
-        source: new URL(f.url).hostname,
-        expires,
-        token: signature(owner, f.url, expires),
-      });
-    } catch {}
-  }
-  return verified;
+    },
+  );
+  const unique = [
+    ...new Map(groups.flat().map((c) => [c.url, c])).values(),
+  ].slice(0, 8);
+  const verified = await mapSources(
+    unique,
+    async (c): Promise<Candidate | null> => {
+      try {
+        let url = c.url;
+        if (!c.verified) {
+          const f = await publicFetch(c.url, 4_000_000, 0, true, signal);
+          if (f.status !== 200) return null;
+          validatePdf(f.bytes, "report.pdf");
+          url = f.url;
+        }
+        const expires = Date.now() + 1800000;
+        return {
+          organisation,
+          title: c.title.slice(0, 220),
+          year:
+            (c.title.match(/\b20\d{2}(?:[–/-]\d{2,4})?\b/) || [])[0] || null,
+          url,
+          source: new URL(url).hostname,
+          expires,
+          token: signature(owner, url, expires),
+        };
+      } catch {
+        return null;
+      }
+    },
+  );
+  return [
+    ...new Map(
+      verified.filter((c): c is Candidate => c !== null).map((c) => [c.url, c]),
+    ).values(),
+  ];
 }

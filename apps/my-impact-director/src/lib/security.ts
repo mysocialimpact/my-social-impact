@@ -34,9 +34,46 @@ export async function rateLimit(key: string, limit: number, seconds: number) {
       "RATE_LIMIT",
     );
 }
+// Aggregate spend survives report deletion. The count stores microdollars.
+const usageKey = createHash("sha256").update("ai-spend:global").digest("hex");
+export async function dailyUsageCost() {
+  const [row] = await query<{ count: number }>(
+    "SELECT count FROM director.rate_limits WHERE key=$1 AND reset_at>now()",
+    [usageKey],
+  );
+  return (row?.count || 0) / 1_000_000;
+}
+export async function recordUsageCost(cost: number) {
+  if (!Number.isFinite(cost) || cost <= 0) return;
+  await query(
+    `INSERT INTO director.rate_limits(key,count,reset_at) VALUES($1,$2,now()+interval '24 hours')
+    ON CONFLICT(key) DO UPDATE SET count=CASE WHEN rate_limits.reset_at<=now() THEN $2 ELSE rate_limits.count+$2 END,
+    reset_at=CASE WHEN rate_limits.reset_at<=now() THEN now()+interval '24 hours' ELSE rate_limits.reset_at END`,
+    [usageKey, Math.ceil(cost * 1_000_000)],
+  );
+}
 export async function readJson(req: Request, max = 16000) {
-  const text = await req.text();
-  if (text.length > max) throw new AppError(413, "This request is too large.");
+  if (Number(req.headers.get("content-length") || 0) > max)
+    throw new AppError(413, "This request is too large.");
+  const reader = req.body?.getReader();
+  if (!reader) throw new AppError(400, "Provide the requested information.");
+  const chunks: Uint8Array[] = [];
+  let bytes = 0;
+  try {
+    while (true) {
+      const part = await reader.read();
+      if (part.done) break;
+      bytes += part.value.length;
+      if (bytes > max) {
+        await reader.cancel();
+        throw new AppError(413, "This request is too large.");
+      }
+      chunks.push(part.value);
+    }
+  } finally {
+    reader.releaseLock();
+  }
+  const text = Buffer.concat(chunks).toString("utf8");
   try {
     return JSON.parse(text);
   } catch {

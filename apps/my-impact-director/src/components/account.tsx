@@ -110,8 +110,8 @@ export function Account({ next = "/review" }: { next?: string }) {
         </button>
       </form>
       <p className="fine-print">
-        Uses the existing My Social Impact / SORP account service. If you
-        already have an account, sign in with the same details.{" "}
+        Use your My Social Impact account. If you already have an account, sign
+        in with the same details.{" "}
         <a href="https://sorp2026.org/forgot-password/">
           Forgot your password?
         </a>

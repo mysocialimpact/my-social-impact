@@ -27,9 +27,11 @@ export async function publicFetch(
   maxBytes = 4_000_000,
   redirects = 0,
   robots = true,
+  signal: AbortSignal = AbortSignal.timeout(90000),
 ): Promise<{ url: string; bytes: Buffer; type: string; status: number }> {
+  signal?.throwIfAborted();
   const url = publicUrl(input);
-  if (robots) await checkRobots(url.href);
+  if (robots) await checkRobots(url.href, signal);
   const addresses = await lookup(url.hostname.replace(/^\[|\]$/g, ""), {
     all: true,
   });
@@ -55,6 +57,7 @@ export async function publicFetch(
             ? cb(null, [address])
             : cb(null, address.address, address.family),
         timeout: 12000,
+        signal,
       },
       (res) => {
         const chunks: Buffer[] = [];
@@ -94,13 +97,20 @@ export async function publicFetch(
       maxBytes,
       redirects + 1,
       robots,
+      signal,
     );
   }
   return { ...result, url: url.href };
 }
-export async function checkRobots(input: string) {
+export async function checkRobots(input: string, signal?: AbortSignal) {
   const u = publicUrl(input);
-  const r = await publicFetch(new URL("/robots.txt", u).href, 300000, 0, false);
+  const r = await publicFetch(
+    new URL("/robots.txt", u).href,
+    300000,
+    0,
+    false,
+    signal,
+  );
   if (r.status === 404 || r.status === 410) return;
   if (
     r.status !== 200 ||

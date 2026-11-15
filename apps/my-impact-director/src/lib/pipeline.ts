@@ -1,6 +1,12 @@
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { query, transaction } from "./db";
+import {
+  dailyUsageCost,
+  recordUsageCost,
+  rateLimit,
+  AppError,
+} from "./security";
 import { structured, AIError, type AIResult } from "./ai";
 import { extractPages, readVisualPages, MAX_TEXT } from "./documents";
 import {
@@ -92,10 +98,9 @@ export async function processOne(id?: string) {
   let usage: AIResult<unknown>["usage"] | undefined;
   try {
     if (Number(job.cost_usd) > 4) throw new AIError("REPORT_COST_LIMIT", false);
-    const [{ cost }] = await query<{ cost: string }>(
-      `SELECT COALESCE(sum(cost_usd),0)::text AS cost FROM director.processing_events WHERE created_at>now()-interval '24 hours'`,
-    );
-    if (Number(cost) > 20) throw new AIError("DAILY_COST_LIMIT", false);
+    if ((await dailyUsageCost()) >= 20)
+      throw new AIError("DAILY_COST_LIMIT", false);
+    if (job.stage > 0) await rateLimit("ai-stage:global", 240, 86400);
     const [doc] = await query<Document>(
       "SELECT pages,file_bytes,title,extraction_notes FROM director.reports WHERE id=$1",
       [job.report_id],
@@ -277,7 +282,8 @@ export async function processOne(id?: string) {
           ? "OUTPUT_INVALID"
           : "STAGE_VALIDATION_FAILED";
     const retry =
-      (e instanceof AIError ? e.retryable : true) && job.stage_attempts < 3;
+      (e instanceof AIError ? e.retryable : !(e instanceof AppError)) &&
+      job.stage_attempts < 3;
     await query(
       `UPDATE director.reviews SET status=$3,lease_token=NULL,lease_until=NULL,next_attempt_at=now()+make_interval(secs=>$4),error_code=$5,error_message=$6,cost_usd=cost_usd+$7,updated_at=now() WHERE id=$1 AND lease_token=$2`,
       [
@@ -304,6 +310,8 @@ export async function processOne(id?: string) {
       ],
     );
     return false;
+  } finally {
+    if (usage) await recordUsageCost(usage.cost);
   }
 }
 export async function drain(id?: string) {

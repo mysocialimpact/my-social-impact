@@ -18,6 +18,8 @@ import { POST as enquiryPost } from "../src/app/api/enquiries/route";
 import { GET as adminGet } from "../src/app/api/admin/route";
 import { POST as inspectPost } from "../src/app/api/admin/[id]/route";
 import { GET as workerGet } from "../src/app/api/worker/route";
+import { dailyUsageCost } from "../src/lib/security";
+import { mkdir, writeFile } from "node:fs/promises";
 import type { ReviewResult } from "../src/lib/pipeline";
 const enabled = process.env.RUN_DATABASE_TESTS === "1";
 test(
@@ -286,6 +288,8 @@ test(
         async () => {
           const r = await getReview(user, id),
             bytes = await exportPdf(r.result as ReviewResult);
+          await mkdir("artifacts", { recursive: true });
+          await writeFile("artifacts/synthetic-test-export.pdf", bytes);
           assert.equal(bytes.subarray(0, 5).toString(), "%PDF-");
           const pages = await extractPages(bytes);
           assert.ok(pages.length >= 5);
@@ -356,14 +360,12 @@ test(
         "failed stages retry with backoff without inventing results",
         async () => {
           const pdf2 = await PDFDocument.create();
-          pdf2
-            .addPage()
-            .drawText(text + " Retry case.", {
-              size: 10,
-              x: 40,
-              y: 700,
-              maxWidth: 500,
-            });
+          pdf2.addPage().drawText(text + " Retry case.", {
+            size: 10,
+            x: 40,
+            y: 700,
+            maxWidth: 500,
+          });
           const r = await createReview(
             user,
             Buffer.from(await pdf2.save()),
@@ -433,6 +435,10 @@ test(
             [uid],
           );
           assert.equal(e.review_id, null);
+          assert.ok(
+            (await dailyUsageCost()) > 0,
+            "deletion cannot erase aggregate spend",
+          );
         },
       );
     } finally {

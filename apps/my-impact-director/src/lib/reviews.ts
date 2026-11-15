@@ -33,6 +33,8 @@ export async function createReview(
     [user.id, sha, VERSION],
   );
   if (previous) return previous;
+  // Keep the daily quota after deletion as well as counting retained reports.
+  await rateLimit(`new-report:${user.id}`, 3, 86400);
   return transaction(async (c) => {
     await c.query("SELECT pg_advisory_xact_lock(hashtextextended($1,0))", [
       user.id,
