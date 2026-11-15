@@ -273,6 +273,8 @@ test(
           }
           const r = await getReview(user, id);
           assert.equal(r.status, "complete");
+          await mkdir("artifacts", { recursive: true });
+          await writeFile("artifacts/synthetic-review.json", JSON.stringify(r));
           const result = r.result as ReviewResult;
           assert.equal(result.scores.claims.overall, 75);
           assert.equal(result.scores.excellence.overall, 75);

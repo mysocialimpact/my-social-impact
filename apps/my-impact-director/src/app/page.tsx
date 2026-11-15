@@ -12,13 +12,11 @@ export default function Home() {
           </div>
           <h1>
             How good is
-            <br />
-            your <em>impact report?</em>
+            <br /> your <em>impact report?</em>
           </h1>
           <p className="hero-description">
             You’re making a difference.
-            <br />
-            Let’s make sure your report shows it.
+            <br /> Let’s make sure your report shows it.
           </p>
           <p className="hero-detail">
             Get a free AI-powered review. Discover what’s working, what could be
@@ -29,8 +27,7 @@ export default function Home() {
           </Link>
           <p className="reassurance">
             Two complementary assessments. Practical recommendations.
-            <br />
-            Completely free.
+            <br /> Completely free.
           </p>
           {!ready() && (
             <p className="launch-note">
@@ -50,8 +47,7 @@ export default function Home() {
             <DocumentIcon />
             <h2>
               From a good story
-              <br />
-              to <em>credible impact.</em>
+              <br /> to <em>credible impact.</em>
             </h2>
             <div className="sheet-rule" />
             <p className="sheet-caption">TWO LENSES. ONE CLEARER PICTURE.</p>
@@ -103,8 +99,7 @@ export default function Home() {
             <p className="eyebrow">A little clarity goes a long way</p>
             <h2>
               Your report.
-              <br />
-              <em>A fresh perspective.</em>
+              <br /> <em>A fresh perspective.</em>
             </h2>
           </div>
           <p>
@@ -153,8 +148,7 @@ export default function Home() {
               <p className="eyebrow">More than a single score</p>
               <h2>
                 Two assessments.
-                <br />
-                <em>Different questions.</em>
+                <br /> <em>Different questions.</em>
               </h2>
             </div>
             <p>
@@ -167,8 +161,7 @@ export default function Home() {
               <span className="tag">01 · THE CREDIBILITY OF YOUR CLAIMS</span>
               <h3>
                 Social Impact
-                <br />
-                Claims Code
+                <br /> Claims Code
               </h3>
               <p>
                 How responsibly does your report make and support its social
@@ -196,8 +189,7 @@ export default function Home() {
               <span className="tag">02 · WHAT YOUR REPORT DEMONSTRATES</span>
               <h3>
                 Social Impact
-                <br />
-                Excellence
+                <br /> Excellence
               </h3>
               <p>
                 What does your report show about how you understand, manage and
@@ -235,8 +227,7 @@ export default function Home() {
             <p className="eyebrow">Technology, with people behind it</p>
             <h2>
               Free insight.
-              <br />
-              <em>Expert help when you need it.</em>
+              <br /> <em>Expert help when you need it.</em>
             </h2>
           </div>
           <p>
@@ -282,10 +273,8 @@ export default function Home() {
           <p className="eyebrow">Why we’re here</p>
           <h2>
             Imagine a world where
-            <br />
-            <em>social impact</em> was taken
-            <br />
-            as seriously as financial performance.
+            <br /> <em>social impact</em> was taken
+            <br /> as seriously as financial performance.
           </h2>
           <div className="vision-copy">
             <span className="vision-star" aria-hidden="true">
@@ -313,8 +302,7 @@ export default function Home() {
         <p className="eyebrow">A bigger ambition · Coming next</p>
         <h2>
           What if every organisation had
-          <br />
-          its own <em>Impact Director?</em>
+          <br /> its own <em>Impact Director?</em>
         </h2>
         <p>
           An intelligent partner to help you question assumptions, learn from
