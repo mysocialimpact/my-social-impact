@@ -38,7 +38,12 @@ const pdf = await getDocumentProxy(
 );
 const extracted = await extractText(pdf, { mergePages: false });
 const pages = extracted.text;
-const content = pages.join("\n");
+const content = pages
+  .join("\n")
+  .replace(
+    /Developed by My Social Impact \| Built by The Ideas Shed\s*\d+\s*\/\s*\d+/g,
+    " ",
+  );
 await pdf.destroy();
 for (const framework of frameworks)
   assert.ok(
