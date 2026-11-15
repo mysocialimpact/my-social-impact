@@ -4,6 +4,7 @@ export class AIError extends Error {
   constructor(
     public code: string,
     public retryable: boolean,
+    public diagnostic?: string,
   ) {
     super("The analysis provider could not complete this stage.");
   }
@@ -49,8 +50,7 @@ export async function structured<T extends z.ZodType>(
       type: "file",
       file: {
         filename: "report.pdf",
-        data: pdf.toString("base64"),
-        media_type: "application/pdf",
+        file_data: `data:application/pdf;base64,${pdf.toString("base64")}`,
       },
     });
   const response = await fetch(
@@ -93,6 +93,13 @@ export async function structured<T extends z.ZodType>(
     throw new AIError(
       code,
       [408, 429, 500, 502, 503, 504].includes(response.status),
+      String(
+        error.error?.message ||
+          error.message ||
+          (typeof error.error === "string"
+            ? error.error
+            : "No provider diagnostic"),
+      ).slice(0, 600),
     );
   }
   const r = await response.json();

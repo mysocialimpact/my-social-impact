@@ -28,7 +28,11 @@ export async function GET(req: Request) {
       });
     } catch (e) {
       return Response.json(
-        { ok: false, code: e instanceof AIError ? e.code : "AI_CHECK_FAILED" },
+        {
+          ok: false,
+          code: e instanceof AIError ? e.code : "AI_CHECK_FAILED",
+          diagnostic: e instanceof AIError ? e.diagnostic : undefined,
+        },
         { status: 503 },
       );
     }
