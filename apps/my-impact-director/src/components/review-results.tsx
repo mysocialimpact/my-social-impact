@@ -90,7 +90,7 @@ function SourceLink({
     </a>
   ) : (
     <Link href={`/reviews/${id}/source?page=${page}`}>
-      View source · PDF page {page} ↗
+      View source · PDF page {page} <Arrow diagonal />
     </Link>
   );
 }

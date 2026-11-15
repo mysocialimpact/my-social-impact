@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { Arrow } from "./icons";
 import { useEffect, useState } from "react";
 import { api, useSession } from "./session";
 import { useReportAction } from "./action-bar";
@@ -155,7 +156,9 @@ export function ReviewView({
             Download your assessment PDF ↓
           </a>
         )}
-        <a href={`/api/reviews/${id}/source`}>Download original report ↗</a>
+        <a href={`/api/reviews/${id}/source`}>
+          Download original report <Arrow diagonal />
+        </a>
         <button className="danger-button" onClick={remove}>
           Delete report & review
         </button>

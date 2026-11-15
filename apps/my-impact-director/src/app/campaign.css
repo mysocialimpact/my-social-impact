@@ -1509,3 +1509,23 @@ select,
 .progress-card .progress-list li.active span {
   color: var(--ink);
 }
+
+:root {
+  --peach: #fff;
+}
+.toolbar a svg,
+.citation a svg,
+.candidate a svg {
+  width: 16px;
+  height: 16px;
+  vertical-align: middle;
+}
+.progress-card h2 {
+  font-family: var(--sans);
+  font-weight: 700;
+  letter-spacing: -0.04em;
+}
+.spinner {
+  border-color: #ffffff55;
+  border-top-color: var(--orange);
+}

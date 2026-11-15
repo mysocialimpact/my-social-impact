@@ -243,7 +243,7 @@ export function Intake({
                 </span>
               </label>
               <a href={c.url} target="_blank" rel="noreferrer">
-                Check source ↗
+                Check source <Arrow diagonal />
               </a>
             </div>
           ))}
