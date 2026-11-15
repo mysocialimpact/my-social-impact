@@ -1,6 +1,7 @@
+import { privateNetworkKey } from "@/lib/access";
 import { z } from "zod";
 import { after } from "next/server";
-import { identity } from "@/lib/auth";
+import { visitor } from "@/lib/auth";
 import {
   AppError,
   failure,
@@ -34,7 +35,7 @@ const schema = z.discriminatedUnion("action", [
 export async function POST(req: Request) {
   try {
     sameOrigin(req);
-    const user = await identity(req);
+    const user = await visitor(req);
     if (!ready())
       throw new AppError(
         503,
@@ -42,6 +43,8 @@ export async function POST(req: Request) {
       );
     const input = schema.parse(await readJson(req));
     if (input.action === "search") {
+      if (user.anonymous)
+        await rateLimit(`anonymous-search:${privateNetworkKey(req)}`, 5, 86400);
       await rateLimit(`search:${user.id}`, 5, 86400);
       await rateLimit("search:global", 200, 86400);
       return Response.json({
@@ -49,6 +52,8 @@ export async function POST(req: Request) {
       });
     }
     verifyCandidate(user.id, input);
+    if (user.anonymous)
+      await rateLimit(`anonymous-upload:${privateNetworkKey(req)}`, 3, 86400);
     await rateLimit(`retrieve:${user.id}`, 10, 3600);
     const f = await publicFetch(input.url);
     if (f.status !== 200)

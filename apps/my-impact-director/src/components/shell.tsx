@@ -1,77 +1,90 @@
 import Link from "next/link";
-import { Mark, Arrow } from "./icons";
-export function Header() {
+import Image from "next/image";
+import { Arrow } from "./icons";
+export { Header } from "./header";
+export function Brand({ className = "" }: { className?: string }) {
   return (
-    <>
-      <a className="skip" href="#main">
-        Skip to content
-      </a>
-      <div className="parent-line">
-        A product brought to you by{" "}
-        <a href="https://mysocialimpact.org">
-          My Social Impact <Arrow diagonal />
-        </a>
-      </div>
-      <header className="header">
-        <Link href="/" className="brand">
-          <Mark />
-          <span>
-            my impact
-            <span className="brand-second">
-              director<span className="brand-dot">.</span>
-            </span>
-          </span>
-        </Link>
-        <nav aria-label="Main navigation">
-          <Link href="/#how-it-works">How it works</Link>
-          <Link href="/methodology">Our methodology</Link>
-          <Link href="/services">Expert help</Link>
-          <Link href="/reviews" className="nav-account">
-            My reviews <Arrow />
-          </Link>
-        </nav>
-      </header>
-    </>
+    <Image
+      className={className}
+      src="/brand/my-impact-director.png"
+      width={2160}
+      height={720}
+      alt="My Impact Director"
+      sizes="(max-width: 700px) 178px, 240px"
+    />
   );
 }
 export function Footer() {
   return (
-    <footer className="footer">
-      <div className="footer-top">
-        <Link href="/" className="brand">
-          <Mark />
-          <span>
-            my impact<span className="brand-second">director.</span>
-          </span>
-        </Link>
+    <footer className="footer brand-footer">
+      <div className="footer-invitation section">
         <p>
           Good intentions deserve
           <br />
-          good evidence.
+          <em>good evidence.</em>
         </p>
+        <Link href="/#upload" className="button primary">
+          Review a report — free
+          <Arrow />
+        </Link>
       </div>
-      <div className="footer-links">
-        <div>
-          Developed by{" "}
-          <a href="https://mysocialimpact.org">
-            My Social Impact <Arrow diagonal />
+      <div className="footer-partners section">
+        <section>
+          <p className="eyebrow">Developed by My Social Impact</p>
+          <a href="https://mysocialimpact.org" className="footer-msi">
+            <Image
+              src="/brand/my-social-impact.png"
+              width={1088}
+              height={124}
+              alt="My Social Impact"
+              sizes="320px"
+            />
           </a>
-          <br />
-          Built by{" "}
-          <a href="https://www.theideasshed.com/">
-            The Ideas Shed <Arrow diagonal />
+          <h2>
+            Serious about impact.
+            <br />
+            <em>Human about everything else.</em>
+          </h2>
+          <a href="https://mysocialimpact.org" className="text-link">
+            Meet the people behind the thinking
+            <Arrow diagonal />
           </a>
-        </div>
+        </section>
+        <section>
+          <a className="footer-shed" href="https://www.theideasshed.com/">
+            <Image
+              src="/brand/the-ideas-shed.png"
+              width={1254}
+              height={1254}
+              alt="The Ideas Shed"
+              sizes="130px"
+            />
+            <span>
+              Built by
+              <br />
+              <strong>The Ideas Shed</strong>
+            </span>
+          </a>
+          <h2>
+            Good ideas.
+            <br />
+            <em>Made real.</em>
+          </h2>
+          <a href="https://www.theideasshed.com/" className="text-link">
+            See what’s in the Shed
+            <Arrow diagonal />
+          </a>
+        </section>
+      </div>
+      <div className="footer-bottom section">
+        <span>© {new Date().getFullYear()} My Social Impact</span>
         <nav aria-label="Footer navigation">
           <Link href="/methodology">Methodology</Link>
-          <Link href="/services">Professional services</Link>
+          <Link href="/services">Expert help</Link>
           <Link href="/privacy">Privacy</Link>
           <Link href="/terms">Terms & accessibility</Link>
         </nav>
-      </div>
-      <div className="footer-bottom">
-        <span>© {new Date().getFullYear()} My Social Impact</span>
-        <span>Automated insight. Professional judgement still matters.</span>
+        <span>Automated insight. Human judgement.</span>
       </div>
     </footer>
   );

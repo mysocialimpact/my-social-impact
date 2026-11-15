@@ -1,54 +1,59 @@
 "use client";
 import { useState } from "react";
-import { Account } from "./account";
-import { useSession, api } from "./session";
-import { DocumentIcon, Arrow } from "./icons";
+import { api } from "./session";
+import { Arrow, DocumentIcon } from "./icons";
 import type { Candidate } from "@/lib/discovery";
-export function Intake({ enabled }: { enabled: boolean }) {
-  const { user, loading, error: sessionError } = useSession();
-  const [tab, setTab] = useState("upload"),
-    [file, setFile] = useState<File | null>(null),
+
+export function Intake({
+  enabled,
+  hero = false,
+}: {
+  enabled: boolean;
+  hero?: boolean;
+}) {
+  const [file, setFile] = useState<File | null>(null),
     [consent, setConsent] = useState(false),
     [quality, setQuality] = useState(false),
     [busy, setBusy] = useState(false),
     [progress, setProgress] = useState(0),
     [error, setError] = useState(""),
+    [drag, setDrag] = useState(false),
     [candidates, setCandidates] = useState<Candidate[] | null>(null),
     [selection, setSelection] = useState<Candidate | null>(null),
-    [drag, setDrag] = useState(false);
-  if (loading)
-    return (
-      <p className="loading" role="status">
-        Checking your account…
-      </p>
-    );
-  if (sessionError)
-    return (
-      <div className="alert error" role="alert">
-        {sessionError}
-      </div>
-    );
-  if (!user) return <Account />;
-  function choose(f: File | undefined) {
+    [find, setFind] = useState(false);
+  function choose(value: File | undefined) {
+    if (!enabled || busy || !value) return;
     setError("");
     setSelection(null);
-    if (!f) return;
-    if (!f.name.toLowerCase().endsWith(".pdf") || f.size > 4_000_000) {
-      setError("Please choose a PDF up to 4 MB.");
+    setConsent(false);
+    if (
+      !value.name.toLowerCase().endsWith(".pdf") ||
+      value.size > 4_000_000 ||
+      value.size === 0
+    ) {
+      setError("Choose a PDF up to 4 MB. Your file hasn’t been uploaded.");
       return;
     }
-    setFile(f);
+    setFile(value);
   }
   async function upload() {
-    if (!file || !consent) return;
+    if (!file || !consent || !enabled || busy) return;
     setBusy(true);
     setError("");
+    try {
+      await api("/api/visitor", { method: "POST" });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Please try again.");
+      setBusy(false);
+      return;
+    }
     const data = new FormData();
     data.set("file", file);
     data.set("consent", String(consent));
     data.set("qualityConsent", String(quality));
     const xhr = new XMLHttpRequest();
     xhr.open("POST", "/api/reviews");
+    xhr.timeout = 120000;
     xhr.upload.onprogress = (e) => {
       if (e.lengthComputable)
         setProgress(Math.round((e.loaded / e.total) * 100));
@@ -56,16 +61,16 @@ export function Intake({ enabled }: { enabled: boolean }) {
     xhr.onload = () => {
       try {
         const d = JSON.parse(xhr.responseText);
-        if (xhr.status >= 400) throw new Error(d.error);
+        if (xhr.status >= 400) throw Error(d.error);
         window.location.assign("/reviews/" + d.id);
       } catch (e) {
         setError(e instanceof Error ? e.message : "Please try again.");
         setBusy(false);
       }
     };
-    xhr.onerror = () => {
+    xhr.onerror = xhr.ontimeout = () => {
       setError(
-        "The connection was interrupted. Your upload may not have finished. Please retry.",
+        "The connection was interrupted. Please try again; an identical upload won’t create a second review.",
       );
       setBusy(false);
     };
@@ -73,18 +78,17 @@ export function Intake({ enabled }: { enabled: boolean }) {
   }
   async function search(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    const organisation = new FormData(e.currentTarget).get("organisation");
     setBusy(true);
     setError("");
     setCandidates(null);
     setSelection(null);
     try {
+      await api("/api/visitor", { method: "POST" });
       const d = await api("/api/discovery", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          action: "search",
-          organisation: new FormData(e.currentTarget).get("organisation"),
-        }),
+        body: JSON.stringify({ action: "search", organisation }),
       });
       setCandidates(d.candidates);
     } catch (e) {
@@ -117,69 +121,60 @@ export function Intake({ enabled }: { enabled: boolean }) {
     }
   }
   return (
-    <div className="intake">
-      <div className="journey">
-        <span className="done">✓ Account</span>
-        <span className="current">2 · Your report</span>
-        <span>3 · Your review</span>
-      </div>
+    <div
+      className={"intake upload-studio" + (hero ? " upload-hero" : "")}
+      id={hero ? "upload" : undefined}
+    >
       {!enabled && (
-        <div className="alert" role="status">
-          <strong>We’re completing live validation.</strong> Reviews are not
-          open yet. Please come back soon or{" "}
-          <a href="https://mysocialimpact.org/#contact">
-            contact My Social Impact
-          </a>{" "}
-          for a professional review.
-        </div>
+        <p className="intake-notice" role="status">
+          <strong>Reviews are temporarily paused.</strong> We’re checking the
+          live assessment service. You can explore the methodology or ask for
+          expert help.
+        </p>
       )}
-      <div className="segmented">
-        <button
-          aria-pressed={tab === "upload"}
-          onClick={() => setTab("upload")}
-        >
-          Upload your report
-        </button>
-        <button aria-pressed={tab === "find"} onClick={() => setTab("find")}>
-          Find a published report
-        </button>
+      <div className="upload-topline">
+        <span>YOUR REPORT. A FRESH PERSPECTIVE.</span>
+        <span>100% FREE</span>
       </div>
-      {tab === "upload" ? (
-        <>
-          <label
-            className={"dropzone " + (drag ? "dragging" : "")}
-            onDragOver={(e) => {
-              e.preventDefault();
-              setDrag(true);
-            }}
-            onDragLeave={() => setDrag(false)}
-            onDrop={(e) => {
-              e.preventDefault();
-              setDrag(false);
-              choose(e.dataTransfer.files[0]);
-            }}
-          >
+      {!find ? (
+        <label
+          className={
+            "dropzone " + (drag ? "dragging " : "") + (file ? "has-file" : "")
+          }
+          onDragOver={(e) => {
+            e.preventDefault();
+            if (enabled) setDrag(true);
+          }}
+          onDragLeave={() => setDrag(false)}
+          onDrop={(e) => {
+            e.preventDefault();
+            setDrag(false);
+            choose(e.dataTransfer.files[0]);
+          }}
+        >
+          <span className="upload-icon">
             <DocumentIcon />
-            <strong>{file ? file.name : "Drop your impact report here"}</strong>
-            <span>
-              {file
-                ? `${(file.size / 1000000).toFixed(2)} MB · Ready for your confirmation`
-                : "or choose a file from your device"}
-            </span>
-            <input
-              aria-label="Choose a PDF report"
-              type="file"
-              accept="application/pdf,.pdf"
-              disabled={busy || !enabled}
-              onChange={(e) => choose(e.target.files?.[0])}
-            />
-            <small>PDF · Up to 4 MB · Up to 100 pages</small>
-          </label>
-          <p className="fine-print">
-            Text PDFs, tables, charts and legible scans. Poor scans may receive
-            a provisional assessment. We’ll tell you what couldn’t be read.
-          </p>
-        </>
+            <span aria-hidden="true">+</span>
+          </span>
+          <strong>{file ? file.name : "Drop your impact report here"}</strong>
+          <span>
+            {file
+              ? `${(file.size / 1_000_000).toFixed(2)} MB · Ready when you are`
+              : "or choose a PDF from your device"}
+          </span>
+          <span className="choose-file">
+            {file ? "Choose a different file" : "Choose a PDF"}
+            <Arrow />
+          </span>
+          <input
+            aria-label="Choose a PDF report"
+            type="file"
+            accept="application/pdf,.pdf"
+            disabled={!enabled || busy}
+            onChange={(e) => choose(e.target.files?.[0])}
+          />
+          <small>PDF · Up to 4 MB · Up to 100 pages</small>
+        </label>
       ) : (
         <div className="discovery">
           <form onSubmit={search}>
@@ -187,122 +182,126 @@ export function Intake({ enabled }: { enabled: boolean }) {
               Organisation name
               <input
                 name="organisation"
-                placeholder="For example, your charity or social enterprise"
                 minLength={2}
                 maxLength={160}
+                placeholder="The organisation that published the report"
                 required
                 disabled={busy}
               />
             </label>
-            <button className="button secondary" disabled={busy || !enabled}>
-              {busy ? "Searching public reports…" : "Find reports"}
+            <button className="button primary" disabled={busy || !enabled}>
+              {busy ? "Finding public reports…" : "Find reports"}
               <Arrow />
             </button>
           </form>
-          {candidates && (
-            <div className="search-results">
-              {!candidates.length ? (
-                <div className="alert">
-                  We couldn’t verify an accessible report. Try a more specific
-                  name or upload your PDF.
-                </div>
-              ) : (
-                <>
-                  <p>
-                    Check the organisation and source carefully. Choose the
-                    report you want us to review.
-                  </p>
-                  {candidates.map((c) => (
-                    <div
-                      className={
-                        "candidate " +
-                        (selection?.url === c.url ? "selected" : "")
-                      }
-                      key={c.url}
-                    >
-                      <label>
-                        <input
-                          type="radio"
-                          name="candidate"
-                          checked={selection?.url === c.url}
-                          onChange={() => setSelection(c)}
-                        />
-                        <span>
-                          <strong>{c.title}</strong>
-                          <small>
-                            {c.source} ·{" "}
-                            {c.year || "Reporting year not verified"}
-                          </small>
-                          <small>Search: {c.organisation}</small>
-                        </span>
-                      </label>
-                      <a href={c.url} target="_blank" rel="noreferrer">
-                        Check source ↗
-                      </a>
-                    </div>
-                  ))}
-                </>
-              )}
-            </div>
+          {candidates?.length === 0 && (
+            <p role="status">
+              We couldn’t verify an accessible PDF. Try another name or upload
+              your report.
+            </p>
           )}
+          {candidates?.map((c) => (
+            <div
+              className={
+                "candidate " + (selection?.url === c.url ? "selected" : "")
+              }
+              key={c.url}
+            >
+              <label>
+                <input
+                  type="radio"
+                  name="candidate"
+                  checked={selection?.url === c.url}
+                  onChange={() => {
+                    setSelection(c);
+                    setConsent(false);
+                  }}
+                />
+                <span>
+                  <strong>{c.title}</strong>
+                  <small>
+                    {c.source} · {c.year || "Year not verified"}
+                  </small>
+                </span>
+              </label>
+              <a href={c.url} target="_blank" rel="noreferrer">
+                Check source ↗
+              </a>
+            </div>
+          ))}
         </div>
       )}
-      <div className="consent-box">
-        <label className="checkbox">
-          <input
-            type="checkbox"
-            checked={consent}
-            onChange={(e) => setConsent(e.target.checked)}
-          />
-          <span>
-            I have permission to submit this report and agree to its processing
-            by our AI service, as explained in the{" "}
-            <a href="/privacy">privacy notice</a>.
-          </span>
-        </label>
-        <label className="checkbox">
-          <input
-            type="checkbox"
-            checked={quality}
-            onChange={(e) => setQuality(e.target.checked)}
-          />
-          <span>
-            Optional: allow My Social Impact to inspect my detailed review for
-            quality improvement.
-          </span>
-        </label>
-      </div>
-      {error && (
-        <div className="alert error" role="alert">
-          {error}
+      {((file && !find) || (selection && find)) && (
+        <div className="upload-confirm">
+          <label className="checkbox">
+            <input
+              type="checkbox"
+              checked={consent}
+              onChange={(e) => setConsent(e.target.checked)}
+            />
+            <span>
+              I have permission to share this report for AI processing, as
+              explained in the <a href="/privacy">privacy notice</a>.
+            </span>
+          </label>
+          <details className="optional-consent">
+            <summary>Optional quality-improvement permission</summary>
+            <label className="checkbox">
+              <input
+                type="checkbox"
+                checked={quality}
+                onChange={(e) => setQuality(e.target.checked)}
+              />
+              <span>
+                Allow My Social Impact to inspect my detailed review to improve
+                the service.
+              </span>
+            </label>
+          </details>
+          <button
+            className="button primary full"
+            disabled={!consent || !enabled || busy}
+            onClick={find ? confirm : upload}
+          >
+            {busy ? "Preparing your review…" : "Review my report — free"}
+            <Arrow />
+          </button>
         </div>
       )}
-      {busy && progress > 0 && tab === "upload" && (
+      {busy && progress > 0 && (
         <div role="status">
-          <progress value={progress} max={100} />
+          <progress value={progress} max={100} aria-label="Upload progress" />
           <p>
             {progress < 100
-              ? `Uploading · ${progress}%`
-              : "Upload received. Preparing your review…"}
+              ? `Uploading ${progress}%`
+              : "Your PDF is uploaded. Preparing the evidence review…"}
           </p>
         </div>
       )}
-      <button
-        className="button primary full"
-        disabled={
-          !enabled ||
-          busy ||
-          !consent ||
-          (tab === "upload" ? !file : !selection)
-        }
-        onClick={tab === "upload" ? upload : confirm}
-      >
-        {busy ? "Please wait…" : "Confirm report & start my free review"}
-        <Arrow />
-      </button>
-      <p className="fine-print centered">
-        Your report stays private. Both assessments are included. No card
-        required.
+      {error && (
+        <p className="alert error" role="alert">
+          {error}
+        </p>
+      )}
+      <div className="upload-foot">
+        <p>
+          <span aria-hidden="true">↗</span> No sign-up. No email. Your results
+          first.
+        </p>
+        <button
+          className="subtle-button"
+          disabled={busy}
+          onClick={() => {
+            setFind(!find);
+            setConsent(false);
+            setError("");
+          }}
+        >
+          {find ? "Upload a PDF instead" : "Find a published report"}
+        </button>
+      </div>
+      <p className="upload-privacy">
+        Private to this browser for 7 days. Download or save after your review.
       </p>
     </div>
   );

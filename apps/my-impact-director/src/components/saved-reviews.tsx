@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useSession, api } from "./session";
 import { Account } from "./account";
+import { SaveReview } from "./save-review";
 import { Arrow, DocumentIcon } from "./icons";
 type Row = {
   id: string;
@@ -17,54 +18,66 @@ export function SavedReviews() {
     [rows, setRows] = useState<Row[] | null>(null),
     [error, setError] = useState("");
   useEffect(() => {
-    if (!user) return;
+    if (loading) return;
+    if (!user) {
+      setRows([]);
+      return;
+    }
     api("/api/reviews")
       .then((d) => setRows(d.reviews))
       .catch((e) => setError(e.message));
-  }, [user]);
-  if (loading) return <p role="status">Checking your account…</p>;
-  if (sessionError) return <div className="alert error">{sessionError}</div>;
-  if (!user) return <Account next="/reviews" />;
+  }, [user, loading]);
   return (
     <>
       <div className="dashboard-actions">
         <div>
-          <p>Welcome, {user.name}.</p>
-          {user.founder && (
+          <p>
+            {user?.anonymous
+              ? "Private reviews from this browser."
+              : user
+                ? `Signed in as ${user.email}`
+                : "Your reviews, on your terms."}
+          </p>
+          {user?.founder && (
             <Link href="/admin">Open founder control centre →</Link>
           )}
         </div>
-        <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-          <Link href="/review" className="button primary small">
-            Review a report <Arrow />
+        <div className="toolbar">
+          <Link href="/#upload" className="button primary small">
+            Review a report
+            <Arrow />
           </Link>
-          <button
-            className="button secondary small"
-            onClick={async () => {
-              try {
-                await api("/api/account", {
-                  method: "POST",
-                  headers: { "content-type": "application/json" },
-                  body: JSON.stringify({ action: "logout" }),
-                });
-                window.location.assign("/");
-              } catch (e) {
-                setError(e instanceof Error ? e.message : "Please try again.");
-              }
-            }}
-          >
-            Sign out
-          </button>
+          {user && !user.anonymous && (
+            <button
+              className="button secondary small"
+              onClick={async () => {
+                try {
+                  await api("/api/account", {
+                    method: "POST",
+                    headers: { "content-type": "application/json" },
+                    body: JSON.stringify({ action: "logout" }),
+                  });
+                  window.location.assign("/");
+                } catch (e) {
+                  setError(
+                    e instanceof Error ? e.message : "Please try again.",
+                  );
+                }
+              }}
+            >
+              Sign out
+            </button>
+          )}
         </div>
       </div>
-      {error && (
-        <div className="alert error" role="alert">
-          {error}
-        </div>
+      {(error || sessionError) && (
+        <p className="alert error" role="alert">
+          {error || sessionError}
+        </p>
       )}
-      {!rows && !error ? (
-        <p role="status">Loading your reviews…</p>
-      ) : rows?.length ? (
+      {loading || !rows ? (
+        <p role="status">Looking for your reviews…</p>
+      ) : rows.length ? (
         <div className="review-list">
           {rows.map((r) => (
             <Link href={"/reviews/" + r.id} className="review-item" key={r.id}>
@@ -72,7 +85,7 @@ export function SavedReviews() {
                 <span className={"badge " + r.status}>{r.status}</span>
                 <h3>{r.title}</h3>
                 <p>
-                  {r.organisation || "Organisation being identified"} ·{" "}
+                  {r.organisation || "Getting to know the report"} ·{" "}
                   {r.reporting_period ||
                     new Date(r.created_at).toLocaleDateString("en-GB")}
                 </p>
@@ -82,20 +95,24 @@ export function SavedReviews() {
           ))}
         </div>
       ) : (
-        rows && (
-          <div className="empty">
-            <DocumentIcon />
-            <h2>Your first fresh perspective starts here.</h2>
-            <p>
-              Upload or find an impact report. Your saved reviews will appear
-              here.
-            </p>
-            <Link className="button primary" href="/review">
-              Review my first report <Arrow />
-            </Link>
-          </div>
-        )
+        <div className="empty">
+          <DocumentIcon />
+          <h2>A fresh perspective starts with your report.</h2>
+          <p>
+            No reviews in this browser yet. Upload a PDF to begin, or use an
+            email link to return to a saved review.
+          </p>
+          <Link className="text-link" href="/#upload">
+            Review my report — free
+            <Arrow />
+          </Link>
+        </div>
       )}
+      <SaveReview returning />
+      <details className="existing-account">
+        <summary>Already have a My Social Impact account?</summary>
+        <Account next="/reviews" />
+      </details>
     </>
   );
 }

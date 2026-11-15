@@ -15,7 +15,9 @@ await mkdir(directory, { recursive: true });
 const browser = await chromium.launch({
   executablePath: process.env.QA_BROWSER || undefined,
   args: ["--no-sandbox"],
-  ...(process.env.HTTPS_PROXY
+  ...(!base.includes("localhost") &&
+  !base.includes("127.0.0.1") &&
+  process.env.HTTPS_PROXY
     ? { proxy: { server: process.env.HTTPS_PROXY } }
     : {}),
 });
@@ -50,6 +52,25 @@ try {
       assert.equal(response.status(), 200, `${path} loads at ${width}px`);
       assert.match(await page.title(), /My Impact Director/);
       assert.equal(await page.locator("h1").count(), 1);
+      if (path === "/") {
+        await page.evaluate(async () => {
+          for (const img of document.images) {
+            img.loading = "eager";
+          }
+          await Promise.all(
+            [...document.images].map((img) => img.decode().catch(() => {})),
+          );
+        });
+        assert.equal(
+          await page.evaluate(
+            () =>
+              [...document.images].filter((img) => img.naturalWidth === 0)
+                .length,
+          ),
+          0,
+          "All brand assets load",
+        );
+      }
       if (path === "/")
         await page.screenshot({
           path: `${directory}/${width}-home.png`,
@@ -91,30 +112,33 @@ try {
           path: `${directory}/${width}-${path === "/" ? "home" : "review"}.png`,
           fullPage: true,
         });
-      if (path === "/review") {
-        await page
-          .getByRole("button", { name: "Sign in", exact: true })
-          .first()
-          .click();
-        await page.getByRole("heading", { name: "Welcome back." }).waitFor();
+      if (path === "/" || path === "/review") {
         assert.equal(
-          await page.getByLabel("Your name", { exact: true }).count(),
+          await page.getByLabel("Email address", { exact: true }).count(),
           0,
+          "No email gate before upload",
         );
-        await page
-          .getByRole("button", { name: "Create account", exact: true })
-          .click();
-        await page
-          .getByLabel("Your name", { exact: true })
-          .fill("Synthetic Browser QA");
-        await page
-          .getByLabel("Email address", { exact: true })
-          .fill("qa@example.invalid");
-        await page.getByLabel(/^Password/).fill("short");
         assert.equal(
-          await page.locator("form").evaluate((form) => form.checkValidity()),
-          false,
-          "short registration password is rejected before submission",
+          await page.locator('input[type="password"]').count(),
+          0,
+          "No password gate",
+        );
+        assert.equal(
+          await page.locator('input[type="file"]').count(),
+          1,
+          "Upload available without account",
+        );
+      }
+      if (width === 390 && path === "/") {
+        await page.getByRole("button", { name: "Menu", exact: true }).click();
+        assert.equal(
+          await page.locator(".menu-toggle").getAttribute("aria-expanded"),
+          "true",
+        );
+        await page.keyboard.press("Escape");
+        assert.equal(
+          await page.locator(".menu-toggle").getAttribute("aria-expanded"),
+          "false",
         );
       }
     }

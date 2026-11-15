@@ -1,4 +1,4 @@
-import { identity } from "@/lib/auth";
+import { visitor } from "@/lib/auth";
 import { getReview } from "@/lib/reviews";
 import { failure, AppError } from "@/lib/security";
 import { exportPdf } from "@/lib/export";
@@ -8,7 +8,7 @@ export async function GET(
   ctx: { params: Promise<{ id: string }> },
 ) {
   try {
-    const review = await getReview(await identity(req), (await ctx.params).id);
+    const review = await getReview(await visitor(req), (await ctx.params).id);
     if (review.status !== "complete" || !review.result)
       throw new AppError(409, "The review is still being prepared.");
     return new Response(

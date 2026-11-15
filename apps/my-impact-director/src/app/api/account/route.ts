@@ -1,10 +1,10 @@
-import { identity, accountAction } from "@/lib/auth";
+import { visitor, accountAction } from "@/lib/auth";
 import { failure, AppError, readJson } from "@/lib/security";
 export const dynamic = "force-dynamic";
 export async function GET(req: Request) {
   try {
     return Response.json(
-      { user: await identity(req) },
+      { user: await visitor(req) },
       { headers: { "cache-control": "no-store" } },
     );
   } catch (e) {

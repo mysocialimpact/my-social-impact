@@ -1,4 +1,4 @@
-import { identity } from "@/lib/auth";
+import { visitor } from "@/lib/auth";
 import { sourceFile } from "@/lib/reviews";
 import { failure } from "@/lib/security";
 export async function GET(
@@ -6,7 +6,7 @@ export async function GET(
   ctx: { params: Promise<{ id: string }> },
 ) {
   try {
-    const file = await sourceFile(await identity(req), (await ctx.params).id);
+    const file = await sourceFile(await visitor(req), (await ctx.params).id);
     return new Response(new Uint8Array(file), {
       headers: {
         "content-type": "application/pdf",

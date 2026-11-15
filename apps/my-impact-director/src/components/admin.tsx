@@ -5,6 +5,7 @@ import { Account } from "./account";
 import { ReviewResults } from "./review-results";
 import type { ReviewResult } from "@/lib/pipeline";
 type AdminData = {
+  usage: { event: string; count: string }[];
   metrics: Record<string, string>;
   users: {
     id: string;
@@ -138,6 +139,29 @@ export function Admin() {
             is an estimate based on recorded usage; interrupted requests may be
             missing.
           </p>
+          <section className="result-section">
+            <h2>Anonymous journey · last 30 days</h2>
+            <p>
+              Aggregate events, with no visitor identifiers. A completed report
+              and its first view are each counted once.
+            </p>
+            <div className="metrics">
+              {[
+                ["anonymous_started", "Guest reviews started"],
+                ["review_completed", "Reviews completed"],
+                ["result_viewed", "Results opened"],
+                ["email_saved", "Email links used"],
+                ["enquiry_created", "Enquiries sent"],
+              ].map(([event, label]) => (
+                <div className="metric" key={event}>
+                  <strong>
+                    {data.usage.find((x) => x.event === event)?.count || "0"}
+                  </strong>
+                  <span>{label}</span>
+                </div>
+              ))}
+            </div>
+          </section>
           <section className="result-section">
             <h2>Reports & assessment quality</h2>
             <p>

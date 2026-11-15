@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { api, useSession } from "./session";
-import { Account } from "./account";
+import { SaveReview } from "./save-review";
 import { ReviewResults } from "./review-results";
 import type { ReviewResult } from "@/lib/pipeline";
 import type { Page } from "@/lib/assessment";
@@ -70,9 +70,20 @@ export function ReviewView({
       clearTimeout(timer);
     };
   }, [user, id, busy]);
-  if (loading) return <p role="status">Checking your account…</p>;
+  if (loading) return <p role="status">Opening your private review…</p>;
   if (sessionError) return <div className="alert error">{sessionError}</div>;
-  if (!user) return <Account next={"/reviews/" + id} />;
+  if (!user)
+    return (
+      <>
+        <h1>This review is private.</h1>
+        <p>
+          Return in the browser you used to upload it, or use your saved email
+          link.
+        </p>
+        <SaveReview returning />
+        <Link href="/#upload">Start a new review →</Link>
+      </>
+    );
   if (error)
     return (
       <div className="alert error" role="alert">
@@ -143,7 +154,10 @@ export function ReviewView({
         </button>
       </div>
       {review.status === "complete" && review.result ? (
-        <ReviewResults id={id} result={review.result} />
+        <>
+          <ReviewResults id={id} result={review.result} />
+          <SaveReview id={id} />
+        </>
       ) : (
         <div className="progress-card">
           {review.status === "failed" ? (
@@ -186,8 +200,9 @@ export function ReviewView({
               <div className="spinner" aria-hidden="true" />
               <h2>Good insight starts with the evidence.</h2>
               <p>
-                We’re checking your report carefully. You can leave this page
-                and return to your saved review.
+                We’re reading your report and checking the evidence carefully.
+                This can take several minutes. You can return to this page in
+                the same browser; no account is needed.
               </p>
               <div role="status" aria-live="polite">
                 <p className="progress-stage">

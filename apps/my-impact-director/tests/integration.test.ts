@@ -1,6 +1,14 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { randomUUID } from "node:crypto";
+import {
+  createGuest,
+  localIdentity,
+  tokenHash,
+  clearLocalSession,
+} from "../src/lib/access";
+import { requestEmailSave, redeemEmailLink } from "../src/lib/email-save";
+import { visitor } from "../src/lib/auth";
+import { randomUUID, randomBytes } from "node:crypto";
 import { PDFDocument, StandardFonts } from "pdf-lib";
 import { database, query } from "../src/lib/db";
 import {
@@ -49,11 +57,17 @@ test(
     const text =
       quote +
       " We have not measured changes in household income. The board approved follow-up interviews to learn whether participants benefited.";
+    const localUsers: string[] = [];
+    const emails: Record<string, any>[] = [];
     let aiCalls = 0,
       failAI = false,
       forgeQuote = false;
     globalThis.fetch = async (input, init) => {
       const url = String(input);
+      if (url === "https://api.resend.com/emails") {
+        emails.push(JSON.parse(String(init?.body)));
+        return Response.json({ id: "synthetic-email-receipt" });
+      }
       if (url.includes("/api/readiness-account")) {
         const h = new Headers(init?.headers),
           cookie = h.get("cookie") || "";
@@ -114,14 +128,7 @@ test(
               score: 3,
               explanation:
                 "Synthetic fixture judgement for testing persistence, not professional calibration.",
-              evidence: [
-                {
-                  page: 1,
-                  quote: forgeQuote
-                    ? "This invented evidence does not exist."
-                    : quote,
-                },
-              ],
+              evidenceIds: [forgeQuote ? "INVENTED" : p.passages[0].id],
               limitations: ["Synthetic contract test."],
               improvement:
                 "Publish the follow-up income measure and response rate.",
@@ -163,12 +170,11 @@ test(
             claims: [
               {
                 id: "C1",
-                text: quote,
-                page: 1,
+                passageId: p.passages[0].id,
                 classification: "output",
                 outcome: "People attended training.",
                 materiality: "high",
-                evidence: [{ page: 1, quote }],
+                evidenceIds: [p.passages[0].id],
                 adequacy: "partial",
                 causal: false,
                 assumptions: ["No measured income outcome."],
@@ -303,6 +309,121 @@ test(
         },
       );
       await t.test(
+        "anonymous sessions and optional email saving preserve private access, expiry and single-use links",
+        async () => {
+          const guestReq = (cookie = "") =>
+            new Request("https://test.example/api/save", {
+              headers: {
+                cookie,
+                origin: "https://test.example",
+                "x-forwarded-for": uid,
+              },
+            });
+          const a = await createGuest(guestReq()),
+            b = await createGuest(guestReq());
+          localUsers.push(a.user.id, b.user.id);
+          const cookie = a.cookie!.split(";")[0];
+          assert.equal((await visitor(guestReq(cookie))).anonymous, true);
+          assert.equal(
+            (await createGuest(guestReq(cookie))).user.id,
+            a.user.id,
+          );
+          await assert.rejects(() => identity(guestReq(cookie)), {
+            status: 401,
+          });
+          assert.equal(
+            await localIdentity(
+              guestReq("mid_access=" + randomBytes(32).toString("base64url")),
+              true,
+            ),
+            null,
+          );
+          const guestReview = await createReview(
+            a.user,
+            bytes,
+            "guest-contract.pdf",
+            true,
+            false,
+          );
+          ids.push(guestReview.id);
+          // Use the explicitly synthetic, already validated result produced above.
+          await query(
+            "UPDATE director.reviews SET status='complete',stage=15,result=(SELECT result FROM director.reviews WHERE id=$2) WHERE id=$1",
+            [guestReview.id, id],
+          );
+          const guestResult = await getReview(a.user, guestReview.id);
+          assert.ok(
+            new Date(String(guestResult.expires_at)).getTime() <
+              Date.now() + 8 * 86400000,
+          );
+          await assert.rejects(() => getReview(b.user, guestReview.id), {
+            status: 404,
+          });
+          await assert.rejects(() => sourceFile(b.user, guestReview.id), {
+            status: 404,
+          });
+          process.env.EMAIL_ENABLED = "false";
+          await assert.rejects(
+            () =>
+              requestEmailSave(guestReq(cookie), {
+                email: "fixture@example.invalid",
+                reviewId: guestReview.id,
+              }),
+            { status: 503 },
+          );
+          process.env.EMAIL_ENABLED = "true";
+          process.env.EMAIL_FROM = "QA <qa@example.invalid>";
+          process.env.RESEND_API_KEY = "synthetic-contract-only";
+          const email = uid + "@example.invalid";
+          await assert.rejects(
+            () =>
+              requestEmailSave(guestReq(b.cookie!.split(";")[0]), {
+                email,
+                reviewId: guestReview.id,
+              }),
+            { status: 404 },
+          );
+          await requestEmailSave(guestReq(cookie), {
+            email,
+            reviewId: guestReview.id,
+          });
+          assert.equal(emails.length, 1);
+          assert.equal(
+            Buffer.from(emails[0].attachments[0].content, "base64")
+              .subarray(0, 5)
+              .toString(),
+            "%PDF-",
+          );
+          const token = emails[0].text.match(/access#([A-Za-z0-9_-]{43})/)![1];
+          const redeemed = await redeemEmailLink(token);
+          assert.equal(redeemed.destination, "/reviews/" + guestReview.id);
+          const savedReq = guestReq(redeemed.cookie.split(";")[0]);
+          const saved = await visitor(savedReq);
+          localUsers.push(saved.id);
+          assert.equal(saved.anonymous, false);
+          assert.equal(saved.founder, false);
+          const retained = await getReview(saved, guestReview.id);
+          assert.ok(
+            new Date(String(retained.expires_at)).getTime() >
+              Date.now() + 179 * 86400000,
+          );
+          await assert.rejects(() => redeemEmailLink(token), { status: 410 });
+          const expired = randomBytes(32).toString("base64url");
+          await query(
+            "INSERT INTO director.email_links(token_hash,owner_id,email,expires_at) VALUES($1,$2,$3,now()-interval '1 second')",
+            [tokenHash(expired), a.user.id, email],
+          );
+          await assert.rejects(() => redeemEmailLink(expired), { status: 410 });
+          await deleteReview(saved, guestReview.id);
+          await assert.rejects(() => getReview(a.user, guestReview.id), {
+            status: 404,
+          });
+          await clearLocalSession(savedReq);
+          await assert.rejects(() => visitor(savedReq), { status: 401 });
+          process.env.EMAIL_ENABLED = "false";
+        },
+      );
+      await t.test(
         "founder restriction and detailed inspection consent",
         async () => {
           assert.equal((await adminGet(req("/api/admin"))).status, 403);
@@ -386,6 +507,9 @@ test(
           assert.equal(await processOne(r.id), false);
           failAI = false;
           await query(
+            "DELETE FROM director.rate_limits WHERE key='ai-provider-backoff'",
+          );
+          await query(
             "UPDATE director.reviews SET next_attempt_at=now() WHERE id=$1",
             [r.id],
           );
@@ -398,7 +522,7 @@ test(
       await t.test(
         "citation validation prevents publication of invented source text",
         async () => {
-          const id2 = ids[1];
+          const id2 = ids.at(-1)!;
           await processOne(id2);
           await processOne(id2);
           forgeQuote = true;
@@ -459,7 +583,7 @@ test(
         [uid, other, founder],
       ]);
       await query("DELETE FROM director.users WHERE id=ANY($1::text[])", [
-        [uid, other, founder],
+        [uid, other, founder, ...localUsers],
       ]);
       await database().end();
     }

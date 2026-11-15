@@ -1,5 +1,6 @@
+import { privateNetworkKey } from "@/lib/access";
 import { after } from "next/server";
-import { identity } from "@/lib/auth";
+import { visitor } from "@/lib/auth";
 import { sameOrigin, failure, AppError, rateLimit } from "@/lib/security";
 import { createReview, listReviews, ready } from "@/lib/reviews";
 import { drain } from "@/lib/pipeline";
@@ -8,7 +9,7 @@ export const dynamic = "force-dynamic";
 export async function GET(req: Request) {
   try {
     return Response.json(
-      { reviews: await listReviews(await identity(req)), enabled: ready() },
+      { reviews: await listReviews(await visitor(req)), enabled: ready() },
       { headers: { "cache-control": "no-store" } },
     );
   } catch (e) {
@@ -18,7 +19,9 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     sameOrigin(req);
-    const user = await identity(req);
+    const user = await visitor(req);
+    if (user.anonymous)
+      await rateLimit(`anonymous-upload:${privateNetworkKey(req)}`, 3, 86400);
     await rateLimit(`upload:${user.id}`, 10, 3600);
     if (Number(req.headers.get("content-length") || 0) > 4_100_000)
       throw new AppError(413, "Choose a PDF up to 4 MB.");

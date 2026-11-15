@@ -20,16 +20,17 @@ export default function Terms() {
           Submit only reports you have permission to share and process. Do not
           upload malicious, unlawful or unnecessary sensitive content. You
           retain rights in your report and allow us to process it to provide the
-          requested service. Keep your account credentials secure.
+          requested service. Keep your private browser session and optional
+          email links secure.
         </p>
         <h2>Free use and availability</h2>
         <p>
-          The current fair-use limit is three reports per account per 24 hours,
-          with 20 stored reports. PDFs may be up to 4 MB and 100 pages;
-          unusually complex or lengthy content may exceed processing limits.
-          Searches and retries also have fair-use limits. We may pause
-          processing when capacity or safety checks require it. We do not invent
-          results for failed jobs.
+          The current fair-use limit is three reports per visitor per 24 hours,
+          with additional network limits for anonymous use, with 20 stored
+          reports. PDFs may be up to 4 MB and 100 pages; unusually complex or
+          lengthy content may exceed processing limits. Searches and retries
+          also have fair-use limits. We may pause processing when capacity or
+          safety checks require it. We do not invent results for failed jobs.
         </p>
         <h2>Professional services</h2>
         <p>

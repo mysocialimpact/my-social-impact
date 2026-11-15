@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { localIdentity, clearLocalSession } from "./access";
 import { query } from "./db";
 import { AppError, rateLimit, sameOrigin } from "./security";
 const identitySchema = z.object({
@@ -17,6 +18,8 @@ export type Identity = {
   name: string;
   organisation?: string;
   founder: boolean;
+  anonymous?: boolean;
+  accessIds?: string[];
 };
 const accountUrl = () =>
   new URL(
@@ -33,7 +36,14 @@ export function sessionCookie(req: Request) {
 }
 export async function identity(req: Request): Promise<Identity> {
   const cookie = sessionCookie(req);
-  if (!cookie) throw new AppError(401, "Please sign in to continue.");
+  if (!cookie) {
+    const local = await localIdentity(req);
+    if (local) return local;
+    throw new AppError(
+      401,
+      "Open your saved email link or sign in to continue.",
+    );
+  }
   const r = await fetch(accountUrl(), {
     headers: { cookie, "x-sorp-destination": "sorp2026.org" },
     redirect: "error",
@@ -57,6 +67,24 @@ export async function identity(req: Request): Promise<Identity> {
   );
   return user;
 }
+export async function visitor(req: Request): Promise<Identity> {
+  if (sessionCookie(req)) {
+    try {
+      const user = await identity(req);
+      const local = await localIdentity(req, true);
+      return { ...user, accessIds: [user.id, ...(local?.accessIds || [])] };
+    } catch (e) {
+      if (!(e instanceof AppError && e.status === 401)) throw e;
+    }
+  }
+  const local = await localIdentity(req, true);
+  if (local) return local;
+  throw new AppError(
+    401,
+    "This review is private to the browser that created it. Open your saved email link to return.",
+    "ACCESS_REQUIRED",
+  );
+}
 export async function founder(req: Request) {
   const u = await identity(req);
   if (!u.founder) throw new AppError(403, "Founder access is required.");
@@ -73,6 +101,12 @@ export async function accountAction(req: Request, input: unknown) {
     })
     .strict()
     .parse(input);
+  if (data.action === "logout" && !sessionCookie(req)) {
+    const headers = new Headers({ "cache-control": "no-store" });
+    for (const cookie of await clearLocalSession(req))
+      headers.append("set-cookie", cookie);
+    return Response.json({ ok: true }, { headers });
+  }
   if (data.action !== "logout" && (!data.email || !data.password))
     throw new AppError(400, "Enter your email and password.");
   if (
@@ -114,6 +148,10 @@ export async function accountAction(req: Request, input: unknown) {
   for (const cookie of r.headers.getSetCookie())
     if (cookie.startsWith("msi_sorp_session="))
       headers.append("set-cookie", cookie);
+  if (data.action === "logout") {
+    for (const cookie of await clearLocalSession(req))
+      headers.append("set-cookie", cookie);
+  }
   return Response.json(
     r.ok
       ? { ok: true }

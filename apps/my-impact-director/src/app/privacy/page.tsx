@@ -3,7 +3,7 @@ export default function Privacy() {
   return (
     <section className="section">
       <PageIntro
-        label="Privacy notice · Version 1.0 · 15 November 2026"
+        label="Privacy notice · Version 2.0 · 15 November 2026"
         title="Your report stays yours."
       />
       <div className="content-prose">
@@ -17,19 +17,21 @@ export default function Privacy() {
         </p>
         <h2>What we process and why</h2>
         <p>
-          We process your account identifier, name and email, the reports you
-          submit, extracted content, assessment findings and processing records
-          to deliver and save your reviews. A report may contain information
-          about other people. Only submit documents you are entitled to share
-          for this purpose. Remove unnecessary personal or sensitive information
-          first.
+          You can upload a report and see the complete review without giving us
+          a name or email address. We process the report, extracted content,
+          assessment findings and minimal processing records to deliver the
+          review. An unguessable browser session protects your access. A report
+          may contain information about other people. Only submit documents you
+          are entitled to share for this purpose. Remove unnecessary personal or
+          sensitive information first.
         </p>
         <p>
-          Accounts use the existing My Social Impact / SORP authentication
-          service. Existing account details remain with that service. My Impact
-          Director does not store your password. Essential, secure session
-          cookies keep you signed in. We do not add advertising trackers or
-          automatically subscribe you to marketing.
+          Essential, secure cookies keep guest reviews available in the same
+          browser for seven days. Optional email saving, where available, sends
+          a PDF copy and a single-use link valid for 30 minutes. Opening it
+          gives you a 30-day saved-review session. Existing My Social Impact /
+          SORP accounts remain supported; we do not store their passwords. We do
+          not add advertising trackers or subscribe you to marketing.
         </p>
         <h2>Document processing and providers</h2>
         <p>
@@ -53,22 +55,43 @@ export default function Privacy() {
           web search. Accessible sources are retrieved only after checking
           public-network addresses and website access rules.
         </p>
+        <p>
+          Where email saving is configured, Resend delivers the requested PDF
+          and secure return link to your chosen email address. The PDF then
+          follows your email provider’s retention rules. No email is sent unless
+          you request it.
+        </p>
+        <h2>Usage and security</h2>
+        <p>
+          We count daily totals for review starts, completions, first result
+          views, email saves and enquiries. These aggregate counts contain no
+          visitor identifiers. To enforce fair-use limits we store keyed,
+          rotating hashes of network addresses, never raw network addresses in
+          our application rate-limit records. Hosting providers may keep their
+          own security logs.
+        </p>
         <h2>Who can see your report</h2>
         <p>
-          Your uploads and assessments are private to your account. Other users
-          cannot view them. Founder dashboards show operational metadata such as
-          account, organisation, status and scores. Detailed quality inspection
-          requires your optional consent or your explicit choice to share the
-          linked review in a service enquiry. Each inspection records an audit
-          reason. Infrastructure administrators may need restricted technical
-          access to operate or secure the service.
+          Your uploads and assessments are private to the browser session that
+          created them, your existing account, or an email recipient you
+          explicitly choose. Knowing a review URL alone does not grant access.
+          An email recipient who opens the private saving link can read and
+          delete that review. Founder dashboards show operational metadata such
+          as account, organisation, status and scores. Detailed quality
+          inspection requires your optional consent or your explicit choice to
+          share the linked review in a service enquiry. Each inspection records
+          an audit reason. Infrastructure administrators may need restricted
+          technical access to operate or secure the service.
         </p>
         <h2>Retention and deletion</h2>
         <p>
-          Reports and their associated assessments are scheduled for automatic
-          deletion 180 days after upload. You can delete them sooner from the
-          review page. Deletion also removes extracted pages and processing
-          records. An enquiry may remain so the team can complete the
+          Anonymous reports and assessments expire after seven days. Opening an
+          optional saving link retains that report for 180 days from that time.
+          Reports uploaded through an existing signed-in account expire after
+          180 days. Expired reports cannot be accessed; a scheduled worker
+          deletes their files and associated records. You can delete them sooner
+          from the review page. Deletion also removes extracted pages and
+          processing records. An enquiry may remain so the team can complete the
           conversation; deleting its report removes the assessment link.
         </p>
         <p>
@@ -81,11 +104,11 @@ export default function Privacy() {
         </p>
         <h2>Enquiries and your choices</h2>
         <p>
-          When you submit an enquiry, we use its message and your account email
-          to respond. Sharing the assessment is a separate choice. We do not
-          publish your report or send it to another customer. You can request
-          correction, access, deletion or restriction of your data, and raise a
-          concern with the relevant data-protection authority.
+          When you submit an enquiry, we use the name, email and message you
+          provide to respond. Sharing the assessment is a separate choice. We do
+          not publish your report or send it to another customer. You can
+          request correction, access, deletion or restriction of your data, and
+          raise a concern with the relevant data-protection authority.
         </p>
         <h2>Changes</h2>
         <p>

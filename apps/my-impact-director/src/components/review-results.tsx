@@ -11,18 +11,41 @@ function ScoreCard({
   score: Scores;
 }) {
   return (
-    <article className="score-card">
+    <article className={"score-card score-" + framework}>
       <p className="eyebrow">
         {framework === "claims"
           ? "The credibility of your claims"
           : "What your report demonstrates"}
       </p>
       <h2>{frameworkNames[framework]}</h2>
-      <div
-        className={"score-value " + (score.provisional ? "provisional" : "")}
-      >
-        {score.provisional ? "Provisional" : score.overall}
-        {!score.provisional && <span> / 100</span>}
+      <div className="score-display">
+        <div className="score-dial">
+          <svg viewBox="0 0 160 160" aria-hidden="true">
+            <circle cx="80" cy="80" r="68" className="dial-track" />
+            <circle
+              cx="80"
+              cy="80"
+              r="68"
+              className="dial-value"
+              pathLength="100"
+              strokeDasharray={`${score.overall || 0} 100`}
+              transform="rotate(-90 80 80)"
+            />
+          </svg>
+          <div
+            className={
+              "score-value " + (score.provisional ? "provisional" : "")
+            }
+          >
+            {score.provisional ? "—" : score.overall}
+            <span>{score.provisional ? "provisional" : "out of 100"}</span>
+          </div>
+        </div>
+        <p>
+          {score.provisional
+            ? "More reliable evidence is needed for an overall result."
+            : "An indicative assessment of the evidence in your report."}
+        </p>
       </div>
       <p>
         {score.coverage}/20 tests assessed.{" "}
@@ -163,6 +186,24 @@ export function ReviewResults({
           </div>
         </div>
       </div>
+      {result.claims.some((c) => c.exaggerationRisk === "high") && (
+        <aside className="priority-concerns">
+          <p className="eyebrow">LOOK CLOSELY AT THESE CLAIMS</p>
+          <h2>Where the wording may run ahead of the evidence.</h2>
+          <ul>
+            {result.claims
+              .filter((c) => c.exaggerationRisk === "high")
+              .slice(0, 3)
+              .map((c) => (
+                <li key={c.id}>
+                  <blockquote>“{c.text}”</blockquote>
+                  <p>{c.defensibleWording || c.outcome}</p>
+                  <SourceLink id={id} page={c.page} admin={admin} />
+                </li>
+              ))}
+          </ul>
+        </aside>
+      )}
       <nav className="tabs-nav" aria-label="Review sections">
         <a href="#claims">Claims Code</a>
         <a href="#excellence">Excellence</a>

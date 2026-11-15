@@ -11,7 +11,7 @@ export const services = {
     ],
   },
   preparation: {
-    name: "Impact Report Preparation",
+    name: "Create an Impact Report",
     heading: "A report that does your impact justice.",
     intro:
       "Need an impact report from scratch? We can help you understand your impact, collect the evidence and produce a compelling, credible report.",
@@ -22,7 +22,7 @@ export const services = {
     ],
   },
   digitisation: {
-    name: "Impact Report Digitisation",
+    name: "Digitise Your Impact Report",
     heading: "Your report deserves more than a PDF.",
     intro:
       "Turn your existing impact report into an engaging, interactive digital experience that helps more people explore, understand and connect with your impact.",

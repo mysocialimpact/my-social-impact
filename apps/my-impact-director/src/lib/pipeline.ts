@@ -1,3 +1,10 @@
+import {
+  sourcePassages,
+  referencedClaimsSchema,
+  referencedFindingsSchema,
+  resolveClaims,
+  resolveFindings,
+} from "./passages";
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { query, transaction } from "./db";
@@ -11,8 +18,6 @@ import { structured, AIError, type AIResult } from "./ai";
 import { extractPages, readVisualPages, MAX_TEXT } from "./documents";
 import {
   contextSchema,
-  claimsSchema,
-  findingsSchema,
   actionSchema,
   validateClaims,
   validateFindings,
@@ -81,15 +86,22 @@ export type ReviewResult = {
 };
 export async function processOne(id?: string) {
   if (process.env.REVIEWS_ENABLED !== "true") return false;
+  const [backoff] = await query(
+    "SELECT 1 FROM director.rate_limits WHERE key='ai-provider-backoff' AND reset_at>now()",
+  );
+  if (backoff) return false;
   const token = randomUUID();
   const job = await transaction(async (c) => {
+    await c.query(
+      "UPDATE director.reviews SET status='failed',error_code='ATTEMPT_LIMIT',error_message='The service could not finish within its processing limits. Please contact us for help.',lease_until=NULL WHERE attempts>=80 AND (status='queued' OR status='running' AND lease_until<now())",
+    );
     await c.query(
       `UPDATE director.reviews SET status='failed',error_code='INTERRUPTED',error_message='Processing was interrupted repeatedly. Please retry or contact us.',lease_until=NULL WHERE status='running' AND lease_until<now() AND stage_attempts>=3`,
     );
     const {
       rows: [j],
     } = await c.query<Job>(
-      `WITH candidate AS (SELECT id FROM director.reviews WHERE ($1::uuid IS NULL OR id=$1) AND next_attempt_at<=now() AND stage_attempts<3 AND (status='queued' OR status='running' AND lease_until<now()) ORDER BY created_at FOR UPDATE SKIP LOCKED LIMIT 1) UPDATE director.reviews v SET status='running',lease_token=$2,lease_until=now()+interval '4 minutes',stage_attempts=stage_attempts+1,attempts=attempts+1,updated_at=now() FROM candidate c WHERE v.id=c.id RETURNING v.*`,
+      `WITH candidate AS (SELECT id FROM director.reviews WHERE ($1::uuid IS NULL OR id=$1) AND next_attempt_at<=now() AND stage_attempts<3 AND attempts<80 AND (status='queued' OR status='running' AND lease_until<now()) ORDER BY created_at FOR UPDATE SKIP LOCKED LIMIT 1) UPDATE director.reviews v SET status='running',lease_token=$2,lease_until=now()+interval '4 minutes',stage_attempts=stage_attempts+1,attempts=attempts+1,updated_at=now() FROM candidate c WHERE v.id=c.id RETURNING v.*`,
       [id || null, token],
     );
     return j;
@@ -149,30 +161,38 @@ export async function processOne(id?: string) {
       usage = r.usage;
     } else if (job.stage === 3) {
       const r = await structured(
-        claimsSchema,
-        "Identify and scrutinise all material impact claims, usually 8–12 if the document contains that many, fewer for a short report, up to 40. Never pad the register. Include serious exaggerated or causal claims even if this exceeds the typical number. For each exact claim, retrieve relevant supporting passages from anywhere in the document before judging adequacy. Claim text must be a verbatim passage at least 12 characters long. Do not treat a repeated assertion as independent evidence. Participation alone does not establish escape from poverty. Suggest defensible wording only supported by what the report demonstrates. Claim IDs C1, C2 etc.",
-        { context, pages, visualObservations: notes },
+        referencedClaimsSchema,
+        "Identify and scrutinise all material impact claims, usually 8–12 if the document contains that many, fewer for a short report, up to 40. Never pad the register. Include serious exaggerated or causal claims even if this exceeds the typical number. For each exact claim, retrieve relevant supporting passages from anywhere in the document before judging adequacy. Select the exact source passage ID for each claim and evidenceIds for its support. Choose only IDs from the supplied passages; the server copies their verbatim text. Do not treat a repeated assertion as independent evidence. Participation alone does not establish escape from poverty. Suggest defensible wording only supported by what the report demonstrates. Claim IDs C1, C2 etc.",
+        {
+          context,
+          passages: sourcePassages(pages!),
+          visualObservations: notes,
+        },
       );
       usage = r.usage;
-      claims = validateClaims(r.data, pages!);
+      claims = validateClaims(
+        resolveClaims(r.data, sourcePassages(pages!)),
+        pages!,
+      );
     } else if (job.stage >= 4 && job.stage <= 13) {
       const framework: Framework = job.stage < 9 ? "claims" : "excellence",
         principle = (job.stage - 4) % 5;
       const r = await structured(
-        findingsSchema,
-        `Assess exactly these four criterion IDs, using the material claims register and the supplied source evidence. Establish evidence before judgement. Cite exact source passages. Numeric anchors: ${JSON.stringify(ANCHORS)}. 'assessed' needs score 1–4 and cited evidence. 'not_demonstrated' means relevant expected disclosure is absent in a fully readable report; score 0. Never use not_applicable for missing information. 'not_applicable' means genuinely irrelevant, with null score and a contextual explanation. 'unassessable' means insufficient reliable material, with null score and an explanation. Do not use absence judgements where pages are unreadable. Excellence measures report demonstrations, not full organisational maturity. Give specific improvements and confidence. Material claim risks must inform relevant criteria, without mechanical caps. Return no overall score. If previousValidationFailure is UNVERIFIED_QUOTATION, select shorter verbatim contiguous passages copied from the correct page. Do not combine fragments, change punctuation or insert ellipses into quotations. If IDs were invalid, copy exactly the supplied criterion and claim IDs.`,
+        referencedFindingsSchema,
+        `Assess exactly these four criterion IDs, using the material claims register and the supplied source evidence. Establish evidence before judgement. Select evidenceIds from the supplied source passages. The server copies their exact text and physical page; never invent an ID. Numeric anchors: ${JSON.stringify(ANCHORS)}. 'assessed' needs score 1–4 and cited evidence. 'not_demonstrated' means relevant expected disclosure is absent in a fully readable report; score 0. Never use not_applicable for missing information. 'not_applicable' means genuinely irrelevant, with null score and a contextual explanation. 'unassessable' means insufficient reliable material, with null score and an explanation. Do not use absence judgements where pages are unreadable. Excellence measures report demonstrations, not full organisational maturity. Give specific improvements and confidence. Material claim risks must inform relevant criteria, without mechanical caps. Return no overall score. If previousValidationFailure is UNVERIFIED_QUOTATION, select shorter verbatim contiguous passages copied from the correct page. Do not combine fragments, change punctuation or insert ellipses into quotations. If IDs were invalid, copy exactly the supplied criterion and claim IDs.`,
         {
           context,
           criteria: criteria(framework).slice(principle * 4, principle * 4 + 4),
           claims,
-          pages,
+          passages: sourcePassages(pages!),
+          unreadablePages: pages!.filter((p) => !p.readable).map((p) => p.page),
           visualObservations: notes,
           previousValidationFailure: job.error_code,
         },
       );
       usage = r.usage;
       const validated = validateFindings(
-        r.data.findings,
+        resolveFindings(r.data, sourcePassages(pages!)),
         framework,
         pages!,
         claims!,
@@ -260,6 +280,10 @@ export async function processOne(id?: string) {
           usage?.cost || 0,
         ],
       );
+      if (result)
+        await c.query(
+          "INSERT INTO director.daily_metrics(event,count) VALUES('review_completed',1) ON CONFLICT(day,event) DO UPDATE SET count=daily_metrics.count+1",
+        );
       await c.query(
         `INSERT INTO director.processing_events(review_id,stage,attempt,status,model,response_id,input_tokens,output_tokens,cost_usd,duration_ms) VALUES($1,$2,$3,'complete',$4,$5,$6,$7,$8,$9)`,
         [
@@ -294,21 +318,28 @@ export async function processOne(id?: string) {
                       "Missing content prevents reliable absence judgements."
                   ? "UNREADABLE_SOURCE_ABSENCE"
                   : "STAGE_VALIDATION_FAILED";
+    const providerWait = e instanceof AIError ? e.retryAfterSeconds : undefined;
+    if (providerWait)
+      await query(
+        "INSERT INTO director.rate_limits(key,count,reset_at) VALUES('ai-provider-backoff',1,now()+make_interval(secs=>$1)) ON CONFLICT(key) DO UPDATE SET reset_at=GREATEST(rate_limits.reset_at,EXCLUDED.reset_at)",
+        [providerWait],
+      );
     const retry =
       (e instanceof AIError ? e.retryable : !(e instanceof AppError)) &&
-      job.stage_attempts < 3;
+      (providerWait ? job.attempts < 80 : job.stage_attempts < 3);
     await query(
-      `UPDATE director.reviews SET status=$3,lease_token=NULL,lease_until=NULL,next_attempt_at=now()+make_interval(secs=>$4),error_code=$5,error_message=$6,cost_usd=cost_usd+$7,updated_at=now() WHERE id=$1 AND lease_token=$2`,
+      `UPDATE director.reviews SET status=$3,lease_token=NULL,lease_until=NULL,next_attempt_at=now()+make_interval(secs=>$4),error_code=$5,error_message=$6,cost_usd=cost_usd+$7,stage_attempts=GREATEST(0,stage_attempts-$8),updated_at=now() WHERE id=$1 AND lease_token=$2`,
       [
         job.id,
         token,
         retry ? "queued" : "failed",
-        retry ? 30 * 2 ** job.stage_attempts : 0,
+        retry ? providerWait || 30 * 2 ** job.stage_attempts : 0,
         code,
         retry
           ? "A processing stage needs another attempt. We’ll retry automatically."
           : "We couldn’t safely complete this review. No scores have been published. Retry or contact us for help.",
         usage?.cost || 0,
+        providerWait ? 1 : 0,
       ],
     );
     await query(

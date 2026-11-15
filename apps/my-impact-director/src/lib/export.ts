@@ -27,9 +27,9 @@ export async function exportPdf(result: ReviewResult) {
   let substitutedCharacters = false;
   let page = pdf.addPage([595, 842]),
     y = 780;
-  const ink = rgb(0.1, 0.2, 0.18),
-    muted = rgb(0.36, 0.41, 0.39),
-    accent = rgb(0.18, 0.36, 0.29);
+  const ink = rgb(0.025, 0.05, 0.12),
+    muted = rgb(0.34, 0.37, 0.44),
+    accent = rgb(0.87, 0.2, 0.015);
   function newPage() {
     page = pdf.addPage([595, 842]);
     y = 780;

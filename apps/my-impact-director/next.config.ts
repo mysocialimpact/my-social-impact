@@ -4,6 +4,7 @@ const config: NextConfig = {
   serverExternalPackages: ["pg", "unpdf"],
   outputFileTracingIncludes: {
     "/api/reviews/*/export": ["./assets/fonts/*.ttf"],
+    "/api/save": ["./assets/fonts/*.ttf"],
   },
   async headers() {
     return [

@@ -4,6 +4,7 @@ import { query, transaction } from "./db";
 import { type Identity } from "./auth";
 import { AppError, rateLimit } from "./security";
 import { VERSION } from "./rubric";
+import { metric } from "./access";
 import { validatePdf } from "./documents";
 export const idSchema = z.uuid();
 export const ready = () => process.env.REVIEWS_ENABLED === "true";
@@ -28,6 +29,10 @@ export async function createReview(
     );
   validatePdf(bytes, title);
   const sha = createHash("sha256").update(bytes).digest("hex");
+  await query(
+    "DELETE FROM director.reports WHERE owner_id=$1 AND sha256=$2 AND expires_at<=now()",
+    [user.id, sha],
+  );
   const [previous] = await query<{ id: string }>(
     `SELECT v.id FROM director.reports r JOIN director.reviews v ON v.report_id=r.id WHERE r.owner_id=$1 AND r.sha256=$2 AND v.version=$3`,
     [user.id, sha, VERSION],
@@ -53,40 +58,59 @@ export async function createReview(
     const {
       rows: [report],
     } = await c.query(
-      `INSERT INTO director.reports(owner_id,title,source_url,sha256,file_bytes,consent_version,quality_consent) VALUES($1,$2,$3,$4,$5,$6,$7) ON CONFLICT(owner_id,sha256) DO UPDATE SET title=reports.title RETURNING id`,
+      `INSERT INTO director.reports(owner_id,title,source_url,sha256,file_bytes,consent_version,quality_consent,expires_at) VALUES($1,$2,$3,$4,$5,$6,$7,now()+make_interval(days=>$8)) ON CONFLICT(owner_id,sha256) DO UPDATE SET title=reports.title RETURNING id`,
       [
         user.id,
         title.slice(0, 200),
         sourceUrl,
         sha,
         bytes,
-        "privacy-1.0",
+        "privacy-2.0",
         qualityConsent,
+        user.anonymous ? 7 : 180,
       ],
     );
     const {
       rows: [review],
     } = await c.query(
-      `INSERT INTO director.reviews(report_id,version) VALUES($1,$2) ON CONFLICT(report_id,version) DO UPDATE SET version=reviews.version RETURNING id`,
+      `INSERT INTO director.reviews(report_id,version) VALUES($1,$2) ON CONFLICT(report_id,version) DO UPDATE SET version=reviews.version RETURNING id,(xmax=0) AS created`,
       [report.id, VERSION],
     );
-    return review as { id: string };
+    if (review.created)
+      await c.query(
+        "INSERT INTO director.daily_metrics(event,count) VALUES('review_started',1) ON CONFLICT(day,event) DO UPDATE SET count=daily_metrics.count+1",
+      );
+    if (user.anonymous && review.created)
+      await c.query(
+        "INSERT INTO director.daily_metrics(event,count) VALUES('anonymous_started',1) ON CONFLICT(day,event) DO UPDATE SET count=daily_metrics.count+1",
+      );
+    return { id: review.id as string };
   });
 }
 export async function listReviews(user: Identity) {
   return query(
-    `SELECT v.id,v.status,v.stage,v.error_message,v.created_at,v.updated_at,r.title,r.organisation,r.reporting_period,r.source_url,v.result->'scores' AS scores FROM director.reviews v JOIN director.reports r ON r.id=v.report_id WHERE r.owner_id=$1 ORDER BY v.created_at DESC LIMIT 50`,
-    [user.id],
+    `SELECT v.id,v.status,v.stage,v.error_message,v.created_at,v.updated_at,r.title,r.organisation,r.reporting_period,r.source_url,v.result->'scores' AS scores FROM director.reviews v JOIN director.reports r ON r.id=v.report_id WHERE (r.owner_id=ANY($1::text[]) OR EXISTS(SELECT 1 FROM director.review_grants g WHERE g.review_id=v.id AND g.owner_id=ANY($1::text[]))) AND r.expires_at>now() ORDER BY v.created_at DESC LIMIT 50`,
+    [user.accessIds || [user.id]],
   );
 }
 export async function getReview(user: Identity, id: string) {
   idSchema.parse(id);
   const [row] = await query(
-    `SELECT v.*,r.title,r.organisation,r.reporting_period,r.source_url,r.expires_at,r.pages,r.extraction_notes,r.quality_consent FROM director.reviews v JOIN director.reports r ON r.id=v.report_id WHERE v.id=$1 AND r.owner_id=$2`,
-    [id, user.id],
+    `SELECT v.*,r.title,r.organisation,r.reporting_period,r.source_url,r.expires_at,r.pages,r.extraction_notes,r.quality_consent,true AS can_delete FROM director.reviews v JOIN director.reports r ON r.id=v.report_id WHERE v.id=$1 AND (r.owner_id=ANY($2::text[]) OR EXISTS(SELECT 1 FROM director.review_grants g WHERE g.review_id=v.id AND g.owner_id=ANY($2::text[]))) AND r.expires_at>now()`,
+    [id, user.accessIds || [user.id]],
   );
   if (!row)
-    throw new AppError(404, "This review is unavailable to your account.");
+    throw new AppError(
+      404,
+      "This review has expired or is unavailable in this browser.",
+    );
+  if (row.status === "complete" && !row.first_viewed_at) {
+    const viewed = await query(
+      "UPDATE director.reviews SET first_viewed_at=now() WHERE id=$1 AND first_viewed_at IS NULL RETURNING id",
+      [id],
+    );
+    if (viewed.length) await metric("result_viewed");
+  }
   return row;
 }
 export async function retryReview(user: Identity, id: string) {
@@ -98,17 +122,19 @@ export async function retryReview(user: Identity, id: string) {
   );
 }
 export async function deleteReview(user: Identity, id: string) {
-  await getReview(user, id);
+  const review = await getReview(user, id);
+  if (!review.can_delete)
+    throw new AppError(403, "Only the review owner can delete it.");
   await query(
-    `DELETE FROM director.reports r USING director.reviews v WHERE v.report_id=r.id AND v.id=$1 AND r.owner_id=$2`,
-    [id, user.id],
+    `DELETE FROM director.reports r USING director.reviews v WHERE v.report_id=r.id AND v.id=$1 AND (r.owner_id=ANY($2::text[]) OR EXISTS(SELECT 1 FROM director.review_grants g WHERE g.review_id=v.id AND g.owner_id=ANY($2::text[])))`,
+    [id, user.accessIds || [user.id]],
   );
 }
 export async function sourceFile(user: Identity, id: string) {
   idSchema.parse(id);
   const [r] = await query<{ file_bytes: Buffer }>(
-    `SELECT r.file_bytes FROM director.reports r JOIN director.reviews v ON v.report_id=r.id WHERE v.id=$1 AND r.owner_id=$2`,
-    [id, user.id],
+    `SELECT r.file_bytes FROM director.reports r JOIN director.reviews v ON v.report_id=r.id WHERE v.id=$1 AND (r.owner_id=ANY($2::text[]) OR EXISTS(SELECT 1 FROM director.review_grants g WHERE g.review_id=v.id AND g.owner_id=ANY($2::text[]))) AND r.expires_at>now()`,
+    [id, user.accessIds || [user.id]],
   );
   if (!r) throw new AppError(404, "Report unavailable.");
   return r.file_bytes;
