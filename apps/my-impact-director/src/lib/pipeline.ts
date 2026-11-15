@@ -188,7 +188,14 @@ export async function processOne(id?: string) {
           unreadablePages: pages!.filter((p) => !p.readable).map((p) => p.page),
           visualObservations: notes,
           previousValidationFailure: job.error_code,
+          ...(job.stage === 13
+            ? {
+                visualAssessment:
+                  "The original PDF is attached. Inspect its actual layout, charts, tables and labels directly when judging communication and presentation. Incomplete extracted text is a limitation of this assessment and must not reduce the report score.",
+              }
+            : {}),
         },
+        job.stage === 13 ? doc.file_bytes : undefined,
       );
       usage = r.usage;
       const validated = validateFindings(
