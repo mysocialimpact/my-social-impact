@@ -1,1 +1,4 @@
-{"regions":["iad1"],"crons":[{"path":"/api/worker","schedule":"* * * * *"}]}
+{
+  "regions": ["iad1"],
+  "crons": [{ "path": "/api/worker", "schedule": "* * * * *" }]
+}

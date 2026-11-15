@@ -1,10 +1,133 @@
-'use client';
-import { useState } from 'react';
-import { useSession, api } from './session';
-import { services, type Service } from '@/lib/services';
-import { Arrow } from './icons';
-import Link from 'next/link';
-export function Enquiry({service,reviewId=null}:{service:Service;reviewId?:string|null}){const {user,loading}=useSession(),[busy,setBusy]=useState(false),[error,setError]=useState(''),[sent,setSent]=useState(false);
- async function submit(e:React.FormEvent<HTMLFormElement>){e.preventDefault();setBusy(true);setError('');const f=new FormData(e.currentTarget);try{await api('/api/enquiries',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({service,message:f.get('message'),reviewId,shareReview:f.get('share')==='on',contactConsent:f.get('contact')==='on'})});setSent(true);}catch(e){setError(e instanceof Error?e.message:'Please try again.');}finally{setBusy(false);}}
- return <div className="enquiry" id="enquire"><p className="eyebrow">A conversation, not a checkout</p><h2>Tell us what you have in mind.</h2>{sent?<div className="success" role="status"><h3>Your enquiry is saved.</h3><p>It’s now in the My Social Impact team’s enquiry inbox. We’ll use your account email to respond. Thank you for getting in touch.</p>{reviewId&&<Link href={'/reviews/'+reviewId}>Back to my review →</Link>}</div>:<><p>A short message is all we need. We’ll discuss the right scope and approach with you.</p>{loading?<p>Checking your account…</p>:user?<form onSubmit={submit}><label>How can we help?<textarea name="message" minLength={10} maxLength={5000} required placeholder="A little about your organisation and what you’d like to achieve…"/></label>{reviewId&&<label className="checkbox"><input type="checkbox" name="share"/><span>Share the linked assessment findings with My Social Impact to help with this enquiry.</span></label>}<label className="checkbox"><input type="checkbox" name="contact" required/><span>My Social Impact may respond to this enquiry at {user.email}. This doesn’t subscribe me to marketing.</span></label>{error&&<div className="alert error" role="alert">{error}</div>}<button className="button primary" disabled={busy}>{busy?'Saving your enquiry…':'Send my enquiry'}<Arrow/></button></form>:<p><Link className="button primary" href={'/login?next='+encodeURIComponent(`/services/${service}${reviewId?'?review='+reviewId:''}`)}>Sign in to send an enquiry <Arrow/></Link></p>}<p className="fine-print">Prefer email? <a href={'mailto:marcus@mysocialimpact.org?subject='+encodeURIComponent(services[service].name)}>marcus@mysocialimpact.org ↗</a></p></>}</div>;
+"use client";
+import { useState } from "react";
+import { useSession, api } from "./session";
+import { services, type Service } from "@/lib/services";
+import { Arrow } from "./icons";
+import Link from "next/link";
+export function Enquiry({
+  service,
+  reviewId = null,
+}: {
+  service: Service;
+  reviewId?: string | null;
+}) {
+  const { user, loading } = useSession(),
+    [busy, setBusy] = useState(false),
+    [error, setError] = useState(""),
+    [sent, setSent] = useState(false);
+  async function submit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setBusy(true);
+    setError("");
+    const f = new FormData(e.currentTarget);
+    try {
+      await api("/api/enquiries", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          service,
+          message: f.get("message"),
+          reviewId,
+          shareReview: f.get("share") === "on",
+          contactConsent: f.get("contact") === "on",
+        }),
+      });
+      setSent(true);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Please try again.");
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <div className="enquiry" id="enquire">
+      <p className="eyebrow">A conversation, not a checkout</p>
+      <h2>Tell us what you have in mind.</h2>
+      {sent ? (
+        <div className="success" role="status">
+          <h3>Your enquiry is saved.</h3>
+          <p>
+            It’s now in the My Social Impact team’s enquiry inbox. We’ll use
+            your account email to respond. Thank you for getting in touch.
+          </p>
+          {reviewId && (
+            <Link href={"/reviews/" + reviewId}>Back to my review →</Link>
+          )}
+        </div>
+      ) : (
+        <>
+          <p>
+            A short message is all we need. We’ll discuss the right scope and
+            approach with you.
+          </p>
+          {loading ? (
+            <p>Checking your account…</p>
+          ) : user ? (
+            <form onSubmit={submit}>
+              <label>
+                How can we help?
+                <textarea
+                  name="message"
+                  minLength={10}
+                  maxLength={5000}
+                  required
+                  placeholder="A little about your organisation and what you’d like to achieve…"
+                />
+              </label>
+              {reviewId && (
+                <label className="checkbox">
+                  <input type="checkbox" name="share" />
+                  <span>
+                    Share the linked assessment findings with My Social Impact
+                    to help with this enquiry.
+                  </span>
+                </label>
+              )}
+              <label className="checkbox">
+                <input type="checkbox" name="contact" required />
+                <span>
+                  My Social Impact may respond to this enquiry at {user.email}.
+                  This doesn’t subscribe me to marketing.
+                </span>
+              </label>
+              {error && (
+                <div className="alert error" role="alert">
+                  {error}
+                </div>
+              )}
+              <button className="button primary" disabled={busy}>
+                {busy ? "Saving your enquiry…" : "Send my enquiry"}
+                <Arrow />
+              </button>
+            </form>
+          ) : (
+            <p>
+              <Link
+                className="button primary"
+                href={
+                  "/login?next=" +
+                  encodeURIComponent(
+                    `/services/${service}${reviewId ? "?review=" + reviewId : ""}`,
+                  )
+                }
+              >
+                Sign in to send an enquiry <Arrow />
+              </Link>
+            </p>
+          )}
+          <p className="fine-print">
+            Prefer email?{" "}
+            <a
+              href={
+                "mailto:marcus@mysocialimpact.org?subject=" +
+                encodeURIComponent(services[service].name)
+              }
+            >
+              marcus@mysocialimpact.org ↗
+            </a>
+          </p>
+        </>
+      )}
+    </div>
+  );
 }

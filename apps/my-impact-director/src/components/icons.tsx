@@ -1,3 +1,50 @@
-export function Arrow({diagonal=false}:{diagonal?:boolean}){return <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><path d={diagonal?'M6 18 18 6M6 6h12v12':'M4 12h15m-6-6 6 6-6 6'}/></svg>;}
-export function Mark(){return <svg aria-hidden="true" viewBox="0 0 40 40" width="38" height="38" fill="none"><circle cx="20" cy="20" r="17" stroke="currentColor" strokeWidth="1.5"/><path d="M12 26V20m8 6V14m8 12V9" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/><path d="m10 14 8-5" stroke="currentColor" strokeWidth="1.5"/></svg>;}
-export function DocumentIcon(){return <svg aria-hidden="true" width="36" height="42" viewBox="0 0 36 42" fill="none" stroke="currentColor" strokeWidth="1.3"><path d="M6 2h16l8 8v29H6zM22 2v9h8M12 19h12M12 25h12M12 31h7"/></svg>;}
+export function Arrow({ diagonal = false }: { diagonal?: boolean }) {
+  return (
+    <svg
+      aria-hidden="true"
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.7"
+    >
+      <path d={diagonal ? "M6 18 18 6M6 6h12v12" : "M4 12h15m-6-6 6 6-6 6"} />
+    </svg>
+  );
+}
+export function Mark() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 40 40"
+      width="38"
+      height="38"
+      fill="none"
+    >
+      <circle cx="20" cy="20" r="17" stroke="currentColor" strokeWidth="1.5" />
+      <path
+        d="M12 26V20m8 6V14m8 12V9"
+        stroke="currentColor"
+        strokeWidth="3"
+        strokeLinecap="round"
+      />
+      <path d="m10 14 8-5" stroke="currentColor" strokeWidth="1.5" />
+    </svg>
+  );
+}
+export function DocumentIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      width="36"
+      height="42"
+      viewBox="0 0 36 42"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.3"
+    >
+      <path d="M6 2h16l8 8v29H6zM22 2v9h8M12 19h12M12 25h12M12 31h7" />
+    </svg>
+  );
+}
