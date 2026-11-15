@@ -1,6 +1,6 @@
 # My Impact Director
 
-Evidence-grounded reviews of impact reports against the Social Impact Claims Code and Social Impact Excellence frameworks. This is a standalone Next.js application in the `my-social-impact` repository; the parent website has a separate deployment and is unaffected by this application’s build configuration.
+Evidence-grounded reviews of impact reports against the Social Impact Claims Code and Social Impact Excellence frameworks. This is a standalone Next.js application in the `my-social-impact` repository; the parent website has a separate deployment. Its TypeScript and ESLint configurations narrowly exclude this independent app. Existing website runtime code and deployment settings are unchanged.
 
 ## Release status
 
