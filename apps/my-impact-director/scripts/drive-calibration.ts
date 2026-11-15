@@ -59,7 +59,7 @@ async function worker() {
   }
 }
 try {
-  await Promise.all([worker(), worker(), worker()]);
+  await worker();
 } finally {
   await context.dispose();
   await database().end();

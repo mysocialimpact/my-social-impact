@@ -21,6 +21,8 @@ try {
         viewport: { width, height: 1000 },
       }),
       page = await ctx.newPage();
+    const pageErrors = [];
+    page.on("pageerror", (e) => pageErrors.push(e.message));
     await page.goto(config.url + "/reviews/" + id, {
       waitUntil: "networkidle",
     });
@@ -63,6 +65,43 @@ try {
       assert.equal(pdf.subarray(0, 5).toString(), "%PDF-");
       await writeFile("artifacts/live/genuine-review-export.pdf", pdf);
     }
+    if (width === 390 && config.url === "https://www.myimpactdirector.com") {
+      await page
+        .getByRole("link", { name: "Discuss my review", exact: false })
+        .click();
+      await page
+        .getByLabel("Your name", { exact: true })
+        .fill("Production UI QA");
+      await page
+        .getByLabel("Email address", { exact: true })
+        .fill("qa@example.invalid");
+      await page
+        .getByLabel("How can we help?")
+        .fill(
+          "TEST ONLY: anonymous production UI verification. No follow-up required. " +
+            id,
+        );
+      await page.getByRole("checkbox", { name: /Share the linked/ }).check();
+      await page
+        .getByRole("checkbox", { name: /may respond to this enquiry/ })
+        .check();
+      const response = page.waitForResponse(
+        (r) =>
+          r.url().endsWith("/api/enquiries") && r.request().method() === "POST",
+      );
+      await page
+        .getByRole("button", { name: "Send my enquiry", exact: true })
+        .click();
+      const enquiry = await response;
+      assert.equal(enquiry.status(), 201);
+      await page
+        .getByRole("heading", { name: "Your enquiry is saved." })
+        .waitFor();
+      await writeFile(
+        "artifacts/live/production-ui-enquiry.json",
+        JSON.stringify(await enquiry.json()),
+      );
+    }
     await page.goto(config.url + "/reviews", { waitUntil: "networkidle" });
     await page.locator(`a[href="/reviews/${id}"]`).waitFor();
     assert.equal(
@@ -70,6 +109,7 @@ try {
         .anonymous,
       true,
     );
+    assert.deepEqual(pageErrors, []);
     await ctx.close();
   }
 } finally {

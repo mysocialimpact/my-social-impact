@@ -56,9 +56,13 @@ const allCitations = [
     s.principles.flatMap((p) => p.tests.flatMap((f) => f.evidence)),
   ),
 ];
+const evidenceText = normalise(content).replace(
+  /developed by my social impact \| built by the ideas shed\s*\d+\s*\/\s*\d+/g,
+  " ",
+);
 for (const citation of allCitations)
   assert.ok(
-    normalise(content).includes(normalise(citation.quote)),
+    normalise(evidenceText).includes(normalise(citation.quote)),
     `PDF retains full source passage from page ${citation.page}`,
   );
 const checks = {
