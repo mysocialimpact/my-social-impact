@@ -1495,3 +1495,17 @@ select,
 .support-cta p {
   color: var(--ink);
 }
+.progress-card p,
+.progress-card .fine-print {
+  color: #d9deec;
+}
+.progress-card .progress-stage {
+  color: #fff !important;
+}
+.progress-card .progress-list li.active {
+  background: var(--orange);
+  color: var(--ink);
+}
+.progress-card .progress-list li.active span {
+  color: var(--ink);
+}
