@@ -1529,3 +1529,33 @@ select,
   border-color: #ffffff55;
   border-top-color: var(--orange);
 }
+.upload-failure {
+  background: #fff;
+  border: 0;
+  border-left: 5px solid var(--ink);
+  color: var(--ink);
+  padding: 22px;
+}
+.upload-failure h3 {
+  font-family: var(--sans);
+  font-size: 21px;
+  letter-spacing: -0.025em;
+  line-height: 1.2;
+  margin: 0 0 12px;
+}
+.upload-failure p {
+  font-size: 15px;
+  margin: 0 0 16px;
+  line-height: 1.5;
+}
+.upload-failure a {
+  display: inline-flex;
+  gap: 12px;
+  align-items: center;
+  font-weight: 700;
+  font-size: 16px;
+}
+.upload-failure .failure-help {
+  font-size: 13px;
+  margin: 12px 0 0;
+}

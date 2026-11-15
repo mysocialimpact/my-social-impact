@@ -24,8 +24,20 @@ export function useSession() {
   return { user, loading, error };
 }
 export async function api(url: string, init?: RequestInit) {
-  const r = await fetch(url, init);
-  const d = await r.json();
-  if (!r.ok) throw new Error(d.error || "Please try again.");
+  let r: Response;
+  try {
+    r = await fetch(url, init);
+  } catch {
+    throw new Error(
+      "The connection was interrupted. Please try again — your selected report and saved work are safe.",
+    );
+  }
+  const d = await r.json().catch(() => null);
+  if (!r.ok)
+    throw new Error(
+      d?.error || "We couldn’t complete this request. Please try again.",
+    );
+  if (d === null)
+    throw new Error("We couldn’t read the response. Please try again.");
   return d;
 }

@@ -1,3 +1,4 @@
+import { MAX_FILE } from "./file-limits";
 import { createHmac } from "node:crypto";
 import { load } from "cheerio";
 import { searchWeb } from "./ai";
@@ -56,7 +57,7 @@ export async function discoverReports(
     citations.slice(0, 7),
     async (link): Promise<Found[]> => {
       try {
-        const fetched = await publicFetch(link.url, 4_000_000, 0, true, signal);
+        const fetched = await publicFetch(link.url, MAX_FILE, 0, true, signal);
         if (fetched.status !== 200) return [];
         if (fetched.bytes.subarray(0, 5).toString() === "%PDF-") {
           validatePdf(fetched.bytes, "report.pdf");
@@ -99,7 +100,7 @@ export async function discoverReports(
       try {
         let url = c.url;
         if (!c.verified) {
-          const f = await publicFetch(c.url, 4_000_000, 0, true, signal);
+          const f = await publicFetch(c.url, MAX_FILE, 0, true, signal);
           if (f.status !== 200) return null;
           validatePdf(f.bytes, "report.pdf");
           url = f.url;

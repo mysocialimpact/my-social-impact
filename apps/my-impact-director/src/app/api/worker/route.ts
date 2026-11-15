@@ -37,6 +37,7 @@ export async function GET(req: Request) {
       );
     }
   }
+  await query("DELETE FROM director.uploads WHERE expires_at<now()");
   await query("DELETE FROM director.reports WHERE expires_at<now()");
   await query("DELETE FROM director.access_sessions WHERE expires_at<now()");
   await query(

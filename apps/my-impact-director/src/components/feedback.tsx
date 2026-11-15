@@ -3,9 +3,17 @@ import { Arrow } from "./icons";
 import { useState } from "react";
 import Link from "next/link";
 import { api } from "./session";
-export function Feedback({ from }: { from: string }) {
+export function Feedback({
+  from,
+  uploadIssue = false,
+}: {
+  from: string;
+  uploadIssue?: boolean;
+}) {
   const [rating, setRating] = useState<number | null>(null),
-    [comment, setComment] = useState(""),
+    [comment, setComment] = useState(
+      uploadIssue ? "I couldn’t upload my impact report. " : "",
+    ),
     [busy, setBusy] = useState(false),
     [sent, setSent] = useState(false),
     [error, setError] = useState("");

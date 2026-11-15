@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { PDFDocument, StandardFonts } from "pdf-lib";
-import { extractPages, validatePdf } from "../src/lib/documents";
+import { MAX_FILE, extractPages, validatePdf } from "../src/lib/documents";
 import { publicUrl, assertPublicAddress } from "../src/lib/public-fetch";
 import { sameOrigin, secretMatches, readJson } from "../src/lib/security";
 import { verifyCandidate } from "../src/lib/discovery";
@@ -27,7 +27,7 @@ test("scanned blank page is identified for visual extraction", async () => {
 });
 test("rejects invalid file type, oversized, truncated and active PDFs", () => {
   assert.throws(() => validatePdf(Buffer.from("not a PDF"), "file.pdf"));
-  assert.throws(() => validatePdf(Buffer.alloc(4_000_001), "file.pdf"));
+  assert.throws(() => validatePdf(Buffer.alloc(MAX_FILE + 1), "file.pdf"));
   assert.throws(() =>
     validatePdf(
       Buffer.from("%PDF-1.7 /JavaScript " + "x".repeat(50) + " %%EOF"),

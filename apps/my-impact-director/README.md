@@ -66,7 +66,7 @@ Browser checks use Playwright and axe on public pages and unauthenticated screen
 
 ## Operational limits
 
-- PDFs up to 4 MB, 100 physical pages and 240,000 extracted characters; visual batches use five pages. Larger documents must be reduced or split before upload. Parsing, active-content screening and visual reading can reject unusual or protected PDFs.
+- PDFs up to 50 MB, 100 physical pages and 240,000 extracted characters; visual batches use five pages. Larger documents must be reduced or split before upload. Parsing, active-content screening and visual reading can reject unusual or protected PDFs.
 - Three new reports per visitor per day, twenty retained reports; anonymous network quotas prevent resetting the upload limit by clearing cookies; upload, search, retry, enquiry and sign-in rate limits. Report deletion preserves the daily upload and aggregate spend counters.
 - Estimated spend pauses at $4 per report or $20 per daily accounting window, with a separate 240-stage-request ceiling. Concurrent/in-flight or interrupted requests and web search charges can exceed recorded spend; these are application controls, not a provider billing guarantee. Inspect Gateway usage as well as the founder dashboard. No billing plans were changed.
 - Anonymous reports expire after seven days. Opening a saving link retains a report for 180 days; existing-account uploads also retain for 180 days. All private reads enforce expiry before the scheduled deletion runs. Deletion cascades through results and processing details; linked enquiries become unlinked. Daily cleanup requires the authenticated worker. Provider backups follow provider retention. Account/enquiry erasure requests need operational handling through the contact published in the privacy notice.

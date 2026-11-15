@@ -3,9 +3,10 @@ export const metadata = { title: "Help us make this better" };
 export default async function FeedbackPage({
   searchParams,
 }: {
-  searchParams: Promise<{ from?: string }>;
+  searchParams: Promise<{ from?: string; issue?: string }>;
 }) {
-  const value = (await searchParams).from || "/";
+  const params = await searchParams;
+  const value = params.from || "/";
   const from =
     typeof value === "string" &&
     /^\/(?!\/)[^?#\\\s]*$/.test(value) &&
@@ -14,7 +15,7 @@ export default async function FeedbackPage({
       : "/";
   return (
     <section className="section">
-      <Feedback from={from} />
+      <Feedback from={from} uploadIssue={params.issue === "upload"} />
     </section>
   );
 }

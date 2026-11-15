@@ -216,6 +216,7 @@ test(
         method: body === undefined ? "GET" : "POST",
         headers: {
           origin: "https://test.example",
+          "x-forwarded-for": uid,
           cookie: "msi_sorp_session=" + cookie,
           "content-type": "application/json",
         },
@@ -494,7 +495,12 @@ test(
           ) =>
             new Request("https://test.example/api/feedback", {
               method: "POST",
-              headers: { cookie, origin, "content-type": "application/json" },
+              headers: {
+                cookie,
+                origin,
+                "x-forwarded-for": uid,
+                "content-type": "application/json",
+              },
               body: JSON.stringify(body),
             });
           const body = {

@@ -33,6 +33,13 @@ export default function Privacy() {
           SORP accounts remain supported; we do not store their passwords. We do
           not add advertising trackers or subscribe you to marketing.
         </p>
+        <p>
+          Larger uploads are transferred in private parts to the same protected
+          application database. Unfinished uploads expire after one hour and are
+          deleted by the scheduled cleanup. Once your review is created,
+          temporary parts are removed; your report follows the retention period
+          below.
+        </p>
         <h2>Document processing and providers</h2>
         <p>
           The application is hosted on Vercel. Report files, extracted text and

@@ -85,7 +85,7 @@ try {
     });
     assert.match(
       await page.locator(".alert[role=alert]").innerText(),
-      /Choose a PDF/,
+      /PDF version/,
     );
     await page.reload({ waitUntil: "networkidle" });
     await page.screenshot({ path: `artifacts/radical/${width}-initial.png` });

@@ -1,5 +1,13 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { MAX_FILE, MAX_FILE_LABEL } from "@/lib/file-limits";
+import {
+  prepareTransfer,
+  transferFile,
+  type Transfer,
+} from "./upload-transfer";
 import { api } from "./session";
 import { Arrow } from "./icons";
 import type { Candidate } from "@/lib/discovery";
@@ -35,19 +43,41 @@ export function Intake({
     [candidates, setCandidates] = useState<Candidate[] | null>(null),
     [selection, setSelection] = useState<Candidate | null>(null),
     [find, setFind] = useState(false);
+  const errorPanel = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    if (error)
+      errorPanel.current?.scrollIntoView({
+        block: "nearest",
+        behavior: "instant",
+      });
+  }, [error]);
+  const transfer = useRef<Transfer | null>(null),
+    path = usePathname();
   function choose(value: File | undefined) {
     if (!enabled || busy || !value) return;
     setError("");
     setSelection(null);
     setConsent(false);
-    if (
-      !value.name.toLowerCase().endsWith(".pdf") ||
-      value.size > 4_000_000 ||
-      value.size === 0
-    ) {
-      setError("Choose a PDF up to 4 MB. Your file hasn’t been uploaded.");
+    if (!value.name.toLowerCase().endsWith(".pdf") || value.size < 40) {
+      setFile(null);
+      setError(
+        "We couldn’t recognise this file as a PDF. Please try a PDF version of your report.",
+      );
       return;
     }
+    if (value.size > MAX_FILE) {
+      setFile(null);
+      setError(
+        `This report is larger than the ${MAX_FILE_LABEL} we can currently accept. You can try a smaller PDF, or tell us what you need using the link below.`,
+      );
+      return;
+    }
+    if (transfer.current)
+      void api(`/api/uploads/${transfer.current.id}`, {
+        method: "DELETE",
+      }).catch(() => {});
+    transfer.current = null;
+    setProgress(0);
     setFile(value);
     if (hero)
       document.getElementById("upload")?.scrollIntoView({
@@ -63,39 +93,23 @@ export function Intake({
     setError("");
     try {
       await api("/api/visitor", { method: "POST" });
+      if (!transfer.current || transfer.current.file !== file)
+        transfer.current = await prepareTransfer(file);
+      await transferFile(transfer.current, setProgress);
+      const review = await api(`/api/uploads/${transfer.current.id}`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ consent, qualityConsent: quality }),
+      });
+      window.location.assign("/reviews/" + review.id);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Please try again.");
-      setBusy(false);
-      return;
-    }
-    const data = new FormData();
-    data.set("file", file);
-    data.set("consent", String(consent));
-    data.set("qualityConsent", String(quality));
-    const xhr = new XMLHttpRequest();
-    xhr.open("POST", "/api/reviews");
-    xhr.timeout = 120000;
-    xhr.upload.onprogress = (e) => {
-      if (e.lengthComputable)
-        setProgress(Math.round((e.loaded / e.total) * 100));
-    };
-    xhr.onload = () => {
-      try {
-        const d = JSON.parse(xhr.responseText);
-        if (xhr.status >= 400) throw Error(d.error);
-        window.location.assign("/reviews/" + d.id);
-      } catch (e) {
-        setError(e instanceof Error ? e.message : "Please try again.");
-        setBusy(false);
-      }
-    };
-    xhr.onerror = xhr.ontimeout = () => {
       setError(
-        "The connection was interrupted. Please try again; an identical upload won’t create a second review.",
+        e instanceof Error
+          ? e.message
+          : "The upload was interrupted. Please try again — we’ve kept your selected report.",
       );
       setBusy(false);
-    };
-    xhr.send(data);
+    }
   }
   async function search(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -191,7 +205,7 @@ export function Intake({
             disabled={!enabled || busy}
             onChange={(e) => choose(e.target.files?.[0])}
           />
-          <small>PDF · Up to 4 MB · Up to 100 pages</small>
+          <small>PDF · Up to {MAX_FILE_LABEL} · Up to 100 pages</small>
         </label>
       ) : (
         <div className="discovery">
@@ -297,9 +311,25 @@ export function Intake({
         </div>
       )}
       {error && (
-        <p className="alert error" role="alert">
-          {error}
-        </p>
+        <section
+          ref={errorPanel}
+          className="alert error upload-failure"
+          role="alert"
+        >
+          <h3>
+            We’re really sorry — we haven’t been able to do what you wanted.
+          </h3>
+          <p>{error}</p>
+          <Link
+            href={`/feedback?from=${encodeURIComponent(path)}&issue=upload`}
+          >
+            Help us make this better <Arrow />
+          </Link>
+          <p className="failure-help">
+            Please tell us what went wrong so we can improve it. Your report
+            won’t be shared through this feedback link.
+          </p>
+        </section>
       )}
       <div className="upload-foot">
         <p>No sign-up. No email. Your results first.</p>

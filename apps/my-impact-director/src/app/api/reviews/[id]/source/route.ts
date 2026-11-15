@@ -7,7 +7,16 @@ export async function GET(
 ) {
   try {
     const file = await sourceFile(await visitor(req), (await ctx.params).id);
-    return new Response(new Uint8Array(file), {
+    const stream = new ReadableStream<Uint8Array>({
+      start(controller) {
+        for (let offset = 0; offset < file.length; offset += 64 * 1024)
+          controller.enqueue(
+            new Uint8Array(file.subarray(offset, offset + 64 * 1024)),
+          );
+        controller.close();
+      },
+    });
+    return new Response(stream, {
       headers: {
         "content-type": "application/pdf",
         "content-disposition": 'attachment; filename="source-report.pdf"',

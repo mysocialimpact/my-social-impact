@@ -4,12 +4,16 @@ import { z } from "zod";
 import { structured } from "./ai";
 import { type Page, pageSchema } from "./assessment";
 import { AppError } from "./security";
-export const MAX_FILE = 4_000_000,
-  MAX_PAGES = 100,
+import { MAX_FILE, MAX_FILE_LABEL } from "./file-limits";
+export { MAX_FILE } from "./file-limits";
+export const MAX_PAGES = 100,
   MAX_TEXT = 240000;
 export function validatePdf(bytes: Buffer, name: string) {
   if (!/\.pdf$/i.test(name) || bytes.length > MAX_FILE || bytes.length < 40)
-    throw new AppError(400, "Choose a PDF up to 4 MB.");
+    throw new AppError(
+      400,
+      `We couldn’t accept this file. Please try a complete PDF up to ${MAX_FILE_LABEL}.`,
+    );
   if (
     bytes.subarray(0, 5).toString() !== "%PDF-" ||
     !bytes.subarray(-2048).includes(Buffer.from("%%EOF"))

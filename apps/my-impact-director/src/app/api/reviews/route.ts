@@ -1,3 +1,4 @@
+import { MAX_FILE } from "@/lib/file-limits";
 import { privateNetworkKey } from "@/lib/access";
 import { after } from "next/server";
 import { visitor } from "@/lib/auth";
@@ -24,13 +25,19 @@ export async function POST(req: Request) {
       await rateLimit(`anonymous-upload:${privateNetworkKey(req)}`, 3, 86400);
     await rateLimit(`upload:${user.id}`, 10, 3600);
     if (Number(req.headers.get("content-length") || 0) > 4_100_000)
-      throw new AppError(413, "Choose a PDF up to 4 MB.");
+      throw new AppError(
+        413,
+        "Please refresh the page to use the larger-file uploader, then try your report again.",
+      );
     const form = await req.formData();
     const file = form.get("file");
     if (!(file instanceof File))
       throw new AppError(400, "Choose a PDF to upload.");
-    if (file.size > 4_000_000)
-      throw new AppError(413, "Choose a PDF up to 4 MB.");
+    if (file.size > MAX_FILE)
+      throw new AppError(
+        413,
+        "Please refresh the page to use the larger-file uploader, then try your report again.",
+      );
     const review = await createReview(
       user,
       Buffer.from(await file.arrayBuffer()),

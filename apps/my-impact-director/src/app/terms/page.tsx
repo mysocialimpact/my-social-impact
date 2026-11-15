@@ -27,7 +27,7 @@ export default function Terms() {
         <p>
           The current fair-use limit is three reports per visitor per 24 hours,
           with additional network limits for anonymous use, with 20 stored
-          reports. PDFs may be up to 4 MB and 100 pages; unusually complex or
+          reports. PDFs may be up to 50 MB and 100 pages; unusually complex or
           lengthy content may exceed processing limits. Searches and retries
           also have fair-use limits. We may pause processing when capacity or
           safety checks require it. We do not invent results for failed jobs.

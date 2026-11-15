@@ -1,4 +1,5 @@
 // Adapted from SORP2026's public-fetch safeguards; no cookies or credentials forwarded.
+import { MAX_FILE } from "./file-limits";
 import { request } from "node:https";
 import { lookup } from "node:dns/promises";
 import ipaddr from "ipaddr.js";
@@ -24,7 +25,7 @@ export function assertPublicAddress(ip: string) {
 }
 export async function publicFetch(
   input: string,
-  maxBytes = 4_000_000,
+  maxBytes = MAX_FILE,
   redirects = 0,
   robots = true,
   signal: AbortSignal = AbortSignal.timeout(90000),
