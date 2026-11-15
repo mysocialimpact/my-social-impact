@@ -10,11 +10,17 @@ import { criteria } from "../src/lib/rubric";
 import { normalise } from "../src/lib/assessment";
 import type { ReviewResult } from "../src/lib/pipeline";
 const review = JSON.parse(
-  await readFile("artifacts/live/genuine-anonymous-review.json", "utf8"),
+  await readFile(
+    process.argv[3] || "artifacts/live/genuine-anonymous-review.json",
+    "utf8",
+  ),
 );
 const result = review.result as ReviewResult;
+const frameworks = (["claims", "excellence"] as const).filter(
+  (f) => !!result.scores[f],
+);
 const claims = validateClaims({ claims: result.claims }, review.pages);
-for (const framework of ["claims", "excellence"] as const) {
+for (const framework of frameworks) {
   const tests = result.scores[framework]!.principles.flatMap((p) => p.tests);
   const checked = validateFindings(tests, framework, review.pages, claims);
   assert.deepEqual(
@@ -34,11 +40,17 @@ const extracted = await extractText(pdf, { mergePages: false });
 const pages = extracted.text;
 const content = pages.join("\n");
 await pdf.destroy();
-assert.match(content, /Social Impact Claims Code/);
-assert.match(content, /Social Impact Excellence/);
+for (const framework of frameworks)
+  assert.ok(
+    content.includes(
+      framework === "claims"
+        ? "Social Impact Claims Code"
+        : "Social Impact Excellence",
+    ),
+  );
 assert.match(content, /Methodology/);
 assert.match(content, /PDF p\./);
-for (const framework of ["claims", "excellence"] as const)
+for (const framework of frameworks)
   for (const p of result.scores[framework]!.principles)
     for (const f of p.tests)
       assert.ok(
@@ -69,15 +81,16 @@ const checks = {
   organisation: result.context.organisation,
   sourcePages: review.pages.length,
   claims: claims.length,
-  validatedTests: 40,
-  claimsScore: result.scores.claims!.overall,
-  excellenceScore: result.scores.excellence!.overall,
+  validatedTests: frameworks.length * 20,
+  scores: Object.fromEntries(
+    frameworks.map((f) => [f, result.scores[f]!.overall]),
+  ),
   pdfPages: pages.length,
   cost: review.cost_usd,
   attempts: review.attempts,
 };
 await writeFile(
-  "artifacts/live/result-validation.json",
+  process.argv[4] || "artifacts/live/result-validation.json",
   JSON.stringify(checks, null, 2),
 );
 console.log(JSON.stringify(checks));

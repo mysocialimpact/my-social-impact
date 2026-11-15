@@ -211,8 +211,8 @@ export function ReviewResults({
         </aside>
       )}
       <nav className="tabs-nav" aria-label="Review sections">
-        <a href="#claims">Claims Code</a>
-        <a href="#excellence">Excellence</a>
+        {result.scores.claims && <a href="#claims">Claims Code</a>}
+        {result.scores.excellence && <a href="#excellence">Excellence</a>}
         <a href="#claims-register">Material claims</a>
         <a href="#actions">Your action plan</a>
       </nav>

@@ -27,7 +27,7 @@ export async function requestEmailSave(req: Request, input: unknown) {
   if (!emailEnabled())
     throw new AppError(
       503,
-      "Email saving is not available yet. Your results remain available here, and you can download the full PDF.",
+      "We’re sorry — email delivery is temporarily unavailable. Your headline results remain here. Please try again later or tell us through Help us make this better.",
       "EMAIL_UNAVAILABLE",
     );
   const { email: rawEmail, reviewId } = inputSchema.parse(input),
@@ -99,7 +99,7 @@ export async function requestEmailSave(req: Request, input: unknown) {
   } catch {
     throw new AppError(
       503,
-      "We couldn’t confirm email delivery. Your review is still here; please download it or try again later.",
+      "We’re sorry — we couldn’t confirm email delivery. Your review is still here. Please try again or tell us through Help us make this better.",
     );
   }
   if (!response.ok) {
