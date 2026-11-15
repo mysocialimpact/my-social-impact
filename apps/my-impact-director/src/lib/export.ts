@@ -5,6 +5,18 @@ import { join } from "node:path";
 import type { ReviewResult } from "./pipeline";
 import { criteria, frameworkNames, ANCHORS, type Framework } from "./rubric";
 export async function exportPdf(result: ReviewResult) {
+  const sourceIndex = new Map<string, string>();
+  const sources: { id: string; page: number; quote: string }[] = [];
+  function sourceRef(page: number, quote: string) {
+    const key = page + "\u0000" + quote;
+    let id = sourceIndex.get(key);
+    if (!id) {
+      id = "E" + (sources.length + 1);
+      sourceIndex.set(key, id);
+      sources.push({ id, page, quote });
+    }
+    return `${id} · PDF p. ${page}`;
+  }
   const pdf = await PDFDocument.create();
   pdf.setTitle(`${result.context.organisation} — Impact report review`);
   pdf.setAuthor("My Social Impact");
@@ -146,7 +158,14 @@ export async function exportPdf(result: ReviewResult) {
           muted,
         );
         write(f.explanation);
-        for (const e of f.evidence) write(`PDF p. ${e.page}: "${e.quote}"`, 9);
+        if (f.evidence.length)
+          write(
+            "Source evidence: " +
+              f.evidence.map((e) => sourceRef(e.page, e.quote)).join("; "),
+            9,
+            "normal",
+            accent,
+          );
         f.limitations.forEach((l) => write("Limitation: " + l, 9));
         write("Improve: " + f.improvement, 10, "bold");
       }
@@ -156,12 +175,17 @@ export async function exportPdf(result: ReviewResult) {
   write("Material claims register", 26, "serif");
   for (const c of result.claims) {
     heading(`${c.id} · ${c.materiality} materiality`);
-    write(`PDF p. ${c.page}: "${c.text}"`, 11, "bold");
+    write("Claim passage: " + sourceRef(c.page, c.text), 11, "bold");
     write(
       `${c.classification} · Evidence ${c.adequacy} · Exaggeration risk ${c.exaggerationRisk}`,
     );
     write(c.outcome);
-    c.evidence.forEach((e) => write(`Evidence, p. ${e.page}: "${e.quote}"`, 9));
+    if (c.evidence.length)
+      write(
+        "Supporting evidence: " +
+          c.evidence.map((e) => sourceRef(e.page, e.quote)).join("; "),
+        9,
+      );
     c.assumptions.forEach((a) => write("Qualification: " + a, 9));
     if (c.defensibleWording)
       write("More defensible wording: " + c.defensibleWording);
@@ -202,6 +226,18 @@ export async function exportPdf(result: ReviewResult) {
     "The Excellence review describes the report. It is separate from the full maturity assessment at socialimpactexcellence.org.",
     9,
   );
+  if (sources.length) {
+    newPage();
+    write("Source evidence", 26, "serif");
+    write(
+      "Each reference below contains the full verbatim passage cited in the findings and material claims register. Repeated references share the same passage. Page numbers refer to the original PDF, not this assessment. Check the original document before relying on a finding.",
+      10,
+    );
+    for (const source of sources) {
+      heading(`${source.id} · PDF p. ${source.page}`);
+      write(source.quote, 9);
+    }
+  }
   for (const [i, p] of pdf.getPages().entries()) {
     p.drawLine({
       start: { x: 60, y: 49 },

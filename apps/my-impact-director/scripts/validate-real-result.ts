@@ -5,7 +5,7 @@ import {
   validateFindings,
   scoreFramework,
 } from "../src/lib/assessment";
-import { extractPages } from "../src/lib/documents";
+import { getDocumentProxy, extractText } from "unpdf";
 import { criteria } from "../src/lib/rubric";
 import { normalise } from "../src/lib/assessment";
 import type { ReviewResult } from "../src/lib/pipeline";
@@ -22,10 +22,18 @@ for (const framework of ["claims", "excellence"] as const) {
     result.scores[framework],
   );
 }
-const pages = await extractPages(
-  await readFile("artifacts/live/genuine-review-export.pdf"),
+const pdf = await getDocumentProxy(
+  new Uint8Array(
+    await readFile(
+      process.argv[2] || "artifacts/live/genuine-review-export.pdf",
+    ),
+  ),
+  { isEvalSupported: false },
 );
-const content = pages.map((p) => p.text).join("\n");
+const extracted = await extractText(pdf, { mergePages: false });
+const pages = extracted.text;
+const content = pages.join("\n");
+await pdf.destroy();
 assert.match(content, /Social Impact Claims Code/);
 assert.match(content, /Social Impact Excellence/);
 assert.match(content, /Methodology/);
@@ -39,6 +47,20 @@ for (const framework of ["claims", "excellence"] as const)
         ),
         `PDF contains the question for ${f.id}`,
       );
+const allCitations = [
+  ...result.claims.flatMap((c) => [
+    { page: c.page, quote: c.text },
+    ...c.evidence,
+  ]),
+  ...Object.values(result.scores).flatMap((s) =>
+    s.principles.flatMap((p) => p.tests.flatMap((f) => f.evidence)),
+  ),
+];
+for (const citation of allCitations)
+  assert.ok(
+    normalise(content).includes(normalise(citation.quote)),
+    `PDF retains full source passage from page ${citation.page}`,
+  );
 const checks = {
   organisation: result.context.organisation,
   sourcePages: review.pages.length,
