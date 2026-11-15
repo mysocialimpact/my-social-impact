@@ -112,7 +112,7 @@ export function Admin() {
               ["completed", "Completed"],
               ["pending", "In progress"],
               ["failed", "Need attention"],
-              ["enquiries", "Service enquiries"],
+              ["enquiries", "Enquiries & feedback"],
               ["cost_usd", "Estimated AI spend · USD"],
             ].map(([k, label]) => (
               <div className="metric" key={k}>
@@ -152,6 +152,7 @@ export function Admin() {
                 ["result_viewed", "Results opened"],
                 ["email_saved", "Email links used"],
                 ["enquiry_created", "Enquiries sent"],
+                ["feedback_created", "Feedback received"],
               ].map(([event, label]) => (
                 <div className="metric" key={event}>
                   <strong>
@@ -290,7 +291,7 @@ export function Admin() {
             </div>
           )}
           <section className="result-section">
-            <h2>Professional service enquiries</h2>
+            <h2>Enquiries & product feedback</h2>
             <div className="table-scroll">
               <table className="admin-table">
                 <thead>
@@ -307,11 +308,19 @@ export function Admin() {
                       <td>
                         <strong>{e.name}</strong>
                         <p>
-                          <a href={"mailto:" + e.email}>{e.email}</a>
+                          {e.email ? (
+                            <a href={"mailto:" + e.email}>{e.email}</a>
+                          ) : (
+                            "No contact details provided"
+                          )}
                         </p>
                       </td>
                       <td>
-                        <strong>{e.service}</strong>
+                        <strong>
+                          {e.service === "feedback"
+                            ? "Product feedback"
+                            : e.service}
+                        </strong>
                         <p>{e.message}</p>
                       </td>
                       <td>

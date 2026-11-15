@@ -45,6 +45,7 @@ try {
       "/privacy",
       "/terms",
       "/admin",
+      "/feedback",
     ]) {
       const response = await page.goto(new URL(path, base).href, {
         waitUntil: "networkidle",

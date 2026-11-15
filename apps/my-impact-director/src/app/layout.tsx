@@ -9,23 +9,27 @@ import "@fontsource/lora/400-italic.css";
 import "@fontsource/instrument-serif/400.css";
 import "@fontsource/instrument-serif/400-italic.css";
 import "./globals.css";
+import "./campaign.css";
+import { ActionShell } from "@/components/action-bar";
 import { Header, Footer } from "@/components/shell";
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.myimpactdirector.com"),
   title: {
-    default: "My Impact Director — How good is your impact report?",
+    default: "My Impact Director — Expert impact management. For everyone.",
     template: "%s | My Impact Director",
   },
   description:
-    "A free, evidence-grounded review of your impact report, using the Social Impact Claims Code and Social Impact Excellence frameworks. Developed by My Social Impact.",
+    "Making expert impact management affordable for every organisation. Start with a free impact report review. No registration required. Developed by My Social Impact.",
 };
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en-GB">
       <body>
-        <Header />
-        <main id="main">{children}</main>
-        <Footer />
+        <ActionShell>
+          <Header />
+          <main id="main">{children}</main>
+          <Footer />
+        </ActionShell>
       </body>
     </html>
   );

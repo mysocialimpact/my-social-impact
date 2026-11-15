@@ -64,11 +64,11 @@ export default function Privacy() {
         <h2>Usage and security</h2>
         <p>
           We count daily totals for review starts, completions, first result
-          views, email saves and enquiries. These aggregate counts contain no
-          visitor identifiers. To enforce fair-use limits we store keyed,
-          rotating hashes of network addresses, never raw network addresses in
-          our application rate-limit records. Hosting providers may keep their
-          own security logs.
+          views, email saves, enquiries and feedback. These aggregate counts
+          contain no visitor identifiers. To enforce fair-use limits we store
+          keyed, rotating hashes of network addresses, never raw network
+          addresses in our application rate-limit records. Hosting providers may
+          keep their own security logs.
         </p>
         <h2>Who can see your report</h2>
         <p>
@@ -95,12 +95,20 @@ export default function Privacy() {
           conversation; deleting its report removes the assessment link.
         </p>
         <p>
-          Account, enquiry and minimal security/audit records are retained for
-          service administration. Contact us to request deletion or a copy,
-          including closure of the existing shared account. Provider backups or
-          recovery history may retain deleted information temporarily according
-          to their retention policies; deletion from the active application is
-          not a promise of instant removal from every backup.
+          Account, enquiry, feedback and minimal security/audit records are
+          retained for service administration. Contact us to request deletion or
+          a copy, including closure of the existing shared account. Provider
+          backups or recovery history may retain deleted information temporarily
+          according to their retention policies; deletion from the active
+          application is not a promise of instant removal from every backup.
+        </p>
+        <h2>Feedback</h2>
+        <p>
+          Optional feedback is stored in the founder inbox with your rating,
+          comment and the page path. You do not need to provide a name or email.
+          Feedback does not share your assessment findings or grant access to
+          your private report. Please leave out personal or confidential
+          information.
         </p>
         <h2>Enquiries and your choices</h2>
         <p>

@@ -1,9 +1,23 @@
 "use client";
 import { useState } from "react";
 import { api } from "./session";
-import { Arrow, DocumentIcon } from "./icons";
+import { Arrow } from "./icons";
 import type { Candidate } from "@/lib/discovery";
 
+export function UploadShortcut() {
+  return (
+    <button
+      type="button"
+      className="mobile-upload"
+      onClick={() => document.getElementById("hero-report-file")?.click()}
+    >
+      <span>First job: review your report. Free.</span>
+      <strong>
+        Upload your impact report <Arrow />
+      </strong>
+    </button>
+  );
+}
 export function Intake({
   enabled,
   hero = false,
@@ -35,6 +49,13 @@ export function Intake({
       return;
     }
     setFile(value);
+    if (hero)
+      document.getElementById("upload")?.scrollIntoView({
+        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+          ? "instant"
+          : "smooth",
+        block: "start",
+      });
   }
   async function upload() {
     if (!file || !consent || !enabled || busy) return;
@@ -133,8 +154,8 @@ export function Intake({
         </p>
       )}
       <div className="upload-topline">
-        <span>YOUR REPORT. A FRESH PERSPECTIVE.</span>
-        <span>100% FREE</span>
+        <span>Upload your impact report</span>
+        <span>No registration required.</span>
       </div>
       {!find ? (
         <label
@@ -152,11 +173,7 @@ export function Intake({
             choose(e.dataTransfer.files[0]);
           }}
         >
-          <span className="upload-icon">
-            <DocumentIcon />
-            <span aria-hidden="true">+</span>
-          </span>
-          <strong>{file ? file.name : "Drop your impact report here"}</strong>
+          <strong>{file ? file.name : "Drop your PDF here"}</strong>
           <span>
             {file
               ? `${(file.size / 1_000_000).toFixed(2)} MB · Ready when you are`
@@ -167,6 +184,7 @@ export function Intake({
             <Arrow />
           </span>
           <input
+            id={hero ? "hero-report-file" : "report-file"}
             aria-label="Choose a PDF report"
             type="file"
             accept="application/pdf,.pdf"
@@ -284,10 +302,7 @@ export function Intake({
         </p>
       )}
       <div className="upload-foot">
-        <p>
-          <span aria-hidden="true">↗</span> No sign-up. No email. Your results
-          first.
-        </p>
+        <p>No sign-up. No email. Your results first.</p>
         <button
           className="subtle-button"
           disabled={busy}

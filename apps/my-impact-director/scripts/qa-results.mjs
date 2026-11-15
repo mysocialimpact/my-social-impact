@@ -77,6 +77,17 @@ try {
     });
     await page.locator(".score-card").first().waitFor();
     assert.equal(await page.locator(".score-card").count(), 2);
+    await page
+      .locator(".action-primary", { hasText: "Keep your full report" })
+      .waitFor();
+    assert.equal(
+      await page.locator(".action-primary").getAttribute("href"),
+      "#keep-review",
+    );
+    assert.match(
+      await page.locator(".action-talk").getAttribute("href"),
+      new RegExp(review.id),
+    );
     assert.equal(await page.locator(".principle .finding").count(), 40);
     assert.ok(
       await page.evaluate(
@@ -140,6 +151,48 @@ try {
     await page
       .getByRole("link", { name: /Synthetic 2025 impact report/ })
       .waitFor();
+    for (const status of ["running", "failed"]) {
+      await context.route(`${config.url}/api/reviews/${review.id}`, (route) =>
+        route.fulfill({
+          json: {
+            ...review,
+            status,
+            stage: 7,
+            result: null,
+            error_message:
+              status === "failed"
+                ? "Synthetic recoverable test failure."
+                : null,
+          },
+        }),
+      );
+      await page.goto(`${config.url}/reviews/${review.id}`, {
+        waitUntil: "networkidle",
+      });
+      await page
+        .locator(".action-primary", {
+          hasText:
+            status === "running"
+              ? "View review progress"
+              : "Review needs attention",
+        })
+        .waitFor();
+      assert.equal(
+        await page.locator(".action-primary").getAttribute("href"),
+        "#review-progress",
+      );
+      const check = await new AxeBuilder({ page })
+        .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
+        .analyze();
+      results.push({
+        width,
+        mode: `synthetic ${status} UI contract`,
+        violations: check.violations.map((v) => ({
+          id: v.id,
+          nodes: v.nodes.map((n) => n.target),
+        })),
+      });
+    }
     await context.close();
   }
 } finally {

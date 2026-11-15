@@ -110,7 +110,8 @@ export async function metric(
     | "result_viewed"
     | "email_requested"
     | "email_saved"
-    | "enquiry_created",
+    | "enquiry_created"
+    | "feedback_created",
 ) {
   await query(
     "INSERT INTO director.daily_metrics(event,count) VALUES($1,1) ON CONFLICT(day,event) DO UPDATE SET count=daily_metrics.count+1",

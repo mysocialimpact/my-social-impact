@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { api, useSession } from "./session";
+import { useReportAction } from "./action-bar";
 import { SaveReview } from "./save-review";
 import { ReviewResults } from "./review-results";
 import type { ReviewResult } from "@/lib/pipeline";
@@ -43,6 +44,7 @@ export function ReviewView({
   id: string;
   sourcePage?: number;
 }) {
+  const setReportAction = useReportAction();
   const { user, loading, error: sessionError } = useSession(),
     [review, setReview] = useState<Review | null>(null),
     [error, setError] = useState(""),
@@ -70,6 +72,11 @@ export function ReviewView({
       clearTimeout(timer);
     };
   }, [user, id, busy]);
+  useEffect(() => {
+    if (review)
+      setReportAction({ id, status: review.status, stage: review.stage });
+  }, [id, review, setReportAction]);
+  useEffect(() => () => setReportAction(null), [id, setReportAction]);
   if (loading) return <p role="status">Opening your private review…</p>;
   if (sessionError) return <div className="alert error">{sessionError}</div>;
   if (!user)
@@ -134,7 +141,7 @@ export function ReviewView({
       <Link href="/reviews" className="breadcrumb">
         ← My saved reviews
       </Link>
-      <div className="page-intro review-heading">
+      <div className="page-intro review-heading" id="review-progress">
         <p className="eyebrow">Your impact report review</p>
         <h1>{review.organisation || "A fresh perspective is on its way."}</h1>
         <p className="intro-copy">{review.title}</p>
@@ -159,7 +166,7 @@ export function ReviewView({
           <SaveReview id={id} />
         </>
       ) : (
-        <div className="progress-card">
+        <div className="progress-card" id="processing-progress">
           {review.status === "failed" ? (
             <>
               <span className="badge failed">Needs attention</span>
