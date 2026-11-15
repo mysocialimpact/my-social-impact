@@ -1,12 +1,15 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { api } from "./session";
 export function AccessLink() {
+  const captured = useRef(false);
   const [token, setToken] = useState(""),
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false);
   useEffect(() => {
+    if (captured.current) return;
+    captured.current = true;
     setToken(window.location.hash.slice(1));
     window.history.replaceState(null, "", "/access");
   }, []);

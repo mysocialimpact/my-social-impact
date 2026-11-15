@@ -12,7 +12,7 @@ const pdf = await readFile("artifacts/synthetic-test-export.pdf");
 const browser = await chromium.launch({
   executablePath: process.env.QA_BROWSER || undefined,
   args: ["--no-sandbox"],
-  ...(process.env.HTTPS_PROXY
+  ...(!config.url.includes("localhost") && process.env.HTTPS_PROXY
     ? { proxy: { server: process.env.HTTPS_PROXY } }
     : {}),
 });
@@ -25,11 +25,17 @@ try {
     });
     const page = await context.newPage();
     const share = new URL(config.url);
-    share.searchParams.set("_vercel_share", config.bypass);
+    if (config.bypass) share.searchParams.set("_vercel_share", config.bypass);
     await page.goto(share.href, { waitUntil: "networkidle" });
     let enquiry;
     await context.route(`${config.url}/api/**`, async (route) => {
       const path = new URL(route.request().url()).pathname;
+      if (path === "/api/save")
+        return route.fulfill({ json: { emailEnabled: false } });
+      if (path === "/api/visitor")
+        return route.fulfill({
+          json: { user: { id: "synthetic-ui-test", anonymous: true } },
+        });
       if (path === "/api/account")
         return route.fulfill({
           json: {
@@ -38,6 +44,7 @@ try {
               name: "Synthetic QA",
               email: "qa@example.invalid",
               founder: false,
+              anonymous: true,
             },
           },
         });
@@ -111,6 +118,10 @@ try {
     await page
       .getByRole("link", { name: "Discuss my review", exact: false })
       .click();
+    await page.getByLabel("Your name", { exact: true }).fill("Synthetic QA");
+    await page
+      .getByLabel("Email address", { exact: true })
+      .fill("qa@example.invalid");
     await page
       .getByLabel("How can we help?")
       .fill("Synthetic UI contract test. No enquiry is sent or stored.");

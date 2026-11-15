@@ -154,7 +154,7 @@ export async function processOne(id?: string) {
     } else if (job.stage === 2) {
       const r = await structured(
         contextSchema,
-        "Identify the report context from the document. Do not infer unknown identity or period. Use Unknown if identity cannot be established, and null for unknown period. Explain unreadable pages and transcription limitations.",
+        "Identify the report context from the document. Do not infer unknown identity or period. Use Unknown if identity cannot be established, and null for unknown period. Record unreadable pages and transcription limitations explicitly as limitations of this assessment, never as defects in the original report. Avoid judgements about reporting quality at this context stage.",
         { pages, visualObservations: notes },
       );
       context = r.data;
@@ -179,7 +179,7 @@ export async function processOne(id?: string) {
         principle = (job.stage - 4) % 5;
       const r = await structured(
         referencedFindingsSchema,
-        `Assess exactly these four criterion IDs, using the material claims register and the supplied source evidence. Establish evidence before judgement. Select evidenceIds from the supplied source passages. The server copies their exact text and physical page; never invent an ID. Numeric anchors: ${JSON.stringify(ANCHORS)}. 'assessed' needs score 1–4 and cited evidence. 'not_demonstrated' means relevant expected disclosure is absent in a fully readable report; score 0. Never use not_applicable for missing information. 'not_applicable' means genuinely irrelevant, with null score and a contextual explanation. 'unassessable' means insufficient reliable material, with null score and an explanation. Do not use absence judgements where pages are unreadable. Excellence measures report demonstrations, not full organisational maturity. Give specific improvements and confidence. Material claim risks must inform relevant criteria, without mechanical caps. Return no overall score. If previousValidationFailure is UNVERIFIED_QUOTATION, select shorter verbatim contiguous passages copied from the correct page. Do not combine fragments, change punctuation or insert ellipses into quotations. If IDs were invalid, copy exactly the supplied criterion and claim IDs.`,
+        `Assess exactly these four criterion IDs, using the material claims register and the supplied source evidence. Establish evidence before judgement. Select evidenceIds from the supplied source passages. The server copies their exact text and physical page; never invent an ID. Numeric anchors: ${JSON.stringify(ANCHORS)}. 'assessed' needs score 1–4 and cited evidence. 'not_demonstrated' means relevant expected disclosure is absent in a fully readable report; score 0. Never use not_applicable for missing information. 'not_applicable' means genuinely irrelevant, with null score and a contextual explanation. 'unassessable' means insufficient reliable material, with null score and an explanation. Do not use absence judgements where pages are unreadable. Excellence measures report demonstrations, not full organisational maturity. Give specific improvements and confidence. Material claim risks must inform relevant criteria, without mechanical caps. Return no overall score. If previousValidationFailure is UNVERIFIED_QUOTATION, choose only existing passage IDs from the catalogue. If IDs were invalid, copy exactly the supplied criterion and claim IDs.`,
         {
           context,
           criteria: criteria(framework).slice(principle * 4, principle * 4 + 4),

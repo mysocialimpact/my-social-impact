@@ -16,7 +16,7 @@ export async function POST(req: Request) {
   try {
     sameOrigin(req);
     const input = await readJson(req);
-    if (input.action === "redeem") {
+    if (input?.action === "redeem") {
       const data = z
         .object({ action: z.literal("redeem"), token: z.string().max(100) })
         .strict()

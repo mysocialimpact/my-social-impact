@@ -4,7 +4,7 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: "*",
       allow: "/",
-      disallow: ["/api/", "/reviews", "/admin", "/login", "/review"],
+      disallow: ["/api/", "/reviews", "/admin", "/login", "/review", "/access"],
     },
     sitemap: "https://www.myimpactdirector.com/sitemap.xml",
   };
