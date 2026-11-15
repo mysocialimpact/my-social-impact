@@ -8,7 +8,7 @@ import "@fontsource/instrument-serif/400-italic.css";
 import "./globals.css";
 import { Header, Footer } from "@/components/shell";
 export const metadata: Metadata = {
-  metadataBase: new URL("https://myimpactdirector.com"),
+  metadataBase: new URL("https://www.myimpactdirector.com"),
   title: {
     default: "My Impact Director — How good is your impact report?",
     template: "%s | My Impact Director",

@@ -9,5 +9,5 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/services/digitisation",
     "/privacy",
     "/terms",
-  ].map((p) => ({ url: "https://myimpactdirector.com" + p }));
+  ].map((p) => ({ url: "https://www.myimpactdirector.com" + p }));
 }

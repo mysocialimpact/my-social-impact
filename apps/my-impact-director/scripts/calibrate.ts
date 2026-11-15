@@ -8,13 +8,14 @@ import { createReview, getReview } from "../src/lib/reviews";
 import { processOne } from "../src/lib/pipeline";
 
 const run = process.argv.includes("--run");
+const enqueue = process.argv.includes("--enqueue");
 const folder = "artifacts/calibration";
 await mkdir(folder, { recursive: true });
 if (
-  run &&
+  (run || enqueue) &&
   (new URL(process.env.DATABASE_URL || "https://missing").pathname !==
     "/my_impact_director_validation" ||
-    !aiAvailable())
+    (run && !aiAvailable()))
 )
   throw new Error(
     "Live calibration requires the isolated validation database and authorised AI credentials.",
@@ -49,7 +50,7 @@ try {
       humanReviewCheck: fixture.check,
       status: "prepared, not assessed",
     };
-    if (run) {
+    if (run || enqueue) {
       const owner = `calibration-${randomUUID()}`;
       try {
         await query(
@@ -69,8 +70,12 @@ try {
           true,
           false,
         );
-        for (let i = 0; i < 25; i++) {
-          if (!(await processOne(review.id))) break;
+        record.ownerId = owner;
+        record.reviewId = review.id;
+        if (run) {
+          for (let i = 0; i < 25; i++) {
+            if (!(await processOne(review.id))) break;
+          }
         }
         const saved = await getReview(user, review.id);
         record.status = saved.status;
@@ -82,8 +87,12 @@ try {
           JSON.stringify(record, null, 2),
         );
       } finally {
-        await query("DELETE FROM director.reports WHERE owner_id=$1", [owner]);
-        await query("DELETE FROM director.users WHERE id=$1", [owner]);
+        if (!enqueue) {
+          await query("DELETE FROM director.reports WHERE owner_id=$1", [
+            owner,
+          ]);
+          await query("DELETE FROM director.users WHERE id=$1", [owner]);
+        }
       }
     }
     records.push(record);
@@ -95,16 +104,18 @@ try {
     JSON.stringify(
       {
         generatedAt: new Date().toISOString(),
-        mode: run
-          ? "live model — human calibration still required"
-          : "prepared only — no model evaluation",
+        mode: enqueue
+          ? "queued for real hosted processing — not yet assessed"
+          : run
+            ? "live model — human calibration still required"
+            : "prepared only — no model evaluation",
         fixtures: records,
       },
       null,
       2,
     ),
   );
-  if (run) await database().end();
+  if (run || enqueue) await database().end();
 }
 if (run && records.some((r) => (r as { status: string }).status !== "complete"))
   process.exitCode = 1;

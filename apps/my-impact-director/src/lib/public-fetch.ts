@@ -4,7 +4,7 @@ import { lookup } from "node:dns/promises";
 import ipaddr from "ipaddr.js";
 import robotsParser from "robots-parser";
 export const AGENT =
-  "MyImpactDirector/1.0 (+https://myimpactdirector.com/privacy)";
+  "MyImpactDirector/1.0 (+https://www.myimpactdirector.com/privacy)";
 export function publicUrl(input: string) {
   const u = new URL(input);
   if (

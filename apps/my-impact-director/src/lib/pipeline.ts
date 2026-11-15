@@ -48,6 +48,7 @@ export const STAGES = [
   "Review complete",
 ];
 type Job = {
+  error_code: string | null;
   id: string;
   report_id: string;
   stage: number;
@@ -159,13 +160,14 @@ export async function processOne(id?: string) {
         principle = (job.stage - 4) % 5;
       const r = await structured(
         findingsSchema,
-        `Assess exactly these four criterion IDs, using the material claims register and the supplied source evidence. Establish evidence before judgement. Cite exact source passages. Numeric anchors: ${JSON.stringify(ANCHORS)}. 'assessed' needs score 1–4 and cited evidence. 'not_demonstrated' means relevant expected disclosure is absent in a fully readable report; score 0. Never use not_applicable for missing information. 'not_applicable' means genuinely irrelevant, with null score and a contextual explanation. 'unassessable' means insufficient reliable material, with null score and an explanation. Do not use absence judgements where pages are unreadable. Excellence measures report demonstrations, not full organisational maturity. Give specific improvements and confidence. Material claim risks must inform relevant criteria, without mechanical caps. Return no overall score.`,
+        `Assess exactly these four criterion IDs, using the material claims register and the supplied source evidence. Establish evidence before judgement. Cite exact source passages. Numeric anchors: ${JSON.stringify(ANCHORS)}. 'assessed' needs score 1–4 and cited evidence. 'not_demonstrated' means relevant expected disclosure is absent in a fully readable report; score 0. Never use not_applicable for missing information. 'not_applicable' means genuinely irrelevant, with null score and a contextual explanation. 'unassessable' means insufficient reliable material, with null score and an explanation. Do not use absence judgements where pages are unreadable. Excellence measures report demonstrations, not full organisational maturity. Give specific improvements and confidence. Material claim risks must inform relevant criteria, without mechanical caps. Return no overall score. If previousValidationFailure is UNVERIFIED_QUOTATION, select shorter verbatim contiguous passages copied from the correct page. Do not combine fragments, change punctuation or insert ellipses into quotations. If IDs were invalid, copy exactly the supplied criterion and claim IDs.`,
         {
           context,
           criteria: criteria(framework).slice(principle * 4, principle * 4 + 4),
           claims,
           pages,
           visualObservations: notes,
+          previousValidationFailure: job.error_code,
         },
       );
       usage = r.usage;
@@ -280,7 +282,18 @@ export async function processOne(id?: string) {
         ? e.code
         : e instanceof Error && e.name === "ZodError"
           ? "OUTPUT_INVALID"
-          : "STAGE_VALIDATION_FAILED";
+          : e instanceof Error && e.message.startsWith("Unverified quotation")
+            ? "UNVERIFIED_QUOTATION"
+            : e instanceof Error &&
+                e.message === "Missing or duplicated criteria."
+              ? "INVALID_CRITERION_IDS"
+              : e instanceof Error && e.message === "Unknown claim reference."
+                ? "UNKNOWN_CLAIM_REFERENCE"
+                : e instanceof Error &&
+                    e.message ===
+                      "Missing content prevents reliable absence judgements."
+                  ? "UNREADABLE_SOURCE_ABSENCE"
+                  : "STAGE_VALIDATION_FAILED";
     const retry =
       (e instanceof AIError ? e.retryable : !(e instanceof AppError)) &&
       job.stage_attempts < 3;

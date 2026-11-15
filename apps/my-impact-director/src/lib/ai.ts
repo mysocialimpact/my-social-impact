@@ -117,7 +117,11 @@ export async function structured<T extends z.ZodType>(
   }
   const it = Number(r.usage?.prompt_tokens || 0),
     ot = Number(r.usage?.completion_tokens || 0);
-  // Conservative estimate using catalogue pricing, excluding prompt-cache discounts.
+  // Catalogue rates exclude prompt-cache discounts. Keep model changes explicit.
+  const rates =
+    model === "openai/gpt-5.4-nano"
+      ? { input: 0.0000002, output: 0.00000125 }
+      : { input: 0.00000075, output: 0.0000045 };
   return {
     data,
     usage: {
@@ -125,7 +129,7 @@ export async function structured<T extends z.ZodType>(
       responseId: r.id || "",
       inputTokens: it,
       outputTokens: ot,
-      cost: it * 0.00000075 + ot * 0.0000045,
+      cost: it * rates.input + ot * rates.output,
       duration: Date.now() - start,
     },
   };

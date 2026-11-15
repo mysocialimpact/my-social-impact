@@ -6,6 +6,6 @@ export default function robots(): MetadataRoute.Robots {
       allow: "/",
       disallow: ["/api/", "/reviews", "/admin", "/login", "/review"],
     },
-    sitemap: "https://myimpactdirector.com/sitemap.xml",
+    sitemap: "https://www.myimpactdirector.com/sitemap.xml",
   };
 }

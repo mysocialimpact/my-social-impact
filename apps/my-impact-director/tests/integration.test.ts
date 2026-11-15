@@ -406,7 +406,7 @@ test(
           const r = await getReview(user, id2);
           assert.equal(r.stage, 4);
           assert.equal(r.result, null);
-          assert.equal(r.error_code, "STAGE_VALIDATION_FAILED");
+          assert.equal(r.error_code, "UNVERIFIED_QUOTATION");
           forgeQuote = false;
         },
       );
