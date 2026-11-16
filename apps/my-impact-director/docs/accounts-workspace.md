@@ -25,6 +25,29 @@ Marketing choice, time, wording/version and source are stored on the canonical u
 - 31 unit checks and 31 real validation-database checks pass. Database identity, AI and email transports are mocked; real transactions, ownership, token isolation/replay, report migration, PDF bytes, queue idempotency, preferences, shares and revocation are exercised.
 - The new account regression includes unverified-email collision denial, registration during an existing guest review, adoption of an upload made by a pending password account, reuse of an existing verified-email account, password login from another browser, reset forwarding, automatic PDF transport and a durable password-login URL, unsubscribe, and rejection of a share token as an account verification token.
 - The account browser contract covers registration, login, logged-out reports, authenticated workspace, confirmation, saved results and active processing at 1440×900, 1366×768 and 390×844. It uses synthetic HTTP transports; it is not evidence of real inbox delivery or identity-provider authentication. Screenshots and exact results are in ignored `artifacts/accounts`.
-- Build and TypeScript pass. Real deployed authentication and received-email results are recorded separately after release. Do not represent mocked email acceptance as live inbox delivery.
+- Build and TypeScript pass. The browser contract passed all 21 page/viewport combinations with no tested axe violations, horizontal overflow or page errors. Screenshots were inspected and corrected before release. Do not represent mocked email acceptance as live inbox delivery.
+
+## Production verification — 16 November 2026
+
+Migration 008 was applied to production before release. Counts before and immediately after migration were unchanged: 19 users, 9 report documents and 24 assessments. The existing restricted runtime could read the additive columns without any new grants.
+
+Commit `fc82c9545b9af9566bedf5a4e4cf020d09c41255` is live at https://www.myimpactdirector.com, deployed as `dpl_EnSyo64BHTfQbMcZQXk1yYwhprCu`. Both the apex and www aliases point to this ready production deployment. PR #10 contains this change on top of PR #9.
+
+The live end-to-end check used a clearly labelled synthetic one-page report and an authorised internal inbox alias, with real account, model and email services:
+
+- Anonymous upload and Claims Code selection succeeded. Registration during processing returned an unverified account and sent a real confirmation email.
+- Redeeming the received confirmation saved the existing upload. A fresh cookie jar logged in with the password, retained verification and found that report without requesting another confirmation email.
+- Password recovery delivered a real reset email. After reset, the old password was rejected (401) and the new password logged in successfully (200), preserving verified access.
+- Processing completed in the background. The inbox received the completed Claims Code PDF, 160,077 bytes and 19 pages. Attachment extraction confirmed the framework and all five principles. Its email contained a durable password-login return URL for the saved assessment. A subsequent authenticated PDF export returned valid PDF bytes (200).
+- A share link opened the detailed assessment without an account and returned only title and result. The unauthenticated original-document request was denied (401). Revocation succeeded and the same share token was then rejected (404).
+- Logout returned an unauthenticated account state. Live registration was also opened and visually inspected in the browser. The final production error/fatal log scan was empty.
+
+No credentials were written into source or release notes. The synthetic QA document remains clearly labelled in the internal test workspace; no customer report was altered or deleted.
+
+### Remaining limits
+
+The existing identity provider sends password-reset emails branded “Are You SORP Ready?” and opens its secure SORP reset page. Password recovery works, but this part of the shared service is not yet branded for My Impact Director. The My Impact Director recovery screen explains the shared service and return to login.
+
+The representative model/human calibration programme for assessment quality remains incomplete, as documented in the existing methodology calibration notes. This account release does not change or validate assessment scoring.
 
 The validation database retains four unused prototype tables from an earlier implementation attempt. Runtime roles have no access to those tables; the final implementation does not use or create them in production. No permission-expanding grant was applied.
