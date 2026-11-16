@@ -186,7 +186,7 @@ export async function redeemEmailLink(token: string) {
       auth_subject: string | null;
       guest_owner_id: string | null;
     }>(
-      "SELECT email,review_id,owner_id,auth_subject,guest_owner_id FROM director.email_links WHERE token_hash=$1 AND used_at IS NULL AND expires_at>now() FOR UPDATE",
+      "SELECT email,review_id,owner_id,auth_subject,guest_owner_id FROM director.email_links WHERE token_hash=$1 AND purpose='verification' AND used_at IS NULL AND expires_at>now() FOR UPDATE",
       [tokenHash(token)],
     );
     if (!link)
@@ -209,12 +209,12 @@ export async function redeemEmailLink(token: string) {
     );
     if (link.auth_subject) {
       await c.query(
-        "UPDATE director.account_identities SET owner_id=$2,verified_at=now() WHERE subject=$1 AND email=$3 AND owner_id=$4",
+        "UPDATE director.users SET canonical_owner_id=$2,password_verified_at=now() WHERE id=$1 AND account_email=$3 AND canonical_owner_id=$4",
         [link.auth_subject, id, link.email, link.owner_id],
       );
       if (id !== link.owner_id) {
         await c.query(
-          "INSERT INTO director.marketing_consent(owner_id,opted_in,wording_version,wording,source,recorded_at) SELECT $2,opted_in,wording_version,wording,source,recorded_at FROM director.marketing_consent WHERE owner_id=$1 ON CONFLICT(owner_id) DO NOTHING",
+          "UPDATE director.users target SET marketing_opt_in=pending.marketing_opt_in,marketing_wording_version=pending.marketing_wording_version,marketing_wording=pending.marketing_wording,marketing_source=pending.marketing_source,marketing_recorded_at=pending.marketing_recorded_at FROM director.users pending WHERE pending.id=$1 AND target.id=$2 AND target.marketing_recorded_at IS NULL AND pending.marketing_recorded_at IS NOT NULL",
           [link.owner_id, id],
         );
       }

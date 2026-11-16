@@ -242,6 +242,8 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
     if (searchParams.get("results") === "1") setResults(true);
   }, [searchParams]);
   const setAction = useReportAction();
+  const { user } = useSession();
+  const verificationPending = !!user && !user.anonymous && !user.emailVerified;
   const framework = r.framework === "document" ? null : r.framework,
     complete = r.status === "complete" && !!r.result;
   const siblings = (r.siblings || []).map((s) =>
@@ -291,61 +293,73 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
                 ? "We’ll email you when it’s ready."
                 : "Save your work and return on any device."
             : "Choose any review. We reuse this document.",
-      primaryLabel: !framework
-        ? allDone
-          ? "Explore your reports"
-          : completedCount
-            ? "Start your next free review"
-            : "Start your first free review"
-        : complete
-          ? nextAfterResults
+      primaryLabel:
+        verificationPending && !r.full
+          ? "Confirm your email to save your reports"
+          : !framework
             ? allDone
               ? "Explore your reports"
-              : "Start your next free review"
-            : "View your results"
-          : r.status === "failed"
-            ? "Resolve review issue"
-            : r.full
-              ? "Explore the methodology"
-              : "Save your work & get the full report",
-      primaryHref: !framework
-        ? allDone
-          ? "/reviews"
-          : "#choose-review"
-        : nextAfterResults && allDone
-          ? "/reviews"
-          : complete
-            ? "#review-results"
-            : r.full
-              ? "#learning"
-              : "#email-delivery",
-      onPrimary: !framework
-        ? undefined
-        : complete
-          ? nextAfterResults
+              : completedCount
+                ? "Start your next free review"
+                : "Start your first free review"
+            : complete
+              ? nextAfterResults
+                ? allDone
+                  ? "Explore your reports"
+                  : "Start your next free review"
+                : "View your results"
+              : r.status === "failed"
+                ? "Resolve review issue"
+                : r.full
+                  ? "Explore the methodology"
+                  : "Save your work & get the full report",
+      primaryHref:
+        verificationPending && !r.full
+          ? "/verify-email"
+          : !framework
             ? allDone
-              ? () => window.location.assign("/reviews")
-              : () => {
-                  document
-                    .querySelector(".next-review")
-                    ?.scrollIntoView({ behavior: "smooth", block: "start" });
-                }
-            : viewResults
-          : r.status === "failed"
-            ? () => document.querySelector(".honest-status")?.scrollIntoView()
-            : () =>
-                r.full
-                  ? goStep(0)
-                  : step === 0
-                    ? document
-                        .querySelector<HTMLInputElement>(
-                          '#email-delivery input[name="email"]',
-                        )
-                        ?.focus()
-                    : setEmailOpen(true),
+              ? "/reviews"
+              : "#choose-review"
+            : nextAfterResults && allDone
+              ? "/reviews"
+              : complete
+                ? "#review-results"
+                : r.full
+                  ? "#learning"
+                  : "#email-delivery",
+      onPrimary:
+        verificationPending && !r.full
+          ? () => window.location.assign("/verify-email")
+          : !framework
+            ? undefined
+            : complete
+              ? nextAfterResults
+                ? allDone
+                  ? () => window.location.assign("/reviews")
+                  : () => {
+                      document.querySelector(".next-review")?.scrollIntoView({
+                        behavior: "smooth",
+                        block: "start",
+                      });
+                    }
+                : viewResults
+              : r.status === "failed"
+                ? () =>
+                    document.querySelector(".honest-status")?.scrollIntoView()
+                : () =>
+                    r.full
+                      ? goStep(0)
+                      : step === 0
+                        ? document
+                            .querySelector<HTMLInputElement>(
+                              '#email-delivery input[name="email"]',
+                            )
+                            ?.focus()
+                        : setEmailOpen(true),
       processingLabel: "Processing continues when you leave",
     });
   }, [
+    verificationPending,
     r.id,
     r.status,
     r.stage,
@@ -757,7 +771,7 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
           </section>
         )}
       </div>
-      {results && (
+      {results && complete && (
         <EmailInvitation id={r.id} full={r.full} delivery={r.delivery} />
       )}
       {emailOpen && (

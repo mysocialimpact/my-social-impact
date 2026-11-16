@@ -7,12 +7,17 @@ export function useSession() {
     [error, setError] = useState("");
   useEffect(() => {
     const c = new AbortController();
+    let timer: ReturnType<typeof setTimeout>;
     const refresh = () => {
-      fetch("/api/account", { signal: c.signal })
+      clearTimeout(timer);
+      fetch("/api/account", { signal: c.signal, cache: "no-store" })
         .then(async (r) => {
           const d = await r.json();
           if (!r.ok) throw new Error(d.error);
           setUser(d.user);
+          setError("");
+          if (d.user && !d.user.anonymous && !d.user.emailVerified)
+            timer = setTimeout(refresh, 5000);
         })
         .catch((e) => {
           if (!c.signal.aborted) setError(e.message);
@@ -23,8 +28,11 @@ export function useSession() {
     };
     refresh();
     window.addEventListener("mid-session-refresh", refresh);
+    window.addEventListener("focus", refresh);
     return () => {
       c.abort();
+      clearTimeout(timer);
+      window.removeEventListener("focus", refresh);
       window.removeEventListener("mid-session-refresh", refresh);
     };
   }, []);

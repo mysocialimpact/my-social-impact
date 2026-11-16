@@ -12,7 +12,7 @@ export async function GET(req: Request, ctx: Context) {
     return Response.json(
       {
         shares: await query(
-          "SELECT id,created_at,expires_at,revoked_at FROM director.assessment_shares WHERE review_id=$1 AND owner_id=$2 ORDER BY created_at DESC LIMIT 30",
+          "SELECT share_id AS id,created_at,expires_at,used_at AS revoked_at FROM director.email_links WHERE purpose='assessment-share' AND review_id=$1 AND owner_id=$2 ORDER BY created_at DESC LIMIT 30",
           [id, user.id],
         ),
       },
@@ -46,7 +46,7 @@ export async function DELETE(req: Request, ctx: Context) {
       .strict()
       .parse(await readJson(req));
     await query(
-      "UPDATE director.assessment_shares SET revoked_at=now() WHERE id=$1 AND review_id=$2 AND owner_id=$3",
+      "UPDATE director.email_links SET used_at=now() WHERE purpose='assessment-share' AND share_id=$1 AND review_id=$2 AND owner_id=$3",
       [data.id, id, user.id],
     );
     return Response.json({ ok: true });

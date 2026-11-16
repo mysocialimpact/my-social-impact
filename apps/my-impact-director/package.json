@@ -8,7 +8,7 @@
     "build": "next build",
     "start": "next start --hostname 0.0.0.0",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test tests/*.test.ts",
+    "test": "node --import tsx --test tests/*.test.ts",
     "db:migrate": "tsx scripts/migrate.ts",
     "test:database": "RUN_DATABASE_TESTS=1 node --env-file=.env.local --import tsx --test tests/integration.test.ts tests/workspace-integration.test.ts tests/rate-limits.test.ts",
     "test:browser": "node scripts/qa-browser.mjs",

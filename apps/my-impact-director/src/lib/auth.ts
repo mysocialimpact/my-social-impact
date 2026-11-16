@@ -78,12 +78,8 @@ export async function identity(req: Request): Promise<Identity> {
     // New unverified provider accounts get a private placeholder, never another
     // person's saved workspace based solely on a matching email string.
     await c.query(
-      "INSERT INTO director.users(id,email,name,is_anonymous) VALUES($1,'',$2,true) ON CONFLICT(id) DO NOTHING",
-      [user.id, user.name],
-    );
-    await c.query(
-      "INSERT INTO director.account_identities(subject,owner_id,email) VALUES($1,$1,$2) ON CONFLICT(subject) DO UPDATE SET last_seen=now()",
-      [user.id, email],
+      "INSERT INTO director.users(id,email,name,is_anonymous,account_email,canonical_owner_id) VALUES($1,'',$2,true,$3,$1) ON CONFLICT(id) DO UPDATE SET account_email=COALESCE(director.users.account_email,$3),canonical_owner_id=COALESCE(director.users.canonical_owner_id,$1)",
+      [user.id, user.name, email],
     );
     let {
       rows: [binding],
@@ -92,7 +88,7 @@ export async function identity(req: Request): Promise<Identity> {
       email: string;
       verified_at: Date | null;
     }>(
-      "SELECT owner_id,email,verified_at FROM director.account_identities WHERE subject=$1 FOR UPDATE",
+      "SELECT canonical_owner_id AS owner_id,account_email AS email,password_verified_at AS verified_at FROM director.users WHERE id=$1 FOR UPDATE",
       [user.id],
     );
     if (binding.email !== email)
@@ -108,7 +104,7 @@ export async function identity(req: Request): Promise<Identity> {
       local.email.toLowerCase() === email
     ) {
       await c.query(
-        "UPDATE director.account_identities SET owner_id=$2,verified_at=now() WHERE subject=$1",
+        "UPDATE director.users SET canonical_owner_id=$2,password_verified_at=now() WHERE id=$1",
         [user.id, local.id],
       );
       binding = { ...binding, owner_id: local.id, verified_at: new Date() };

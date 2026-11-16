@@ -10,6 +10,7 @@ import "@fontsource/instrument-serif/400.css";
 import "@fontsource/instrument-serif/400-italic.css";
 import "./globals.css";
 import "./campaign.css";
+import "./account.css";
 import { ActionShell } from "@/components/action-bar";
 import { Header, Footer } from "@/components/shell";
 export const metadata: Metadata = {

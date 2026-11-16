@@ -156,7 +156,7 @@ export function ActionShell({ children }: { children: React.ReactNode }) {
             review ? `/services/expert-review?review=${review[1]}` : "/contact"
           }
         >
-          {complete ? "Talk to your Impact Director" : "Contact Us"}
+          {review && complete ? "Talk to your Impact Director" : "Contact Us"}
         </Link>
         <Link
           className="action-feedback"

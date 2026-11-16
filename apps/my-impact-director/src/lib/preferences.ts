@@ -9,22 +9,30 @@ export async function recordConsent(
 ) {
   await transaction(async (c) => {
     await c.query(
-      "INSERT INTO director.marketing_consent(owner_id,opted_in,wording_version,wording,source) VALUES($1,$2,$3,$4,$5) ON CONFLICT(owner_id) DO UPDATE SET opted_in=$2,wording_version=$3,wording=$4,source=$5,recorded_at=now()",
+      "UPDATE director.users SET marketing_opt_in=$2,marketing_wording_version=$3,marketing_wording=$4,marketing_source=$5,marketing_recorded_at=now() WHERE id=$1",
       [owner, optedIn, CONSENT_VERSION, CONSENT_WORDING, source],
     );
     await c.query(
-      "INSERT INTO director.marketing_consent_events(owner_id,opted_in,wording_version,wording,source) VALUES($1,$2,$3,$4,$5)",
-      [owner, optedIn, CONSENT_VERSION, CONSENT_WORDING, source],
+      "INSERT INTO director.audit(actor_id,action,resource_id,reason) VALUES($1,'marketing-consent',$1,$2)",
+      [
+        owner,
+        JSON.stringify({
+          optedIn,
+          version: CONSENT_VERSION,
+          wording: CONSENT_WORDING,
+          source,
+        }),
+      ],
     );
   });
 }
 export async function preferences(owner: string) {
   const [row] = await query<{
     opted_in: boolean;
-    recorded_at: string;
-    wording_version: string;
+    recorded_at: string | null;
+    wording_version: string | null;
   }>(
-    "SELECT opted_in,recorded_at,wording_version FROM director.marketing_consent WHERE owner_id=$1",
+    "SELECT marketing_opt_in AS opted_in,marketing_recorded_at AS recorded_at,marketing_wording_version AS wording_version FROM director.users WHERE id=$1",
     [owner],
   );
   return (

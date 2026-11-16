@@ -12,7 +12,7 @@ const server = supplied
       process.execPath,
       [
         "node_modules/next/dist/bin/next",
-        "dev",
+        process.env.QA_PRODUCTION_BUILD ? "start" : "dev",
         "--hostname",
         "127.0.0.1",
         "--port",
@@ -33,11 +33,6 @@ try {
     await new Promise((r) => setTimeout(r, 500));
     if (i === 59) throw Error("Preview server did not start");
   }
-  browser = await chromium.launch({
-    executablePath: "/usr/bin/chromium",
-    args: ["--no-sandbox"],
-    ...(supplied ? { proxy: { server: process.env.HTTPS_PROXY } } : {}),
-  });
   await fs.mkdir("artifacts/accounts", { recursive: true });
   const fixture = JSON.parse(
     await fs.readFile("artifacts/claims-review.json", "utf8"),
@@ -55,7 +50,17 @@ try {
       "reports-verified",
       "verify",
       "results",
+      "processing",
     ]) {
+      browser = await chromium.launch({
+        ...(process.env.QA_BROWSER
+          ? { executablePath: process.env.QA_BROWSER }
+          : {}),
+        args: process.env.QA_BROWSER_ARGS
+          ? JSON.parse(process.env.QA_BROWSER_ARGS)
+          : ["--no-sandbox"],
+        ...(supplied ? { proxy: { server: process.env.HTTPS_PROXY } } : {}),
+      });
       const context = await browser.newContext({ viewport: { width, height } }),
         p = await context.newPage();
       let state = ["reports-verified", "results"].includes(scenario)
@@ -74,7 +79,7 @@ try {
               emailVerified: false,
               passwordAccount: true,
             }
-          : scenario === "reports-guest"
+          : ["reports-guest", "processing"].includes(scenario)
             ? { id: "guest", anonymous: true, email: "" }
             : null;
       const errors = [];
@@ -131,7 +136,10 @@ try {
           json: {
             ...fixture,
             framework: "claims",
-            full: true,
+            status: scenario === "processing" ? "running" : fixture.status,
+            stage: 4,
+            result: scenario === "processing" ? null : fixture.result,
+            full: scenario !== "processing",
             emailEnabled: true,
             understanding_ready: true,
             siblings: [
@@ -148,8 +156,8 @@ try {
               ? "/login"
               : scenario === "verify"
                 ? "/verify-email"
-                : scenario === "results"
-                  ? `/reviews/${id}?results=1`
+                : ["results", "processing"].includes(scenario)
+                  ? `/reviews/${id}${scenario === "processing" ? "" : "?results=1"}`
                   : "/reviews"),
         { waitUntil: "networkidle" },
       );
@@ -160,6 +168,7 @@ try {
         false,
         `${scenario} ${width} overflow`,
       );
+      await p.evaluate(() => window.scrollTo(0, 0));
       if (scenario === "register") {
         assert.equal(
           await p.locator("input[name=marketing]").isChecked(),
@@ -182,6 +191,7 @@ try {
         await p
           .getByRole("button", { name: "Hide password", exact: true })
           .click();
+        await p.evaluate(() => window.scrollTo(0, 0));
         await p.screenshot({
           path: `artifacts/accounts/${scenario}-${width}.png`,
           fullPage: true,
@@ -228,6 +238,7 @@ try {
       assert.equal(errors.length, 0, JSON.stringify(errors));
       assert.equal(axe.violations.length, 0, JSON.stringify(checks.at(-1)));
       await context.close();
+      await browser.close();
     }
   }
   await fs.writeFile(

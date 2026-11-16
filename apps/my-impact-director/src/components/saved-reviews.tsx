@@ -131,27 +131,6 @@ export function SavedReviews() {
           <Link className="button primary small" href="/#upload">
             Upload a report →
           </Link>
-          {user && !user.anonymous && (
-            <button
-              className="button secondary small"
-              onClick={async () => {
-                try {
-                  await api("/api/account", {
-                    method: "POST",
-                    headers: { "content-type": "application/json" },
-                    body: JSON.stringify({ action: "logout" }),
-                  });
-                  window.location.assign("/reviews");
-                } catch (e) {
-                  setError(
-                    e instanceof Error ? e.message : "Please try again.",
-                  );
-                }
-              }}
-            >
-              Sign out
-            </button>
-          )}
         </div>
       </div>
       {(error || sessionError) && (

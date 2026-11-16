@@ -25,8 +25,8 @@ export async function createShare(user: Identity, id: string) {
   await shareable(user, id);
   const token = randomBytes(32).toString("base64url");
   const [share] = await query<{ id: string; expires_at: string }>(
-    "INSERT INTO director.assessment_shares(review_id,owner_id,token_hash) VALUES($1,$2,$3) RETURNING id,expires_at",
-    [id, user.id, tokenHash(token)],
+    "INSERT INTO director.email_links(review_id,owner_id,token_hash,email,purpose,expires_at) VALUES($1,$2,$3,$4,'assessment-share',now()+interval '30 days') RETURNING share_id AS id,expires_at",
+    [id, user.id, tokenHash(token), user.email],
   );
   return { ...share, url: `${process.env.APP_ORIGIN}/shared#${token}` };
 }
@@ -34,7 +34,7 @@ export async function readShare(token: string) {
   if (!/^[A-Za-z0-9_-]{43}$/.test(token))
     throw new AppError(404, "This shared assessment is unavailable.");
   const [row] = await query(
-    "SELECT r.title,v.result FROM director.assessment_shares s JOIN director.reviews v ON v.id=s.review_id JOIN director.reports r ON r.id=v.report_id WHERE s.token_hash=$1 AND s.revoked_at IS NULL AND s.expires_at>now() AND r.expires_at>now() AND v.status='complete' AND v.result IS NOT NULL",
+    "SELECT r.title,v.result FROM director.email_links s JOIN director.reviews v ON v.id=s.review_id JOIN director.reports r ON r.id=v.report_id WHERE s.token_hash=$1 AND s.purpose='assessment-share' AND s.used_at IS NULL AND s.expires_at>now() AND r.expires_at>now() AND v.status='complete' AND v.result IS NOT NULL",
     [tokenHash(token)],
   );
   if (!row)

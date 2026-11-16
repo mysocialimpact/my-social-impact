@@ -169,6 +169,17 @@ test(
           assert.equal(emails[0].attachments, undefined);
         },
       );
+      const pendingUser = await visitor(req("msi_sorp_session=qa-password"));
+      const pending = await createReview(
+        pendingUser,
+        bytes,
+        "uploaded-before-verification.pdf",
+        true,
+        false,
+        null,
+        true,
+      );
+      reports.push(pending.id);
       const token = emails[0].text.match(/access#([A-Za-z0-9_-]{43})/)[1],
         redeemed = await redeemEmailLink(token);
       const signed = await visitor(req("msi_sorp_session=qa-password"));
@@ -177,7 +188,10 @@ test(
         async () => {
           assert.equal(signed.id, old);
           assert.equal(signed.emailVerified, true);
-          assert.equal((await workspaces(signed)).length, 2);
+          assert.equal((await workspaces(signed)).length, 3);
+          assert.ok(
+            await reviewAccess(signed, await getReview(signed, pending.id)),
+          );
           assert.ok(
             await reviewAccess(signed, await getReview(signed, selected.id)),
           );
@@ -263,10 +277,11 @@ test(
           const share = await createShare(signed, selected.id),
             secret = share.url.split("#")[1];
           assert.equal(share.url.split("#")[0], "https://test.example/shared");
+          await assert.rejects(() => redeemEmailLink(secret), { status: 410 });
           const publicView = await readShare(secret);
           assert.deepEqual(Object.keys(publicView).sort(), ["result", "title"]);
           await query(
-            "UPDATE director.assessment_shares SET revoked_at=now() WHERE id=$1 AND owner_id=$2",
+            "UPDATE director.email_links SET used_at=now() WHERE purpose='assessment-share' AND share_id=$1 AND owner_id=$2",
             [share.id, old],
           );
           await assert.rejects(() => readShare(secret), { status: 404 });
@@ -286,12 +301,12 @@ test(
                 [old],
               )
             ).length,
-            2,
+            3,
           );
           assert.ok(
             (
               await query(
-                "SELECT 1 FROM director.marketing_consent_events WHERE owner_id=$1",
+                "SELECT 1 FROM director.audit WHERE actor_id=$1 AND action='marketing-consent'",
                 [old],
               )
             ).length,
@@ -317,6 +332,9 @@ test(
           "DELETE FROM director.reports WHERE id=(SELECT report_id FROM director.reviews WHERE id=$1)",
           [id],
         );
+      await query("DELETE FROM director.audit WHERE actor_id=ANY($1::text[])", [
+        users,
+      ]);
       await query("DELETE FROM director.users WHERE id=ANY($1::text[])", [
         users,
       ]);
