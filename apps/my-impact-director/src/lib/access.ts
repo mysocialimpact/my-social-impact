@@ -110,6 +110,7 @@ export async function metric(
     | "result_viewed"
     | "email_requested"
     | "email_saved"
+    | "report_downloaded"
     | "enquiry_created"
     | "feedback_created",
 ) {

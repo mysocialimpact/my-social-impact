@@ -37,7 +37,7 @@ export async function sendPendingReports() {
         body: JSON.stringify({
           from: process.env.EMAIL_FROM,
           to: [row.email],
-          subject: `Your ${row.result.framework === "claims" ? "Social Impact Claims Code" : row.result.framework === "excellence" ? "Social Impact Excellence" : "impact report"} review is ready`,
+          subject: `Your ${row.result.framework === "claims" ? "Social Impact Claims Code" : row.result.framework === "excellence" ? "Social Impact Excellence" : row.result.framework === "report" ? "Impact Report Excellence" : "impact report"} review is ready`,
           text: `Your free detailed review is attached. Open your private return link within 30 minutes: ${process.env.APP_ORIGIN}/access#${token}\n\nNo marketing subscription. You requested and verified this delivery address.`,
           attachments: [
             {

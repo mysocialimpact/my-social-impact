@@ -113,6 +113,22 @@ export async function exportPdf(result: ReviewResult) {
     height: logoHeight,
   });
   y = 770 - logoHeight;
+  if (result.framework === "report") {
+    const frameworkLogo = await pdf.embedPng(
+      await readFile(
+        join(
+          process.cwd(),
+          "public/brand/impact-report-excellence-horizontal.png",
+        ),
+      ),
+    );
+    page.drawImage(frameworkLogo, {
+      x: 325,
+      y: 795 - 60,
+      width: 220,
+      height: 55,
+    });
+  }
   write("Your impact report,\nreviewed.", 34, "serif");
   y -= 15;
   write(result.context.organisation, 20, "bold");
@@ -128,12 +144,12 @@ export async function exportPdf(result: ReviewResult) {
   );
   heading("Executive summary");
   write(result.actions.summary, 11);
-  for (const key of (["claims", "excellence"] as Framework[]).filter(
+  for (const key of (["claims", "excellence", "report"] as Framework[]).filter(
     (f) => !!result.scores[f],
   )) {
     const s = result.scores[key]!;
     write(
-      `${frameworkNames[key]}: ${s.provisional ? "Provisional - no overall score" : s.overall + "/100"} · ${s.coverage}/20 tests assessed`,
+      `${frameworkNames[key]}: ${s.provisional ? "Provisional - no overall score" : s.overall + "/100"} · ${s.coverage}/${criteria(key).length} tests assessed`,
       12,
       "bold",
     );
@@ -142,16 +158,20 @@ export async function exportPdf(result: ReviewResult) {
   result.actions.strengths.forEach((s) => write("- " + s));
   heading("Opportunities");
   result.actions.opportunities.forEach((s) => write("- " + s));
-  for (const framework of (["claims", "excellence"] as Framework[]).filter(
-    (f) => !!result.scores[f],
-  )) {
+  for (const framework of (
+    ["claims", "excellence", "report"] as Framework[]
+  ).filter((f) => !!result.scores[f])) {
     newPage();
     write(frameworkNames[framework], 26, "serif");
     for (const p of result.scores[framework]!.principles) {
       heading(
-        `${p.name} · ${p.score === null ? "Unassessable" : p.score + "/20"} · ${p.coverage}/4 tests`,
+        `${p.name} · ${p.score === null ? "Unassessable" : p.score + "/20"} · ${p.coverage}/${framework === "report" ? 5 : 4} tests`,
       );
       for (const f of p.tests) {
+        if (f.visualPages?.length)
+          write(
+            `Visual observations: physical PDF pages ${f.visualPages.join(", ")}`,
+          );
         write(
           `${f.id} · ${criteria(framework).find((c) => c.id === f.id)!.question}`,
           11,
@@ -178,6 +198,16 @@ export async function exportPdf(result: ReviewResult) {
     }
   }
   newPage();
+  if (result.visualInspection) {
+    write("Visual inspection coverage", 20, "bold");
+    write(
+      `Rendered at ${result.visualInspection.resolution}px width. Physical pages inspected: ${result.visualInspection.pages.join(", ")} of ${result.visualInspection.totalPages}. Representative sampling does not verify unseen pages.`,
+    );
+    for (const o of result.visualInspection.observations)
+      write(`PDF page ${o.page}: ${o.description} ${o.limitations}`);
+    write("Suggested creative direction", 20, "bold");
+    write(result.creativeDirection || result.actions.actions.at(-1)!.detail);
+  }
   write("Material claims register", 26, "serif");
   for (const c of result.claims) {
     heading(`${c.id} · ${c.materiality} materiality`);
@@ -219,7 +249,9 @@ export async function exportPdf(result: ReviewResult) {
   }
   heading("Methodology and limitations");
   write(
-    "Each framework contains five principles with four tests each. Assessable tests score 0 to 4. A principle is the average of its assessable scores multiplied by 5, contributing up to 20 points. A definitive overall score needs at least 3 assessable tests in every principle and at least 16 of 20 overall. Excluded tests have explanations.",
+    result.framework === "report"
+      ? "Impact Report Excellence Methodology v1.0: five equally weighted pillars, each with five criteria scoring 0–4. Each pillar normalises assessable criteria to 20. A definitive overall score requires four assessable criteria per pillar and 22 overall, with actual visual inspection. Creative judgement is indicative, not accreditation."
+      : "Each framework contains five principles with four tests each. Assessable tests score 0 to 4. A principle is the average of its assessable scores multiplied by 5, contributing up to 20 points. A definitive overall score needs at least 3 assessable tests in every principle and at least 16 of 20 overall. Excluded tests have explanations.",
   );
   ANCHORS.forEach((a, i) => write(`${i}: ${a}`, 9));
   result.limitations.forEach((l) => write(l, 9));

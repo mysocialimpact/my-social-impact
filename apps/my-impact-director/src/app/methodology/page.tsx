@@ -19,7 +19,15 @@ export default function Methodology() {
         </p>
       </PageIntro>
       <div className="content-prose">
-        <h2>Two different questions</h2>
+        <h2>Three different questions</h2>
+        <p>
+          <a href="/methodology/impact-report-excellence">
+            Impact Report Excellence
+          </a>{" "}
+          examines how effectively the report communicates, using 25 criteria
+          and actual visual inspection. Its separate scoring and coverage rules
+          are documented in full.
+        </p>
         <p>
           The <strong>Social Impact Claims Code Review</strong> examines the
           credibility, proportionality, transparency and integrity of impact

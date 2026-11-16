@@ -132,7 +132,18 @@ test(
           );
         const p = JSON.parse(b.messages[1].content[0].text);
         let data: unknown;
-        if (p.pageMapping)
+        if (p.physicalPages)
+          data = {
+            pages: p.physicalPages.map((page: number) => ({
+              page,
+              description:
+                "Synthetic visual observation: clear type and consistent page layout.",
+              limitations:
+                "Synthetic visual contract, not professional judgement.",
+              readable: true,
+            })),
+          };
+        else if (p.pageMapping)
           data = {
             pages: p.pageMapping.map((m: { original: number }) => ({
               page: m.original,
@@ -155,7 +166,10 @@ test(
               improvement:
                 "Publish the follow-up income measure and response rate.",
               confidence: "medium",
-              claimIds: ["C1"],
+              claimIds: c.id.startsWith("report.") ? [] : ["C1"],
+              ...(c.id.startsWith("report.")
+                ? { visualPages: [p.visualObservations[0].page] }
+                : {}),
             })),
           };
         else if (p.findings)
@@ -1010,6 +1024,68 @@ test(
               )
             ).status,
             401,
+          );
+        },
+      );
+      await t.test(
+        "third visual framework reuses the report and persists twenty-five independent findings",
+        async () => {
+          const selected = await startFramework(user, id, "report");
+          assert.equal(
+            (await startFramework(user, id, "report")).id,
+            selected.id,
+          );
+          const before = (
+            await query<{ n: string }>(
+              "SELECT count(*) AS n FROM director.reports WHERE id=(SELECT report_id FROM director.reviews WHERE id=$1)",
+              [id],
+            )
+          )[0].n;
+          for (
+            let i = 0;
+            i < 16 &&
+            (await getReview(user, selected.id)).status !== "complete";
+            i++
+          )
+            assert.equal(await processOne(selected.id), true);
+          const done = await getReview(user, selected.id),
+            result = done.result as ReviewResult;
+          assert.equal(done.status, "complete");
+          assert.equal(result.framework, "report");
+          assert.equal(result.scores.report!.coverage, 25);
+          assert.equal(result.scores.report!.overall, 75);
+          assert.ok(result.visualInspection!.pages.length);
+          assert.equal(result.scores.claims, undefined);
+          assert.equal(result.scores.excellence, undefined);
+          assert.equal(
+            (
+              await query<{ n: string }>(
+                "SELECT count(*) AS n FROM director.reports WHERE id=(SELECT report_id FROM director.reviews WHERE id=$1)",
+                [id],
+              )
+            )[0].n,
+            before,
+          );
+          assert.equal(
+            (
+              await reviewGet(req("/api/reviews/" + selected.id), {
+                params: Promise.resolve({ id: selected.id }),
+              })
+            ).status,
+            200,
+          );
+          await assert.rejects(() => getReview(otherUser, selected.id), {
+            status: 404,
+          });
+          const pdf = await exportPdf(result),
+            pdfPages = await extractPages(pdf);
+          assert.match(
+            pdfPages.map((p) => p.text).join(" "),
+            /Visual inspection coverage/,
+          );
+          await writeFile(
+            "artifacts/report-review.json",
+            JSON.stringify({ ...done, full: false, siblings: [] }, null, 2),
           );
         },
       );

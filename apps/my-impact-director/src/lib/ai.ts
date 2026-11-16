@@ -51,6 +51,7 @@ export async function structured<T extends z.ZodType>(
   instructions: string,
   input: unknown,
   pdf?: Buffer,
+  images: { page: number; dataUrl: string }[] = [],
 ): Promise<AIResult<z.infer<T>>> {
   const start = Date.now(),
     model = process.env.AI_MODEL || "openai/gpt-5.4-mini";
@@ -65,6 +66,11 @@ export async function structured<T extends z.ZodType>(
         file_data: `data:application/pdf;base64,${pdf.toString("base64")}`,
       },
     });
+  for (const image of images)
+    content.push(
+      { type: "text", text: `Original physical PDF page ${image.page}` },
+      { type: "image_url", image_url: { url: image.dataUrl, detail: "high" } },
+    );
   const response = await fetch(
     "https://ai-gateway.vercel.sh/v1/chat/completions",
     {

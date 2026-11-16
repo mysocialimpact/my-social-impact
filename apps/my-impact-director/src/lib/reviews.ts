@@ -145,7 +145,7 @@ export async function sourceFile(user: Identity, id: string) {
 export async function startFramework(
   user: Identity,
   id: string,
-  framework: "claims" | "excellence",
+  framework: "claims" | "excellence" | "report",
 ) {
   const parent = await getReview(user, id);
   const reportId = parent.report_id as string;
@@ -160,7 +160,7 @@ export async function startFramework(
       reportId,
       VERSION + "-" + framework,
       framework,
-      framework === "claims" ? 4 : 9,
+      framework === "report" ? 16 : framework === "claims" ? 4 : 9,
     ],
   );
   if (review.created)
@@ -170,7 +170,7 @@ export async function startFramework(
     );
   if (review.created)
     await query(
-      "INSERT INTO director.daily_metrics(event,count) SELECT 'second_framework_selected',1 WHERE EXISTS(SELECT 1 FROM director.reviews WHERE report_id=$1 AND framework IN ('claims','excellence') AND framework<>$2) ON CONFLICT(day,event) DO UPDATE SET count=daily_metrics.count+1",
+      "INSERT INTO director.daily_metrics(event,count) SELECT 'second_framework_selected',1 WHERE EXISTS(SELECT 1 FROM director.reviews WHERE report_id=$1 AND framework IN ('claims','excellence','report') AND framework<>$2) ON CONFLICT(day,event) DO UPDATE SET count=daily_metrics.count+1",
       [reportId, framework],
     );
   return review;

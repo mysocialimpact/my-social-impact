@@ -7,12 +7,55 @@ import { api, useSession } from "./session";
 import { useReportAction } from "./action-bar";
 import { ScoreCard, ReviewResults } from "./review-results";
 import type { ReviewResult } from "@/lib/pipeline";
-type Framework = "claims" | "excellence";
-const names = {
-  claims: "Social Impact Claims Code",
-  excellence: "Social Impact Excellence",
-};
+import {
+  type Framework,
+  FRAMEWORKS,
+  frameworkNames as names,
+  frameworkLogos,
+} from "@/lib/rubric";
 const lessons = {
+  report: [
+    [
+      "The introduction",
+      "A GREAT IMPACT REPORT SHOULD MAKE AN IMPACT.",
+      "Having a powerful story isn’t enough. You have to communicate it well. We inspect the writing and actual page design across five pillars. This is an indicative creative review by My Social Impact, not accreditation.",
+    ],
+    [
+      "01 · Clarity",
+      "MAKE IT EASY TO UNDERSTAND.",
+      "The best reports make complicated information accessible. Plain English, useful navigation and a clear hierarchy help readers find what matters.",
+      "Try a takeaway above a detailed table: what should your reader understand before exploring the numbers?",
+    ],
+    [
+      "02 · Storytelling",
+      "EVERY NUMBER HAS A STORY.",
+      "Connect evidence to real people and meaningful change. A coherent story explains purpose, action, change and what happens next.",
+      "An example should illuminate a wider finding. Protect dignity; a moving story is not a substitute for evidence.",
+    ],
+    [
+      "03 · Design",
+      "MAKE EVERY PAGE COUNT.",
+      "Typography, composition and art direction help the message land. We inspect rendered pages, not just extracted words.",
+      "A simple black-and-white publication can excel. Use size, spacing and alignment to make important information stand out.",
+    ],
+    [
+      "04 · Engagement",
+      "GIVE PEOPLE A REASON TO KEEP READING.",
+      "Capture attention and reward curiosity. A purposeful opening, varied pacing and relevant visuals help readers explore.",
+      "Judge the medium fairly: a useful static PDF does not need animations or interactive features.",
+    ],
+    [
+      "05 · Communication",
+      "MAKE THE MESSAGE MATTER.",
+      "Help people understand, remember and act. Make the main message, data explanations and next steps clear.",
+      "Give a chart an informative title, legible labels and a short explanation of the conclusion readers can draw.",
+    ],
+    [
+      "The bigger picture",
+      "YOUR IMPACT DESERVES MORE THAN A PDF.",
+      "Use your findings to shape a clearer narrative, stronger design or an accessible digital experience. My Social Impact and The Ideas Shed can help you improve the next edition. Completed results are available whenever they are ready.",
+    ],
+  ],
   claims: [
     [
       "The introduction",
@@ -324,7 +367,7 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
       id: r.id,
       contextTitle:
         r.framework === "document"
-          ? "One report. Two perspectives."
+          ? "One report. Three perspectives."
           : complete
             ? r.full
               ? "Your complete review is ready."
@@ -332,7 +375,7 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
             : undefined,
       contextDetail:
         r.framework === "document"
-          ? "Choose either free review."
+          ? "Choose any free review."
           : complete
             ? r.full
               ? "Download it. Keep it. Put it to work."
@@ -415,11 +458,11 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
   if (!framework)
     return (
       <div className="review-choice" id="choose-review">
-        <p className="eyebrow">One upload. Two methodologies. Your choice.</p>
+        <p className="eyebrow">One upload. Three methodologies. Your choice.</p>
         <h1>
           One report.
           <br />
-          <em>Two ways to look closer.</em>
+          <em>Three ways to look closer.</em>
         </h1>
         <p>
           Choose your first free review. We’ll read and understand your document
@@ -429,7 +472,7 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
           <strong>A useful headline snapshot: no email needed.</strong> The full
           detailed report is also free, delivered after email verification.
           {!r.emailEnabled &&
-            "Email delivery is currently unavailable; you can still use both headline reviews."}
+            "Email delivery is currently unavailable; you can still use all three headline reviews."}
         </p>
         {r.status === "failed" && (
           <div className="alert error">
@@ -446,14 +489,10 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
           </div>
         )}
         <div className="review-choices">
-          {(["claims", "excellence"] as Framework[]).map((f) => (
+          {FRAMEWORKS.map((f) => (
             <section key={f}>
               <Image
-                src={
-                  f === "claims"
-                    ? "/brand/claims-code.png"
-                    : "/brand/excellence.png"
-                }
+                src={frameworkLogos[f]}
                 alt={names[f]}
                 width={140}
                 height={140}
@@ -461,12 +500,16 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
               <h2>
                 {f === "claims"
                   ? "Can your impact claims stand up to scrutiny?"
-                  : "What does your report reveal about how you manage impact?"}
+                  : f === "report"
+                    ? "Does your impact report make an impact?"
+                    : "What does your report reveal about how you manage impact?"}
               </h2>
               <p>
                 {f === "claims"
                   ? "Evidence. Proportion. Transparency. Balance. Learning."
-                  : "Purpose. Leadership. Data. Delivery. Communications."}
+                  : f === "report"
+                    ? "Clarity. Storytelling. Design. Engagement. Communication."
+                    : "Purpose. Leadership. Data. Delivery. Communications."}
               </p>
               <button
                 className="button primary"
@@ -506,9 +549,9 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
         <div className="review-product-heading">
           <Image
             src={
-              framework === "claims"
-                ? "/brand/claims-code.png"
-                : "/brand/excellence.png"
+              framework === "report"
+                ? "/brand/impact-report-excellence-symbol.svg"
+                : frameworkLogos[framework]
             }
             alt={names[framework]}
             width={110}
@@ -557,7 +600,13 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
             <>
               <strong>
                 {r.understanding_ready
-                  ? "Your Impact Director is preparing your report."
+                  ? r.framework === "report"
+                    ? r.stage === 16
+                      ? "Inspecting rendered pages."
+                      : r.stage >= 17
+                        ? `Reviewing ${["Clarity", "Storytelling", "Design", "Engagement", "Communication"][r.stage - 17] || "your findings"}.`
+                        : "Preparing your creative recommendations."
+                    : "Your Impact Director is preparing your report."
                   : "Your Impact Director is reading your report."}
               </strong>{" "}
               {r.error_message ||
@@ -572,7 +621,9 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
             <h2 className="snapshot-heading">
               {framework === "claims"
                 ? "Your claims. Under the microscope."
-                : "Beyond reporting. Towards better impact management."}
+                : framework === "report"
+                  ? "Does your impact report make an impact?"
+                  : "Beyond reporting. Towards better impact management."}
             </h2>
             <ScoreCard
               framework={framework}
@@ -734,26 +785,53 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
           close={() => setEmailOpen(false)}
         />
       )}
-      {complete && results && (
-        <section className="next-methodology">
-          <h2>Your Impact Director has another way to look at this report.</h2>
-          <h3>
-            {other === "excellence"
-              ? "Are you managing impact as seriously as your finances?"
-              : "Can your impact claims stand up to scrutiny?"}
-          </h3>
+      {complete &&
+        results &&
+        FRAMEWORKS.filter((f) => f !== framework).map((other) => (
+          <section className="next-review" key={other}>
+            <p className="eyebrow">SAME DOCUMENT. ANOTHER PERSPECTIVE.</p>
+            <h3>{names[other]}</h3>
+            <p>
+              {other === "report"
+                ? "How effectively does your report communicate its impact?"
+                : other === "claims"
+                  ? "Can we trust what the report claims?"
+                  : "What does the report demonstrate about managing impact?"}
+            </p>
+            <button
+              className="button primary"
+              disabled={busy}
+              onClick={() => choose(other)}
+            >
+              Review against {names[other]} — free
+            </button>
+            {error && <p role="alert">{error}</p>}
+          </section>
+        ))}
+      {complete && results && framework === "report" && (
+        <section className="bigger-conversation">
+          <h2>Let’s make your next impact report better.</h2>
           <p>
-            Same document. A different set of questions. No new upload or
-            repeated extraction.
+            Professional editing, copywriting and creative guidance from My
+            Social Impact, with digital and creative technology from The Ideas
+            Shed.
           </p>
-          <button
-            className="button primary"
-            disabled={busy}
-            onClick={() => choose(other)}
-          >
-            Review against {names[other]} — free
-          </button>
-          {error && <p role="alert">{error}</p>}
+          <p>
+            <Link href={`/services/expert-review?review=${r.id}#enquire`}>
+              Improve your report →
+            </Link>
+          </p>
+          <p>
+            <Link href={`/services/preparation?review=${r.id}#enquire`}>
+              Create your next report →
+            </Link>
+          </p>
+          <p>
+            <Link href={`/services/digitisation?review=${r.id}#enquire`}>
+              Bring your report to life →
+            </Link>
+          </p>
+          <Link href="mailto:marcus@mysocialimpact.org">Talk to Marcus →</Link>
         </section>
       )}
       {complete && results && (

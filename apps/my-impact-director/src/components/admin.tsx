@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useSession, api } from "./session";
 import { Account } from "./account";
 import { ReviewResults } from "./review-results";
+import { frameworkNames, type Framework } from "@/lib/rubric";
 import { services, serviceLabel } from "@/lib/services";
 import type { ReviewResult } from "@/lib/pipeline";
 type AdminData = {
@@ -178,8 +179,10 @@ export function Admin() {
                 ["result_viewed", "Results opened"],
                 ["email_saved", "Email links used"],
                 ["enquiry_created", "Enquiries sent"],
+                ["report_downloaded", "PDF downloads"],
                 ["selected_claims", "Claims Code selected"],
                 ["selected_excellence", "Excellence selected"],
+                ["selected_report", "Report Excellence selected"],
                 ["snapshot_viewed", "Snapshots opened"],
                 ["email_requested", "Verification emails requested"],
                 ["email_saved", "Email verified"],
@@ -219,7 +222,13 @@ export function Admin() {
                     <tr key={r.id}>
                       <td>
                         <strong>{r.title}</strong>
-                        <p>{r.framework || "Legacy combined review"}</p>
+                        <p>
+                          {r.framework === "document"
+                            ? "Document understanding"
+                            : r.framework
+                              ? frameworkNames[r.framework as Framework]
+                              : "Legacy combined review"}
+                        </p>
                         <p>{r.organisation}</p>
                         <p>{r.email}</p>
                         <small>
@@ -230,13 +239,26 @@ export function Admin() {
                       </td>
                       <td>
                         <span className={"badge " + r.status}>{r.status}</span>
-                        <p>Stage {r.stage}/15</p>
+                        <p>
+                          {r.status === "complete"
+                            ? "Complete"
+                            : r.framework === "report"
+                              ? r.stage === 16
+                                ? "Visual page inspection"
+                                : "Editorial assessment"
+                              : `Stage ${r.stage}/15`}
+                        </p>
                         <small>{r.error_code}</small>
                       </td>
                       <td>
                         {r.scores
-                          ? `Claims ${r.scores.claims?.overall ?? "provisional"} · Excellence ${r.scores.excellence?.overall ?? "provisional"}`
+                          ? `Claims ${r.scores.claims?.overall ?? "provisional"} · Excellence ${r.scores.excellence?.overall ?? "provisional"} · Report ${r.scores.report?.overall ?? "—"}`
                           : "Not yet assessed"}
+                        {r.scores?.report?.principles.map((p) => (
+                          <p key={p.name}>
+                            {p.name}: {p.score ?? "Unassessable"}/20
+                          </p>
+                        ))}
                       </td>
                       <td>${Number(r.cost_usd).toFixed(3)}</td>
                       <td>

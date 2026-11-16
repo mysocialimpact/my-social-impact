@@ -25,12 +25,13 @@ export async function GET(req: Request, ctx: Context) {
     void lease_token;
     const siblings = r.framework
       ? await query(
-          "SELECT id,framework,status FROM director.reviews WHERE report_id=$1 AND framework IN ('claims','excellence')",
+          "SELECT id,framework,status FROM director.reviews WHERE report_id=$1 AND framework IN ('claims','excellence','report')",
           [r.report_id],
         )
       : [];
     if (!full) {
       delete safe.findings;
+      delete safe.extraction_notes;
       delete safe.claims;
       safe.pages = null;
       if (safe.result) {
@@ -40,6 +41,8 @@ export async function GET(req: Request, ctx: Context) {
         for (const score of Object.values(result.scores))
           for (const p of score!.principles) p.tests = [];
         result.claims = [];
+        delete result.creativeDirection;
+        if (result.visualInspection) result.visualInspection.observations = [];
         result.actions.actions = result.actions.actions.slice(0, 3);
         result.actions.strengths = result.actions.strengths.slice(0, 3);
         result.actions.opportunities = result.actions.opportunities.slice(0, 3);
@@ -111,7 +114,9 @@ export async function POST(req: Request, ctx: Context) {
       return Response.json({ ok: true });
     }
     if (data.framework) {
-      const framework = z.enum(["claims", "excellence"]).parse(data.framework);
+      const framework = z
+        .enum(["claims", "excellence", "report"])
+        .parse(data.framework);
       const review = await startFramework(user, id, framework);
       after(async () => {
         await drain(id);

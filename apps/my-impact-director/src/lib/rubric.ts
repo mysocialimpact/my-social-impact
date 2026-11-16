@@ -9,12 +9,56 @@ export const ANCHORS = [
 ];
 export const LIMITATION =
   "An automated review of this report, not independent verification, certification, professional assurance or a judgement of undisclosed organisational practice. Evidence not disclosed here may exist elsewhere.";
-export type Framework = "claims" | "excellence";
+export type Framework = "claims" | "excellence" | "report";
 export const frameworkNames = {
   claims: "Social Impact Claims Code",
   excellence: "Social Impact Excellence",
+  report: "Impact Report Excellence",
 };
 export const rubrics = {
+  report: [
+    [
+      "Clarity",
+      "C1 · Plain English",
+      "C2 · Structure and Organisation",
+      "C3 · Navigation",
+      "C4 · Information Hierarchy",
+      "C5 · Cognitive Readability",
+    ],
+    [
+      "Storytelling",
+      "S1 · Narrative Structure",
+      "S2 · Human Stories",
+      "S3 · Meaningful Case Studies",
+      "S4 · Emotional Connection",
+      "S5 · Narrative Coherence",
+    ],
+    [
+      "Design",
+      "D1 · Typography",
+      "D2 · Layout and Composition",
+      "D3 · Colour and Visual Identity",
+      "D4 · Photography, Illustration and Art Direction",
+      "D5 · Overall Design Quality",
+    ],
+    [
+      "Engagement",
+      "E1 · First Impression",
+      "E2 · Pacing and Variety",
+      "E3 · Visual Engagement",
+      "E4 · Audience Connection",
+      "E5 · Sustained Interest and Participation",
+    ],
+    [
+      "Communication",
+      "M1 · Key Messages",
+      "M2 · Data Communication",
+      "M3 · Tone and Voice",
+      "M4 · Conclusions and Takeaways",
+      "M5 · Communication Effectiveness",
+    ],
+  ],
+
   claims: [
     [
       "Evidence",
@@ -99,3 +143,19 @@ export function criteria(framework: Framework) {
     })),
   );
 }
+
+export const FRAMEWORKS: Framework[] = ["claims", "excellence", "report"];
+export const frameworkLogos = {
+  claims: "/brand/claims-code.png",
+  excellence: "/brand/excellence.png",
+  report: "/brand/impact-report-excellence.svg",
+};
+export const testsPerPillar = (framework: Framework) =>
+  framework === "report" ? 5 : 4;
+export const reportAnchors = [
+  "Not demonstrated or seriously ineffective",
+  "Weak — substantial improvements required",
+  "Developing — partially effective with clear shortcomings",
+  "Good — effective with opportunities to improve",
+  "Excellent — highly effective and appropriate to purpose",
+];

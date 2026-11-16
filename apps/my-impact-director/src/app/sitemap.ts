@@ -3,6 +3,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   return [
     "",
     "/methodology",
+    "/methodology/impact-report-excellence",
     "/services",
     "/your-impact-director",
     "/services/expert-review",

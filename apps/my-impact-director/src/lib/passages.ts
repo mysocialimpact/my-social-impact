@@ -52,7 +52,7 @@ export const referencedFindingsSchema = z
     findings: z
       .array(
         criterionSchema
-          .omit({ evidence: true })
+          .omit({ evidence: true, visualPages: true })
           .extend({ evidenceIds: references })
           .strict(),
       )

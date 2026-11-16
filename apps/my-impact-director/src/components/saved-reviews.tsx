@@ -89,7 +89,7 @@ export function SavedReviews() {
                       ? "Document understood — choose or return to a review"
                       : "Reading your document"
                     : r.framework
-                      ? `${r.framework === "claims" ? "Claims Code" : "Excellence"} · ${r.status}`
+                      ? `${r.framework === "claims" ? "Claims Code" : r.framework === "report" ? "Report Excellence" : "Excellence"} · ${r.status}`
                       : r.status}
                 </span>
                 <h3>{r.title}</h3>

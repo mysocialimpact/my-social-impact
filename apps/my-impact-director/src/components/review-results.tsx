@@ -15,7 +15,9 @@ export function ScoreCard({
       <p className="eyebrow">
         {framework === "claims"
           ? "The credibility of your claims"
-          : "What your report demonstrates"}
+          : framework === "report"
+            ? "How effectively your report communicates"
+            : "What your report demonstrates"}
       </p>
       <h2>{frameworkNames[framework]}</h2>
       <div className="score-display">
@@ -48,7 +50,7 @@ export function ScoreCard({
         </p>
       </div>
       <p>
-        {score.coverage}/20 tests assessed.{" "}
+        {score.coverage}/{criteria(framework).length} tests assessed.{" "}
         {score.provisional
           ? "Coverage is too limited for a definitive overall score."
           : "An assessment of the evidence in this report."}
@@ -68,7 +70,9 @@ export function ScoreCard({
                 style={{ width: `${(p.score || 0) * 5}%` }}
               />
             </div>
-            <small>{p.coverage}/4 tests assessed</small>
+            <small>
+              {p.coverage}/{framework === "report" ? 5 : 4} tests assessed
+            </small>
           </div>
         ))}
       </div>
@@ -118,6 +122,12 @@ function Finding({
           {f.status.replaceAll("_", " ")} · {f.confidence} confidence
         </span>
         <p style={{ marginTop: 15 }}>{f.explanation}</p>
+        {f.visualPages?.map((page) => (
+          <p key={page}>
+            Visual observation ·{" "}
+            <SourceLink id={id} page={page} admin={admin} />
+          </p>
+        ))}
         {f.evidence.map((e, i) => (
           <div className="citation" key={i}>
             <blockquote>“{e.quote}”</blockquote>
@@ -160,7 +170,7 @@ export function ReviewResults({
         Methodology {result.version}
       </div>
       <div className="results-grid">
-        {(["claims", "excellence"] as Framework[])
+        {(["claims", "excellence", "report"] as Framework[])
           .filter((f) => !!result.scores[f])
           .map((f) => (
             <ScoreCard key={f} framework={f} score={result.scores[f]!} />
@@ -213,7 +223,10 @@ export function ReviewResults({
       <nav className="tabs-nav" aria-label="Review sections">
         {result.scores.claims && <a href="#claims">Claims Code</a>}
         {result.scores.excellence && <a href="#excellence">Excellence</a>}
-        <a href="#claims-register">Material claims</a>
+        {result.scores.report && <a href="#report">Report Excellence</a>}
+        {!result.scores.report && (
+          <a href="#claims-register">Material claims</a>
+        )}
         <a href="#actions">Your action plan</a>
       </nav>
       <section className="result-section" id="actions">
@@ -251,20 +264,24 @@ export function ReviewResults({
           ))}
         </div>
       </section>
-      {(["claims", "excellence"] as Framework[])
+      {(["claims", "excellence", "report"] as Framework[])
         .filter((f) => !!result.scores[f])
         .map((framework) => (
           <section className="result-section" id={framework} key={framework}>
             <p className="eyebrow">
               {framework === "claims"
                 ? "01 · Credibility & integrity"
-                : "02 · Understanding, managing & communicating"}
+                : framework === "report"
+                  ? "03 · Editorial & creative review"
+                  : "02 · Understanding, managing & communicating"}
             </p>
             <h2>{frameworkNames[framework]} Review</h2>
             <p>
               {framework === "claims"
                 ? "How responsibly the report makes and supports its material impact claims."
-                : "What the report demonstrates about impact management. This is not the full organisational maturity assessment."}
+                : framework === "report"
+                  ? "Clarity, storytelling, design, engagement and communication, grounded in inspected physical pages."
+                  : "What the report demonstrates about impact management. This is not the full organisational maturity assessment."}
             </p>
             {result.scores[framework]!.principles.map((p) => (
               <div className="principle" key={p.name}>
@@ -272,7 +289,7 @@ export function ReviewResults({
                   {p.name}{" "}
                   <span className="badge">
                     {p.score === null ? "Unassessable" : `${p.score}/20`} ·{" "}
-                    {p.coverage}/4 tests
+                    {p.coverage}/{framework === "report" ? 5 : 4} tests
                   </span>
                 </h3>
                 {p.tests.map((f) => (
@@ -296,64 +313,91 @@ export function ReviewResults({
             )}
           </section>
         ))}
-      <section className="result-section" id="claims-register">
-        <p className="eyebrow">Look behind the headline</p>
-        <h2>Your material claims register</h2>
-        <p>
-          These are the significant claims identified in the report. Risks are
-          shown separately from numerical scores.
-        </p>
-        {!result.claims.length && (
+      {result.visualInspection && (
+        <section className="result-section">
+          <h2>Visual inspection coverage</h2>
           <p>
-            No material impact claims were identified in the readable report.
+            Rendered at {result.visualInspection.resolution}px width. Physical
+            pages inspected: {result.visualInspection.pages.join(", ")} of{" "}
+            {result.visualInspection.totalPages}. Longer documents use
+            representative and targeted sampling; unseen pages are not visually
+            verified.
           </p>
-        )}
-        {result.claims.map((c) => (
-          <details className="finding" key={c.id}>
-            <summary>
-              <span>
-                {c.id} ·{" "}
-                {c.outcome.length > 150
-                  ? c.outcome.slice(0, 147) + "…"
-                  : c.outcome}
-              </span>
-              <small>{c.exaggerationRisk} risk</small>
-            </summary>
-            <div className="finding-content">
-              <p>
-                <span className="badge">{c.materiality} materiality</span>{" "}
-                {c.classification} · Evidence: {c.adequacy} · Causality{" "}
-                {c.causal ? "asserted" : "not asserted"}
-              </p>
-              <p>{c.outcome}</p>
-              <blockquote>“{c.text}”</blockquote>
-              <SourceLink id={id} page={c.page} admin={admin} />
-              {c.evidence.map((e, i) => (
-                <div className="citation" key={i}>
-                  <blockquote>“{e.quote}”</blockquote>
-                  <SourceLink id={id} page={e.page} admin={admin} />
-                </div>
-              ))}
-              {c.assumptions.length > 0 && (
-                <>
-                  <h4>Assumptions & limitations</h4>
-                  <ul>
-                    {c.assumptions.map((a, i) => (
-                      <li key={i}>{a}</li>
-                    ))}
-                  </ul>
-                </>
-              )}
-              {c.defensibleWording && (
-                <>
-                  <h4>A more defensible way to say it</h4>
-                  <p>{c.defensibleWording}</p>
-                </>
-              )}
-            </div>
-          </details>
-        ))}
-      </section>
+          {result.visualInspection.observations.map((o) => (
+            <details key={o.page}>
+              <summary>PDF page {o.page} · visual observations</summary>
+              <p>{o.description}</p>
+              <p>{o.limitations}</p>
+              <SourceLink id={id} page={o.page} admin={admin} />
+            </details>
+          ))}
+          <h3>Suggested creative direction</h3>
+          <p>
+            {result.creativeDirection ||
+              result.actions.actions[result.actions.actions.length - 1]?.detail}
+          </p>
+        </section>
+      )}
+      {!result.scores.report && (
+        <section className="result-section" id="claims-register">
+          <p className="eyebrow">Look behind the headline</p>
+          <h2>Your material claims register</h2>
+          <p>
+            These are the significant claims identified in the report. Risks are
+            shown separately from numerical scores.
+          </p>
+          {!result.claims.length && (
+            <p>
+              No material impact claims were identified in the readable report.
+            </p>
+          )}
+          {result.claims.map((c) => (
+            <details className="finding" key={c.id}>
+              <summary>
+                <span>
+                  {c.id} ·{" "}
+                  {c.outcome.length > 150
+                    ? c.outcome.slice(0, 147) + "…"
+                    : c.outcome}
+                </span>
+                <small>{c.exaggerationRisk} risk</small>
+              </summary>
+              <div className="finding-content">
+                <p>
+                  <span className="badge">{c.materiality} materiality</span>{" "}
+                  {c.classification} · Evidence: {c.adequacy} · Causality{" "}
+                  {c.causal ? "asserted" : "not asserted"}
+                </p>
+                <p>{c.outcome}</p>
+                <blockquote>“{c.text}”</blockquote>
+                <SourceLink id={id} page={c.page} admin={admin} />
+                {c.evidence.map((e, i) => (
+                  <div className="citation" key={i}>
+                    <blockquote>“{e.quote}”</blockquote>
+                    <SourceLink id={id} page={e.page} admin={admin} />
+                  </div>
+                ))}
+                {c.assumptions.length > 0 && (
+                  <>
+                    <h4>Assumptions & limitations</h4>
+                    <ul>
+                      {c.assumptions.map((a, i) => (
+                        <li key={i}>{a}</li>
+                      ))}
+                    </ul>
+                  </>
+                )}
+                {c.defensibleWording && (
+                  <>
+                    <h4>A more defensible way to say it</h4>
+                    <p>{c.defensibleWording}</p>
+                  </>
+                )}
+              </div>
+            </details>
+          ))}
+        </section>
+      )}
       <details className="finding">
         <summary>
           <span>Methodology, coverage and limitations</span>

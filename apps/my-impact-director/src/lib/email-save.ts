@@ -204,7 +204,7 @@ async function grantVerifiedReport(
       [reviewId, id, email],
     );
     await c.query(
-      "INSERT INTO director.report_deliveries(review_id,owner_id,email) SELECT v.id,$2,$3 FROM director.reviews v WHERE v.report_id=(SELECT report_id FROM director.reviews WHERE id=$1) AND (v.framework IN ('claims','excellence') OR v.id=$1) AND v.status='complete' AND v.result IS NOT NULL ON CONFLICT DO NOTHING",
+      "INSERT INTO director.report_deliveries(review_id,owner_id,email) SELECT v.id,$2,$3 FROM director.reviews v WHERE v.report_id=(SELECT report_id FROM director.reviews WHERE id=$1) AND (v.framework IN ('claims','excellence','report') OR v.id=$1) AND v.status='complete' AND v.result IS NOT NULL ON CONFLICT DO NOTHING",
       [reviewId, id, email],
     );
   }

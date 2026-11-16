@@ -1,4 +1,10 @@
 import {
+  visualSample,
+  inspectVisualBatch,
+  assessReportPillar,
+  type VisualObservation,
+} from "./report-visual";
+import {
   sourcePassages,
   referencedClaimsSchema,
   referencedFindingsSchema,
@@ -51,6 +57,12 @@ export const STAGES = [
   "Excellence · Communications",
   "Validating findings and preparing your action plan",
   "Review complete",
+  "Inspecting rendered page images",
+  "Report Excellence · Clarity",
+  "Report Excellence · Storytelling",
+  "Report Excellence · Design",
+  "Report Excellence · Engagement",
+  "Report Excellence · Communication",
 ];
 type Job = {
   framework: "document" | Framework | null;
@@ -76,6 +88,13 @@ type Document = {
   extraction_notes: unknown[];
 };
 export type ReviewResult = {
+  visualInspection?: {
+    pages: number[];
+    totalPages: number;
+    resolution: number;
+    observations: VisualObservation[];
+  };
+  creativeDirection?: string;
   version: string;
   assessedAt: string;
   context: z.infer<typeof contextSchema>;
@@ -175,6 +194,48 @@ export async function processOne(id?: string) {
         resolveClaims(r.data, sourcePassages(pages!)),
         pages!,
       );
+    } else if (job.framework === "report" && job.stage === 16) {
+      const sample = visualSample(pages!);
+      const cached = (notes as VisualObservation[]).filter(
+        (n) => n.kind === "report-visual-v1",
+      );
+      const missing = sample.filter((n) => !cached.some((o) => o.page === n));
+      if (missing.length) {
+        const response = await inspectVisualBatch(
+          doc.file_bytes,
+          missing.slice(0, 2),
+        );
+        usage = response.usage;
+        notes = [...notes, ...response.data];
+        if (missing.length > 2) next = 16;
+      }
+    } else if (
+      job.framework === "report" &&
+      job.stage >= 17 &&
+      job.stage <= 21
+    ) {
+      const principle = job.stage - 17;
+      const response = await assessReportPillar(
+        pages!,
+        (notes as VisualObservation[]).filter(
+          (n) => n.kind === "report-visual-v1",
+        ),
+        principle,
+        context,
+      );
+      usage = response.usage;
+      const validated = validateFindings(
+        response.data,
+        "report",
+        pages!,
+        claims!,
+        principle,
+      );
+      findings = [
+        ...findings.filter((f) => !validated.some((v) => v.id === f.id)),
+        ...validated,
+      ];
+      if (job.stage === 21) next = 14;
     } else if (job.stage >= 4 && job.stage <= 13) {
       const framework: Framework = job.stage < 9 ? "claims" : "excellence",
         principle = (job.stage - 4) % 5;
@@ -223,10 +284,22 @@ export async function processOne(id?: string) {
           claims!,
         );
         scores[framework] = scoreFramework(checked, framework);
+        if (
+          framework === "report" &&
+          !(notes as VisualObservation[]).some(
+            (o) => o.kind === "report-visual-v1" && o.readable,
+          )
+        ) {
+          scores[framework]!.overall = null;
+          scores[framework]!.provisional = true;
+        }
       }
       const r = await structured(
         actionSchema,
-        "Write a concise executive summary and specific prioritised action plan using ONLY validated findings. Each action must cite existing criterion IDs and say what to change, why, and how. Distinguish quick wording changes, important evidence/reporting improvements, and longer-term measurement/management improvements. Do not invent achievements, comparisons, benchmarks or new source facts. If evidence is weak, a strength may be a clearly qualified useful starting point. Do not describe provisional assessments as definitive scores.",
+        (job.framework === "report"
+          ? "Write an editorial judgement and ranked creative improvement plan. Include a final action titled Suggested creative direction, a specific creative brief grounded in criterion IDs, with issue, why, physical page, improvement and likely benefit. Do not assess validity of underlying impact claims. "
+          : "") +
+          "Write a concise executive summary and specific prioritised action plan using ONLY validated findings. Each action must cite existing criterion IDs and say what to change, why, and how. Distinguish quick wording changes, important evidence/reporting improvements, and longer-term measurement/management improvements. Do not invent achievements, comparisons, benchmarks or new source facts. If evidence is weak, a strength may be a clearly qualified useful starting point. Do not describe provisional assessments as definitive scores.",
         { context, claims, findings, scores },
       );
       usage = r.usage;
@@ -239,6 +312,23 @@ export async function processOne(id?: string) {
       result = {
         ...(job.framework && job.framework !== "document"
           ? { framework: job.framework }
+          : {}),
+        ...(job.framework === "report"
+          ? {
+              visualInspection: {
+                pages: (notes as VisualObservation[])
+                  .filter((n) => n.kind === "report-visual-v1")
+                  .map((n) => n.page),
+                totalPages: pages!.length,
+                resolution: 1600,
+                observations: (notes as VisualObservation[]).filter(
+                  (n) => n.kind === "report-visual-v1",
+                ),
+              },
+              creativeDirection: r.data.actions.find((a) =>
+                /creative direction/i.test(a.title),
+              )?.detail,
+            }
           : {}),
         version: VERSION,
         assessedAt: new Date().toISOString(),

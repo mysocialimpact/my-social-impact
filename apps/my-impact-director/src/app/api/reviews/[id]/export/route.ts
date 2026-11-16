@@ -1,3 +1,4 @@
+import { metric } from "@/lib/access";
 import { visitor } from "@/lib/auth";
 import { getReview, reviewAccess } from "@/lib/reviews";
 import { failure, AppError } from "@/lib/security";
@@ -17,17 +18,16 @@ export async function GET(
       );
     if (review.status !== "complete" || !review.result)
       throw new AppError(409, "The review is still being prepared.");
-    return new Response(
-      new Uint8Array(await exportPdf(review.result as ReviewResult)),
-      {
-        headers: {
-          "content-type": "application/pdf",
-          "content-disposition":
-            'attachment; filename="my-impact-director-review.pdf"',
-          "cache-control": "private, no-store",
-        },
+    const pdf = await exportPdf(review.result as ReviewResult);
+    await metric("report_downloaded");
+    return new Response(new Uint8Array(pdf), {
+      headers: {
+        "content-type": "application/pdf",
+        "content-disposition":
+          'attachment; filename="my-impact-director-review.pdf"',
+        "cache-control": "private, no-store",
       },
-    );
+    });
   } catch (e) {
     return failure(e);
   }

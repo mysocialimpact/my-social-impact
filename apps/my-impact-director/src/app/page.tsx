@@ -53,7 +53,7 @@ export default function Home() {
               <span>£0</span>
             </div>
             <p>
-              Upload your PDF. Choose either of two evidence-based reviews, with
+              Upload your PDF. Choose any of three complementary reviews, with
               practical recommendations.
             </p>
           </div>
@@ -69,12 +69,12 @@ export default function Home() {
           <h2 id="today-title">
             One report.
             <br />
-            <em>Two perspectives.</em>
+            <em>Three perspectives.</em>
           </h2>
           <p>
             Upload. Review. Discover. Improve.
             <br />
-            Forty focused checks. Your evidence. Clear next steps.
+            Three distinct questions. Your evidence. Clear next steps.
           </p>
         </div>
         <div className="framework-lines">
@@ -124,6 +124,28 @@ export default function Home() {
               <Arrow diagonal />
             </span>
           </a>
+          <Link
+            href="/methodology/impact-report-excellence"
+            className="framework-line"
+          >
+            <Image
+              src="/brand/impact-report-excellence.svg"
+              alt="Impact Report Excellence"
+              width={120}
+              height={120}
+            />
+            <div>
+              <h3>
+                Does your impact report
+                <br />
+                make an impact?
+              </h3>
+              <p>Clarity. Storytelling. Design. Engagement. Communication.</p>
+            </div>
+            <span className="line-arrow" aria-hidden="true">
+              <Arrow diagonal />
+            </span>
+          </Link>
         </div>
         <div className="methodology-line">
           <p>

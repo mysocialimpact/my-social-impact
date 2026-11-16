@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { COVERAGE, criteria, type Framework } from "./rubric";
+import { COVERAGE, testsPerPillar, criteria, type Framework } from "./rubric";
 const text = z.string().trim().min(1).max(5000);
 export const citationSchema = z
   .object({
@@ -32,6 +32,7 @@ export const criterionSchema = z
     improvement: text,
     confidence: z.enum(["high", "medium", "low"]),
     claimIds: z.array(z.string()).max(40),
+    visualPages: z.array(z.number().int().positive()).optional(),
   })
   .strict();
 export type Criterion = z.infer<typeof criterionSchema>;
@@ -134,7 +135,9 @@ export function validateFindings(
   const findings = z.array(criterionSchema).parse(input);
   const expected = criteria(framework)
     .filter(
-      (_, i) => principle === undefined || Math.floor(i / 4) === principle,
+      (_, i) =>
+        principle === undefined ||
+        Math.floor(i / testsPerPillar(framework)) === principle,
     )
     .map((c) => c.id);
   if (
@@ -156,7 +159,10 @@ export function validateFindings(
       throw new Error("Excluded tests cannot have scores.");
     if (
       f.status === "assessed" &&
-      (f.score === null || f.score === 0 || !f.evidence.length)
+      (f.score === null ||
+        f.score === 0 ||
+        (!f.evidence.length &&
+          !(framework === "report" && f.visualPages?.length)))
     )
       throw new Error("A positive score requires verified evidence.");
     if (
@@ -172,18 +178,23 @@ export function validateFindings(
 export function scoreFramework(
   findings: Criterion[],
   framework: Framework,
-  thresholds: { minimumPerPrinciple: number; minimumTotal: number } = COVERAGE,
+  thresholds: {
+    minimumPerPrinciple: number;
+    minimumTotal: number;
+  } = framework === "report"
+    ? { minimumPerPrinciple: 4, minimumTotal: 22 }
+    : COVERAGE,
 ) {
   const expected = criteria(framework);
   if (
-    findings.length !== 20 ||
-    new Set(findings.map((f) => f.id)).size !== 20 ||
+    findings.length !== expected.length ||
+    new Set(findings.map((f) => f.id)).size !== expected.length ||
     findings.some((f) => !expected.some((c) => c.id === f.id))
   )
-    throw new Error("A framework needs all twenty test outcomes.");
+    throw new Error("A framework needs all expected test outcomes.");
   const principles = Array.from({ length: 5 }, (_, i) => {
     const tests = expected
-      .slice(i * 4, i * 4 + 4)
+      .slice(i * testsPerPillar(framework), (i + 1) * testsPerPillar(framework))
       .map((c) => findings.find((f) => f.id === c.id)!);
     const assessable = tests.filter(
       (f) => f.status === "assessed" || f.status === "not_demonstrated",
@@ -200,7 +211,7 @@ export function scoreFramework(
     )
       throw new Error("Invalid scoring input.");
     return {
-      name: expected[i * 4].principle,
+      name: expected[i * testsPerPillar(framework)].principle,
       score: assessable.length
         ? Math.round(
             (assessable.reduce((n, f) => n + f.score!, 0) / assessable.length) *
