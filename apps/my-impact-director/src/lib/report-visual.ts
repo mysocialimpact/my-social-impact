@@ -118,14 +118,17 @@ export async function assessReportPillar(
   observations: VisualObservation[],
   principle: number,
   context: unknown,
+  previousValidationFailure: string | null = null,
 ) {
   const passages = sourcePassages(pages);
   const expected = criteria("report").slice(principle * 5, principle * 5 + 5);
   const response = await structured(
     schema,
-    `Assess these five Impact Report Excellence v1.0 criteria. This is editorial communication quality, not evidence validity or organisational maturity. Anchors: ${JSON.stringify(reportAnchors)}. All findings need specific issue, why it matters, physical pages and a practical improvement. Select exact evidenceIds for writing observations; visualPages must refer only to supplied readable visual observations. All Design criteria and E1/E2/E3/M2 require visualPages for assessed scores. Use assessed scores 1-4, not_demonstrated score 0 only when absence is established across a fully readable report; otherwise unassessable/null. Excluded findings need limitations. No claimIds. Simple, black-and-white, short and low-budget reports can excel. Do not demand contents for short reports, interactive features for PDFs, or photographs/personal stories when inappropriate. Ethical, dignified storytelling matters; don't reward manipulation. Do not infer poor design from OCR limitations. If visual sampling misses material needed for a whole-report judgement, use unassessable or explain limited confidence. Never extrapolate unseen design. Refer to physical page numbers, not observation IDs.`,
+    `Assess these five Impact Report Excellence v1.0 criteria. This is editorial communication quality, not evidence validity or organisational maturity. Anchors: ${JSON.stringify(reportAnchors)}. All findings need specific issue, why it matters, physical pages and a practical improvement. Select exact evidenceIds for writing observations; visualPages must refer only to supplied readable visual observations. All Design criteria and E1/E2/E3/M2 require visualPages for assessed scores. Use assessed scores 1-4, not_demonstrated score 0 only when absence is established across a fully readable report; otherwise unassessable/null. Excluded findings need limitations. No claimIds. Simple, black-and-white, short and low-budget reports can excel. Do not demand contents for short reports, interactive features for PDFs, or photographs/personal stories when inappropriate. Ethical, dignified storytelling matters; don't reward manipulation. Do not infer poor design from OCR limitations. If visual sampling misses material needed for a whole-report judgement, use unassessable or explain limited confidence. Never extrapolate unseen design. If unreadablePages is nonempty, never use not_demonstrated: choose unassessable/null for unsupported absence. If previousValidationFailure is set, correct that precise validation issue. Only use original physical page numbers actually present in visualObservations, never invent pages or use excerpt numbering. Refer to physical page numbers, not observation IDs.`,
     {
       context,
+      previousValidationFailure,
+      unreadablePages: pages.filter((p) => !p.readable).map((p) => p.page),
       criteria: expected.map((c) => ({
         ...c,
         guidance:

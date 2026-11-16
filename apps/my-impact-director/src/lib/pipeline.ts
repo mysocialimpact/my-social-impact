@@ -222,6 +222,7 @@ export async function processOne(id?: string) {
         ),
         principle,
         context,
+        job.error_code,
       );
       usage = response.usage;
       const validated = validateFindings(
@@ -426,7 +427,27 @@ export async function processOne(id?: string) {
                     e.message ===
                       "Missing content prevents reliable absence judgements."
                   ? "UNREADABLE_SOURCE_ABSENCE"
-                  : "STAGE_VALIDATION_FAILED";
+                  : e instanceof Error &&
+                      e.message === "Uninspected visual page reference"
+                    ? "UNINSPECTED_VISUAL_PAGE"
+                    : e instanceof Error &&
+                        e.message === "Visual evidence required"
+                      ? "VISUAL_EVIDENCE_REQUIRED"
+                      : e instanceof Error &&
+                          e.message ===
+                            "A positive score requires verified evidence."
+                        ? "FINDING_EVIDENCE_REQUIRED"
+                        : e instanceof Error &&
+                            e.message === "An excluded test needs a limitation."
+                          ? "EXCLUSION_LIMITATION_REQUIRED"
+                          : e instanceof Error &&
+                              e.message === "Not demonstrated must score zero."
+                            ? "ZERO_STATUS_MISMATCH"
+                            : e instanceof Error &&
+                                e.message ===
+                                  "Excluded tests cannot have scores."
+                              ? "EXCLUDED_SCORE_INVALID"
+                              : "STAGE_VALIDATION_FAILED";
     const providerWait = e instanceof AIError ? e.retryAfterSeconds : undefined;
     if (providerWait)
       await query(
