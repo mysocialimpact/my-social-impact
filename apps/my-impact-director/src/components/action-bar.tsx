@@ -14,6 +14,8 @@ import { usePathname } from "next/navigation";
 type ReportAction = {
   primaryLabel?: string;
   processingLabel?: string;
+  contextTitle?: string;
+  contextDetail?: string;
   primaryHref?: string;
   onPrimary?: () => void;
   id: string;
@@ -78,7 +80,12 @@ export function ActionShell({ children }: { children: React.ReactNode }) {
       {children}
       <aside ref={bar} className="permanent-actions" aria-label="Page actions">
         <div className="action-context">
-          {processing ? (
+          {active?.contextTitle ? (
+            <>
+              <strong>{active.contextTitle}</strong>
+              <span>{active.contextDetail}</span>
+            </>
+          ) : processing ? (
             <>
               <strong>Reviewing your report</strong>
               <span>

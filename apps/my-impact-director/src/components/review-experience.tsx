@@ -322,6 +322,22 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
   useEffect(() => {
     setAction({
       id: r.id,
+      contextTitle:
+        r.framework === "document"
+          ? "One report. Two perspectives."
+          : complete
+            ? r.full
+              ? "Your complete review is ready."
+              : "Your headline results are ready."
+            : undefined,
+      contextDetail:
+        r.framework === "document"
+          ? "Choose either free review."
+          : complete
+            ? r.full
+              ? "Download it. Keep it. Put it to work."
+              : "Free snapshot. Full report by confirmed email."
+            : undefined,
       status: r.status,
       stage: r.stage,
       onPrimary: complete
