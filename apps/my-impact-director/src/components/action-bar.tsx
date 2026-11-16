@@ -47,7 +47,11 @@ export function ActionShell({ children }: { children: React.ReactNode }) {
     };
   }, []);
   const review = /^\/reviews\/([a-f0-9-]{36})(\/source)?$/.exec(path);
-  const active = review && report?.id === review[1] ? report : null;
+  const active =
+    (review && report?.id === review[1]) ||
+    (path === "/reviews" && report?.id === "workspace")
+      ? report
+      : null;
   const source = !!review?.[2];
   const complete = active?.status === "complete";
   const processing = active && !["complete", "failed"].includes(active.status);
@@ -133,7 +137,7 @@ export function ActionShell({ children }: { children: React.ReactNode }) {
               : "/your-impact-director#enquire"
           }
         >
-          {complete ? "Get expert help" : "Talk to us"}
+          {complete ? "Talk to your Impact Director" : "Contact Us"}
         </Link>
         <Link
           className="action-feedback"

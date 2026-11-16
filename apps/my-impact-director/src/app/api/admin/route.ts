@@ -14,7 +14,7 @@ export async function GET(req: Request) {
       `SELECT (SELECT count(*) FROM director.users WHERE is_anonymous=false) AS users,(SELECT count(DISTINCT organisation) FROM director.reports WHERE organisation<>'') AS organisations,(SELECT count(*) FROM director.reviews WHERE framework IS DISTINCT FROM 'document') AS reviews,(SELECT count(*) FROM director.reviews WHERE status='complete' AND framework IS DISTINCT FROM 'document') AS completed,(SELECT count(*) FROM director.reviews WHERE status='failed') AS failed,(SELECT count(*) FROM director.reviews WHERE status IN ('running','queued')) AS pending,(SELECT count(*) FROM director.enquiries) AS enquiries,(SELECT count(DISTINCT owner_id) FROM director.enquiries) AS enquirers,(SELECT count(DISTINCT r.owner_id) FROM director.reports r JOIN director.reviews v ON v.report_id=r.id WHERE v.status='complete') AS reviewed_users,(SELECT COALESCE(sum(cost_usd),0) FROM director.reviews) AS cost_usd`,
     );
     const users = await query(
-      `SELECT id,name,email,organisation,created_at,last_seen FROM director.users WHERE is_anonymous=false AND (email ILIKE $1 OR name ILIKE $1) ORDER BY last_seen DESC LIMIT 100`,
+      `SELECT id,name,email,email_verified_at,organisation,created_at,last_seen FROM director.users WHERE is_anonymous=false AND (email ILIKE $1 OR name ILIKE $1) ORDER BY last_seen DESC LIMIT 100`,
       ["%" + q + "%"],
     );
     const reviews = await query(

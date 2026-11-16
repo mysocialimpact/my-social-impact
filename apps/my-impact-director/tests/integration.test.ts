@@ -1,3 +1,4 @@
+import { workspaces } from "../src/lib/workspace";
 import { sendPendingReports } from "../src/lib/report-delivery";
 import { GET as reviewGet } from "../src/app/api/reviews/[id]/route";
 import { GET as exportGet } from "../src/app/api/reviews/[id]/export/route";
@@ -1086,6 +1087,156 @@ test(
           await writeFile(
             "artifacts/report-review.json",
             JSON.stringify({ ...done, full: false, siblings: [] }, null, 2),
+          );
+        },
+      );
+      await t.test(
+        "passwordless workspace associates a current report, deduplicates accounts and automatically saves future uploads",
+        async () => {
+          process.env.EMAIL_ENABLED = "true";
+          process.env.EMAIL_FROM = "QA <qa@example.invalid>";
+          process.env.RESEND_API_KEY = "synthetic-contract-only";
+          const guest = await createGuest(
+            new Request("https://test.example/api/visitor", {
+              headers: { "x-forwarded-for": "dashboard-" + uid },
+            }),
+          );
+          localUsers.push(guest.user.id);
+          const cookie = guest.cookie!.split(";")[0];
+          const guestReq = () =>
+            new Request("https://test.example/api/save", {
+              headers: { cookie, "x-forwarded-for": "dashboard-" + uid },
+            });
+          const parent = await createReview(
+            guest.user,
+            bytes,
+            "workspace.pdf",
+            true,
+            false,
+            null,
+            true,
+          );
+          ids.push(parent.id);
+          const selected = await startFramework(
+            guest.user,
+            parent.id,
+            "claims",
+          );
+          let [w] = await workspaces(guest.user, parent.id);
+          assert.equal((w.assessments as any[]).length, 1);
+          assert.equal((w.assessments as any[])[0].has_result, false);
+          assert.equal((w.assessments as any[])[0].status, "queued");
+          await assert.rejects(() => workspaces(otherUser, parent.id), {
+            status: 404,
+          });
+          const email = uid + "-workspace@example.invalid",
+            before = emails.length;
+          await requestEmailSave(guestReq(), {
+            email,
+            reviewId: parent.id,
+            account: true,
+          });
+          assert.equal(emails.length, before + 1);
+          assert.equal(emails.at(-1)!.attachments, undefined);
+          assert.equal(
+            (
+              await query(
+                "SELECT id FROM director.users WHERE email=$1 AND NOT is_anonymous",
+                [email],
+              )
+            ).length,
+            0,
+          );
+          const token = emails
+            .at(-1)!
+            .text.match(/access#([A-Za-z0-9_-]{43})/)![1];
+          const redeemed = await redeemEmailLink(token);
+          const verifiedReq = () =>
+            new Request("https://test.example/api/save", {
+              headers: {
+                cookie: redeemed.cookie.split(";")[0],
+                "x-forwarded-for": "dashboard2-" + uid,
+              },
+            });
+          const verified = await visitor(verifiedReq());
+          localUsers.push(verified.id);
+          assert.equal(verified.emailVerified, true);
+          [w] = await workspaces(verified, parent.id);
+          assert.equal(w.full, true);
+          assert.equal((w.assessments as any[])[0].id, selected.id);
+          assert.equal(
+            (
+              await createReview(
+                verified,
+                bytes,
+                "workspace.pdf",
+                true,
+                false,
+                null,
+                true,
+              )
+            ).id,
+            parent.id,
+            "cross-device re-upload reuses authorised source",
+          );
+          const pdf3 = await PDFDocument.create();
+          pdf3.addPage().drawText("Another document saved automatically.");
+          const fresh = await createReview(
+            verified,
+            Buffer.from(await pdf3.save()),
+            "another.pdf",
+            true,
+            false,
+            null,
+            true,
+          );
+          ids.push(fresh.id);
+          assert.equal(
+            await reviewAccess(verified, await getReview(verified, fresh.id)),
+            true,
+          );
+          assert.equal(
+            (
+              await query(
+                "SELECT 1 FROM director.report_subscriptions WHERE report_id=(SELECT report_id FROM director.reviews WHERE id=$1) AND owner_id=$2",
+                [fresh.id, verified.id],
+              )
+            ).length,
+            1,
+          );
+          const count = emails.length;
+          assert.equal(
+            (
+              await requestEmailSave(verifiedReq(), {
+                email,
+                reviewId: parent.id,
+              })
+            )?.verified,
+            true,
+          );
+          assert.equal(emails.length, count);
+          await requestEmailSave(guestReq(), { email, account: true });
+          const secondToken = emails
+            .at(-1)!
+            .text.match(/access#([A-Za-z0-9_-]{43})/)![1];
+          await redeemEmailLink(secondToken);
+          assert.equal(
+            (
+              await query(
+                "SELECT id FROM director.users WHERE email=$1 AND NOT is_anonymous",
+                [email],
+              )
+            ).length,
+            1,
+          );
+          await assert.rejects(() => redeemEmailLink(token), { status: 410 });
+          const summary = JSON.stringify(await workspaces(verified));
+          assert.ok(
+            !summary.includes("file_bytes") && !summary.includes("findings"),
+          );
+          await writeFile(
+            "artifacts/workspace-dashboard.json",
+            JSON.stringify({ workspace: w, user: verified }, null, 2),
           );
         },
       );

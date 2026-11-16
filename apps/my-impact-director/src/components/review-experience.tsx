@@ -1,4 +1,6 @@
 "use client";
+import { SaveReview } from "./save-review";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Arrow } from "./icons";
@@ -155,7 +157,12 @@ export type ExperienceReview = {
   title: string;
   error_message: string | null;
   result: ReviewResult | null;
-  siblings: { id: string; framework: Framework; status: string }[];
+  siblings: {
+    id: string;
+    framework: Framework;
+    status: string;
+    has_result?: boolean;
+  }[];
 };
 function EmailInvitation({
   id,
@@ -352,63 +359,135 @@ function EmailDialog({
   );
 }
 export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
+  const searchParams = useSearchParams();
   const [step, setStep] = useState(0),
     [direction, setDirection] = useState("forward"),
     [emailOpen, setEmailOpen] = useState(false),
-    [results, setResults] = useState(false),
+    [results, setResults] = useState(searchParams.get("results") === "1"),
     [busy, setBusy] = useState(false),
     [error, setError] = useState("");
   const lessonHeading = useRef<HTMLHeadingElement>(null);
+  useEffect(() => {
+    if (searchParams.get("results") === "1") setResults(true);
+  }, [searchParams]);
   const setAction = useReportAction();
   const framework = r.framework === "document" ? null : r.framework,
     complete = r.status === "complete" && !!r.result;
+  const siblings = (r.siblings || []).map((s) =>
+    s.id === r.id ? { ...s, has_result: !!r.result, status: r.status } : s,
+  );
+  const completedCount = siblings.filter(
+    (s) => s.status === "complete" && s.has_result,
+  ).length;
+  const nextFramework = FRAMEWORKS.find(
+    (f) =>
+      !siblings.some(
+        (s) => s.framework === f && s.status === "complete" && s.has_result,
+      ),
+  );
   useEffect(() => {
+    const allDone = completedCount === 3;
+    const nextAfterResults = complete && results;
     setAction({
       id: r.id,
-      contextTitle:
-        r.framework === "document"
-          ? "One report. Three perspectives."
-          : complete
-            ? r.full
-              ? "Your complete review is ready."
-              : "Your headline results are ready."
-            : undefined,
-      contextDetail:
-        r.framework === "document"
-          ? "Choose any free review."
-          : complete
-            ? r.full
-              ? "Download it. Keep it. Put it to work."
-              : "Free snapshot. Full report by confirmed email."
-            : undefined,
       status: r.status,
       stage: r.stage,
-      onPrimary: complete
-        ? viewResults
-        : framework
-          ? () => (r.full ? goStep(0) : setEmailOpen(true))
-          : undefined,
-      processingLabel: framework
-        ? "Processing continues when you leave"
-        : undefined,
-      primaryLabel:
-        r.framework === "document"
-          ? "Choose your free review"
-          : complete
-            ? "View results"
+      contextTitle:
+        r.status === "failed"
+          ? "Your review needs attention."
+          : framework
+            ? complete
+              ? allDone
+                ? "All three reviews complete."
+                : `You’ve completed ${completedCount || 1} of 3 reviews.`
+              : r.full
+                ? "Your report is being prepared."
+                : "Make this your Impact Director."
+            : allDone
+              ? "All three reviews complete."
+              : completedCount
+                ? `You’ve completed ${completedCount} of 3 reviews.`
+                : "One report. Three reviews. Your progress.",
+      contextDetail:
+        r.status === "failed"
+          ? "Retry your saved review or contact us for help."
+          : framework
+            ? complete
+              ? r.full
+                ? "Your results are ready to explore."
+                : "Headline results now. Full report after email verification."
+              : r.full
+                ? "We’ll email you when it’s ready."
+                : "Save your work and return on any device."
+            : "Choose any review. We reuse this document.",
+      primaryLabel: !framework
+        ? allDone
+          ? "Explore your reports"
+          : completedCount
+            ? "Explore your next review"
+            : "Start your first free review"
+        : complete
+          ? nextAfterResults
+            ? allDone
+              ? "Explore your reports"
+              : "Explore your next review"
+            : "View your results"
+          : r.status === "failed"
+            ? "Resolve review issue"
             : r.full
-              ? "Email confirmed — you can leave"
-              : "Email me my full report",
-      primaryHref:
-        r.framework === "document"
-          ? "#choose-review"
+              ? "Explore the methodology"
+              : "Save your work & get the full report",
+      primaryHref: !framework
+        ? allDone
+          ? "/reviews"
+          : "#choose-review"
+        : nextAfterResults && allDone
+          ? "/reviews"
           : complete
             ? "#review-results"
             : r.full
               ? "#learning"
               : "#email-delivery",
+      onPrimary: !framework
+        ? undefined
+        : complete
+          ? nextAfterResults
+            ? allDone
+              ? () => window.location.assign("/reviews")
+              : () => {
+                  document
+                    .querySelector(".next-review")
+                    ?.scrollIntoView({ behavior: "smooth", block: "start" });
+                }
+            : viewResults
+          : r.status === "failed"
+            ? () => document.querySelector(".honest-status")?.scrollIntoView()
+            : () =>
+                r.full
+                  ? goStep(0)
+                  : step === 0
+                    ? document
+                        .querySelector<HTMLInputElement>(
+                          '#email-delivery input[name="email"]',
+                        )
+                        ?.focus()
+                    : setEmailOpen(true),
+      processingLabel: "Processing continues when you leave",
     });
-  }, [r.id, r.status, r.stage, r.full, r.framework, complete, setAction]);
+  }, [
+    r.id,
+    r.status,
+    r.stage,
+    r.full,
+    r.framework,
+    r.result,
+    complete,
+    results,
+    completedCount,
+    nextFramework,
+    step,
+    setAction,
+  ]);
   function goStep(value: number) {
     setDirection(value < step ? "backward" : "forward");
     setStep(value);
@@ -417,13 +496,20 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
       document.querySelector(".lesson-scroll")?.scrollTo({ top: 0 });
     });
   }
-  function viewResults() {
-    setResults(true);
+  const recordedView = useRef("");
+  useEffect(() => {
+    if (!complete || !results || recordedView.current === r.id) return;
+    recordedView.current = r.id;
     void api("/api/reviews/" + r.id, {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ action: "snapshot" }),
-    }).catch(() => {});
+    })
+      .then(() => window.dispatchEvent(new Event("mid-workspace-refresh")))
+      .catch(() => {});
+  }, [complete, results, r.id]);
+  function viewResults() {
+    setResults(true);
   }
   async function retrySaved(id: string) {
     setBusy(true);
@@ -449,11 +535,28 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ framework: f }),
       });
-      window.location.assign("/reviews/" + d.id);
+      const existing = r.siblings?.find((s) => s.id === d.id);
+      window.location.assign(
+        "/reviews/" +
+          d.id +
+          (existing?.status === "complete" && existing.has_result
+            ? "?results=1"
+            : ""),
+      );
     } catch (e) {
       setError(e instanceof Error ? e.message : "Please try again.");
       setBusy(false);
     }
+  }
+  function choiceLabel(f: Framework) {
+    const sibling = r.siblings?.find((s) => s.framework === f);
+    return !sibling
+      ? `Start ${names[f]} — free`
+      : sibling.status === "complete" && sibling.has_result
+        ? `View ${names[f]} results`
+        : sibling.status === "failed" || sibling.status === "complete"
+          ? `Resolve ${names[f]} review`
+          : `View ${names[f]} progress`;
   }
   if (!framework)
     return (
@@ -488,6 +591,7 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
             <Link href="/feedback?issue=upload">Help us make this better</Link>
           </div>
         )}
+        <SaveReview id={r.id} />
         <div className="review-choices">
           {FRAMEWORKS.map((f) => (
             <section key={f}>
@@ -516,10 +620,7 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
                 disabled={busy}
                 onClick={() => choose(f)}
               >
-                {r.siblings?.find((s) => s.framework === f)
-                  ? "Return to "
-                  : "Start "}
-                {names[f]} — free
+                {choiceLabel(f)}
               </button>
             </section>
           ))}
@@ -803,7 +904,7 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
               disabled={busy}
               onClick={() => choose(other)}
             >
-              Review against {names[other]} — free
+              {choiceLabel(other)}
             </button>
             {error && <p role="alert">{error}</p>}
           </section>

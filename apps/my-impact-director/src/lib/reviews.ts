@@ -36,10 +36,27 @@ export async function createReview(
     [user.id, sha],
   );
   const [previous] = await query<{ id: string }>(
-    `SELECT v.id FROM director.reports r JOIN director.reviews v ON v.report_id=r.id WHERE r.owner_id=$1 AND r.sha256=$2 AND v.version=$3`,
-    [user.id, sha, version],
+    `SELECT v.id FROM director.reports r JOIN director.reviews v ON v.report_id=r.id WHERE r.expires_at>now() AND (r.owner_id=ANY($1::text[]) OR EXISTS(SELECT 1 FROM director.review_grants g JOIN director.reviews gv ON gv.id=g.review_id WHERE gv.report_id=r.id AND g.owner_id=ANY($1::text[]))) AND r.sha256=$2 AND v.version=$3 ORDER BY r.created_at LIMIT 1`,
+    [user.accessIds || [user.id], sha, version],
   );
-  if (previous) return previous;
+  if (previous) {
+    if (user.emailVerified && user.email)
+      await transaction(async (c) => {
+        await c.query(
+          "INSERT INTO director.review_grants(review_id,owner_id) VALUES($1,$2) ON CONFLICT DO NOTHING",
+          [previous.id, user.id],
+        );
+        await c.query(
+          "INSERT INTO director.report_subscriptions(report_id,owner_id,email) SELECT report_id,$2,$3 FROM director.reviews WHERE id=$1 ON CONFLICT DO NOTHING",
+          [previous.id, user.id, user.email],
+        );
+        await c.query(
+          "UPDATE director.reports SET expires_at=GREATEST(expires_at,now()+interval '180 days') WHERE id=(SELECT report_id FROM director.reviews WHERE id=$1)",
+          [previous.id],
+        );
+      });
+    return previous;
+  }
   // Keep the daily quota after deletion as well as counting retained reports.
   await rateLimit(`new-report:${user.id}`, 3, 86400);
   return transaction(async (c) => {
@@ -86,6 +103,20 @@ export async function createReview(
       await c.query(
         "INSERT INTO director.daily_metrics(event,count) VALUES('anonymous_started',1) ON CONFLICT(day,event) DO UPDATE SET count=daily_metrics.count+1",
       );
+    if (user.emailVerified && user.email) {
+      await c.query(
+        "INSERT INTO director.review_grants(review_id,owner_id) VALUES($1,$2) ON CONFLICT DO NOTHING",
+        [review.id, user.id],
+      );
+      await c.query(
+        "INSERT INTO director.report_subscriptions(report_id,owner_id,email) VALUES($1,$2,$3) ON CONFLICT DO NOTHING",
+        [report.id, user.id, user.email],
+      );
+      await c.query(
+        "UPDATE director.reports SET expires_at=GREATEST(expires_at,now()+interval '180 days') WHERE id=$1",
+        [report.id],
+      );
+    }
     return { id: review.id as string };
   });
 }
@@ -163,6 +194,16 @@ export async function startFramework(
       framework === "report" ? 16 : framework === "claims" ? 4 : 9,
     ],
   );
+  if (user.emailVerified && user.email) {
+    await query(
+      "INSERT INTO director.report_subscriptions(report_id,owner_id,email) VALUES($1,$2,$3) ON CONFLICT DO NOTHING",
+      [reportId, user.id, user.email],
+    );
+    await query(
+      "INSERT INTO director.report_deliveries(review_id,owner_id,email) SELECT id,$2,$3 FROM director.reviews WHERE id=$1 AND status='complete' AND result IS NOT NULL ON CONFLICT DO NOTHING",
+      [review.id, user.id, user.email],
+    );
+  }
   if (review.created)
     await query(
       "INSERT INTO director.daily_metrics(event,count) VALUES($1,1) ON CONFLICT(day,event) DO UPDATE SET count=daily_metrics.count+1",

@@ -47,6 +47,7 @@ export async function localIdentity(
         ...row,
         founder: false,
         anonymous: row.kind === "guest",
+        emailVerified: row.kind === "email",
         accessIds: rows.map((x) => x.id),
       }
     : null;

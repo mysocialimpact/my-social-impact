@@ -2946,3 +2946,369 @@ body:has(.immersive-review) .campaign-footer {
 .two-review-report .methodology-lesson a {
   color: inherit;
 }
+/* The personal tracker occupies measured space, independently of lesson progress. */
+:root {
+  --workspace-height: 0px;
+}
+.workspace-tracker {
+  position: sticky;
+  top: var(--header-height);
+  z-index: 40;
+  background: var(--navy);
+  color: white;
+  padding: 12px 3vw;
+  display: grid;
+  grid-template-columns: minmax(180px, 0.8fr) minmax(0, 2fr);
+  gap: 24px;
+  border-bottom: 1px solid #626979;
+}
+.workspace-heading {
+  min-width: 0;
+  align-self: center;
+}
+.workspace-heading > a {
+  color: #ff9a79;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-decoration: none;
+}
+.workspace-heading p {
+  margin: 5px 0 0;
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.workspace-heading p span {
+  color: #d9deec;
+}
+.workspace-assessments {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+}
+.workspace-assessment {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 3px 8px;
+  align-content: center;
+  border-left: 1px solid #626979;
+  padding-left: 16px;
+  min-width: 0;
+}
+.workspace-framework {
+  grid-column: 1 / -1;
+  font-size: 12px;
+  font-weight: 600;
+}
+.workspace-assessment strong {
+  font-size: 13px;
+  color: #d9deec;
+}
+.workspace-assessment a,
+.workspace-assessment button {
+  font: inherit;
+  font-size: 12px;
+  color: white;
+  padding: 0;
+  border: 0;
+  background: none;
+  text-decoration: underline;
+  cursor: pointer;
+  text-underline-offset: 3px;
+}
+.workspace-assessment a[aria-current="page"] {
+  text-decoration-thickness: 2px;
+}
+.workspace-assessment.state-completed strong {
+  color: #8ce2c0;
+}
+.workspace-assessment.state-needs-attention strong {
+  color: #ffbca7;
+}
+.workspace-error {
+  grid-column: 1/-1;
+  font-size: 13px;
+  margin: 0;
+}
+.workspace-loading {
+  padding: 10px 3vw;
+  font-size: 14px;
+}
+body:has(.immersive-review) .immersive-review {
+  height: calc(
+    100dvh - var(--header-height) - var(--action-height) -
+      var(--workspace-height)
+  );
+  min-height: 0;
+}
+html:has(.report-workspace) {
+  scroll-padding-top: calc(
+    var(--header-height) + var(--workspace-height) + 16px
+  );
+}
+.report-workspace .review-choice > .keep-review {
+  max-width: none;
+  padding: 24px;
+  margin: 25px 0;
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: 40px;
+}
+.review-choice > .keep-review h2 {
+  font-family: inherit;
+  font-size: 28px;
+  line-height: 1.1;
+}
+.review-choice > .keep-review p {
+  font-size: 15px;
+  margin: 10px 0 0;
+}
+.workspace-saved {
+  background: var(--navy);
+  color: white;
+  padding: 18px 22px;
+  margin: 24px 0;
+}
+.workspace-saved p {
+  margin: 5px 0 0;
+  font-size: 14px;
+}
+.personal-report {
+  border-top: 3px solid var(--navy);
+  margin-top: 36px;
+  padding: 24px 0;
+}
+.personal-report-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+.personal-report-heading h2 {
+  font-family: inherit;
+  font-size: 30px;
+  margin: 0;
+}
+.personal-report-heading h2 a {
+  text-decoration: none;
+}
+.personal-report-heading p {
+  font-size: 14px;
+}
+.personal-assessments {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+  margin-top: 22px;
+}
+.personal-assessments section {
+  border-top: 1px solid var(--line);
+  padding-top: 18px;
+}
+.personal-assessments h3 {
+  font-family: inherit;
+  font-size: 21px;
+  line-height: 1.15;
+}
+.workspace-state {
+  font-size: 16px;
+  font-weight: 700;
+}
+.workspace-retention {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  justify-content: space-between;
+  border-top: 1px solid var(--line);
+  margin-top: 24px;
+  padding-top: 12px;
+}
+.workspace-retention p {
+  font-size: 13px;
+  max-width: 700px;
+}
+.workspace-retention button {
+  font-size: 13px;
+  white-space: nowrap;
+}
+.workspace-service {
+  margin: 36px 0;
+}
+@media (max-width: 1050px) {
+  .workspace-tracker {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .workspace-heading {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+  }
+  .workspace-heading p {
+    margin: 0;
+  }
+  .workspace-assessment {
+    padding-left: 10px;
+  }
+  .workspace-assessments {
+    gap: 12px;
+  }
+}
+@media (max-width: 700px) {
+  .workspace-tracker {
+    padding: 8px 16px;
+    gap: 8px;
+  }
+  .workspace-heading > a {
+    font-size: 10px;
+    white-space: nowrap;
+  }
+  .workspace-heading p {
+    font-size: 11px;
+  }
+  .workspace-heading p span {
+    display: none;
+  }
+  .workspace-framework {
+    font-size: 10px;
+    line-height: 1.2;
+    min-height: 24px;
+  }
+  .workspace-assessment {
+    grid-template-columns: 1fr;
+    gap: 3px;
+    border: 0;
+    padding: 0;
+  }
+  .workspace-assessment strong,
+  .workspace-assessment a,
+  .workspace-assessment button {
+    font-size: 11px;
+    text-align: left;
+  }
+  .workspace-assessment a,
+  .workspace-assessment button {
+    min-height: 20px;
+  }
+  .workspace-assessments {
+    gap: 10px;
+  }
+  .report-workspace .review-choice > .keep-review,
+  .personal-assessments {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  .personal-report-heading,
+  .workspace-retention {
+    display: block;
+  }
+  .personal-report-heading h2 {
+    font-size: 25px;
+  }
+  .report-workspace .review-choice > .keep-review {
+    padding: 20px;
+  }
+  .personal-report {
+    margin-top: 24px;
+  }
+  .workspace-retention button {
+    white-space: normal;
+  }
+}
+.workspace-framework-short {
+  display: none;
+}
+@media (max-width: 700px) {
+  .workspace-framework-long {
+    display: none;
+  }
+  .workspace-framework-short {
+    display: inline;
+  }
+  .workspace-framework {
+    font-size: 12px;
+    line-height: 1.2;
+  }
+  .workspace-assessment strong,
+  .workspace-assessment a,
+  .workspace-assessment button {
+    font-size: 12px;
+  }
+  .workspace-heading > a {
+    font-size: 11px;
+  }
+}
+@media (max-height: 500px) and (max-width: 1050px) {
+  .workspace-tracker {
+    padding: 6px 16px;
+    display: block;
+  }
+  .workspace-heading {
+    display: none;
+  }
+  .workspace-framework {
+    min-height: 0;
+    font-size: 11px;
+  }
+  .workspace-assessment {
+    grid-template-columns: 1fr auto;
+    gap: 2px 6px;
+  }
+  .workspace-assessment strong,
+  .workspace-assessment a,
+  .workspace-assessment button {
+    font-size: 11px;
+    min-height: 0;
+  }
+  .workspace-framework {
+    grid-column: 1/-1;
+  }
+  .permanent-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto 104px;
+    gap: 12px;
+    padding: 7px 16px;
+    align-items: center;
+  }
+  .permanent-actions .action-context {
+    display: none;
+  }
+  .permanent-actions .action-primary {
+    font-size: 12px;
+    min-height: 40px;
+    padding: 8px 12px;
+  }
+  .permanent-actions .action-talk {
+    font-size: 11px;
+  }
+  .permanent-actions .action-feedback {
+    grid-column: auto;
+    text-align: left;
+    font-size: 10px;
+  }
+}
+.personal-assessments button.text-link {
+  font: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  border: 0;
+  background: none;
+  padding: 0;
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  cursor: pointer;
+}
+@media (max-width: 700px) and (min-height: 501px) {
+  .workspace-heading {
+    display: block;
+  }
+  .workspace-heading p {
+    margin-top: 3px;
+  }
+  .workspace-heading p span {
+    display: inline;
+  }
+}

@@ -19,6 +19,7 @@ export type Identity = {
   organisation?: string;
   founder: boolean;
   anonymous?: boolean;
+  emailVerified?: boolean;
   accessIds?: string[];
 };
 const accountUrl = () =>

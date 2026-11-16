@@ -61,6 +61,7 @@ export function ReviewView({
         const d = await api("/api/reviews/" + id);
         if (stopped) return;
         setReview(d);
+        window.dispatchEvent(new Event("mid-workspace-refresh"));
         setError("");
         if (
           !["complete", "failed"].includes(d.status) ||

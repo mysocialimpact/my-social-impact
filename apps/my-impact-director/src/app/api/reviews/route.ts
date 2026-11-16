@@ -1,3 +1,4 @@
+import { workspaces } from "@/lib/workspace";
 import { MAX_FILE } from "@/lib/file-limits";
 import { privateNetworkKey } from "@/lib/access";
 import { after } from "next/server";
@@ -9,8 +10,13 @@ export const maxDuration = 300;
 export const dynamic = "force-dynamic";
 export async function GET(req: Request) {
   try {
+    const user = await visitor(req);
+    const [reviews, workspaceRows] = await Promise.all([
+      listReviews(user),
+      workspaces(user),
+    ]);
     return Response.json(
-      { reviews: await listReviews(await visitor(req)), enabled: ready() },
+      { reviews, workspaces: workspaceRows, enabled: ready() },
       { headers: { "cache-control": "no-store" } },
     );
   } catch (e) {

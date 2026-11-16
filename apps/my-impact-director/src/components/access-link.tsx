@@ -18,7 +18,7 @@ export function AccessLink() {
       <h2>Confirm your email.</h2>
       <p>
         Confirm this address to receive your detailed review when it is ready,
-        and return securely to your report.
+        and return securely to your personal workspace. No password required.
       </p>
       <button
         className="button primary"

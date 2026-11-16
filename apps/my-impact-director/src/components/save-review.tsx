@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { api } from "./session";
+import { api, useSession } from "./session";
 import { Arrow } from "./icons";
 export function SaveReview({
   id,
@@ -9,6 +9,7 @@ export function SaveReview({
   id?: string;
   returning?: boolean;
 }) {
+  const { user } = useSession();
   const [enabled, setEnabled] = useState<boolean | null>(null),
     [sent, setSent] = useState(false),
     [busy, setBusy] = useState(false),
@@ -32,11 +33,20 @@ export function SaveReview({
     setBusy(true);
     setError("");
     try {
-      await api("/api/save", {
+      await api("/api/visitor", { method: "POST" });
+      const result = await api("/api/save", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ email, ...(id ? { reviewId: id } : {}) }),
+        body: JSON.stringify({
+          email,
+          account: true,
+          ...(id ? { reviewId: id } : {}),
+        }),
       });
+      if (result.verified) {
+        window.location.assign(id ? "/reviews/" + id : "/reviews");
+        return;
+      }
       setSent(true);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Please try again.");
@@ -44,6 +54,17 @@ export function SaveReview({
       setBusy(false);
     }
   }
+  if (user?.emailVerified)
+    return (
+      <section className="workspace-saved">
+        <strong>Your workspace is saved.</strong>
+        <p>
+          Signed in as {user.email}. Reports are retained until their displayed
+          deletion dates. Completed detailed reviews are delivered to this
+          address.
+        </p>
+      </section>
+    );
   return (
     <section
       className={"keep-review " + (returning ? "return-review" : "")}
@@ -57,20 +78,14 @@ export function SaveReview({
         </p>
         <h2>
           {returning
-            ? "Return to your saved reviews."
-            : "Keep your full report."}
+            ? "Your personal Impact Director."
+            : "Make this your Impact Director."}
         </h2>
         <p>
           {returning
-            ? "Enter the email you used to save a review. We’ll send a private sign-in link. No password to remember."
-            : "Your results are already yours to explore. Download a copy, or save them for another day."}
+            ? "Enter your email to create or open your workspace. We’ll send a secure sign-in link. No password required."
+            : "Save your reports, track your reviews and pick up where you left off — on any device. One secure email link, no password. The same verified address receives your completed detailed reports."}
         </p>
-        {id && (
-          <a className="text-link" href={`/api/reviews/${id}/export`}>
-            Download the full PDF
-            <Arrow />
-          </a>
-        )}
       </div>
       <div>
         {sent ? (
@@ -78,7 +93,7 @@ export function SaveReview({
             <h3>Check your inbox.</h3>
             <p>
               {returning
-                ? "If this email has saved reviews, a private sign-in link is on its way."
+                ? "A secure sign-in link is on its way. Confirm it within 30 minutes to open your workspace."
                 : "Confirm your address using the private link within 30 minutes. Your detailed report will then be delivered and retained for 180 days."}
             </p>
           </div>
@@ -100,7 +115,7 @@ export function SaveReview({
                 ? "Sending…"
                 : returning
                   ? "Send my sign-in link"
-                  : "Email my report & return link"}
+                  : "Save my workspace — send a sign-in link"}
               <Arrow />
             </button>
             <p className="fine-print">

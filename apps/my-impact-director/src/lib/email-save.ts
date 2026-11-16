@@ -23,7 +23,11 @@ export const emailEnabled = () =>
 const emailId = (email: string) =>
   "email_" + createHash("sha256").update(email).digest("hex");
 const inputSchema = z
-  .object({ email: z.email().max(254), reviewId: z.uuid().optional() })
+  .object({
+    email: z.email().max(254),
+    reviewId: z.uuid().optional(),
+    account: z.boolean().optional(),
+  })
   .strict();
 export async function requestEmailSave(req: Request, input: unknown) {
   if (!emailEnabled())
@@ -32,7 +36,7 @@ export async function requestEmailSave(req: Request, input: unknown) {
       "We’re sorry — email delivery is temporarily unavailable. Your headline results remain here. Please try again later or tell us through Help us make this better.",
       "EMAIL_UNAVAILABLE",
     );
-  const { email: rawEmail, reviewId } = inputSchema.parse(input),
+  const { email: rawEmail, reviewId, account } = inputSchema.parse(input),
     email = rawEmail.trim().toLowerCase();
   await rateLimit(`email-ip:${privateNetworkKey(req)}`, 8, 3600);
   await rateLimit(`email-recipient:${email}`, 3, 3600);
@@ -61,11 +65,24 @@ export async function requestEmailSave(req: Request, input: unknown) {
       return { verified: true };
     }
   } else {
-    const existing = await query(
-      "SELECT id FROM director.users WHERE id=$1 AND is_anonymous=false",
-      [ownerId],
-    );
-    if (!existing.length) return;
+    if (account) {
+      const current = await visitor(req);
+      const verified = await localIdentity(req);
+      if (
+        verified &&
+        !verified.anonymous &&
+        verified.email.toLowerCase() === email
+      )
+        return { verified: true };
+      ownerId = current.id;
+    } else {
+      const existing = await query(
+        "SELECT id FROM director.users WHERE lower(email)=$1 AND is_anonymous=false LIMIT 1",
+        [email],
+      );
+      if (!existing.length) return;
+      ownerId = String(existing[0].id);
+    }
   }
   const token = randomBytes(32).toString("base64url"),
     hash = tokenHash(token);
@@ -95,7 +112,7 @@ export async function requestEmailSave(req: Request, input: unknown) {
         reply_to: "marcus@mysocialimpact.org",
         subject: reviewId
           ? "Confirm your email for your free detailed review"
-          : "Return to your saved impact reviews",
+          : "Your My Impact Director sign-in link",
         text: `${reviewId ? (attachment ? "Your full impact report review is attached. Open this private link to keep it in your saved reviews for 180 days:" : "Confirm your email to receive your free detailed report when it is ready:") : "Open this private link to return to your saved reviews:"}\n\n${destination.href}\n\nThis single-use link expires in 30 minutes. You have not been subscribed to marketing. If you did not request this email, you can ignore it.`,
         ...(attachment
           ? {
@@ -150,13 +167,34 @@ export async function redeemEmailLink(token: string) {
         410,
         "This link has expired or has already been used. Request a fresh email from Saved reviews.",
       );
-    const id = emailId(link.email);
+    await c.query("SELECT pg_advisory_xact_lock(hashtext($1))", [link.email]);
+    const {
+      rows: [existing],
+    } = await c.query<{ id: string }>(
+      "SELECT id FROM director.users WHERE lower(email)=$1 AND is_anonymous=false ORDER BY (id=$2) DESC,created_at LIMIT 1",
+      [link.email, emailId(link.email)],
+    );
+    const id = existing?.id || emailId(link.email);
     await c.query(
-      "INSERT INTO director.users(id,email,name) VALUES($1,$2,'') ON CONFLICT(id) DO UPDATE SET last_seen=now()",
+      "INSERT INTO director.users(id,email,name,email_verified_at) VALUES($1,$2,'',now()) ON CONFLICT(id) DO UPDATE SET last_seen=now(),email_verified_at=COALESCE(director.users.email_verified_at,now())",
       [id, link.email],
     );
     if (link.review_id)
       await grantVerifiedReport(c, link.review_id, id, link.email);
+    // The email proves the account; the captured authenticated guest session proves its documents.
+    // Never subscribe other existing accounts' historical documents merely because they share an email.
+    const { rows: guestReports } = await c.query<{ id: string }>(
+      "SELECT v.id FROM director.reviews v JOIN director.reports r ON r.id=v.report_id JOIN director.users u ON u.id=r.owner_id WHERE r.owner_id=$1 AND u.is_anonymous AND r.expires_at>now() AND (v.framework='document' OR v.framework IS NULL)",
+      [link.owner_id],
+    );
+    for (const row of guestReports)
+      await grantVerifiedReport(c, row.id, id, link.email);
+    const { rows: priorReports } = await c.query<{ id: string }>(
+      "SELECT v.id FROM director.reviews v JOIN director.reports r ON r.id=v.report_id JOIN director.users u ON u.id=r.owner_id WHERE lower(u.email)=$1 AND NOT u.is_anonymous AND r.expires_at>now() AND (v.framework='document' OR v.framework IS NULL)",
+      [link.email],
+    );
+    for (const row of priorReports)
+      await grantVerifiedReport(c, row.id, id, link.email, false);
     await c.query(
       "UPDATE director.email_links SET used_at=now() WHERE token_hash=$1",
       [tokenHash(token)],
@@ -181,6 +219,7 @@ async function grantVerifiedReport(
   reviewId: string,
   id: string,
   email: string,
+  subscribe = true,
 ) {
   {
     const { rowCount } = await c.query(
@@ -198,7 +237,7 @@ async function grantVerifiedReport(
       [reviewId],
     );
   }
-  {
+  if (subscribe) {
     await c.query(
       "INSERT INTO director.report_subscriptions(report_id,owner_id,email) SELECT report_id,$2,$3 FROM director.reviews WHERE id=$1 ON CONFLICT DO NOTHING",
       [reviewId, id, email],

@@ -25,7 +25,7 @@ export async function GET(req: Request, ctx: Context) {
     void lease_token;
     const siblings = r.framework
       ? await query(
-          "SELECT id,framework,status FROM director.reviews WHERE report_id=$1 AND framework IN ('claims','excellence','report')",
+          "SELECT id,framework,status,COALESCE(jsonb_typeof(result->'scores'->framework)='object',false) AS has_result FROM director.reviews WHERE report_id=$1 AND framework IN ('claims','excellence','report')",
           [r.report_id],
         )
       : [];
@@ -101,7 +101,7 @@ export async function POST(req: Request, ctx: Context) {
     }
     if (data.action === "snapshot") {
       const review = await getReview(user, id);
-      if (review.status === "complete") {
+      if (review.status === "complete" && review.result) {
         const viewed = await query(
           "UPDATE director.reviews SET first_viewed_at=now() WHERE id=$1 AND first_viewed_at IS NULL RETURNING id",
           [id],

@@ -18,6 +18,7 @@ type AdminData = {
   metrics: Record<string, string>;
   users: {
     id: string;
+    email_verified_at?: string | null;
     name: string;
     email: string;
     organisation: string;
@@ -180,6 +181,7 @@ export function Admin() {
                 ["email_saved", "Email links used"],
                 ["enquiry_created", "Enquiries sent"],
                 ["report_downloaded", "PDF downloads"],
+                ["workspace_opened", "Workspace visits"],
                 ["selected_claims", "Claims Code selected"],
                 ["selected_excellence", "Excellence selected"],
                 ["selected_report", "Report Excellence selected"],
@@ -460,7 +462,14 @@ export function Admin() {
                   {data.users.map((u) => (
                     <tr key={u.id}>
                       <td>{u.name}</td>
-                      <td>{u.email}</td>
+                      <td>
+                        {u.email}
+                        <p>
+                          {u.email_verified_at
+                            ? "Email verified"
+                            : "Verification not recorded"}
+                        </p>
+                      </td>
                       <td>{u.organisation || "Not supplied"}</td>
                       <td>
                         {new Date(u.last_seen).toLocaleDateString("en-GB")}
