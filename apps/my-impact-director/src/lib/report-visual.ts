@@ -415,7 +415,7 @@ export async function assessReportPillar(
         (!checks ||
           checks.tagged === false ||
           !checks.pages.some((p) => p.hasStructure)) &&
-        f.score > 0
+        f.score > 1
       )
         throw Error("PDF structural evidence required");
       if (

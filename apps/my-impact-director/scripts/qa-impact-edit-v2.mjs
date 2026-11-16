@@ -17,6 +17,9 @@ assert.equal(next.version, "2.0.0");
 const b = await chromium.launch({
   executablePath: "/usr/bin/chromium",
   args: ["--no-sandbox"],
+  ...(!base.includes("localhost")
+    ? { proxy: { server: process.env.HTTPS_PROXY } }
+    : {}),
 });
 try {
   for (const [width, height] of [

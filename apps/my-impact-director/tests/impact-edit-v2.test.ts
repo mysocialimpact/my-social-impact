@@ -206,6 +206,7 @@ test("v2 scoring receives actual images, anchored rubric and no unapproved exter
     previous = process.env.AI_GATEWAY_API_KEY;
   process.env.AI_GATEWAY_API_KEY = "synthetic-no-network";
   let calls = 0;
+  let structureScore = 1;
   try {
     globalThis.fetch = async (input, init) => {
       assert.equal(
@@ -238,9 +239,17 @@ test("v2 scoring receives actual images, anchored rubric and no unapproved exter
         /0 = Absent or seriously obstructive/,
       );
       const findings = finding()
-        .slice(0, 5)
+        .filter((f) => p.criteria.some((c: { id: string }) => c.id === f.id))
         .map(({ evidence, ...f }) => ({
           ...f,
+          ...(f.id === "report.5.3" ? { score: structureScore } : {}),
+          ...(f.id === "report.5.5"
+            ? {
+                score: null,
+                status: "unassessable",
+                limitations: ["No actual assistive user test was performed."],
+              }
+            : {}),
           evidenceIds: [p.passages[0].id],
         }));
       return Response.json({
@@ -266,6 +275,35 @@ test("v2 scoring receives actual images, anchored rubric and no unapproved exter
     assert.equal(r.data.length, 5);
     assert.equal(calls, 1);
     assert.ok(r.data.every((f) => f.anchorReason));
+    const pdfBytes = await bytes();
+    const checks = await inspectPdfChecks(pdfBytes, [1]);
+    const missingStructure = await assessReportPillar(
+      [page],
+      [observation],
+      4,
+      {},
+      null,
+      REPORT_VERSION,
+      pdfBytes,
+      checks,
+    );
+    assert.equal(missingStructure.data[2].score, 1);
+    structureScore = 2;
+    await assert.rejects(
+      () =>
+        assessReportPillar(
+          [page],
+          [observation],
+          4,
+          {},
+          null,
+          REPORT_VERSION,
+          pdfBytes,
+          checks,
+        ),
+      /PDF structural evidence required/,
+    );
+    assert.equal(calls, 3);
     const noImages = await assessReportPillar(
       [page],
       [],
@@ -279,14 +317,14 @@ test("v2 scoring receives actual images, anchored rubric and no unapproved exter
         (f) => f.score === null && f.status === "unassessable",
       ),
     );
-    assert.equal(calls, 1);
+    assert.equal(calls, 3);
     const unavailable = await inspectVisualBatch(
       Buffer.from("broken PDF"),
       [1],
       REPORT_VERSION,
     );
     assert.equal(unavailable.data[0].readable, false);
-    assert.equal(calls, 1);
+    assert.equal(calls, 3);
   } finally {
     globalThis.fetch = original;
     if (previous === undefined) delete process.env.AI_GATEWAY_API_KEY;
