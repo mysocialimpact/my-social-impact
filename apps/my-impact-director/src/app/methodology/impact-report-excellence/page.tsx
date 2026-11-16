@@ -1,105 +1,107 @@
-import { CreativeCaveat } from "@/components/creative-caveat";
-import Image from "next/image";
 import Link from "next/link";
-import { rubrics, reportAnchors } from "@/lib/rubric";
-import { reportGuidance } from "@/lib/report-guidance";
-export const metadata = {
-  title: "Impact Report Excellence Methodology v1.0",
-};
+import { CreativeCaveat } from "@/components/creative-caveat";
+import {
+  REPORT_VERSION,
+  REPORT_SCORING,
+  reportPillars,
+  reportWeights,
+  reportV2Criteria,
+  reportV2Anchors,
+} from "@/lib/report-methodology";
+export const metadata = { title: "The Impact Edit Methodology v2.0.0" };
 export default function Methodology() {
   return (
     <section className="section content-prose">
-      <Image
-        src="/brand/the-impact-edit-horizontal.svg"
-        alt="The Impact Edit"
-        style={{ maxWidth: "100%", height: "auto" }}
-        width={480}
-        height={120}
-      />
-      <p className="eyebrow">MY SOCIAL IMPACT · METHODOLOGY VERSION 1.0</p>
-      <h1 id="overview">Impact Report Excellence Methodology v1.0</h1>
+      <p className="eyebrow">MY SOCIAL IMPACT · METHODOLOGY {REPORT_VERSION}</p>
+      <h1>The Impact Edit Methodology v2.0.0</h1>
       <p className="methodology-question">
-        The Impact Edit · Does your impact report make an impact?
+        Does your impact report make an impact?
       </p>
       <CreativeCaveat />
       <p>
-        Our editorial and creative assessment examines clarity, storytelling,
-        design, engagement and communication. It measures how the report
-        communicates, rather than verifying its impact claims or establishing
-        organisational maturity.{" "}
-        <Link href="/methodology">Compare all three methodologies.</Link>
+        An editorial and visual review of how a report communicates. We judge
+        execution, not the presence of headings, charts, photographs or
+        consistent colours. This does not verify underlying impact claims or
+        organisational maturity.
       </p>
-      <h2 id="visual-inspection">How we inspect your report</h2>
+      <h2 id="visual-inspection">Actual pages. Specific evidence.</h2>
       <p>
-        We reuse the extracted text and shared document understanding. A
-        separate visual pass renders actual PDF pages at 1,600 pixels wide.
-        Reports up to twelve pages are inspected throughout; longer reports use
-        the cover, opening, ending, evenly spaced pages and targeted contents,
-        case-study and data pages. The report lists the physical pages
-        inspected. Unseen pages are not verified. Source text supports writing
-        observations; inspected images support design observations.
+        We render every page of reports up to 24 pages at 1,600 pixels wide.
+        Longer reports use beginning, middle and ending pages plus targeted
+        data, risk, table and human-example pages. Scoring calls receive actual
+        page images as well as page-specific observations and source text. The
+        results disclose the inspected pages. Unseen pages are not verified.
+      </p>
+      <p>
+        Physical text size and sampled PDF structure supplement visual
+        judgement. We distinguish visible contrast, magnified inspection, tags
+        and text alternatives from untested screen-reader behaviour, reflow and
+        measured contrast ratios. Untested assistive usability is unassessable.
+        Missing visual evidence is an assessment limitation: it does not become
+        a low design score or a confident overall score.
       </p>
       <h2 id="scoring">
-        Five pillars. Twenty-five criteria. One hundred points.
+        Five weighted pillars. Twenty-five anchored criteria.
       </h2>
-      <p>
-        Each criterion scores 0–4. Five equally weighted pillars contribute up
-        to twenty points each. Fully assessable scores are added directly. When
-        a criterion is genuinely inapplicable or unassessable, its pillar
-        normalises the remaining scores to twenty. A definitive indicative score
-        requires at least four assessable criteria in every pillar and
-        twenty-two overall, plus actual visual inspection. Otherwise we show a
-        provisional review without an overall score.
-      </p>
+      <p>{REPORT_SCORING}</p>
       <ol start={0}>
-        {reportAnchors.map((a) => (
+        {reportV2Anchors.map((a) => (
           <li key={a}>{a}</li>
         ))}
       </ol>
-      <h2 id="criteria">Twenty-five practical editorial criteria</h2>
-      {rubrics.report.map(([pillar, ...tests]) => (
+      <p>
+        A contents page or chart never earns a strong score merely by existing.
+        Each criterion explains the execution, relevant physical pages,
+        strengths, weaknesses, chosen anchor and practical improvement. We avoid
+        double-counting: physical body-text legibility belongs to Readability,
+        typographic craft to Visual design, and data-label readability to Data
+        communication.
+      </p>
+      <h2 id="criteria">The locked rubric</h2>
+      {reportPillars.map((pillar, i) => (
         <section key={pillar}>
-          <h2>{pillar}</h2>
-          {tests.map((test) => {
-            const guidance =
-              reportGuidance[
-                test.split(" · ")[0] as keyof typeof reportGuidance
-              ];
-            return (
-              <details key={test}>
-                <summary>{test}</summary>
-                <div style={{ whiteSpace: "pre-line" }}>
-                  {guidance.guidance.replaceAll("**", "")}
-                </div>
-              </details>
-            );
-          })}
+          <h2>
+            {pillar} · {reportWeights[i]} points
+          </h2>
+          {reportV2Criteria.slice(i * 5, i * 5 + 5).map((c) => (
+            <details key={c.id}>
+              <summary>{c.question}</summary>
+              <ol start={0}>
+                {c.anchors.map((a) => (
+                  <li key={a}>{a}</li>
+                ))}
+              </ol>
+            </details>
+          ))}
         </section>
       ))}
-      <h2 id="limitations">Judgement, proportionality and limits</h2>
+      <h2 id="reader-test">The whole-report reader test</h2>
       <p>
-        A modest report can communicate brilliantly. We do not require expensive
-        imagery, interactive PDFs or inappropriate personal stories. Ethical
-        representation and audience needs matter. Missing visual information,
-        unreadable pages and sampling limits must be disclosed, not treated as
-        defects in the organisation.
+        Could a new reader identify the main outcomes, their scale, limitations
+        and next steps in about two minutes? We simulate that scan, record where
+        each answer can be found and distinguish easy access from effort or an
+        unanswered question. This is not a timed user test. The final editorial
+        verdict considers whether the whole publication holds attention and
+        checks that the numerical result matches the reading experience.
+        Engagement is not a sixth numerical pillar.
+      </p>
+      <h2 id="limitations">Proportionality, judgement and versions</h2>
+      <p>
+        A short, simple or black-and-white report can be excellent. We do not
+        require expensive photography, decorative graphics, elaborate contents
+        or interactive features. Candour and authentic experience matter. Visual
+        and editorial judgement remains indicative, and independent professional
+        calibration is not claimed.
       </p>
       <p>
-        AI produces page-referenced observations and practical recommendations.
-        Application code validates criterion identities, citations and score
-        aggregation. Creative judgement is subjective and can vary. This is a
-        new framework developed by My Social Impact, not an independently
-        validated standard, certification or accreditation. Professional human
-        calibration is ongoing; automated tests establish software behaviour,
-        not methodological validity.
-      </p>
-      <p>
-        Recommendations identify what to change, why, where and how, with
-        priorities and a suggested creative direction grounded in the assessed
-        document.
+        Version 2 applies to new assessments. Previous results retain their
+        original scores and methodology.{" "}
+        <Link href="/methodology/impact-report-excellence/v1">
+          Read the archived v1 methodology.
+        </Link>
       </p>
       <Link href="/#upload" className="button primary">
-        Start your free review →
+        Upload a report →
       </Link>
     </section>
   );

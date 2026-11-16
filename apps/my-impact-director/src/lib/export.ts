@@ -1,4 +1,10 @@
-import { EDIT_ATTRIBUTION, EDIT_CAVEAT } from "./branding";
+import {
+  isReportV2,
+  pillarMaximum,
+  REPORT_SCORING,
+  reportV2Anchors,
+} from "./report-methodology";
+import { EDIT_ATTRIBUTION, editCaveat } from "./branding";
 import { PDFDocument, rgb, type PDFFont } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
 import { readFile } from "node:fs/promises";
@@ -143,7 +149,25 @@ export async function exportPdf(result: ReviewResult) {
   if (result.framework === "report" || result.scores.report) {
     heading("Indicative Creative Assessment");
     write(EDIT_ATTRIBUTION, 10, "bold");
-    write(EDIT_CAVEAT, 10);
+    write(editCaveat(result.version), 10);
+  }
+  if (result.editorial) {
+    heading("Whole-report editorial verdict");
+    write(result.editorial.verdict);
+    write(result.editorial.attention);
+    if (result.rating) {
+      write("Rating: " + result.rating.label, 12, "bold");
+      write(result.rating.rule, 9);
+      result.rating.reasons.forEach((x) => write(x, 9));
+    }
+    heading("The two-minute reader test");
+    write("Simulated editorial scan, not a timed user test.", 9);
+    Object.entries(result.editorial.readerTest).forEach(([key, a]) =>
+      write(
+        `${key}: ${a.finding} - ${a.access}${a.page !== null ? " - PDF page " + a.page : ""}`,
+      ),
+    );
+    write("Score consistency: " + result.editorial.scoreExplanation);
   }
   heading("Executive summary");
   write(result.actions.summary, 11);
@@ -152,7 +176,7 @@ export async function exportPdf(result: ReviewResult) {
   )) {
     const s = result.scores[key]!;
     write(
-      `${frameworkNames[key]}: ${s.provisional ? "Provisional - no overall score" : s.overall + "/100"} · ${s.coverage}/${criteria(key).length} tests assessed`,
+      `${frameworkNames[key]}: ${s.provisional ? "Provisional - no overall score" : s.overall + "/100"} · ${s.coverage}/${criteria(key, result.version).length} tests assessed`,
       12,
       "bold",
     );
@@ -168,7 +192,7 @@ export async function exportPdf(result: ReviewResult) {
     write(frameworkNames[framework], 26, "serif");
     for (const p of result.scores[framework]!.principles) {
       heading(
-        `${p.name} · ${p.score === null ? "Unassessable" : p.score + "/20"} · ${p.coverage}/${framework === "report" ? 5 : 4} tests`,
+        `${p.name} · ${p.score === null ? "Unassessable" : p.score + "/" + pillarMaximum(p)} · ${p.coverage}/${framework === "report" ? 5 : 4} tests`,
       );
       for (const f of p.tests) {
         if (f.visualPages?.length)
@@ -176,7 +200,7 @@ export async function exportPdf(result: ReviewResult) {
             `Visual observations: physical PDF pages ${f.visualPages.join(", ")}`,
           );
         write(
-          `${f.id} · ${criteria(framework).find((c) => c.id === f.id)!.question}`,
+          `${f.id} · ${criteria(framework, result.version).find((c) => c.id === f.id)!.question}`,
           11,
           "bold",
         );
@@ -187,6 +211,13 @@ export async function exportPdf(result: ReviewResult) {
           muted,
         );
         write(f.explanation);
+        if (f.anchorReason) write("Why this score: " + f.anchorReason);
+        if (f.barrier === "serious")
+          write(
+            "Serious unresolved readability or accessibility barrier.",
+            10,
+            "bold",
+          );
         if (f.evidence.length)
           write(
             "Source evidence: " +
@@ -206,6 +237,13 @@ export async function exportPdf(result: ReviewResult) {
     write(
       `Rendered at ${result.visualInspection.resolution}px width. Physical pages inspected: ${result.visualInspection.pages.join(", ")} of ${result.visualInspection.totalPages}. Representative sampling does not verify unseen pages.`,
     );
+    if (result.visualInspection.normalComparisonPages?.length)
+      write(
+        "Normal-size 96dpi versus enlarged comparison on PDF pages " +
+          result.visualInspection.normalComparisonPages.join(", ") +
+          ". Interactive zoom and reflow were not functionally tested.",
+        9,
+      );
     for (const o of result.visualInspection.observations)
       write(`PDF page ${o.page}: ${o.description} ${o.limitations}`);
     write("Suggested creative direction", 20, "bold");
@@ -252,11 +290,21 @@ export async function exportPdf(result: ReviewResult) {
   }
   heading("Methodology and limitations");
   write(
-    result.framework === "report"
-      ? "Impact Report Excellence Methodology v1.0: five equally weighted pillars, each with five criteria scoring 0–4. Each pillar normalises assessable criteria to 20. A definitive overall score requires four assessable criteria per pillar and 22 overall, with actual visual inspection. Creative judgement is indicative, not accreditation."
-      : "Each framework contains five principles with four tests each. Assessable tests score 0 to 4. A principle is the average of its assessable scores multiplied by 5, contributing up to 20 points. A definitive overall score needs at least 3 assessable tests in every principle and at least 16 of 20 overall. Excluded tests have explanations.",
+    result.framework === "report" && isReportV2(result.version)
+      ? "The Impact Edit v2.0.0: " + REPORT_SCORING
+      : result.framework === "report"
+        ? "Impact Report Excellence Methodology v1.0: five equally weighted pillars, each with five criteria scoring 0–4. Each pillar normalises assessable criteria to 20. A definitive overall score requires four assessable criteria per pillar and 22 overall, with actual visual inspection. Creative judgement is indicative, not accreditation."
+        : "Each framework contains five principles with four tests each. Assessable tests score 0 to 4. A principle is the average of its assessable scores multiplied by 5, contributing up to 20 points. A definitive overall score needs at least 3 assessable tests in every principle and at least 16 of 20 overall. Excluded tests have explanations.",
   );
-  ANCHORS.forEach((a, i) => write(`${i}: ${a}`, 9));
+  (result.framework === "report" && isReportV2(result.version)
+    ? reportV2Anchors
+    : ANCHORS
+  ).forEach((a, i) => write(`${i}: ${a}`, 9));
+  if (result.pdfChecks) {
+    heading("Accessibility checks and limits");
+    result.pdfChecks.verified.forEach((x) => write("Checked: " + x, 9));
+    result.pdfChecks.notVerified.forEach((x) => write("Not verified: " + x, 9));
+  }
   result.limitations.forEach((l) => write(l, 9));
   if (substitutedCharacters)
     write(

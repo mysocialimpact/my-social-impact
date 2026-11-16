@@ -1,4 +1,9 @@
 "use client";
+import {
+  isReportV2,
+  reportPillars,
+  REPORT_VERSION,
+} from "@/lib/report-methodology";
 import { CreativeCaveat } from "./creative-caveat";
 import { SaveReview } from "./save-review";
 import { useSearchParams } from "next/navigation";
@@ -144,8 +149,38 @@ const lessons = {
     ],
   ],
 };
+const reportLessonsV2 = [
+  lessons.report[0],
+  [
+    "01 · Readability and hierarchy",
+    "MAKE THE FINDINGS EASY TO FIND.",
+    "Comfortable body text, purposeful editing and a clear opening help readers find outcomes quickly. Headings alone do not earn a high score.",
+    "Separate actual outcomes from mission and ambition. Check ordinary-size legibility before enlarging the page.",
+  ],
+  lessons.report[2],
+  [
+    "03 · Visual design",
+    "MAKE EVERY PAGE COUNT.",
+    "We judge composition, typographic craft, rhythm, imagery and art direction. Consistent colours or the presence of graphics do not establish good execution.",
+    "Purposeful, modest black-and-white design can be exceptional.",
+  ],
+  [
+    "04 · Data communication",
+    "HELP READERS UNDERSTAND THE EVIDENCE.",
+    "Use appropriate representations, readable labels and clear denominators, periods and sources. Show the honest takeaway.",
+    "A well-edited paragraph or simple table can work better than a decorative pie chart.",
+  ],
+  [
+    "05 · Accessibility",
+    "MAKE THE REPORT USABLE BY MORE PEOPLE.",
+    "We inspect visible contrast, magnification, PDF structure and text alternatives. We distinguish verified checks from untested assistive behaviour.",
+    "Appearance and a PDF tag flag cannot prove screen-reader usability. Untested criteria stay unassessable.",
+  ],
+  lessons.report[6],
+];
 export type ExperienceReview = {
   id: string;
+  version?: string;
   framework: "document" | Framework;
   status: string;
   stage: number;
@@ -163,6 +198,7 @@ export type ExperienceReview = {
     framework: Framework;
     status: string;
     has_result?: boolean;
+    version?: string;
   }[];
 };
 function EmailInvitation({
@@ -374,9 +410,11 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
   const setAction = useReportAction();
   const framework = r.framework === "document" ? null : r.framework,
     complete = r.status === "complete" && !!r.result;
-  const siblings = (r.siblings || []).map((s) =>
-    s.id === r.id ? { ...s, has_result: !!r.result, status: r.status } : s,
-  );
+  const siblings = (r.siblings || [])
+    .filter((s, i, a) => a.findIndex((x) => x.framework === s.framework) === i)
+    .map((s) =>
+      s.id === r.id ? { ...s, has_result: !!r.result, status: r.status } : s,
+    );
   const completedCount = siblings.filter(
     (s) => s.status === "complete" && s.has_result,
   ).length;
@@ -620,7 +658,7 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
                 {f === "claims"
                   ? "Evidence. Proportion. Transparency. Balance. Learning."
                   : f === "report"
-                    ? "Clarity. Storytelling. Design. Engagement. Communication."
+                    ? "Readability and hierarchy. Storytelling. Visual design. Data communication. Accessibility."
                     : "Purpose. Leadership. Data. Delivery. Communications."}
               </p>
               <button
@@ -641,7 +679,12 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
         {error && <p role="alert">{error}</p>}
       </div>
     );
-  const lesson = lessons[framework][step],
+  const currentLessons =
+    framework === "report" &&
+    isReportV2(r.version || r.result?.version || REPORT_VERSION)
+      ? reportLessonsV2
+      : lessons[framework];
+  const lesson = currentLessons[step],
     other = framework === "claims" ? "excellence" : "claims";
   return (
     <div
@@ -713,7 +756,7 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
                     ? r.stage === 16
                       ? "Inspecting rendered pages."
                       : r.stage >= 17
-                        ? `Reviewing ${["Clarity", "Storytelling", "Design", "Engagement", "Communication"][r.stage - 17] || "your findings"}.`
+                        ? `Reviewing ${(isReportV2(r.version) ? reportPillars : ["Clarity", "Storytelling", "Design", "Engagement", "Communication"])[r.stage - 17] || "your findings"}.`
                         : "Preparing your creative recommendations."
                     : "Your Impact Director is preparing your report."
                   : "Your Impact Director is reading your report."}
@@ -734,10 +777,14 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
                   ? "Does your impact report make an impact?"
                   : "Beyond reporting. Towards better impact management."}
             </h2>
-            {framework === "report" && <CreativeCaveat />}
+            {framework === "report" && (
+              <CreativeCaveat version={r.result.version} />
+            )}
             <ScoreCard
               framework={framework}
               score={r.result.scores[framework]!}
+              version={r.result.version}
+              rating={framework === "report" ? r.result.rating : undefined}
             />
             <section className="snapshot-copy">
               <h2>The headline snapshot</h2>
@@ -780,6 +827,44 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
                 )}
               </p>
             </section>
+            {framework === "report" && !isReportV2(r.result.version) && (
+              <div className="notice">
+                <p>
+                  This is your preserved v{r.result.version} assessment. The new
+                  methodology uses revised pillars, weights and direct visual
+                  scoring.
+                </p>
+                <button
+                  className="button secondary"
+                  disabled={busy}
+                  onClick={() => choose("report")}
+                >
+                  Run The Impact Edit v2 on this report
+                </button>
+              </div>
+            )}
+            {(r.siblings || []).some(
+              (s) => s.framework === "report" && s.id !== r.id,
+            ) &&
+              framework === "report" && (
+                <details>
+                  <summary>
+                    Other methodology versions for this document
+                  </summary>
+                  {r.siblings
+                    .filter((s) => s.framework === "report" && s.id !== r.id)
+                    .map((s) => (
+                      <p key={s.id}>
+                        <Link
+                          href={`/reviews/${s.id}${s.status === "complete" ? "?results=1" : ""}`}
+                        >
+                          The Impact Edit · {s.version || "original version"} ·{" "}
+                          {s.status}
+                        </Link>
+                      </p>
+                    ))}
+                </details>
+              )}
             {r.full && (
               <>
                 <a
@@ -819,7 +904,7 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
                   <p className="lesson-position">
                     {lesson[0]}{" "}
                     <span>
-                      {step + 1} / {lessons[framework].length} · Learning
+                      {step + 1} / {currentLessons.length} · Learning
                     </span>
                   </p>
                   <h2 ref={lessonHeading} tabIndex={-1}>
@@ -859,14 +944,14 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
                   progress.
                 </span>
                 <button
-                  disabled={step === lessons[framework].length - 1}
+                  disabled={step === currentLessons.length - 1}
                   onClick={() => goStep(step + 1)}
                 >
                   Next →
                 </button>
               </nav>
               <div className="lesson-jump">
-                {lessons[framework].map((l, i) => (
+                {currentLessons.map((l, i) => (
                   <button
                     key={l[0]}
                     aria-current={step === i ? "step" : undefined}

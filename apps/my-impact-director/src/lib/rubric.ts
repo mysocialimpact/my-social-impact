@@ -1,3 +1,8 @@
+import {
+  REPORT_VERSION,
+  isReportV2,
+  reportV2Rubric,
+} from "./report-methodology";
 export const VERSION = "1.0.0";
 export const COVERAGE = { minimumPerPrinciple: 3, minimumTotal: 16 } as const;
 export const ANCHORS = [
@@ -134,8 +139,15 @@ export const rubrics = {
     ],
   ],
 } as const;
-export function criteria(framework: Framework) {
-  return rubrics[framework].flatMap(([principle, ...tests], p) =>
+export function criteria(
+  framework: Framework,
+  version = framework === "report" ? REPORT_VERSION : VERSION,
+) {
+  const rubric =
+    framework === "report" && isReportV2(version)
+      ? reportV2Rubric
+      : rubrics[framework];
+  return rubric.flatMap(([principle, ...tests], p) =>
     tests.map((question, t) => ({
       id: `${framework}.${p + 1}.${t + 1}`,
       principle,

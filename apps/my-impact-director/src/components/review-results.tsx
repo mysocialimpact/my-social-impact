@@ -1,3 +1,9 @@
+import type { ReportRating } from "@/lib/report-verdict";
+import {
+  REPORT_VERSION,
+  isReportV2,
+  pillarMaximum,
+} from "@/lib/report-methodology";
 import Link from "next/link";
 import { CreativeCaveat } from "./creative-caveat";
 import type { ReviewResult } from "@/lib/pipeline";
@@ -7,9 +13,13 @@ import { Arrow } from "./icons";
 export function ScoreCard({
   framework,
   score,
+  version,
+  rating,
 }: {
   framework: Framework;
   score: Scores;
+  version?: string;
+  rating?: ReportRating;
 }) {
   return (
     <article className={"score-card score-" + framework}>
@@ -51,24 +61,40 @@ export function ScoreCard({
         </p>
       </div>
       <p>
-        {score.coverage}/{criteria(framework).length} tests assessed.{" "}
+        {score.coverage}/{criteria(framework, version).length} tests assessed.{" "}
         {score.provisional
           ? "Coverage is too limited for a definitive overall score."
           : "An assessment of the evidence in this report."}
       </p>
+      {rating && (
+        <div>
+          <h3>{rating.label}</h3>
+          {rating.reasons.map((reason) => (
+            <p key={reason}>{reason}</p>
+          ))}
+          <details>
+            <summary>How the rating is decided</summary>
+            <p>{rating.rule}</p>
+          </details>
+        </div>
+      )}
       <div className="bars">
         {score.principles.map((p) => (
           <div className="bar-row" key={p.name}>
             <div className="bar-label">
               <span>{p.name}</span>
               <strong>
-                {p.score === null ? "Not assessable" : `${p.score} / 20`}
+                {p.score === null
+                  ? "Not assessable"
+                  : `${p.score} / ${pillarMaximum(p)}`}
               </strong>
             </div>
             <div className="bar-track" aria-hidden="true">
               <div
                 className="bar-fill"
-                style={{ width: `${(p.score || 0) * 5}%` }}
+                style={{
+                  width: `${((p.score || 0) / pillarMaximum(p)) * 100}%`,
+                }}
               />
             </div>
             <small>
@@ -104,8 +130,10 @@ function Finding({
   framework,
   id,
   admin,
+  version,
 }: {
   f: Criterion;
+  version?: string;
   framework: Framework;
   id: string;
   admin: boolean;
@@ -113,7 +141,9 @@ function Finding({
   return (
     <details className="finding" id={f.id}>
       <summary>
-        <span>{criteria(framework).find((c) => c.id === f.id)?.question}</span>
+        <span>
+          {criteria(framework, version).find((c) => c.id === f.id)?.question}
+        </span>
         <small>
           {f.score === null ? f.status.replaceAll("_", " ") : `${f.score}/4`}
         </small>
@@ -123,6 +153,16 @@ function Finding({
           {f.status.replaceAll("_", " ")} · {f.confidence} confidence
         </span>
         <p style={{ marginTop: 15 }}>{f.explanation}</p>
+        {f.anchorReason && (
+          <p>
+            <strong>Why this score:</strong> {f.anchorReason}
+          </p>
+        )}
+        {f.barrier === "serious" && (
+          <p className="alert error">
+            Serious unresolved readability or accessibility barrier.
+          </p>
+        )}
         {f.visualPages?.map((page) => (
           <p key={page}>
             Visual observation ·{" "}
@@ -169,14 +209,74 @@ export function ReviewResults({
         {result.context.reportingPeriod || "Reporting period not identified"} ·
         Assessed {new Date(result.assessedAt).toLocaleDateString("en-GB")} ·
         Methodology {result.version}
+        {result.framework === "report" && (
+          <>
+            {" "}
+            ·{" "}
+            <Link
+              href={
+                isReportV2(result.version)
+                  ? "/methodology/impact-report-excellence"
+                  : "/methodology/impact-report-excellence/v1"
+              }
+            >
+              Read this methodology
+            </Link>
+          </>
+        )}
       </div>
       <div className="results-grid">
         {(["claims", "excellence", "report"] as Framework[])
           .filter((f) => !!result.scores[f])
           .map((f) => (
-            <ScoreCard key={f} framework={f} score={result.scores[f]!} />
+            <ScoreCard
+              key={f}
+              framework={f}
+              score={result.scores[f]!}
+              version={result.version}
+              rating={f === "report" ? result.rating : undefined}
+            />
           ))}
       </div>
+      {result.editorial && (
+        <section className="result-section">
+          <h2>Whole-report editorial verdict</h2>
+          <p>{result.editorial.verdict}</p>
+          <p>{result.editorial.attention}</p>
+          {result.rating && (
+            <>
+              <h3>Rating: {result.rating.label}</h3>
+              <p>{result.rating.rule}</p>
+              {result.rating.reasons.map((reason, i) => (
+                <p key={i}>{reason}</p>
+              ))}
+            </>
+          )}
+          <h3>The two-minute reader test</h3>
+          <p>
+            A simulated editorial scan, not a timed user test. Can a new reader
+            quickly find the main outcomes, their scale, limitations and next
+            steps?
+          </p>
+          {Object.entries(result.editorial.readerTest).map(([key, a]) => (
+            <div key={key}>
+              <h4>
+                {key === "nextSteps"
+                  ? "Next steps"
+                  : key.charAt(0).toUpperCase() + key.slice(1)}
+              </h4>
+              <p>
+                {a.finding} · {a.access.replaceAll("_", " ")}
+                {a.page !== null ? ` · PDF page ${a.page}` : ""}
+              </p>
+            </div>
+          ))}
+          <p>
+            <strong>Score consistency:</strong>{" "}
+            {result.editorial.scoreExplanation}
+          </p>
+        </section>
+      )}
       <div className="summary-box">
         <h2>The evidence at a glance</h2>
         <p>{result.actions.summary}</p>
@@ -277,12 +377,16 @@ export function ReviewResults({
                   : "02 · Understanding, managing & communicating"}
             </p>
             <h2>{frameworkNames[framework]} Review</h2>
-            {framework === "report" && <CreativeCaveat />}
+            {framework === "report" && (
+              <CreativeCaveat version={result.version} />
+            )}
             <p>
               {framework === "claims"
                 ? "How responsibly the report makes and supports its material impact claims."
                 : framework === "report"
-                  ? "Clarity, storytelling, design, engagement and communication, grounded in inspected physical pages."
+                  ? isReportV2(result.version)
+                    ? "Readability and hierarchy, storytelling, visual design, data communication and accessibility, grounded in inspected physical pages."
+                    : "Clarity, storytelling, design, engagement and communication, grounded in inspected physical pages."
                   : "What the report demonstrates about impact management. This is not the full organisational maturity assessment."}
             </p>
             {result.scores[framework]!.principles.map((p) => (
@@ -290,8 +394,10 @@ export function ReviewResults({
                 <h3>
                   {p.name}{" "}
                   <span className="badge">
-                    {p.score === null ? "Unassessable" : `${p.score}/20`} ·{" "}
-                    {p.coverage}/{framework === "report" ? 5 : 4} tests
+                    {p.score === null
+                      ? "Unassessable"
+                      : `${p.score}/${pillarMaximum(p)}`}{" "}
+                    · {p.coverage}/{framework === "report" ? 5 : 4} tests
                   </span>
                 </h3>
                 {p.tests.map((f) => (
@@ -301,6 +407,7 @@ export function ReviewResults({
                     framework={framework}
                     id={id}
                     admin={admin}
+                    version={result.version}
                   />
                 ))}
               </div>
@@ -315,6 +422,32 @@ export function ReviewResults({
             )}
           </section>
         ))}
+      {result.pdfChecks && (
+        <section className="result-section">
+          <h2>Accessibility: checked and not checked</h2>
+          <p>
+            PDF tagging:{" "}
+            {result.pdfChecks.tagged === null
+              ? "unknown"
+              : result.pdfChecks.tagged
+                ? "present; quality assessed separately"
+                : "not present"}
+            . A tag flag does not prove accessible reading.
+          </p>
+          <h3>Checked</h3>
+          <ul>
+            {result.pdfChecks.verified.map((x) => (
+              <li key={x}>{x}</li>
+            ))}
+          </ul>
+          <h3>Not verified</h3>
+          <ul>
+            {result.pdfChecks.notVerified.map((x) => (
+              <li key={x}>{x}</li>
+            ))}
+          </ul>
+        </section>
+      )}
       {result.visualInspection && (
         <section className="result-section">
           <h2>Visual inspection coverage</h2>
@@ -325,6 +458,14 @@ export function ReviewResults({
             representative and targeted sampling; unseen pages are not visually
             verified.
           </p>
+          {result.visualInspection.normalComparisonPages?.length && (
+            <p>
+              Normal-size 96dpi and enlarged renderings were compared on PDF
+              pages {result.visualInspection.normalComparisonPages.join(", ")}.
+              Interactive zoom, reflow and assistive-user behaviour were not
+              functionally tested.
+            </p>
+          )}
           {result.visualInspection.observations.map((o) => (
             <details key={o.page}>
               <summary>PDF page {o.page} · visual observations</summary>

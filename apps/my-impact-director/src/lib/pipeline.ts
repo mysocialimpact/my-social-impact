@@ -1,5 +1,17 @@
+import { REPORT_VERSION, isReportV2 } from "./report-methodology";
+import { inspectPdfChecks, type PdfChecks } from "./report-accessibility";
+import {
+  reportActionsSchema,
+  validateEditorial,
+  reportRating,
+  visualCoverage,
+  actionInstructions,
+  type EditorialVerdict,
+  type ReportRating,
+} from "./report-verdict";
 import {
   visualSample,
+  normalComparisonPages,
   inspectVisualBatch,
   assessReportPillar,
   type VisualObservation,
@@ -59,13 +71,14 @@ export const STAGES = [
   "Validating findings and preparing your action plan",
   "Review complete",
   "Inspecting rendered page images",
-  "The Impact Edit · Clarity",
+  "The Impact Edit · Readability and hierarchy",
   "The Impact Edit · Storytelling",
-  "The Impact Edit · Design",
-  "The Impact Edit · Engagement",
-  "The Impact Edit · Communication",
+  "The Impact Edit · Visual design",
+  "The Impact Edit · Data communication",
+  "The Impact Edit · Accessibility",
 ];
 type Job = {
+  version: string;
   framework: "document" | Framework | null;
   error_code: string | null;
   id: string;
@@ -89,10 +102,14 @@ type Document = {
   extraction_notes: unknown[];
 };
 export type ReviewResult = {
+  editorial?: EditorialVerdict;
+  rating?: ReportRating;
+  pdfChecks?: PdfChecks;
   visualInspection?: {
     pages: number[];
     totalPages: number;
     resolution: number;
+    normalComparisonPages?: number[];
     observations: VisualObservation[];
   };
   creativeDirection?: string;
@@ -148,6 +165,11 @@ export async function processOne(id?: string) {
       result: ReviewResult | null = null,
       next = job.stage + 1,
       cursor = job.visual_cursor;
+    const v2 = job.framework === "report" && isReportV2(job.version);
+    const visualKind = v2 ? "report-visual-v2" : "report-visual-v1";
+    let pdfChecks = notes.find(
+      (n) => (n as PdfChecks).kind === "report-pdf-checks-v2",
+    ) as PdfChecks | undefined;
     if (job.stage === 0) {
       pages = await extractPages(doc.file_bytes);
     } else if (job.stage === 1) {
@@ -196,15 +218,21 @@ export async function processOne(id?: string) {
         pages!,
       );
     } else if (job.framework === "report" && job.stage === 16) {
-      const sample = visualSample(pages!);
+      const sample = visualSample(pages!, job.version);
+      if (v2 && !pdfChecks) {
+        pdfChecks = await inspectPdfChecks(doc.file_bytes, sample);
+        notes = [...notes, pdfChecks];
+      }
       const cached = (notes as VisualObservation[]).filter(
-        (n) => n.kind === "report-visual-v1",
+        (n) => n.kind === visualKind,
       );
       const missing = sample.filter((n) => !cached.some((o) => o.page === n));
       if (missing.length) {
         const response = await inspectVisualBatch(
           doc.file_bytes,
           missing.slice(0, 2),
+          job.version,
+          pdfChecks,
         );
         usage = response.usage;
         notes = [...notes, ...response.data];
@@ -218,12 +246,13 @@ export async function processOne(id?: string) {
       const principle = job.stage - 17;
       const response = await assessReportPillar(
         pages!,
-        (notes as VisualObservation[]).filter(
-          (n) => n.kind === "report-visual-v1",
-        ),
+        (notes as VisualObservation[]).filter((n) => n.kind === visualKind),
         principle,
         context,
         job.error_code,
+        job.version,
+        doc.file_bytes,
+        pdfChecks,
       );
       usage = response.usage;
       const validated = validateFindings(
@@ -232,6 +261,7 @@ export async function processOne(id?: string) {
         pages!,
         claims!,
         principle,
+        job.version,
       );
       findings = [
         ...findings.filter((f) => !validated.some((v) => v.id === f.id)),
@@ -284,25 +314,49 @@ export async function processOne(id?: string) {
           framework,
           pages!,
           claims!,
+          undefined,
+          job.version,
         );
-        scores[framework] = scoreFramework(checked, framework);
+        scores[framework] = scoreFramework(
+          checked,
+          framework,
+          undefined,
+          job.version,
+        );
         if (
-          framework === "report" &&
-          !(notes as VisualObservation[]).some(
-            (o) => o.kind === "report-visual-v1" && o.readable,
-          )
+          (framework === "report" &&
+            !(notes as VisualObservation[]).some(
+              (o) => o.kind === visualKind && o.readable,
+            )) ||
+          (v2 &&
+            !visualCoverage(
+              pages!,
+              notes.filter(
+                (n) => (n as VisualObservation).kind === visualKind,
+              ) as VisualObservation[],
+            ))
         ) {
           scores[framework]!.overall = null;
           scores[framework]!.provisional = true;
         }
       }
       const r = await structured(
-        actionSchema,
-        (job.framework === "report"
-          ? "Write an editorial judgement and ranked creative improvement plan. Include a final action titled Suggested creative direction, a specific creative brief grounded in criterion IDs, with issue, why, physical page, improvement and likely benefit. Do not assess validity of underlying impact claims. "
-          : "") +
-          "Write a concise executive summary and specific prioritised action plan using ONLY validated findings. Each action must cite existing criterion IDs and say what to change, why, and how. Distinguish quick wording changes, important evidence/reporting improvements, and longer-term measurement/management improvements. Do not invent achievements, comparisons, benchmarks or new source facts. If evidence is weak, a strength may be a clearly qualified useful starting point. Do not describe provisional assessments as definitive scores.",
-        { context, claims, findings, scores },
+        v2 ? reportActionsSchema : actionSchema,
+        actionInstructions(job.framework === "report", v2),
+        {
+          context,
+          claims,
+          findings,
+          scores,
+          ...(v2
+            ? {
+                visualObservations: notes.filter(
+                  (n) => (n as VisualObservation).kind === visualKind,
+                ),
+                pdfChecks,
+              }
+            : {}),
+        },
       );
       usage = r.usage;
       if (
@@ -311,7 +365,33 @@ export async function processOne(id?: string) {
         )
       )
         throw new Error("Unknown recommendation criterion.");
+      const editorial = v2
+        ? validateEditorial(
+            (r.data as z.infer<typeof reportActionsSchema>).editorial,
+            pages!,
+            notes.filter(
+              (n) => (n as VisualObservation).kind === visualKind,
+            ) as VisualObservation[],
+          )
+        : undefined;
       result = {
+        ...(editorial
+          ? {
+              editorial,
+              rating: reportRating(
+                scores.report!,
+                findings,
+                editorial,
+                visualCoverage(
+                  pages!,
+                  notes.filter(
+                    (n) => (n as VisualObservation).kind === visualKind,
+                  ) as VisualObservation[],
+                ),
+              ),
+              pdfChecks,
+            }
+          : {}),
         ...(job.framework && job.framework !== "document"
           ? { framework: job.framework }
           : {}),
@@ -319,12 +399,29 @@ export async function processOne(id?: string) {
           ? {
               visualInspection: {
                 pages: (notes as VisualObservation[])
-                  .filter((n) => n.kind === "report-visual-v1")
+                  .filter((n) => n.kind === visualKind && (!v2 || n.readable))
                   .map((n) => n.page),
                 totalPages: pages!.length,
                 resolution: 1600,
+                ...(v2 &&
+                visualCoverage(
+                  pages!,
+                  notes.filter(
+                    (n) => (n as VisualObservation).kind === visualKind,
+                  ) as VisualObservation[],
+                )
+                  ? {
+                      normalComparisonPages: normalComparisonPages(
+                        pages!,
+                        notes.filter(
+                          (n) => (n as VisualObservation).kind === visualKind,
+                        ) as VisualObservation[],
+                        pdfChecks,
+                      ),
+                    }
+                  : {}),
                 observations: (notes as VisualObservation[]).filter(
-                  (n) => n.kind === "report-visual-v1",
+                  (n) => n.kind === visualKind,
                 ),
               },
               creativeDirection: r.data.actions.find((a) =>
@@ -332,7 +429,10 @@ export async function processOne(id?: string) {
               )?.detail,
             }
           : {}),
-        version: VERSION,
+        version:
+          job.framework === "report"
+            ? job.version.replace(/-report$/, "")
+            : VERSION,
         assessedAt: new Date().toISOString(),
         context: context!,
         claims: claims!,
@@ -340,6 +440,17 @@ export async function processOne(id?: string) {
         actions: r.data,
         limitations: [
           LIMITATION,
+          ...(v2 &&
+          !visualCoverage(
+            pages!,
+            notes.filter(
+              (n) => (n as VisualObservation).kind === visualKind,
+            ) as VisualObservation[],
+          )
+            ? [
+                "Required rendered-page evidence was unavailable or incomplete. No overall score is published. This is an assessment limitation, not evidence of poor report design.",
+              ]
+            : []),
           "Page references use physical PDF pages. Visual and scanned text is AI-transcribed and may contain errors; check the original source before relying on it.",
           ...context!.limitations,
           ...pages!

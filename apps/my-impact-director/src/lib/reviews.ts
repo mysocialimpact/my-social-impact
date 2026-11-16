@@ -1,3 +1,4 @@
+import { REPORT_VERSION } from "./report-methodology";
 import { createHash } from "node:crypto";
 import { z } from "zod";
 import { query, transaction } from "./db";
@@ -217,7 +218,7 @@ export async function startFramework(
     `INSERT INTO director.reviews(report_id,version,framework,stage) VALUES($1,$2,$3,$4) ON CONFLICT(report_id,version) DO UPDATE SET version=reviews.version RETURNING id,(xmax=0) AS created`,
     [
       reportId,
-      VERSION + "-" + framework,
+      (framework === "report" ? REPORT_VERSION : VERSION) + "-" + framework,
       framework,
       framework === "report" ? 16 : framework === "claims" ? 4 : 9,
     ],

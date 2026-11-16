@@ -1,3 +1,8 @@
+import {
+  REPORT_VERSION,
+  isReportV2,
+  reportWeights,
+} from "./report-methodology";
 import { z } from "zod";
 import { COVERAGE, testsPerPillar, criteria, type Framework } from "./rubric";
 const text = z.string().trim().min(1).max(5000);
@@ -33,6 +38,8 @@ export const criterionSchema = z
     confidence: z.enum(["high", "medium", "low"]),
     claimIds: z.array(z.string()).max(40),
     visualPages: z.array(z.number().int().positive()).optional(),
+    anchorReason: z.string().min(20).max(3000).optional(),
+    barrier: z.enum(["none", "serious"]).optional(),
   })
   .strict();
 export type Criterion = z.infer<typeof criterionSchema>;
@@ -131,9 +138,10 @@ export function validateFindings(
   pages: Page[],
   claims: Claim[],
   principle?: number,
+  version = framework === "report" ? REPORT_VERSION : "1.0.0",
 ): Criterion[] {
   const findings = z.array(criterionSchema).parse(input);
-  const expected = criteria(framework)
+  const expected = criteria(framework, version)
     .filter(
       (_, i) =>
         principle === undefined ||
@@ -160,7 +168,7 @@ export function validateFindings(
     if (
       f.status === "assessed" &&
       (f.score === null ||
-        f.score === 0 ||
+        (f.score === 0 && !(framework === "report" && isReportV2(version))) ||
         (!f.evidence.length &&
           !(framework === "report" && f.visualPages?.length)))
     )
@@ -170,7 +178,11 @@ export function validateFindings(
       !f.limitations.length
     )
       throw new Error("An excluded test needs a limitation.");
-    if (f.status === "not_demonstrated" && pages.some((p) => !p.readable))
+    if (
+      f.status === "not_demonstrated" &&
+      pages.some((p) => !p.readable) &&
+      !(framework === "report" && isReportV2(version) && f.visualPages?.length)
+    )
       throw new Error("Missing content prevents reliable absence judgements.");
   }
   return expected.map((id) => findings.find((f) => f.id === id)!);
@@ -184,8 +196,9 @@ export function scoreFramework(
   } = framework === "report"
     ? { minimumPerPrinciple: 4, minimumTotal: 22 }
     : COVERAGE,
+  version = framework === "report" ? REPORT_VERSION : "1.0.0",
 ) {
-  const expected = criteria(framework);
+  const expected = criteria(framework, version);
   if (
     findings.length !== expected.length ||
     new Set(findings.map((f) => f.id)).size !== expected.length ||
@@ -210,12 +223,15 @@ export function scoreFramework(
       )
     )
       throw new Error("Invalid scoring input.");
+    const maximum =
+      framework === "report" && isReportV2(version) ? reportWeights[i] : 20;
     return {
+      maximum,
       name: expected[i * testsPerPillar(framework)].principle,
       score: assessable.length
         ? Math.round(
             (assessable.reduce((n, f) => n + f.score!, 0) / assessable.length) *
-              5 *
+              (maximum / 4) *
               100,
           ) / 100
         : null,
@@ -230,7 +246,20 @@ export function scoreFramework(
   return {
     overall: provisional
       ? null
-      : Math.round(principles.reduce((n, p) => n + p.score!, 0) * 100) / 100,
+      : Math.round(
+          (framework === "report" && isReportV2(version)
+            ? principles.reduce(
+                (n, p) =>
+                  n +
+                  (p.maximum *
+                    p.tests
+                      .filter((f) => f.score !== null)
+                      .reduce((a, f) => a + f.score!, 0)) /
+                    (4 * p.coverage),
+                0,
+              )
+            : principles.reduce((n, p) => n + p.score!, 0)) * 100,
+        ) / 100,
     provisional,
     coverage,
     principles,
