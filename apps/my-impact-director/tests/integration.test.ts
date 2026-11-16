@@ -858,6 +858,29 @@ test(
                 },
                 body: JSON.stringify(data),
               });
+            if (service === "essentials") {
+              assert.equal(
+                (await enquiryPost(request(body))).status,
+                400,
+                "retired package cannot receive new enquiries",
+              );
+              const [legacy] = await query<{ id: string }>(
+                "INSERT INTO director.enquiries(owner_id,service,message,contact_name,contact_email) VALUES($1,'essentials','Historical retired-package enquiry','Support QA','support@example.invalid') RETURNING id",
+                [guest.user.id],
+              );
+              const historical = await (
+                await adminGet(
+                  req("/api/admin?service=essentials", undefined, "founder"),
+                )
+              ).json();
+              assert.ok(
+                historical.enquiries.some(
+                  (e: { id: string }) => e.id === legacy.id,
+                ),
+                "historical retired-package enquiries remain visible",
+              );
+              continue;
+            }
             assert.equal(
               (
                 await enquiryPost(

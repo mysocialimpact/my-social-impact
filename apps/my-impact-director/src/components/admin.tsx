@@ -5,9 +5,18 @@ import { useSession, api } from "./session";
 import { Account } from "./account";
 import { ReviewResults } from "./review-results";
 import { frameworkNames, type Framework } from "@/lib/rubric";
-import { services, serviceLabel } from "@/lib/services";
+import { activeServices, serviceLabel } from "@/lib/services";
 import type { ReviewResult } from "@/lib/pipeline";
 type AdminData = {
+  intents?: {
+    id: string;
+    action: string;
+    source: string;
+    review_id: string | null;
+    created_at: string;
+    name: string;
+    email: string;
+  }[];
   deliveries?: {
     email: string;
     title: string;
@@ -115,7 +124,7 @@ export function Admin() {
         >
           <option value="">All enquiry interests</option>
           <option value="ongoing">All ongoing support</option>
-          {Object.entries(services).map(([key, value]) => (
+          {activeServices.map(([key, value]) => (
             <option value={key} key={key}>
               {value.name}
             </option>
@@ -135,13 +144,14 @@ export function Admin() {
         <>
           <div className="metrics">
             {[
-              ["users", "Registered users"],
+              ["users", "Registered accounts"],
+              ["uploads", "Reports uploaded / ingested"],
               ["organisations", "Reported organisations"],
               ["reviews", "Assessments"],
               ["completed", "Completed"],
               ["pending", "In progress"],
               ["failed", "Need attention"],
-              ["enquiries", "Enquiries & feedback"],
+              ["enquiries", "Received service enquiries"],
               ["cost_usd", "Estimated AI spend · USD"],
             ].map(([k, label]) => (
               <div className="metric" key={k}>
@@ -169,9 +179,10 @@ export function Admin() {
             missing.
           </p>
           <section className="result-section">
-            <h2>Anonymous journey · last 30 days</h2>
+            <h2>Usage & commercial interest · last 30 days</h2>
             <p>
-              Aggregate events, with no visitor identifiers. A completed report
+              Aggregate event totals, not unique people. Browser return counts
+              use a local visit flag and may be incomplete. A completed report
               and its first view are each counted once.
             </p>
             <div className="metrics">
@@ -179,8 +190,22 @@ export function Admin() {
                 ["anonymous_started", "Guest reviews started"],
                 ["review_completed", "Reviews completed"],
                 ["result_viewed", "Results opened"],
-                ["email_saved", "Email links used"],
-                ["enquiry_created", "Enquiries sent"],
+
+                ["enquiry_created", "Service enquiries received in this app"],
+                ["service_cta_click", "Contact links clicked · intent only"],
+                ["service_interest_discussion", "Free discussion interest"],
+                ["service_interest_improvement", "Report improvement interest"],
+                ["service_interest_digitisation", "Digitisation interest"],
+                ["service_interest_preparation", "New report interest"],
+                ["service_interest_human-director", "Ongoing support interest"],
+                ["service_interest_supported", "Supported interest"],
+                ["service_interest_director", "Director interest"],
+                ["service_interest_bespoke", "Bespoke interest"],
+                ["browser_session_started", "Browser sessions"],
+                [
+                  "returning_browser_session",
+                  "Returning browser sessions · approximate",
+                ],
                 ["report_downloaded", "PDF downloads"],
                 ["workspace_opened", "Workspace visits"],
                 ["selected_claims", "Claims Code selected"],
@@ -189,7 +214,10 @@ export function Admin() {
                 ["snapshot_viewed", "Snapshots opened"],
                 ["email_requested", "Verification emails requested"],
                 ["email_saved", "Email verified"],
-                ["full_report_delivered", "Full reports delivered"],
+                [
+                  "full_report_delivered",
+                  "Full reports accepted by email service",
+                ],
                 ["feedback_created", "Feedback received"],
               ].map(([event, label]) => (
                 <div className="metric" key={event}>
@@ -200,6 +228,59 @@ export function Admin() {
                 </div>
               ))}
             </div>
+          </section>
+          <section className="result-section">
+            <h2>Contact intent · not received enquiries</h2>
+            <p>
+              Email-link clicks do not confirm an email was sent. Anonymous
+              clicks appear only in aggregate totals. Verified account interest
+              appears below; review references are opt-in and grant no access to
+              findings.
+            </p>
+            <p>
+              Confirmed paid clients and revenue: not recorded by this
+              application. No checkout or payment figures are inferred from
+              interest.
+            </p>
+            <div className="table-scroll">
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <th>Person</th>
+                    <th>Interest</th>
+                    <th>Review privacy</th>
+                    <th>Recorded</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.intents?.map((i) => (
+                    <tr key={i.id}>
+                      <td>
+                        {i.name}
+                        <p>
+                          <a href={"mailto:" + i.email}>{i.email}</a>
+                        </p>
+                      </td>
+                      <td>
+                        {serviceLabel(i.action.replace("service-intent:", ""))}
+                        <p>{i.source} · email/contact intent only</p>
+                      </td>
+                      <td>
+                        {i.review_id
+                          ? "Review reference linked by choice; findings private"
+                          : "No linked review"}
+                      </td>
+                      <td>
+                        {new Date(i.created_at).toLocaleDateString("en-GB")}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {!data.intents?.length && (
+              <p>No matching account-linked contact intent recorded.</p>
+            )}
           </section>
           <section className="result-section">
             <h2>Reports & assessment quality</h2>
@@ -360,8 +441,8 @@ export function Admin() {
             {data.deliveries?.map((d, i) => (
               <p key={i}>
                 {d.email} · {d.title} · {d.framework} ·{" "}
-                {d.delivered_at ? "Delivered" : "Queued"} · {d.attempts}{" "}
-                attempts
+                {d.delivered_at ? "Accepted by email service" : "Queued"} ·{" "}
+                {d.attempts} attempts
               </p>
             ))}
           </section>

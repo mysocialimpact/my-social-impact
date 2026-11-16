@@ -3653,3 +3653,369 @@ body:not(:has(.permanent-actions)) {
   margin-top: 4px;
   font-size: 13px;
 }
+
+/* Commercial proposition: the existing brand, one working first job, clear human offers. */
+.commercial-opening {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+.commercial-opening .director-identity {
+  padding: 36px clamp(24px, 3vw, 48px);
+}
+.commercial-opening .director-identity h1 {
+  font-size: clamp(66px, 7vw, 112px);
+}
+.commercial-opening .director-proposition {
+  font-size: clamp(28px, 2.6vw, 42px);
+  max-width: 600px;
+}
+.commercial-opening .director-proposition em {
+  font-size: 1.12em;
+}
+.commercial-opening .director-promise {
+  max-width: 520px;
+  font-size: 17px;
+}
+.commercial-opening .director-audience {
+  font-size: 16px;
+}
+.commercial-opening .director-credit {
+  font-size: 15px;
+}
+.commercial-opening .director-first-job {
+  padding: 30px clamp(24px, 3vw, 42px);
+}
+.commercial-opening .first-job-ready {
+  font-size: clamp(35px, 3.5vw, 56px);
+  line-height: 1;
+  margin: 0 0 20px;
+  letter-spacing: -0.055em;
+}
+.commercial-opening .first-job-action {
+  font-weight: 800;
+  font-size: clamp(24px, 2.4vw, 38px);
+  line-height: 1;
+  letter-spacing: -0.035em;
+  margin: 0 0 14px;
+}
+.first-job-action strong {
+  display: block;
+  font-size: 1.5em;
+  margin-top: 8px;
+}
+.commercial-opening .first-job-explanation {
+  font-size: 16px;
+  line-height: 1.4;
+  margin: 0 0 8px;
+}
+.commercial-opening .first-job-reassurance {
+  font-size: 14px;
+  line-height: 1.4;
+  margin: 0 0 20px;
+}
+.commercial-opening .upload-topline {
+  flex-wrap: wrap;
+  gap: 4px 16px;
+}
+.report-services {
+  background: var(--navy);
+  color: white;
+  padding-block: clamp(40px, 5vw, 72px);
+}
+.report-services-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 28px;
+}
+.report-services-heading h2 {
+  font-size: clamp(32px, 4vw, 60px);
+  line-height: 1;
+  letter-spacing: -0.045em;
+  margin: 0;
+}
+.report-services-heading h2 em {
+  color: var(--orange);
+  font-family: inherit;
+  font-style: normal;
+}
+.report-services-heading > p {
+  font-size: 20px;
+  line-height: 1.3;
+  margin: 0;
+}
+.report-offers {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.report-offers > li {
+  border-top: 1px solid #737884;
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) minmax(220px, 0.52fr);
+  gap: 24px;
+  padding: 24px 0;
+  align-items: start;
+}
+.offer-number {
+  color: var(--orange);
+  font-weight: 700;
+  font-size: 18px;
+}
+.report-offers h3 {
+  font-size: clamp(23px, 2.4vw, 34px);
+  letter-spacing: -0.035em;
+  line-height: 1.1;
+  margin: 0 0 10px;
+}
+.report-offers p {
+  font-size: 15px;
+  color: #d9deec;
+  line-height: 1.5;
+  margin: 0;
+  max-width: 680px;
+}
+.offer-action {
+  display: grid;
+  gap: 16px;
+}
+.offer-action > strong {
+  font-size: 20px;
+  line-height: 1.2;
+  color: var(--navy);
+  background: var(--orange);
+  padding: 12px 16px;
+}
+.service-contact-action a {
+  text-underline-offset: 4px;
+  font-weight: 700;
+}
+.digital-offer {
+  margin-top: 12px;
+  font-size: 14px;
+}
+.digital-offer summary {
+  min-height: 44px;
+  padding: 10px 0;
+  cursor: pointer;
+  color: #ffd1be;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.digital-offer > p {
+  margin: 6px 0 12px;
+  font-size: 13px;
+}
+.digital-offer > a {
+  font-size: 13px;
+}
+.section .digital-offer summary {
+  color: var(--navy);
+}
+.section .digital-offer p {
+  color: var(--navy);
+}
+.report-services .offer-terms {
+  color: #d9deec;
+  font-size: 13px;
+  margin: 16px 0 0;
+}
+.monthly-pricing {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.support-enquiry-line {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 24px;
+}
+.support-enquiry-line > p {
+  max-width: 670px;
+}
+.support-enquiry-line .service-contact-action {
+  max-width: 320px;
+}
+.ambition-note {
+  border-top: 1px solid #737884;
+  margin-top: 28px;
+  padding-top: 22px;
+  display: grid;
+  grid-template-columns: 0.5fr 1fr;
+  gap: 24px;
+}
+.ambition-note strong {
+  color: var(--orange);
+  font-size: 22px;
+}
+.ambition-note p {
+  font-size: 15px;
+  line-height: 1.5;
+  margin: 0;
+}
+.copy-email {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.copy-email button {
+  min-height: 44px;
+  background: transparent;
+  color: inherit;
+  border: 0;
+  padding: 8px 0;
+  cursor: pointer;
+  text-decoration: underline;
+}
+.copy-email span {
+  font-size: 13px;
+}
+.contextual-offers > ul {
+  list-style: none;
+  padding: 0;
+  margin: 22px 0;
+}
+.contextual-offers > ul > li {
+  padding: 18px 0;
+  border-top: 1px solid currentColor;
+  display: grid;
+  grid-template-columns: minmax(160px, 0.5fr) 1fr;
+  gap: 18px;
+}
+.intent-consent {
+  font-size: 13px;
+  font-weight: 400;
+  margin: 0 0 12px;
+}
+.intent-consent input {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+}
+.service-contact-action .button {
+  margin-bottom: 8px;
+}
+@media (max-width: 1000px) {
+  .report-offers > li {
+    grid-template-columns: 30px 1fr;
+    gap: 16px;
+  }
+  .offer-action {
+    grid-column: 2;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 16px;
+  }
+  .offer-action > strong {
+    font-size: 17px;
+  }
+}
+@media (max-width: 700px) {
+  .campaign-header.simple-header .header-review {
+    white-space: normal;
+    width: 154px;
+    flex-shrink: 1;
+    text-align: center;
+    line-height: 1.2;
+    font-size: 12px;
+    padding: 8px;
+  }
+  .campaign-header.simple-header .brand {
+    width: 118px;
+    flex-basis: 118px;
+  }
+  .commercial-opening {
+    display: flex;
+    flex-direction: column;
+  }
+  .commercial-opening .director-identity {
+    display: contents;
+  }
+  .commercial-opening .director-identity h1 {
+    order: 0;
+    font-size: clamp(62px, 16vw, 102px);
+    padding: 26px 22px 0;
+    margin: 0 0 18px;
+  }
+  .commercial-opening .director-proposition {
+    order: 1;
+    font-size: 30px;
+    padding: 0 22px;
+    margin-bottom: 16px;
+  }
+  .commercial-opening .director-promise {
+    order: 2;
+    font-size: 16px;
+    padding: 0 22px;
+    max-width: none;
+    margin-bottom: 26px;
+  }
+  .commercial-opening .director-first-job {
+    order: 3;
+    padding: 26px 22px;
+  }
+  .commercial-opening .director-audience {
+    order: 4;
+    margin: 0;
+    padding: 24px 22px 12px;
+  }
+  .commercial-opening .director-credit {
+    order: 5;
+    margin: 0;
+    padding: 0 22px 24px;
+  }
+  .commercial-opening .mobile-upload {
+    display: none;
+  }
+  .commercial-opening .first-job-ready {
+    font-size: clamp(34px, 8vw, 52px);
+    margin-bottom: 18px;
+  }
+  .commercial-opening .first-job-action {
+    font-size: 26px;
+  }
+  .commercial-opening .upload-topline {
+    font-size: 14px;
+  }
+  .report-services-heading {
+    display: block;
+  }
+  .report-services-heading > p {
+    font-size: 18px;
+    margin-top: 20px;
+  }
+  .report-offers > li {
+    grid-template-columns: 24px minmax(0, 1fr);
+  }
+  .report-offers h3 {
+    font-size: 25px;
+  }
+  .offer-action {
+    display: grid;
+  }
+  .monthly-pricing {
+    grid-template-columns: 1fr;
+  }
+  .monthly-pricing li + li {
+    border-left: 0;
+  }
+  .monthly-pricing summary p {
+    grid-column: 1 / -1;
+  }
+  .support-enquiry-line {
+    display: block;
+  }
+  .ambition-note {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .contextual-offers > ul > li {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
+
+.human-contact .fine-print {
+  color: #d9deec;
+}

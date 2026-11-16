@@ -1,5 +1,5 @@
-import Link from "next/link";
 import { supportTiers } from "@/lib/services";
+import { ServiceContact } from "./service-contact";
 export function SupportIntroduction() {
   return (
     <section
@@ -10,26 +10,27 @@ export function SupportIntroduction() {
       <div className="campaign-width">
         <div className="support-intro-heading">
           <h2 id="support-title">
-            GOOD TECHNOLOGY.
+            SOMEONE IN YOUR CORNER.
             <br />
-            <em>Real people.</em>
+            <em>All year round.</em>
           </h2>
           <div>
             <p>
-              <strong>
-                Your own Impact Director. Without the full-time salary.
-              </strong>
+              From regular professional check-ins to senior strategic
+              involvement, we combine experienced people with the power of AI to
+              help you understand your impact, monitor progress and make better
+              decisions.
             </p>
             <p>
-              AI helps us do more. Experienced professionals help you interpret
-              evidence, make decisions and monitor progress throughout the year.
+              <strong>
+                AI does the groundwork. People help you move forward.
+              </strong>
             </p>
-            <a href="#contact">Talk about ongoing support →</a>
           </div>
         </div>
         <ol
-          className="support-preview simple-pricing"
-          aria-label="Indicative support levels"
+          className="support-preview simple-pricing monthly-pricing"
+          aria-label="Indicative ongoing support levels"
         >
           {supportTiers.map((t) => (
             <li
@@ -41,36 +42,42 @@ export function SupportIntroduction() {
                 <summary>
                   <span>{t.name}</span>
                   <strong>
-                    {t.id !== "free" && <small>from </small>}
+                    <small>from </small>
                     {t.price}
                   </strong>
-                  <span>
-                    {t.id === "free" ? "Free report review" : "/ month"}
-                  </span>
+                  <span>/ month</span>
                   <p>{t.summary}</p>
                   <span className="tier-expand">What’s included +</span>
                 </summary>
                 <div className="tier-description">
                   <p>{t.detail}</p>
-                  <Link
-                    href={
-                      t.id === "free" ? "/#upload" : `/services/${t.id}#enquire`
-                    }
-                  >
-                    {t.id === "free"
-                      ? "Upload a report"
-                      : `Enquire about ${t.name}`}{" "}
-                    →
-                  </Link>
+                  <ServiceContact service={t.id} source="pricing">
+                    Enquire about {t.name}
+                  </ServiceContact>
                 </div>
               </details>
             </li>
           ))}
         </ol>
-        <p className="pricing-qualification">
-          Indicative pricing. Human involvement, meetings and deliverables are
-          agreed before any engagement.
-        </p>
+        <div className="support-enquiry-line">
+          <p className="pricing-qualification">
+            Indicative starting prices. Human involvement, meeting frequency,
+            deliverables and any board participation are agreed before
+            engagement.
+          </p>
+          <ServiceContact service="human-director" source="pricing">
+            Let’s discuss the right level of support
+          </ServiceContact>
+        </div>
+        <div className="ambition-note">
+          <strong>THIS IS JUST THE BEGINNING.</strong>
+          <p>
+            Today: three complementary report reviews. We’re building towards an
+            intelligent partner that helps you monitor impact, understand
+            evidence and improve throughout the year. The fuller agentic service
+            is in development—experienced human support is available now.
+          </p>
+        </div>
       </div>
     </section>
   );

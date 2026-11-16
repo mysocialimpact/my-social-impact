@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { Arrow } from "./icons";
+import { ServiceContact, CopyMarcusEmail } from "./service-contact";
 export function Contact({ standalone = false }: { standalone?: boolean }) {
   const Heading = standalone ? "h1" : "h2";
   return (
@@ -53,13 +53,18 @@ export function Contact({ standalone = false }: { standalone?: boolean }) {
             marcus@mysocialimpact.org
           </a>
           <div className="contact-actions">
-            <a
+            <ServiceContact
+              service="discussion"
+              source="contact"
               className="button primary"
-              href="mailto:marcus@mysocialimpact.org?subject=Let%E2%80%99s%20talk%20about%20impact"
             >
-              Email Marcus <Arrow diagonal />
-            </a>
+              Email Marcus
+            </ServiceContact>
+            <CopyMarcusEmail />
           </div>
+          <p className="fine-print">
+            Your email app opens. Nothing is sent until you send it.
+          </p>
           <p className="contact-locations">
             Somerset · London · Kampala
             <br />

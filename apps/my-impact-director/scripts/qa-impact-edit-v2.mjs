@@ -68,6 +68,10 @@ try {
       };
       await c.route("**/api/**", (route) => {
         const url = new URL(route.request().url());
+        if (url.pathname === "/api/service-intents")
+          return route.fulfill({
+            json: { recorded: "intent_only", emailSent: false },
+          });
         if (url.pathname === "/api/save")
           return route.fulfill({ json: { emailEnabled: false } });
         if (url.pathname === "/api/account")
@@ -200,6 +204,12 @@ try {
     }
   const c = await b.newContext(),
     p = await c.newPage();
+  await c.route("**/api/service-intents", (route) =>
+    route.fulfill({ json: { recorded: "intent_only", emailSent: false } }),
+  );
+  await c.route("**/api/account", (route) =>
+    route.fulfill({ json: { user: null } }),
+  );
   for (const [url, heading] of [
     [
       "/methodology/impact-report-excellence",

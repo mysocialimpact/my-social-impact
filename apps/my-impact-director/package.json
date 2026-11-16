@@ -10,7 +10,7 @@
     "typecheck": "tsc --noEmit",
     "test": "tsx --test tests/*.test.ts",
     "db:migrate": "tsx scripts/migrate.ts",
-    "test:database": "RUN_DATABASE_TESTS=1 node --env-file=.env.local --import tsx --test tests/integration.test.ts tests/workspace-integration.test.ts tests/rate-limits.test.ts tests/password-workspace.test.ts tests/report-version.test.ts",
+    "test:database": "RUN_DATABASE_TESTS=1 node --env-file=.env.local --import tsx --test tests/integration.test.ts tests/workspace-integration.test.ts tests/rate-limits.test.ts tests/password-workspace.test.ts tests/report-version.test.ts tests/commercial-integration.test.ts",
     "test:browser": "node scripts/qa-browser.mjs",
     "fixtures": "tsx scripts/calibrate.ts",
     "format:check": "prettier --check src tests scripts next.config.ts postcss.config.mjs",

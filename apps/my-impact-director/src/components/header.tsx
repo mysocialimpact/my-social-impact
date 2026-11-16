@@ -4,12 +4,17 @@ import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { useSession } from "./session";
+import { recordVisit } from "./service-contact";
 export function Header() {
   const [open, setOpen] = useState(false),
     path = usePathname(),
     header = useRef<HTMLElement>(null);
   const { user } = useSession(),
     signedIn = !!user && !user.anonymous;
+  const inReview = /^\/reviews\/[a-f0-9-]{36}/.test(path);
+  useEffect(() => {
+    recordVisit();
+  }, []);
   useEffect(() => {
     const el = header.current;
     if (!el) return;
@@ -88,29 +93,26 @@ export function Header() {
           </Link>
         </nav>
         <Link
-          href="/#upload"
+          href={inReview ? "/reviews" : "/#upload"}
           className="header-review"
           onClick={(e) => {
             setOpen(false);
             if (path === "/") {
               e.preventDefault();
               history.pushState(null, "", "/#upload");
-              document
-                .getElementById("upload")
-                ?.scrollIntoView({
-                  behavior: matchMedia("(prefers-reduced-motion: reduce)")
-                    .matches
-                    ? "instant"
-                    : "smooth",
-                  block: "start",
-                });
+              document.getElementById("upload")?.scrollIntoView({
+                behavior: matchMedia("(prefers-reduced-motion: reduce)").matches
+                  ? "instant"
+                  : "smooth",
+                block: "start",
+              });
               document
                 .getElementById("hero-report-file")
                 ?.focus({ preventScroll: true });
             }
           }}
         >
-          Upload a report
+          {inReview ? "My review workspace" : "Try your first free review"}
         </Link>
         <button
           className="menu-toggle"

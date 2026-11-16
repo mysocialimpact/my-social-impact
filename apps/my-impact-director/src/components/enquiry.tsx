@@ -1,8 +1,9 @@
 "use client";
 import { useState } from "react";
 import { useSession, api } from "./session";
-import { services, type Service } from "@/lib/services";
+import { services, activeServices, type Service } from "@/lib/services";
 import { Arrow } from "./icons";
+import { ServiceContact } from "./service-contact";
 import Link from "next/link";
 export function Enquiry({
   service,
@@ -58,10 +59,9 @@ export function Enquiry({
           Tell us a little about your organisation and what you’d like to
           achieve. No account needed.
         </p>
-        <a className="text-link" href="mailto:marcus@mysocialimpact.org">
+        <ServiceContact service={service} source="service">
           Or email Marcus directly
-          <Arrow diagonal />
-        </a>
+        </ServiceContact>
       </div>
       {sent ? (
         <div className="success" role="status">
@@ -81,7 +81,7 @@ export function Enquiry({
             <label>
               I’m interested in
               <select name="service" defaultValue={service}>
-                {Object.entries(services).map(([key, value]) => (
+                {activeServices.map(([key, value]) => (
                   <option key={key} value={key}>
                     {value.name}
                   </option>

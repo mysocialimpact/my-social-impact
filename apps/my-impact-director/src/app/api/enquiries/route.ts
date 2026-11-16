@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { services, type Service } from "@/lib/services";
+import { activeServices, type Service } from "@/lib/services";
 import { visitor } from "@/lib/auth";
 import { metric, privateNetworkKey } from "@/lib/access";
 import { query } from "@/lib/db";
@@ -7,7 +7,9 @@ import { getReview } from "@/lib/reviews";
 import { sameOrigin, failure, rateLimit, readJson } from "@/lib/security";
 const schema = z
   .object({
-    service: z.enum(Object.keys(services) as [Service, ...Service[]]),
+    service: z.enum(
+      activeServices.map(([key]) => key) as [Service, ...Service[]],
+    ),
     message: z.string().trim().min(10).max(5000),
     reviewId: z.uuid().nullable(),
     shareReview: z.boolean(),
