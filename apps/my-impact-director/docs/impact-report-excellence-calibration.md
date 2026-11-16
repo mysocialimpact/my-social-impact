@@ -18,3 +18,11 @@ Human reviewer sign-off is required before claiming professional calibration. No
 | Scanned report | Separate extraction limitations from defects in the source design |
 
 For each, retain source, inspected page images, findings, model/version, human criterion scores, disagreement reasons and revised guidance. Never manufacture reviewer approval or infer validity from automated tests. Broader representative real-model assessment and human calibration remain ongoing.
+
+## First genuine production report
+
+The existing public Small Charity Support 2024 report (17 pages) was reused without a new upload or extraction. The visual pass rendered and inspected physical pages 1, 2, 3, 5, 7, 8, 9, 11, 13, 15 and 17. All 25 findings persisted; 24 were assessable and the deterministic indicative total was 69/100. Photography/art direction was excluded because the sample did not support a reliable judgement. The 40-page PDF passed criterion-title, score recomputation and verbatim source-passage checks. The authorised internal recipient received one report email with the correct framework/organisation PDF attachment; one outbox attempt was accepted. Anonymous detailed export remains forbidden and anonymous API responses omit criterion details and visual observations.
+
+Real provider rate limiting and an invalid visual page reference were encountered. Durable retries preserved completed image analysis. Visual page numbers are now constrained in the model schema to the actual inspected set. No quotas were reset and no scores were manually changed.
+
+Spot checks against rendered pages confirmed green heading hierarchy, the single-column layout, footer numbering and visible coloured mnemonic lettering. A calibration issue remains: the model described the mnemonic lettering on page 9 as “placeholder elements”, a stronger interpretation than the source establishes. This illustrates why source mapping and successful software checks are not sufficient to validate creative judgement. Have a professional reviewer check contextual interpretations and score appropriateness across the eight representative report conditions before any validation claim.
