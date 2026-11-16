@@ -1,9 +1,9 @@
 import { workspaces } from "@/lib/workspace";
 import { MAX_FILE } from "@/lib/file-limits";
-import { privateNetworkKey } from "@/lib/access";
+import { protectUpload } from "@/lib/upload-protection";
 import { after } from "next/server";
 import { visitor } from "@/lib/auth";
-import { sameOrigin, failure, AppError, rateLimit } from "@/lib/security";
+import { sameOrigin, failure, AppError } from "@/lib/security";
 import { createReview, listReviews, ready } from "@/lib/reviews";
 import { drain } from "@/lib/pipeline";
 export const maxDuration = 300;
@@ -27,9 +27,7 @@ export async function POST(req: Request) {
   try {
     sameOrigin(req);
     const user = await visitor(req);
-    if (user.anonymous)
-      await rateLimit(`anonymous-upload:${privateNetworkKey(req)}`, 3, 86400);
-    await rateLimit(`upload:${user.id}`, 10, 3600);
+    await protectUpload(req, user);
     if (Number(req.headers.get("content-length") || 0) > 4_100_000)
       throw new AppError(
         413,

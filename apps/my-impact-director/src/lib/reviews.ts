@@ -57,22 +57,46 @@ export async function createReview(
       });
     return previous;
   }
-  // Keep the daily quota after deletion as well as counting retained reports.
-  await rateLimit(`new-report:${user.id}`, 3, 86400);
   return transaction(async (c) => {
     await c.query("SELECT pg_advisory_xact_lock(hashtextextended($1,0))", [
       user.id,
     ]);
+    // Recheck under the owner lock so simultaneous retries are idempotent.
+    const {
+      rows: [duplicate],
+    } = await c.query<{ id: string }>(
+      "SELECT v.id FROM director.reports r JOIN director.reviews v ON v.report_id=r.id WHERE r.owner_id=$1 AND r.sha256=$2 AND r.expires_at>now() AND v.version=$3",
+      [user.id, sha, version],
+    );
+    if (duplicate) return duplicate;
     const {
       rows: [limits],
     } = await c.query(
-      `SELECT count(*) AS total,count(*) FILTER(WHERE created_at>now()-interval '24 hours') AS today FROM director.reports WHERE owner_id=$1`,
+      `SELECT count(*) AS total,
+       (SELECT count(*) FROM director.completed_reports WHERE owner_id=$1 AND completed_at>now()-interval '24 hours') AS completed,
+       count(*) FILTER(WHERE NOT EXISTS(SELECT 1 FROM director.completed_reports cr WHERE cr.report_id=r.id)
+         AND EXISTS(SELECT 1 FROM director.reviews v WHERE v.report_id=r.id AND v.status IN ('queued','running') AND v.updated_at>now()-interval '1 hour')) AS active
+       FROM director.reports r WHERE r.owner_id=$1 AND r.expires_at>now()`,
       [user.id],
     );
-    if (Number(limits.total) >= 20 || Number(limits.today) >= 3)
+    if (Number(limits.total) >= 20)
       throw new AppError(
         429,
-        "You can review 3 reports per day and keep 20 reports. Delete an old report or try again tomorrow.",
+        "I’m sorry — your saved report storage is full. You can keep 20 reports; please delete an old report from Saved reports to make space.",
+        "REPORT_STORAGE_LIMIT",
+      );
+    if (Number(limits.completed) >= 3)
+      throw new AppError(
+        429,
+        "I’m sorry — you’ve completed three free report reviews in the last 24 hours. Your existing reports are still available. Please return tomorrow, or use “Help make this better” if you need support.",
+        "REVIEW_ALLOWANCE",
+      );
+    if (Number(limits.active) >= 3)
+      throw new AppError(
+        429,
+        "I’m sorry — three of your reports are still being prepared. Please open Saved reports to continue them, or try again when one has finished. Unfinished reviews haven’t used your daily allowance.",
+        "REVIEWS_IN_PROGRESS",
+        60,
       );
     const {
       rows: [report],

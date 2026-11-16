@@ -14,6 +14,7 @@ import {
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { query, transaction } from "./db";
+import { recordCompletedReport } from "./review-allowance";
 import {
   dailyUsageCost,
   recordUsageCost,
@@ -385,6 +386,7 @@ export async function processOne(id?: string) {
           usage?.cost || 0,
         ],
       );
+      if (result) await recordCompletedReport(c, job.report_id);
       if (result)
         await c.query(
           "INSERT INTO director.report_deliveries(review_id,owner_id,email) SELECT $1,owner_id,email FROM director.report_subscriptions WHERE report_id=$2 ON CONFLICT DO NOTHING",

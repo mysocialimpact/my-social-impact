@@ -1,4 +1,5 @@
 import { privateNetworkKey } from "@/lib/access";
+import { protectUpload } from "@/lib/upload-protection";
 import { z } from "zod";
 import { after } from "next/server";
 import { visitor } from "@/lib/auth";
@@ -52,8 +53,7 @@ export async function POST(req: Request) {
       });
     }
     verifyCandidate(user.id, input);
-    if (user.anonymous)
-      await rateLimit(`anonymous-upload:${privateNetworkKey(req)}`, 3, 86400);
+    await protectUpload(req, user);
     await rateLimit(`retrieve:${user.id}`, 10, 3600);
     const f = await publicFetch(input.url);
     if (f.status !== 200)

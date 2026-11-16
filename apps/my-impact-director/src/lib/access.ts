@@ -79,7 +79,7 @@ export async function createGuest(req: Request) {
     }
     return { user: existing, cookie: null };
   }
-  await rateLimit(`visitor:${privateNetworkKey(req)}`, 20, 86400);
+  await rateLimit(`visitor-v2:${privateNetworkKey(req)}`, 300, 3600);
   const token = randomBytes(32).toString("base64url"),
     id = "guest_" + randomUUID();
   await transaction(async (c) => {
