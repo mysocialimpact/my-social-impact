@@ -73,7 +73,21 @@ export function Header() {
           <Link href="/#contact" onClick={() => setOpen(false)}>
             Contact Us
           </Link>
+          <Link
+            href="/#upload"
+            className="mobile-nav-review"
+            onClick={() => setOpen(false)}
+          >
+            Review for free <Arrow diagonal />
+          </Link>
         </nav>
+        <Link
+          href="/reviews#login"
+          className="header-login"
+          onClick={() => setOpen(false)}
+        >
+          LOGIN
+        </Link>
         <Link
           href="/#upload"
           className="header-review"

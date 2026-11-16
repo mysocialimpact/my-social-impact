@@ -3324,3 +3324,83 @@ html:has(.report-workspace) {
     white-space: normal;
   }
 }
+
+/* Keep returning visitors' login visible outside the mobile menu. */
+.campaign-header .header-login {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 10px 16px;
+  border: 2px solid var(--ink);
+  color: var(--ink);
+  background: white;
+  font-size: 14px;
+  font-weight: 800;
+  text-decoration: none;
+}
+.campaign-header .header-login:hover {
+  background: var(--ink);
+  color: white;
+}
+.campaign-header .mobile-nav-review {
+  display: none;
+}
+.return-review {
+  scroll-margin-top: calc(var(--header-height, 96px) + 24px);
+}
+.keep-review .fine-print {
+  color: #d9deec;
+}
+@media (max-width: 1550px) {
+  .campaign-header .header-attribution {
+    display: none;
+  }
+}
+@media (max-width: 1280px) {
+  .campaign-header nav {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    padding: 22px 28px;
+    margin: 0;
+    background: white;
+    border-bottom: 2px solid var(--ink);
+    gap: 0;
+    align-items: stretch;
+  }
+  .campaign-header nav.is-open {
+    display: flex;
+    flex-direction: column;
+  }
+  .campaign-header nav > a {
+    padding: 13px 5px;
+    min-height: 46px;
+  }
+  .campaign-header .menu-toggle {
+    display: flex;
+  }
+  .campaign-header .header-login {
+    margin-left: auto;
+  }
+  .campaign-header > .header-review {
+    margin-left: 0;
+  }
+}
+@media (max-width: 700px) {
+  .campaign-header .header-login {
+    min-height: 44px;
+    padding: 9px 12px;
+    font-size: 13px;
+  }
+  .campaign-header > .header-review {
+    display: none;
+  }
+  .campaign-header .mobile-nav-review {
+    display: block;
+    font-weight: 800;
+  }
+}

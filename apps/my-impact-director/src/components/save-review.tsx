@@ -68,7 +68,7 @@ export function SaveReview({
   return (
     <section
       className={"keep-review " + (returning ? "return-review" : "")}
-      id={id ? "keep-review" : undefined}
+      id={returning ? "login" : id ? "keep-review" : undefined}
     >
       <div>
         <p className="eyebrow">
@@ -78,12 +78,12 @@ export function SaveReview({
         </p>
         <h2>
           {returning
-            ? "Your personal Impact Director."
+            ? "Log in to your Impact Director."
             : "Make this your Impact Director."}
         </h2>
         <p>
           {returning
-            ? "Enter your email to create or open your workspace. We’ll send a secure sign-in link. No password required."
+            ? "Find your saved reports, check their progress and continue a review. Enter your email and we’ll send a secure sign-in link. No password required."
             : "Save your reports, track your reviews and pick up where you left off — on any device. One secure email link, no password. The same verified address receives your completed detailed reports."}
         </p>
       </div>
