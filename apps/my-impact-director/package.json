@@ -1,0 +1,59 @@
+{
+  "name": "my-impact-director",
+  "version": "1.0.0",
+  "description": "Evidence-grounded impact report assessments",
+  "main": "index.js",
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "build": "next build",
+    "start": "next start --hostname 0.0.0.0",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test tests/*.test.ts",
+    "db:migrate": "tsx scripts/migrate.ts",
+    "test:database": "RUN_DATABASE_TESTS=1 node --env-file=.env.local --import tsx --test tests/integration.test.ts tests/workspace-integration.test.ts tests/rate-limits.test.ts tests/password-workspace.test.ts",
+    "test:browser": "node scripts/qa-browser.mjs",
+    "fixtures": "tsx scripts/calibrate.ts",
+    "format:check": "prettier --check src tests scripts next.config.ts postcss.config.mjs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "@fontsource/dm-sans": "^5.3.0",
+    "@fontsource/instrument-serif": "^5.3.0",
+    "@fontsource/lora": "^5.3.0",
+    "@napi-rs/canvas": "^0.1.100",
+    "@neondatabase/serverless": "^1.2.1",
+    "@pdf-lib/fontkit": "^1.1.1",
+    "@vercel/functions": "^3.9.11",
+    "cheerio": "^1.2.0",
+    "https-proxy-agent": "^9.1.0",
+    "ipaddr.js": "^2.5.0",
+    "next": "^16.4.2",
+    "pdf-lib": "^1.17.1",
+    "pg": "^8.23.1",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "robots-parser": "^3.0.1",
+    "unpdf": "^1.4.0",
+    "ws": "^8.23.0",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
+    "@playwright/test": "^1.65.1",
+    "@types/node": "^24.19.2",
+    "@types/pg": "^8.23.1",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@types/ws": "^8.18.2",
+    "prettier": "^3.10.1",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3"
+  },
+  "private": true,
+  "engines": {
+    "node": ">=22"
+  }
+}

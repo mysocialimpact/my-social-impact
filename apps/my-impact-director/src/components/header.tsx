@@ -1,0 +1,127 @@
+"use client";
+import Link from "next/link";
+import Image from "next/image";
+import { useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
+import { useSession } from "./session";
+export function Header() {
+  const [open, setOpen] = useState(false),
+    path = usePathname(),
+    header = useRef<HTMLElement>(null);
+  const { user } = useSession(),
+    signedIn = !!user && !user.anonymous;
+  useEffect(() => {
+    const el = header.current;
+    if (!el) return;
+    const measure = () =>
+      document.documentElement.style.setProperty(
+        "--header-height",
+        `${el.getBoundingClientRect().height}px`,
+      );
+    measure();
+    const o = new ResizeObserver(measure);
+    o.observe(el);
+    return () => o.disconnect();
+  }, []);
+  useEffect(() => {
+    setOpen(false);
+    if (path === "/" && location.hash === "#upload")
+      requestAnimationFrame(() =>
+        document
+          .getElementById("hero-report-file")
+          ?.focus({ preventScroll: true }),
+      );
+  }, [path]);
+  useEffect(() => {
+    const close = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    window.addEventListener("keydown", close);
+    return () => window.removeEventListener("keydown", close);
+  }, []);
+  return (
+    <>
+      <a className="skip" href="#main">
+        Skip to content
+      </a>
+      <header
+        ref={header}
+        className="site-header campaign-header simple-header"
+      >
+        <Link className="brand" href="/" onClick={() => setOpen(false)}>
+          <Image
+            src="/brand/my-impact-director-horizontal.svg"
+            alt="My Impact Director — Home"
+            width={580}
+            height={190}
+            sizes="(max-width:700px) 130px, 194px"
+            priority
+          />
+        </Link>
+        <nav
+          id="main-nav"
+          aria-label="Main navigation"
+          className={open ? "is-open" : ""}
+        >
+          <Link
+            href="/contact"
+            aria-current={path === "/contact" ? "page" : undefined}
+            onClick={() => setOpen(false)}
+          >
+            Contact
+          </Link>
+          <Link
+            href="/reviews"
+            aria-current={path.startsWith("/reviews") ? "page" : undefined}
+            onClick={() => setOpen(false)}
+          >
+            My Reports
+          </Link>
+          <Link
+            href={signedIn ? "/account" : "/login"}
+            aria-current={
+              path === (signedIn ? "/account" : "/login") ? "page" : undefined
+            }
+            onClick={() => setOpen(false)}
+          >
+            {signedIn ? "Account" : "Log in"}
+          </Link>
+        </nav>
+        <Link
+          href="/#upload"
+          className="header-review"
+          onClick={(e) => {
+            setOpen(false);
+            if (path === "/") {
+              e.preventDefault();
+              history.pushState(null, "", "/#upload");
+              document
+                .getElementById("upload")
+                ?.scrollIntoView({
+                  behavior: matchMedia("(prefers-reduced-motion: reduce)")
+                    .matches
+                    ? "instant"
+                    : "smooth",
+                  block: "start",
+                });
+              document
+                .getElementById("hero-report-file")
+                ?.focus({ preventScroll: true });
+            }
+          }}
+        >
+          Upload a report
+        </Link>
+        <button
+          className="menu-toggle"
+          aria-expanded={open}
+          aria-controls="main-nav"
+          onClick={() => setOpen(!open)}
+        >
+          {open ? "Close" : "Menu"}
+          <span aria-hidden="true">{open ? "×" : "+"}</span>
+        </button>
+      </header>
+    </>
+  );
+}

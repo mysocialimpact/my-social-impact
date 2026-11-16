@@ -1,0 +1,59 @@
+import { workspaces } from "@/lib/workspace";
+import { MAX_FILE } from "@/lib/file-limits";
+import { protectUpload } from "@/lib/upload-protection";
+import { after } from "next/server";
+import { visitor } from "@/lib/auth";
+import { sameOrigin, failure, AppError } from "@/lib/security";
+import { createReview, listReviews, ready } from "@/lib/reviews";
+import { drain } from "@/lib/pipeline";
+export const maxDuration = 300;
+export const dynamic = "force-dynamic";
+export async function GET(req: Request) {
+  try {
+    const user = await visitor(req);
+    const [reviews, workspaceRows] = await Promise.all([
+      listReviews(user),
+      workspaces(user),
+    ]);
+    return Response.json(
+      { reviews, workspaces: workspaceRows, enabled: ready() },
+      { headers: { "cache-control": "no-store" } },
+    );
+  } catch (e) {
+    return failure(e);
+  }
+}
+export async function POST(req: Request) {
+  try {
+    sameOrigin(req);
+    const user = await visitor(req);
+    await protectUpload(req, user);
+    if (Number(req.headers.get("content-length") || 0) > 4_100_000)
+      throw new AppError(
+        413,
+        "Please refresh the page to use the larger-file uploader, then try your report again.",
+      );
+    const form = await req.formData();
+    const file = form.get("file");
+    if (!(file instanceof File))
+      throw new AppError(400, "Choose a PDF to upload.");
+    if (file.size > MAX_FILE)
+      throw new AppError(
+        413,
+        "Please refresh the page to use the larger-file uploader, then try your report again.",
+      );
+    const review = await createReview(
+      user,
+      Buffer.from(await file.arrayBuffer()),
+      file.name,
+      form.get("consent") === "true",
+      form.get("qualityConsent") === "true",
+      null,
+      true,
+    );
+    after(() => drain(review.id));
+    return Response.json(review, { status: 201 });
+  } catch (e) {
+    return failure(e);
+  }
+}

@@ -31,6 +31,7 @@
     "**/*.mts"
   ],
   "exclude": [
+    "apps/my-impact-director",
     "node_modules",
     "build",
     "db",
