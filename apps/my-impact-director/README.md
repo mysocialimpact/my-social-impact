@@ -143,8 +143,17 @@ The genuine anonymous test uses the publicly available Small Charity Support 202
 
 ## Brand assets
 
-The My Impact Director lockup was developed from the user’s supplied concept reference with their explicit approval. The My Social Impact, Claims Code, Social Impact Excellence and The Ideas Shed assets are established source assets copied from the existing product repositories. The concept’s indicative subscription prices are not published. Fonts are locally served DM Sans, Instrument Serif and Lora.
+The My Impact Director lockup was developed from the user’s supplied concept reference with their explicit approval. The My Social Impact, Claims Code, Social Impact Excellence and The Ideas Shed assets are established source assets copied from the existing product repositories. The original five tiers are published as indicative, enquiry-only starting prices: Free £0, Essentials from £49/month, Supported from £149/month, Director from £495/month and Bespoke from £1,500+/month. Scope, meetings and deliverables require agreement; there is no checkout. Fonts are locally served DM Sans, Instrument Serif and Lora.
 
 ## Domain configuration
 
 Production deployment immediately before the campaign redesign: `dpl_4u6tNquU8Az7yuKBA6f33yangrFh` (commit `e4faac0`). Earlier production deployment before the first rebuild: `dpl_DwkDgRs51Vc5VNYHbk177XYHqB5e` (commit `b3c5e2f`). DNS is already verified; this redesign does not need DNS changes. Apex A records are `216.150.1.1` and `216.150.16.1`; www CNAME is `2ad01a69f582f86c.vercel-dns-016.com.`. Existing MX/SPF/DKIM/DMARC records were preserved. Vercel manages TLS. Roll back application deployments while preserving the additive database schema and report records.
+
+
+## Human-led support release
+
+The homepage keeps the free PDF review as the first job and introduces the ongoing human service in its existing expert-support position. `/your-impact-director` carries the full proposition, Marcus’s authentic portrait, five indicative tiers, human involvement by agreement, AI readiness and wider advice. Both completed-review screens link to that page with their review ID retained. New enquiry interests reuse `director.enquiries`, existing contact consent and server-side report authorisation; optional organisation names are retained in the enquiry message, and founder filters include individual interests and an all-ongoing-support group. No schema change or assessment-engine change is required.
+
+Current automated PDF reviews are explicitly distinguished from developing AI monitoring and agent capabilities. The optional external AI-readiness link points to the existing `https://www.theideasshed.com/ai-ready` questionnaire, inspected through its first question. No diagnostic entitlement is bundled into a tier. Existing cyborg-cow artwork in the reference SORP project was inspected and left untouched. No unrelated product files or creative assets were modified.
+
+Validation for this release: production build and TypeScript pass; 26 unit checks pass (2 database-only skips), and all 18 real-validation-database checks pass. The database suite uses synthetic AI/email transports and now verifies every new enquiry category, founder filters and private-review access denial. A real local-browser Director enquiry was persisted in the validation database, checked and removed by its exact test ID. `scripts/qa-human-support.mjs` exercises pricing selections, failure/retry, responsive accessibility and both review-to-support handoffs with synthetic browser transport. Production checks are recorded separately from these fixtures. Meeting frequency, duration, board involvement, deliverables and final terms remain subject to commercial agreement.

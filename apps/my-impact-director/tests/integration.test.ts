@@ -757,6 +757,118 @@ test(
         },
       );
       await t.test(
+        "ongoing support interests persist, filter and preserve review consent",
+        async () => {
+          const categories = [
+            "human-director",
+            "essentials",
+            "supported",
+            "director",
+            "bespoke",
+            "ai-readiness",
+            "consultancy",
+          ];
+          for (const [index, service] of categories.entries()) {
+            const network = `qa-support-${uid}-${index}`;
+            const guest = await createGuest(
+              new Request("https://test.example/api/visitor", {
+                headers: { "x-forwarded-for": network },
+              }),
+            );
+            localUsers.push(guest.user.id);
+            const cookie = guest.cookie!.split(";")[0];
+            const body = {
+              service,
+              message: "Synthetic support category QA, no follow-up.",
+              reviewId: null,
+              shareReview: false,
+              contactConsent: true,
+              name: "Support QA",
+              email: "support@example.invalid",
+            };
+            const request = (data: unknown) =>
+              new Request("https://test.example/api/enquiries", {
+                method: "POST",
+                headers: {
+                  cookie,
+                  origin: "https://test.example",
+                  "content-type": "application/json",
+                  "x-forwarded-for": network,
+                },
+                body: JSON.stringify(data),
+              });
+            assert.equal(
+              (
+                await enquiryPost(
+                  request({ ...body, reviewId: id, shareReview: true }),
+                )
+              ).status,
+              404,
+              "a query-string review ID grants no access",
+            );
+            assert.equal(
+              (await enquiryPost(request({ ...body, contactConsent: false })))
+                .status,
+              400,
+            );
+            assert.equal(
+              (
+                await enquiryPost(
+                  request({ ...body, service: "unlimited-board-attendance" }),
+                )
+              ).status,
+              400,
+            );
+            const response = await enquiryPost(request(body));
+            assert.equal(response.status, 201, service);
+            const saved = await response.json();
+            const [row] = await query<{
+              service: string;
+              share_review: boolean;
+              review_id: string | null;
+            }>(
+              "SELECT service,share_review,review_id FROM director.enquiries WHERE id=$1",
+              [saved.id],
+            );
+            assert.equal(row.service, service);
+            assert.equal(row.share_review, false);
+            assert.equal(row.review_id, null);
+            const filtered = await (
+              await adminGet(
+                req(`/api/admin?service=${service}`, undefined, "founder"),
+              )
+            ).json();
+            assert.ok(
+              filtered.enquiries.some((e: { id: string }) => e.id === saved.id),
+            );
+            assert.ok(
+              filtered.enquiries.every(
+                (e: { service: string }) => e.service === service,
+              ),
+            );
+          }
+          const grouped = await (
+            await adminGet(
+              req("/api/admin?service=ongoing", undefined, "founder"),
+            )
+          ).json();
+          assert.ok(grouped.enquiries.length >= 5);
+          assert.ok(
+            grouped.enquiries.every((e: { service: string }) =>
+              categories.slice(0, 5).includes(e.service),
+            ),
+          );
+          assert.equal(
+            (
+              await adminGet(
+                req("/api/admin?service=ongoing", undefined, "other"),
+              )
+            ).status,
+            403,
+          );
+        },
+      );
+      await t.test(
         "anonymous feedback is validated, private and visible only to founders",
         async () => {
           const guest = await createGuest(

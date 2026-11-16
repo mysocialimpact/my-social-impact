@@ -4,6 +4,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "",
     "/methodology",
     "/services",
+    "/your-impact-director",
     "/services/expert-review",
     "/services/preparation",
     "/services/digitisation",

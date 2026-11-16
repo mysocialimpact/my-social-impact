@@ -33,7 +33,7 @@ export function ServiceStories() {
           <Arrow diagonal />
         </span>
       </Link>
-      <Link href="/#contact">
+      <Link href="/your-impact-director">
         <span>04</span>
         <div>
           <h3>Ongoing impact management.</h3>

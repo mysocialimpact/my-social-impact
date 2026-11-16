@@ -30,27 +30,33 @@ export function Contact() {
             alt="Marcus Warry, co-founder of My Social Impact"
             sizes="(max-width: 700px) 100vw, 42vw"
           />
-          <figcaption>Marcus Warry · Co-founder, My Social Impact</figcaption>
+          <figcaption>
+            Marcus Warry ACA · Co-founder, My Social Impact
+          </figcaption>
         </figure>
         <div className="marcus-introduction">
-          <h3>Marcus Warry</h3>
+          <h3>Marcus Warry ACA</h3>
           <p className="marcus-role">
             Co-founder, My Social Impact
             <br />
             Chartered Accountant · Social Impact Consultant
           </p>
           <p>
-            I’m a Chartered Accountant and social impact consultant. We believe
-            social impact should be taken as seriously as financial performance.
+            I’m a Chartered Accountant and co-founder of My Social Impact. I
+            help organisations turn good intentions into meaningful results. I
+            believe social impact should be taken as seriously as financial
+            performance.
           </p>
           <p>
-            At My Social Impact, we help organisations understand, manage and
-            communicate the difference they make — from credible reporting to
-            embedding impact into leadership, strategy and everyday decisions.
+            Sometimes you need a report, better evidence or a clearer strategy.
+            Sometimes you need someone experienced to talk things through with
+            regularly, keep you focused and help you make progress.
           </p>
           <p>
-            My Impact Director is part of our ambition to make that expertise
-            accessible to many more organisations.
+            My Impact Director combines human judgement with intelligent
+            technology to make that support more affordable. I’m one of the
+            experienced My Social Impact professionals you can talk to; we’ll
+            agree who is best placed to support you and how.
           </p>
           <a
             className="contact-address"
@@ -63,10 +69,10 @@ export function Contact() {
               className="button primary"
               href="mailto:marcus@mysocialimpact.org?subject=Let%E2%80%99s%20talk%20about%20impact"
             >
-              Email Marcus <Arrow diagonal />
+              Talk to Marcus <Arrow diagonal />
             </a>
-            <Link href="/services/expert-review#enquire">
-              Discuss your impact report <Arrow diagonal />
+            <Link href="/your-impact-director#enquire">
+              Find your level of support <Arrow diagonal />
             </Link>
           </div>
           <p className="contact-locations">

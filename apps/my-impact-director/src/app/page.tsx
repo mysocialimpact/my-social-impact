@@ -3,7 +3,7 @@ import { Arrow } from "@/components/icons";
 import Link from "next/link";
 import Image from "next/image";
 import { Intake, UploadShortcut } from "@/components/intake";
-import { ServiceStories } from "@/components/service-stories";
+import { SupportIntroduction } from "@/components/support-introduction";
 import { ready } from "@/lib/reviews";
 export const dynamic = "force-dynamic";
 export default function Home() {
@@ -17,12 +17,13 @@ export default function Home() {
             <span>DIRECTOR.</span>
           </h1>
           <p className="director-proposition">
-            Expert impact management.
+            Your own Impact Director.
             <br />
-            <em>For everyone.</em>
+            <em>Without the full-time salary.</em>
           </p>
           <p className="director-promise">
             Making expert impact management affordable for every organisation.
+            Human-led. AI-powered.
           </p>
           <p className="director-audience">
             Charities. Social enterprises. NGOs.
@@ -134,23 +135,7 @@ export default function Home() {
           </Link>
         </div>
       </section>
-      <section className="expert-moment" aria-labelledby="expert-title">
-        <div className="campaign-width expert-layout">
-          <div>
-            <h2 id="expert-title">
-              AI gets you started.
-              <br />
-              <em>People take you further.</em>
-            </h2>
-            <p>
-              Professional help from My Social Impact.
-              <br />
-              Paid services, available by enquiry.
-            </p>
-          </div>
-          <ServiceStories />
-        </div>
-      </section>
+      <SupportIntroduction />
       <section className="purpose-moment" aria-labelledby="purpose-title">
         <div className="campaign-width">
           <h2 id="purpose-title">
@@ -165,8 +150,11 @@ export default function Home() {
             <div>
               <h3>What if every organisation had its own Impact Director?</h3>
               <p>
-                A future intelligent partner for ongoing impact management.{" "}
-                <strong>Coming next.</strong>
+                Experienced people. Social Impact Excellence. Powerful AI.
+                <Link href="/your-impact-director">
+                  {" "}
+                  Explore ongoing support →
+                </Link>
               </p>
             </div>
           </div>

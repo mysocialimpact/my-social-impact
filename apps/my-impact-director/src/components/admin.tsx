@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useSession, api } from "./session";
 import { Account } from "./account";
 import { ReviewResults } from "./review-results";
+import { services, serviceLabel } from "@/lib/services";
 import type { ReviewResult } from "@/lib/pipeline";
 type AdminData = {
   deliveries?: {
@@ -52,6 +53,7 @@ export function Admin() {
     [error, setError] = useState(""),
     [q, setQ] = useState(""),
     [status, setStatus] = useState(""),
+    [enquiryService, setEnquiryService] = useState(""),
     [selected, setSelected] = useState<{
       id: string;
       title: string;
@@ -64,7 +66,9 @@ export function Admin() {
     setError("");
     try {
       setData(
-        await api(`/api/admin?q=${encodeURIComponent(q)}&status=${status}`),
+        await api(
+          `/api/admin?q=${encodeURIComponent(q)}&status=${status}&service=${encodeURIComponent(enquiryService)}`,
+        ),
       );
     } catch (e) {
       setError(e instanceof Error ? e.message : "Please try again.");
@@ -100,6 +104,20 @@ export function Admin() {
           {["complete", "queued", "running", "failed"].map((s) => (
             <option key={s}>{s}</option>
           ))}
+        </select>
+        <select
+          aria-label="Enquiry interest"
+          value={enquiryService}
+          onChange={(e) => setEnquiryService(e.target.value)}
+        >
+          <option value="">All enquiry interests</option>
+          <option value="ongoing">All ongoing support</option>
+          {Object.entries(services).map(([key, value]) => (
+            <option value={key} key={key}>
+              {value.name}
+            </option>
+          ))}
+          <option value="feedback">Product feedback</option>
         </select>
         <button className="button secondary small" onClick={refresh}>
           Search & refresh
@@ -347,11 +365,7 @@ export function Admin() {
                         </p>
                       </td>
                       <td>
-                        <strong>
-                          {e.service === "feedback"
-                            ? "Product feedback"
-                            : e.service}
-                        </strong>
+                        <strong>{serviceLabel(e.service)}</strong>
                         <p>{e.message}</p>
                       </td>
                       <td>

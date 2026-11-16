@@ -758,31 +758,49 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
       )}
       {complete && results && (
         <section className="bigger-conversation">
+          <p className="eyebrow">
+            IMPACT ISN’T SOMETHING YOU MANAGE ONCE A YEAR.
+          </p>
           <h2>
             {framework === "claims"
-              ? "Want to discuss your findings?"
-              : "Want to take your impact management further?"}
+              ? "Want someone to help you strengthen your next report?"
+              : "What if someone helped you manage this throughout the year?"}
           </h2>
           <p>
-            Use what you learn to make better decisions throughout the year. My
-            Social Impact helps embed impact in strategy, leadership, data,
-            delivery and communications.
-          </p>
-          <Link href={`/services/expert-review?review=${r.id}`}>
-            Discuss your impact report <Arrow diagonal />
-          </Link>
-          <p>
-            <Link href="/services/preparation">Create your next report</Link> ·{" "}
-            <Link href="/services/digitisation">Digitise your report</Link>
+            You’ve reviewed your impact report. Now imagine having someone help
+            you improve your impact all year round. A real person who knows your
+            organisation, helps you interpret the evidence and keeps you moving
+            forward.
           </p>
           <p>
-            What if you had your own Impact Director? Our future intelligent
-            partner is an emerging ambition. Professional support is available
-            by enquiry.
+            Social Impact Excellence brings impact into regular management
+            conversations, decisions and learning. Your Impact Director helps
+            you put it into practice, with intelligent technology behind the
+            scenes.
           </p>
-          <Link href="/#contact">
-            Meet Marcus & contact us <Arrow diagonal />
+          <Link
+            className="button primary"
+            href={`/your-impact-director?review=${r.id}`}
+          >
+            Meet your Impact Director <Arrow diagonal />
           </Link>
+          <p>
+            Human support from an indicative £149 per month; a more hands-on
+            Director service from £495. Scope and involvement agreed together.
+          </p>
+          <p>
+            <Link href={`/services/expert-review?review=${r.id}#enquire`}>
+              Discuss this report
+            </Link>{" "}
+            ·{" "}
+            <Link href={`/services/preparation?review=${r.id}#enquire`}>
+              Create your next report
+            </Link>{" "}
+            ·{" "}
+            <Link href={`/services/digitisation?review=${r.id}#enquire`}>
+              Digitise your report
+            </Link>
+          </p>
         </section>
       )}
     </div>

@@ -64,8 +64,8 @@ export function Header() {
           <Link href="/methodology" onClick={() => setOpen(false)}>
             Methodology
           </Link>
-          <Link href="/services" onClick={() => setOpen(false)}>
-            Expert help
+          <Link href="/your-impact-director" onClick={() => setOpen(false)}>
+            Your Impact Director
           </Link>
           <Link href="/reviews" onClick={() => setOpen(false)}>
             Saved reports

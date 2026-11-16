@@ -2483,3 +2483,442 @@ body:has(.immersive-review) .campaign-footer {
     overscroll-behavior: contain;
   }
 }
+
+/* Human-led ongoing support: extend the existing campaign rather than add a catalogue. */
+.support-introduction {
+  background: var(--navy);
+  color: white;
+  padding: 44px 0 32px;
+}
+.support-intro-heading {
+  display: grid;
+  grid-template-columns: 1fr 1.05fr;
+  gap: 64px;
+  align-items: center;
+}
+.support-intro-heading h2 {
+  font-size: clamp(34px, 3.4vw, 54px);
+  line-height: 1.02;
+}
+.support-intro-heading h2 em {
+  color: var(--orange);
+  font-size: 1.25em;
+}
+.support-intro-heading p {
+  margin: 0 0 14px;
+}
+.support-intro-heading a,
+.support-page a:not(.button) {
+  font-weight: 700;
+  text-underline-offset: 4px;
+}
+.support-preview {
+  padding: 0;
+  margin: 30px 0 16px;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  border-top: 1px solid #737884;
+}
+.support-preview li {
+  border-bottom: 1px solid #737884;
+}
+.support-preview li + li {
+  border-left: 1px solid #737884;
+}
+.support-preview a {
+  display: block;
+  height: 100%;
+  padding: 18px 20px;
+  text-decoration: none;
+}
+.support-preview a:hover {
+  text-decoration: underline;
+}
+.support-preview span {
+  display: block;
+  font-size: 14px;
+}
+.support-preview span:first-child {
+  font-size: 20px;
+  font-weight: 700;
+}
+.support-preview strong {
+  display: block;
+  font-size: clamp(25px, 2.6vw, 40px);
+  letter-spacing: -0.04em;
+  margin-top: 10px;
+  white-space: nowrap;
+}
+.support-preview small {
+  font-size: 13px;
+  letter-spacing: 0;
+  font-weight: 400;
+}
+.support-preview p {
+  font-size: 13px;
+  margin: 10px 0 0;
+}
+.director-tier {
+  background: var(--orange);
+  color: var(--navy);
+}
+.pricing-qualification {
+  font-size: 14px;
+  line-height: 1.5;
+}
+.support-hero {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: 60px;
+  padding-top: 56px;
+  padding-bottom: 56px;
+  align-items: center;
+}
+.support-hero h1 {
+  font-size: clamp(38px, 4.9vw, 76px);
+  line-height: 0.98;
+  letter-spacing: -0.05em;
+}
+.support-hero h1 em {
+  font-size: 1.12em;
+}
+.support-hero p {
+  max-width: 610px;
+}
+.support-lead {
+  font-size: clamp(22px, 2vw, 29px);
+  line-height: 1.3;
+  letter-spacing: -0.025em;
+}
+.support-hero-actions {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: 26px;
+}
+.support-first-step {
+  font-size: 14px;
+  margin-top: 24px;
+}
+.support-portrait {
+  margin: 0;
+  background: var(--navy);
+  color: white;
+}
+.support-portrait img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 520px;
+  object-fit: cover;
+  object-position: center 30%;
+}
+.support-portrait figcaption {
+  padding: 20px 24px;
+  font-size: 13px;
+}
+.support-portrait figcaption strong {
+  display: block;
+  font-size: 25px;
+}
+.support-portrait figcaption span {
+  display: block;
+}
+.support-portrait figcaption a {
+  display: inline-block;
+  margin-top: 12px;
+}
+.someone-section {
+  background: var(--navy);
+  color: white;
+  padding: 54px 0;
+}
+.someone-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.05fr;
+  gap: 64px;
+}
+.someone-grid h2 {
+  font-size: clamp(38px, 4.6vw, 70px);
+  line-height: 0.98;
+}
+.someone-grid h2 em {
+  color: var(--orange);
+}
+.someone-grid p:first-child {
+  margin-top: 0;
+}
+.support-pricing {
+  padding-top: 60px;
+  padding-bottom: 50px;
+}
+.support-pricing h2,
+.advisory-section h2 {
+  font-size: clamp(36px, 4.1vw, 64px);
+  line-height: 1.05;
+}
+.pricing-rows {
+  margin-top: 30px;
+  border-top: 2px solid var(--navy);
+}
+.pricing-row {
+  display: grid;
+  grid-template-columns: 1.05fr 0.75fr 1.5fr 0.7fr;
+  gap: 32px;
+  align-items: center;
+  border-bottom: 1px solid var(--navy);
+  padding: 28px 20px;
+}
+.tier-name > span {
+  font-size: 12px;
+}
+.tier-name h3 {
+  font-size: 34px;
+  margin: 6px 0;
+}
+.tier-name p {
+  font-size: 14px;
+  margin: 0;
+}
+.tier-price {
+  margin: 0;
+}
+.tier-price span {
+  display: block;
+  font-size: 13px;
+}
+.tier-price strong {
+  font-size: clamp(28px, 3.5vw, 50px);
+  line-height: 1.1;
+  letter-spacing: -0.04em;
+  white-space: nowrap;
+}
+.tier-detail {
+  font-size: 16px;
+  margin: 0;
+}
+.tier-action {
+  font-size: 14px;
+}
+.pricing-terms {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  align-items: center;
+  gap: 64px;
+  margin-top: 20px;
+  font-size: 14px;
+}
+.ai-support {
+  background: var(--orange);
+  color: var(--navy);
+  padding: 54px 0;
+}
+.ai-support h2 {
+  font-size: clamp(32px, 3.8vw, 58px);
+  line-height: 1.05;
+  max-width: 1150px;
+}
+.ai-support-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 64px;
+  margin-top: 32px;
+}
+.ai-support-columns > div {
+  border-top: 1px solid currentColor;
+  padding-top: 24px;
+}
+.ai-support-columns h3 {
+  font-size: 25px;
+}
+.advisory-section {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 80px;
+  padding-top: 60px;
+  padding-bottom: 60px;
+}
+.advisory-section aside {
+  border-left: 1px solid var(--line);
+  padding-left: 48px;
+  align-self: center;
+}
+.advisory-section aside h3 {
+  font-size: 30px;
+  line-height: 1.1;
+}
+.support-enquiry {
+  padding-bottom: 42px;
+}
+.support-enquiry .enquiry {
+  margin-top: 0;
+}
+.support-contact-line {
+  font-size: 14px;
+}
+.enquiry-interest {
+  margin-top: 0;
+}
+@media (max-width: 1100px) {
+  .support-hero,
+  .support-intro-heading,
+  .someone-grid {
+    gap: 32px;
+  }
+  .support-preview a {
+    padding: 16px 12px;
+  }
+  .pricing-row {
+    gap: 22px;
+    grid-template-columns: 1fr 0.8fr 1.5fr;
+  }
+  .tier-action {
+    grid-column: 3;
+  }
+  .advisory-section {
+    gap: 40px;
+  }
+}
+@media (max-width: 700px) {
+  .support-introduction {
+    padding: 32px 0 24px;
+  }
+  .support-intro-heading,
+  .support-hero,
+  .someone-grid,
+  .ai-support-columns,
+  .advisory-section,
+  .pricing-terms {
+    grid-template-columns: 1fr;
+    gap: 26px;
+  }
+  .support-intro-heading h2 {
+    font-size: 36px;
+  }
+  .support-preview {
+    grid-template-columns: 1fr;
+    margin-top: 24px;
+  }
+  .support-preview li + li {
+    border-left: 0;
+  }
+  .support-preview a {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    column-gap: 16px;
+    padding: 14px 12px;
+  }
+  .support-preview strong {
+    grid-column: 2;
+    grid-row: 1;
+    font-size: 28px;
+    margin: 0;
+  }
+  .support-preview span:nth-of-type(2) {
+    grid-column: 2;
+    grid-row: 2;
+    text-align: right;
+    font-size: 12px;
+  }
+  .support-preview p {
+    grid-column: 1;
+    grid-row: 2;
+    margin: 4px 0 0;
+  }
+  .support-hero {
+    padding-top: 30px;
+    padding-bottom: 32px;
+  }
+  .support-hero h1 {
+    font-size: clamp(35px, 9.5vw, 62px);
+  }
+  .support-portrait img {
+    max-height: 420px;
+  }
+  .someone-section,
+  .ai-support {
+    padding: 36px 0;
+  }
+  .support-pricing,
+  .advisory-section {
+    padding-top: 36px;
+    padding-bottom: 36px;
+  }
+  .pricing-row {
+    grid-template-columns: 1fr auto;
+    gap: 18px;
+    padding: 22px 14px;
+  }
+  .tier-name h3 {
+    font-size: 28px;
+  }
+  .tier-price strong {
+    font-size: 34px;
+  }
+  .tier-detail,
+  .tier-action {
+    grid-column: 1 / -1;
+  }
+  .pricing-terms {
+    gap: 10px;
+  }
+  .advisory-section aside {
+    border-left: 0;
+    border-top: 1px solid var(--line);
+    padding: 26px 0 0;
+  }
+  .support-hero-actions {
+    gap: 18px;
+  }
+}
+.support-enquiry .enquiry {
+  max-width: none;
+  width: 100%;
+}
+.someone-section .eyebrow {
+  color: #d9deec;
+}
+.ai-support .eyebrow {
+  color: var(--navy);
+}
+.readiness-extra {
+  font-size: 14px;
+  margin-top: 24px;
+}
+@media (max-width: 360px) {
+  .campaign-header.site-header {
+    padding-left: 12px;
+    padding-right: 12px;
+    gap: 8px;
+  }
+  .campaign-header .brand {
+    width: 112px;
+    flex-basis: 112px;
+  }
+  .campaign-header .header-review {
+    padding: 10px 8px;
+    font-size: 11px;
+    gap: 6px;
+  }
+  .campaign-header .menu-toggle {
+    font-size: 12px;
+    gap: 4px;
+  }
+  .director-opening {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .director-identity,
+  .director-first-job {
+    min-width: 0;
+  }
+  .director-identity h1 {
+    font-size: 14vw;
+  }
+}
+@media (max-width: 360px) {
+  .director-proposition em {
+    white-space: normal;
+  }
+}

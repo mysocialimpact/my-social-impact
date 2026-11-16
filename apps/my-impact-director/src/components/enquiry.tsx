@@ -1,14 +1,16 @@
 "use client";
 import { useState } from "react";
 import { useSession, api } from "./session";
-import { type Service } from "@/lib/services";
+import { services, type Service } from "@/lib/services";
 import { Arrow } from "./icons";
 import Link from "next/link";
 export function Enquiry({
   service,
   reviewId = null,
+  chooseService = false,
 }: {
   service: Service;
+  chooseService?: boolean;
   reviewId?: string | null;
 }) {
   const { user } = useSession(),
@@ -18,6 +20,7 @@ export function Enquiry({
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const f = new FormData(e.currentTarget);
+    const organisation = String(f.get("organisation") || "").trim();
     setBusy(true);
     setError("");
     try {
@@ -26,8 +29,8 @@ export function Enquiry({
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
-          service,
-          message: f.get("message"),
+          service: chooseService ? f.get("service") : service,
+          message: `${organisation ? `Organisation: ${organisation}\n\n` : ""}${String(f.get("message") || "")}`,
           reviewId,
           shareReview: f.get("share") === "on",
           contactConsent: f.get("contact") === "on",
@@ -74,6 +77,23 @@ export function Enquiry({
         </div>
       ) : (
         <form onSubmit={submit}>
+          {chooseService && (
+            <label>
+              I’m interested in
+              <select name="service" defaultValue={service}>
+                {Object.entries(services).map(([key, value]) => (
+                  <option key={key} value={key}>
+                    {value.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+          {!chooseService && (
+            <p className="enquiry-interest">
+              About: <strong>{services[service].name}</strong>
+            </p>
+          )}
           <div className="form-pair">
             <label>
               Your name
@@ -99,11 +119,19 @@ export function Enquiry({
             </label>
           </div>
           <label>
+            Organisation (optional)
+            <input
+              name="organisation"
+              autoComplete="organization"
+              maxLength={160}
+            />
+          </label>
+          <label>
             How can we help?
             <textarea
               name="message"
               minLength={10}
-              maxLength={5000}
+              maxLength={4800}
               required
               placeholder="A little context, and what you have in mind…"
             />

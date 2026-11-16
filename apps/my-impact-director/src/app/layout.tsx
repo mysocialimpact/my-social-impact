@@ -19,7 +19,7 @@ export const metadata: Metadata = {
     template: "%s | My Impact Director",
   },
   description:
-    "Making expert impact management affordable for every organisation. Start with a free impact report review. No registration required. Developed by My Social Impact.",
+    "Making expert impact management affordable for every organisation. Your own Impact Director, with human expertise and powerful AI. Start with a free impact report review. No registration required.",
 };
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
