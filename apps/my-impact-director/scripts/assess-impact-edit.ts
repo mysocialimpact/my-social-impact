@@ -1,3 +1,4 @@
+import { gzipSync } from "node:zlib";
 /** Paid calibration is opt-in. The default prints a cost/test plan and makes no model requests. */
 import fs from "node:fs/promises";
 import path from "node:path";
@@ -182,7 +183,20 @@ try {
       JSON.stringify({ budget, accounted, ledger }, null, 2),
     );
     try {
-      const response = await originalFetch(input, init);
+      const proxy = process.env.IMPACT_EDIT_CALIBRATION_PROXY;
+      const response = proxy
+        ? await originalFetch(proxy, {
+            method: "POST",
+            headers: {
+              "content-type": "application/octet-stream",
+              "content-encoding": "gzip",
+              authorization:
+                "Bearer " + process.env.IMPACT_EDIT_CALIBRATION_TOKEN,
+            },
+            body: gzipSync(Buffer.from(payload)),
+            signal: init?.signal,
+          })
+        : await originalFetch(input, init);
       entry.status = response.status;
       const data = await response
         .clone()
