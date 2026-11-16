@@ -80,7 +80,11 @@ for (const designed of [true, false]) {
       refs.push(ref);
     }
     text("FICTIONAL CALIBRATION FIXTURE / 2025", 50, 800, 9, true);
-    text(title, 50, 746, designed ? 34 : 25, true, "H1");
+    const titleSize = Math.min(
+      designed ? 34 : 25,
+      495 / bold.widthOfTextAtSize(title, 1),
+    );
+    text(title, 50, 746, titleSize, true, "H1");
     p.pushOperators(
       PDFOperator.of(PDFOperatorNames.BeginMarkedContent, [
         PDFName.of("Artifact"),

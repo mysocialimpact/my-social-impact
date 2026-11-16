@@ -11,6 +11,7 @@ import {
 } from "./report-verdict";
 import {
   visualSample,
+  normalComparisonPages,
   inspectVisualBatch,
   assessReportPillar,
   type VisualObservation,
@@ -108,6 +109,7 @@ export type ReviewResult = {
     pages: number[];
     totalPages: number;
     resolution: number;
+    normalComparisonPages?: number[];
     observations: VisualObservation[];
   };
   creativeDirection?: string;
@@ -401,6 +403,23 @@ export async function processOne(id?: string) {
                   .map((n) => n.page),
                 totalPages: pages!.length,
                 resolution: 1600,
+                ...(v2 &&
+                visualCoverage(
+                  pages!,
+                  notes.filter(
+                    (n) => (n as VisualObservation).kind === visualKind,
+                  ) as VisualObservation[],
+                )
+                  ? {
+                      normalComparisonPages: normalComparisonPages(
+                        pages!,
+                        notes.filter(
+                          (n) => (n as VisualObservation).kind === visualKind,
+                        ) as VisualObservation[],
+                        pdfChecks,
+                      ),
+                    }
+                  : {}),
                 observations: (notes as VisualObservation[]).filter(
                   (n) => n.kind === visualKind,
                 ),

@@ -11,6 +11,7 @@ import {
   REPORT_VERSION,
   reportWeights,
   reportV2Criteria,
+  validateReportAnchorReason,
 } from "../src/lib/report-methodology";
 import {
   visualSample,
@@ -57,6 +58,20 @@ const finding = (score = 3): Criterion[] =>
     confidence: "medium",
     claimIds: [],
   }));
+test("anchored reasoning cannot invent a higher execution scale", () => {
+  assert.doesNotThrow(() =>
+    validateReportAnchorReason(
+      "Anchor 4 is exceptional because the difficult comparison is immediately clear.",
+    ),
+  );
+  assert.throws(
+    () =>
+      validateReportAnchorReason(
+        "Anchor 5 is not justified without another feature.",
+      ),
+    /0–4/,
+  );
+});
 const editorial: EditorialVerdict = {
   verdict:
     "The report makes its purpose and outcomes clear without unnecessary decoration.",
@@ -202,6 +217,21 @@ test("v2 scoring receives actual images, anchored rubric and no unapproved exter
         content = body.messages[1].content,
         p = JSON.parse(content[0].text);
       assert.ok(content.some((x: { type: string }) => x.type === "image_url"));
+      assert.ok(
+        content.some((x: { text?: string }) =>
+          x.text?.includes("ENLARGED 1600px"),
+        ),
+      );
+      assert.ok(
+        content.some((x: { text?: string }) =>
+          x.text?.includes("NORMAL-SIZE full-page rendering at 96dpi"),
+        ),
+      );
+      const variants =
+        body.response_format.json_schema.schema.properties.findings.items.anyOf;
+      assert.equal(variants[0].properties.visualPages.minItems, 1);
+      assert.equal(variants[0].properties.status.const, "assessed");
+      assert.equal(variants[2].properties.score.type, "null");
       assert.match(body.messages[0].content, /Merely having a chart/);
       assert.match(
         p.criteria[0].guidance,
@@ -290,5 +320,27 @@ test("direct data scoring includes a critical table and dense chart pages, not j
   assert.deepEqual(
     new Set(scoreImagePages(pages, observations, 3, checks)),
     new Set([17, 5, 6, 1, 12, 23]),
+  );
+});
+
+test("v2 accepts a verified assessed obstruction at zero and renders real normal-size comparisons", async () => {
+  const b = await bytes();
+  const normal = await import("../src/lib/report-visual").then((m) =>
+    m.renderVisualPages(b, [1], 0),
+  );
+  assert.equal(
+    Buffer.from(normal[0].dataUrl.split(",")[1], "base64").readUInt32BE(16),
+    793,
+  );
+  const f = finding();
+  f[0] = { ...f[0], score: 0, barrier: "serious" };
+  const { validateFindings } = await import("../src/lib/assessment");
+  assert.equal(
+    validateFindings(f, "report", [page], [], undefined, REPORT_VERSION)[0]
+      .score,
+    0,
+  );
+  assert.throws(() =>
+    validateFindings(f, "report", [page], [], undefined, "1.0.0"),
   );
 });

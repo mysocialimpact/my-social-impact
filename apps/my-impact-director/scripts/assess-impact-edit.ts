@@ -6,6 +6,7 @@ import { extractPages } from "../src/lib/documents";
 import { inspectPdfChecks } from "../src/lib/report-accessibility";
 import {
   visualSample,
+  normalComparisonPages,
   inspectVisualBatch,
   assessReportPillar,
   type VisualObservation,
@@ -329,6 +330,16 @@ try {
           pages: numbers,
           totalPages: input.pages.length,
           resolution: 1600,
+          ...(version === REPORT_VERSION &&
+          visualCoverage(input.pages, observations)
+            ? {
+                normalComparisonPages: normalComparisonPages(
+                  input.pages,
+                  observations,
+                  checks,
+                ),
+              }
+            : {}),
           observations,
         },
         ...(editorial

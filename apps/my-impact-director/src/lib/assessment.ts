@@ -168,7 +168,7 @@ export function validateFindings(
     if (
       f.status === "assessed" &&
       (f.score === null ||
-        f.score === 0 ||
+        (f.score === 0 && !(framework === "report" && isReportV2(version))) ||
         (!f.evidence.length &&
           !(framework === "report" && f.visualPages?.length)))
     )

@@ -3,6 +3,7 @@ import {
   isReportV2,
   reportV2Criteria,
   reportV2Anchors,
+  validateReportAnchorReason,
 } from "./report-methodology";
 import type { PdfChecks } from "./report-accessibility";
 import { reportGuidance } from "./report-guidance";
@@ -56,7 +57,11 @@ export function visualSample(pages: Page[], version = REPORT_VERSION) {
   }
   return [...selected].sort((a, b) => a - b);
 }
-export async function renderVisualPages(bytes: Buffer, numbers: number[]) {
+export async function renderVisualPages(
+  bytes: Buffer,
+  numbers: number[],
+  width = 1600,
+) {
   const CanvasFactory = await createIsomorphicCanvasFactory(
     () => import("@napi-rs/canvas"),
   );
@@ -71,7 +76,12 @@ export async function renderVisualPages(bytes: Buffer, numbers: number[]) {
       if (page < 1 || page > pdf.numPages)
         throw Error("Visual page out of range");
       const dataUrl = await renderPageAsImage(pdf, page, {
-        width: 1600,
+        width:
+          width === 0
+            ? Math.round(
+                (await pdf.getPage(page)).getViewport({ scale: 96 / 72 }).width,
+              )
+            : width,
         toDataURL: true,
         canvasImport: () => import("@napi-rs/canvas"),
       });
@@ -249,29 +259,75 @@ export async function assessReportPillar(
   const allowedVisualPages = inspected.length
     ? z.array(z.literal(inspected as [number, ...number[]])).max(12)
     : z.array(z.number().int().positive()).max(0);
-  const stageSchema = schema
+  const baseFinding = schema.shape.findings.element
     .extend({
-      findings: z
-        .array(
-          schema.shape.findings.element
-            .extend({
-              visualPages: allowedVisualPages,
-              ...(isReportV2(version)
-                ? {
-                    anchorReason: z.string().min(20).max(3000),
-                    barrier: z.enum(["none", "serious"]),
-                  }
-                : {}),
-            })
-            .strict(),
-        )
-        .length(5),
+      visualPages: allowedVisualPages,
+      ...(isReportV2(version)
+        ? {
+            evidenceIds: passages.length
+              ? z
+                  .array(
+                    z.literal(
+                      passages.map((p) => p.id) as [string, ...string[]],
+                    ),
+                  )
+                  .max(8)
+              : z.array(z.string()).max(0),
+          }
+        : {}),
+      ...(isReportV2(version)
+        ? {
+            anchorReason: z.string().min(20).max(3000),
+            barrier: z.enum(["none", "serious"]),
+          }
+        : {}),
     })
     .strict();
+  const findingSchema = isReportV2(version)
+    ? z.union([
+        baseFinding.extend({
+          status: z.literal("assessed"),
+          score: z.number().int().min(0).max(4),
+          visualPages: allowedVisualPages.min(1),
+        }),
+        baseFinding.extend({
+          status: z.literal("not_demonstrated"),
+          score: z.literal(0),
+          visualPages: allowedVisualPages.min(1),
+        }),
+        baseFinding.extend({
+          status: z.enum(["not_applicable", "unassessable"]),
+          score: z.null(),
+        }),
+      ])
+    : baseFinding;
+  const stageSchema = schema
+    .extend({
+      findings: z.array(findingSchema).length(5),
+    })
+    .strict();
+  const enlargedPages = scoreImagePages(pages, observations, principle, checks);
+  const normalPages =
+    isReportV2(version) && [0, 3, 4].includes(principle)
+      ? enlargedPages.slice(0, 2)
+      : [];
+  const images =
+    isReportV2(version) && bytes
+      ? [
+          ...(await renderVisualPages(bytes, enlargedPages)).map((image) => ({
+            ...image,
+            view: "ENLARGED 1600px full-page rendering; compare with the labelled 96dpi view of the same page where supplied",
+          })),
+          ...(await renderVisualPages(bytes, normalPages, 0)).map((image) => ({
+            ...image,
+            view: "NORMAL-SIZE full-page rendering at 96dpi; compare with the labelled enlarged view of this same physical page",
+          })),
+        ]
+      : [];
   const response = await structured(
     stageSchema,
     isReportV2(version)
-      ? `Assess The Impact Edit v2 using only the attached actual page images, verified PDF checks, source passages and inspected observations. Score execution against each criterion's specific anchored 0/1/2/3/4 descriptions: 2 is adequate, 3 strong, 4 exceptional. Merely having a chart, contents, photographs or consistent colours never earns 3 or 4. For each criterion, explanation must discuss a concrete strength and weakness (or explicitly explain why no material weakness was observed), physical pages, practical consequences and a specific improvement. anchorReason must explain why the selected anchor fits and why the next higher anchor is not justified (or why 4 is exceptional). Keep domains separate: physical body text legibility R1, typographic craft V2, chart label readability D2; do not penalise the same defect again under other pillars. Judge accessible communication, not underlying impact validity. Preserve genuine candour and authentic material as strengths. Simple, modest, text-led reports can be exceptional. For every assessable criterion supply actual inspected visualPages; writing judgements also cite exact source evidenceIds. Use unassessable/null when evidence is unavailable, never infer failure from OCR. Score 0 only for verified absence or serious obstruction, using not_demonstrated. A serious observed readability/accessibility obstruction must set barrier=serious on its own criterion; other criteria use none. A5 is always unassessable because no screen-reader/user test was performed. Tags alone do not prove logical order or useful alt descriptions; A3/A4 need the supplied verified checks plus source/visual examination and must disclose unverified semantics. Mark unsupported technical judgements unassessable, not adequate. No claimIds. Correct any previousValidationFailure. Never invent quotations, unseen pages or technical tests.`
+      ? `Assess The Impact Edit v2 using only the attached actual page images, verified PDF checks, source passages and inspected observations. Score execution against each criterion's specific anchored 0/1/2/3/4 descriptions: 2 is adequate, 3 strong, 4 exceptional. All anchor comparisons must use only the provided 0–4 scale. For 4, explain the exceptional execution without a higher-anchor comparison. Merely having a chart, contents, photographs or consistent colours never earns 3 or 4. For each criterion, explanation must discuss a concrete strength and weakness (or explicitly explain why no material weakness was observed), physical pages, practical consequences and a specific improvement. anchorReason must explain why the selected anchor fits and why the next higher anchor is not justified (or why 4 is exceptional). For a 3 or 4, also identify the execution quality that exceeds anchor 2 (adequate); a contents page, matching colours or orderly routine formatting alone is not enough. Keep domains separate: physical body text legibility R1, typographic craft V2, chart label readability D2; do not penalise the same defect again under other pillars. Judge accessible communication, not underlying impact validity. Preserve genuine candour and authentic material as strengths. Simple, modest, text-led reports can be exceptional. For every assessable criterion supply actual inspected visualPages; writing judgements also cite exact source evidenceIds. Use unassessable/null when evidence is unavailable, never infer failure from OCR. Score 0 only for verified absence or serious obstruction. Assessed/0 is valid for an observed serious obstruction; not_demonstrated/0 means a verified absence. Never put visual descriptions in evidenceIds; select only the literal source-passage IDs or use an empty list for a purely visual judgement. A serious observed readability/accessibility obstruction must set barrier=serious on its own criterion; other criteria use none. R5 judges visible grouping and scanning, not assistive technology: missing user tests cannot exclude it. A2 judges the supplied paired full-page normal-size (96dpi) and enlarged renderings: assess preserved visual relationships and legibility, while disclosing that interactive zoom and reflow were not functionally tested. A3 compares supplied tagged-text order with the visible page and source; it does not require a screen-reader test. A4 assesses available descriptions and adjacent textual equivalents; it does not require an assistive user test. Only A5 is always unassessable because no screen-reader/user test was performed. Do not copy A5's testing limitation into observable criteria as a reason to withhold their scores. Tags alone do not prove logical order or useful alt descriptions; A3/A4 need the supplied verified checks plus source/visual examination and must disclose unverified semantics. Mark unsupported technical judgements unassessable, not adequate. No claimIds. Correct any previousValidationFailure. Never invent quotations, unseen pages or technical tests.`
       : `Assess these five Impact Report Excellence v1.0 criteria. This is editorial communication quality, not evidence validity or organisational maturity. Anchors: ${JSON.stringify(reportAnchors)}. All findings need specific issue, why it matters, physical pages and a practical improvement. Select exact evidenceIds for writing observations; visualPages must refer only to supplied readable visual observations. All Design criteria and E1/E2/E3/M2 require visualPages for assessed scores. Use assessed scores 1-4, not_demonstrated score 0 only when absence is established across a fully readable report; otherwise unassessable/null. Excluded findings need limitations. No claimIds. Simple, black-and-white, short and low-budget reports can excel. Do not demand contents for short reports, interactive features for PDFs, or photographs/personal stories when inappropriate. Ethical, dignified storytelling matters; don't reward manipulation. Do not infer poor design from OCR limitations. If visual sampling misses material needed for a whole-report judgement, use unassessable or explain limited confidence. Never extrapolate unseen design. If unreadablePages is nonempty, never use not_demonstrated: choose unassessable/null for unsupported absence. If previousValidationFailure is set, correct that precise validation issue. Only use original physical page numbers actually present in visualObservations, never invent pages or use excerpt numbering. Refer to physical page numbers, not observation IDs.`,
     {
       context,
@@ -297,18 +353,29 @@ export async function assessReportPillar(
               principle,
               checks,
             ),
+            imageViews: [
+              ...enlargedPages.map((page) => ({
+                page,
+                view: "enlarged 1600px rendering",
+              })),
+              ...normalPages.map((page) => ({
+                page,
+                view: "full page at 96dpi normal-size rendering",
+              })),
+            ],
           }
         : {}),
     },
     undefined,
-    isReportV2(version) && bytes
-      ? await renderVisualPages(
-          bytes,
-          scoreImagePages(pages, observations, principle, checks),
-        )
-      : [],
+    images,
   );
-  const findings = resolveFindings(response.data, passages).map((f, i) => ({
+  const referenced = {
+    findings: response.data.findings.map((f) => ({
+      ...f,
+      evidenceIds: z.array(z.string()).parse(f.evidenceIds),
+    })),
+  };
+  const findings = resolveFindings(referenced, passages).map((f, i) => ({
     ...f,
     visualPages: response.data.findings[i].visualPages,
     ...(isReportV2(version)
@@ -341,6 +408,7 @@ export async function assessReportPillar(
     for (const f of findings) {
       if (!f.anchorReason || !f.barrier)
         throw Error("Anchored execution reasoning required");
+      validateReportAnchorReason(f.anchorReason);
       if (
         f.id === "report.5.3" &&
         f.score !== null &&
@@ -441,4 +509,18 @@ export function scoreImagePages(
   ]
     .filter((n) => readable.has(n))
     .slice(0, 6);
+}
+
+export function normalComparisonPages(
+  pages: Page[],
+  observations: VisualObservation[],
+  checks?: PdfChecks,
+) {
+  return [
+    ...new Set(
+      [0, 3, 4].flatMap((p) =>
+        scoreImagePages(pages, observations, p, checks).slice(0, 2),
+      ),
+    ),
+  ];
 }

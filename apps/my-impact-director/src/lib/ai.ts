@@ -51,7 +51,7 @@ export async function structured<T extends z.ZodType>(
   instructions: string,
   input: unknown,
   pdf?: Buffer,
-  images: { page: number; dataUrl: string }[] = [],
+  images: { page: number; dataUrl: string; view?: string }[] = [],
 ): Promise<AIResult<z.infer<T>>> {
   const start = Date.now(),
     model = process.env.AI_MODEL || "openai/gpt-5.4-mini";
@@ -68,7 +68,10 @@ export async function structured<T extends z.ZodType>(
     });
   for (const image of images)
     content.push(
-      { type: "text", text: `Original physical PDF page ${image.page}` },
+      {
+        type: "text",
+        text: `Original physical PDF page ${image.page}${image.view ? `; ${image.view}` : ""}`,
+      },
       { type: "image_url", image_url: { url: image.dataUrl, detail: "high" } },
     );
   const response = await fetch(

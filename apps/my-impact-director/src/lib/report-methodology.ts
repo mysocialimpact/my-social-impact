@@ -16,6 +16,10 @@ export const reportV2Anchors = [
   "Strong",
   "Exceptional",
 ] as const;
+export function validateReportAnchorReason(reason: string) {
+  if (/\banchor\s*(?:[5-9]|[1-9]\d+|five)\b/i.test(reason))
+    throw Error("Execution reasoning must use only the supplied 0–4 anchors");
+}
 // 0/1/2/3/4 anchors describe execution. Presence of a device earns no automatic credit.
 const definitions = [
   [

@@ -237,6 +237,13 @@ export async function exportPdf(result: ReviewResult) {
     write(
       `Rendered at ${result.visualInspection.resolution}px width. Physical pages inspected: ${result.visualInspection.pages.join(", ")} of ${result.visualInspection.totalPages}. Representative sampling does not verify unseen pages.`,
     );
+    if (result.visualInspection.normalComparisonPages?.length)
+      write(
+        "Normal-size 96dpi versus enlarged comparison on PDF pages " +
+          result.visualInspection.normalComparisonPages.join(", ") +
+          ". Interactive zoom and reflow were not functionally tested.",
+        9,
+      );
     for (const o of result.visualInspection.observations)
       write(`PDF page ${o.page}: ${o.description} ${o.limitations}`);
     write("Suggested creative direction", 20, "bold");

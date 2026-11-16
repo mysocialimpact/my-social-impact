@@ -1,63 +1,19 @@
-// Synthetic UI contracts only. All API calls are intercepted; no model or email transport is used.
+// Replays stored v1 and actual paid-calibration v2 results. All API calls are intercepted; no model or email transport is used.
 import { chromium } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import fs from "node:fs/promises";
 import assert from "node:assert/strict";
-const base = process.argv[2] || "http://localhost:3016",
+const base = process.argv[2] || "http://localhost:3019",
   old = JSON.parse(
     await fs.readFile("artifacts/impact-edit-v2/original-profit.json", "utf8"),
   ).result,
-  ref = JSON.parse(
+  next = JSON.parse(
     await fs.readFile(
-      "artifacts/impact-edit-v2/offline-reference.json",
+      "artifacts/impact-edit-v2/paid/Profit-Impact-2026-Impact-Report--1--v2.0.0.json",
       "utf8",
     ),
-  )[0];
-const next = {
-  ...structuredClone(old),
-  version: "2.0.0",
-  actions: {
-    ...old.actions,
-    summary:
-      "Offline v2 UI reference, not a model assessment. The report contains candid material, but the opening, visual execution and data displays need substantial improvement.",
-    strengths: ["Candid discussion of weaknesses and authentic material."],
-    opportunities: [
-      "Bring achieved outcomes forward and improve chart and table communication.",
-    ],
-  },
-  scores: { report: ref.next },
-  rating: {
-    label: "Needs substantial improvement",
-    reasons: [
-      "A serious readability or accessibility barrier remains unresolved.",
-    ],
-    readerTestPassed: false,
-    rule: "Excellent requires a raw total of at least 80, no weak pillar, no serious barrier and a successful simulated reader test. The numerical total is unchanged.",
-  },
-  editorial: {
-    verdict:
-      "The report contains authentic material and candid weaknesses, but its opening and data displays require substantial editorial work.",
-    attention:
-      "Late, loosely structured human material makes sustained reading harder than it needs to be.",
-    scoreConsistency: "consistent",
-    scoreExplanation:
-      "The low reference total matches the effort needed to locate outcomes and caveats.",
-    readerTest: Object.fromEntries(
-      ["outcomes", "scale", "limitations", "nextSteps"].map((x, i) => [
-        x,
-        {
-          finding:
-            "The reader must assemble relevant information from several sections.",
-          page: [3, 6, 16, 21][i],
-          access: "effortful",
-        },
-      ]),
-    ),
-  },
-  pdfChecks: JSON.parse(
-    await fs.readFile("artifacts/impact-edit-v2/profit-checks.json", "utf8"),
-  ),
-};
+  ).result;
+assert.equal(next.version, "2.0.0");
 const b = await chromium.launch({
   executablePath: "/usr/bin/chromium",
   args: ["--no-sandbox"],
@@ -149,10 +105,14 @@ try {
         .getByRole("heading", { name: "The headline snapshot", exact: true })
         .waitFor();
       await p.locator(".score-value").first().waitFor();
-      assert.match(
-        await p.locator(".score-value").first().innerText(),
-        version === "1.0.0" ? /^84\b/ : /^39\.63\b/,
-      );
+      const total = result.scores.report.overall;
+      const displayed = await p.locator(".score-value").first().innerText();
+      if (total === null) assert.match(displayed, /—|–|Pending|Provisional/i);
+      else
+        assert.ok(
+          displayed.startsWith(String(total)),
+          `Expected ${total}, saw ${displayed}`,
+        );
       if (version === "2.0.0") {
         assert.ok(
           (await p.locator(".score-card").first().innerText()).includes("/ 25"),

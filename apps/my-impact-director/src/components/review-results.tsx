@@ -458,6 +458,14 @@ export function ReviewResults({
             representative and targeted sampling; unseen pages are not visually
             verified.
           </p>
+          {result.visualInspection.normalComparisonPages?.length && (
+            <p>
+              Normal-size 96dpi and enlarged renderings were compared on PDF
+              pages {result.visualInspection.normalComparisonPages.join(", ")}.
+              Interactive zoom, reflow and assistive-user behaviour were not
+              functionally tested.
+            </p>
+          )}
           {result.visualInspection.observations.map((o) => (
             <details key={o.page}>
               <summary>PDF page {o.page} · visual observations</summary>
