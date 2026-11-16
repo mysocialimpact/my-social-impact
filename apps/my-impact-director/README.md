@@ -14,6 +14,14 @@ The processing-retry investigation found an existing Claims job whose model outp
 
 Validation before release: production build, type checking, 26 unit checks and 17 database checks pass. The latter includes existing verified-session reuse, private acceptance/failure state and idempotent delivery. Ten browser contracts cover both frameworks at 1440×900, 1366×768, 1280×720, 390×844 and 640×400, including all seventy learning screens, snapshots, keyboard focus, return navigation, contact anchors, portrait loading and mobile menus. All standard desktop/laptop learning panels have zero overflow; small viewports use internal scrolling. Browser errors, horizontal overflow and axe violations are absent in the tested contracts. Separate interaction checks cover confirmation errors/retry, dialog Escape, immediate ready results and delivery retry/status. These use synthetic transports; genuine production verification is recorded after deployment.
 
+### Genuine production verification of the immersive release
+
+A new anonymous browser uploaded the public 17-page Small Charity Support report with `understanding_ready=false`, chose Claims Code and submitted the authorised internal test email while document understanding was still processing. The verification email arrived with no PDF; confirming it removed the form. Both browser sessions were closed. The durable document job completed its seven extraction/visual/context/claims stages once, and the selected Claims assessment completed independently. The separate Excellence assessment then reused document understanding and the verified address, with no upload or repeated email form.
+
+Both assessments completed twenty findings. Scores were recalculated from their validated tests; every source citation was checked; the separate 30-page Claims and 31-page Excellence PDFs contain all twenty questions and complete cited passages. Actual report emails arrived at `marcus@mysocialimpact.org`, and both received PDF attachments were inspected for the correct organisation and methodology. A private return link opened both full reports in a fresh browser without saved state or a password. Each outbox record remains one accepted delivery and one attempt after return-link redemption. The anonymous upload browser still receives useful snapshots and 403 for detailed exports. No customer or marketing communications were sent.
+
+The previously failed Claims review also completed after one bounded operational retry under the clarified prompt, retaining its validation checks: nineteen criteria were assessable and one was unassessable. Temporary provider HTTP 429 responses paused work and cron resumed it automatically; provider quotas were not reset. Production desktop/phone checks confirm the contact anchor clears the header, the genuine portrait loads, the confirmed locations and email are correct, enquiry routes work and both branded footer attributions remain. Their axe and browser-error checks are clean. Broader professional model calibration remains incomplete, as described below.
+
 ## Two independent reviews
 
 New uploads create a document-understanding job. Extraction, visual interpretation, organisational context and material claims are retained once on the private report. Visitors explicitly select Claims Code or Excellence, with separate durable assessment jobs, results and twenty-criterion PDF exports. Starting the other methodology reuses that same document understanding. Existing combined reviews retain their full access and exports.
@@ -44,7 +52,11 @@ The Vercel connector refused creation of a Blob store (403), and no authenticate
 
 ## Release status
 
-The two-review experience is live at **https://www.myimpactdirector.com**, deployment `dpl_EJV2fVcEGb4NesR91Emd4ozqGtxn`, runtime commit `a647844` (15 November 2026). Migration 004 is applied to production with restricted runtime grants. Existing combined reviews and the 50 MB uploader remain supported.
+The immersive review and human-contact release is live at **https://www.myimpactdirector.com**, production deployment `dpl_H8YzieRfpxaSSrzdpVd3t4FJBM2W`, runtime commit `11e28ee` (16 November 2026). It includes the full-viewport journeys, early email service, delivery controls, genuine Marcus contact section and confirmed Somerset/London/Kampala locations. Current production verification is recorded above. No schema migration was needed for this release.
+
+Previous two-review release verification (15 November 2026):
+
+The two-review experience was released at **https://www.myimpactdirector.com**, deployment `dpl_EJV2fVcEGb4NesR91Emd4ozqGtxn`, runtime commit `a647844` (15 November 2026). Migration 004 is applied to production with restricted runtime grants. Existing combined reviews and the 50 MB uploader remain supported.
 
 Genuine production verification used the public 17-page Small Charity Support 2024 report. Claims Code and Excellence were consciously started as separate jobs, reused its saved document understanding and each completed twenty findings in six model stages. Both scores were recalculated from the validated findings, every citation checked against the source, and their separate 30-page and 29-page PDFs checked for all twenty questions and complete source passages. Their estimated additional model costs were $0.060526 and $0.064378. The methodology was not adjusted to these results.
 
