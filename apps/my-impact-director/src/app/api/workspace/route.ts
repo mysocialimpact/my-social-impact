@@ -19,6 +19,8 @@ export async function POST(req: Request) {
     const { sameOrigin } = await import("@/lib/security");
     sameOrigin(req);
     const user = await visitor(req);
+    const { adoptCurrentReports } = await import("@/lib/account-workspace");
+    await adoptCurrentReports(req, user);
     const { query } = await import("@/lib/db");
     await query("UPDATE director.users SET last_seen=now() WHERE id=$1", [
       user.id,

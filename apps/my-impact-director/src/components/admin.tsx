@@ -19,6 +19,10 @@ type AdminData = {
   users: {
     id: string;
     email_verified_at?: string | null;
+    opted_in?: boolean;
+    consent_at?: string;
+    wording_version?: string;
+    shares_generated?: string;
     name: string;
     email: string;
     organisation: string;
@@ -136,6 +140,9 @@ export function Admin() {
             {[
               ["users", "Registered users"],
               ["organisations", "Reported organisations"],
+              ["verified_accounts", "Verified password accounts"],
+              ["marketing_opt_ins", "Marketing opt-ins"],
+              ["shares_generated", "Share links generated"],
               ["reviews", "Assessments"],
               ["completed", "Completed"],
               ["pending", "In progress"],
@@ -454,7 +461,9 @@ export function Admin() {
                   <tr>
                     <th>Name</th>
                     <th>Email</th>
-                    <th>Organisation</th>
+                    <th>Organisation · self supplied</th>
+                    <th>Optional marketing</th>
+                    <th>Secure shares</th>
                     <th>Last active</th>
                   </tr>
                 </thead>
@@ -471,6 +480,16 @@ export function Admin() {
                         </p>
                       </td>
                       <td>{u.organisation || "Not supplied"}</td>
+                      <td>
+                        {u.opted_in ? "Opted in" : "Not subscribed"}
+                        {u.consent_at && (
+                          <p>
+                            {new Date(u.consent_at).toLocaleDateString("en-GB")}{" "}
+                            · {u.wording_version}
+                          </p>
+                        )}
+                      </td>
+                      <td>{u.shares_generated || "0"}</td>
                       <td>
                         {new Date(u.last_seen).toLocaleDateString("en-GB")}
                       </td>

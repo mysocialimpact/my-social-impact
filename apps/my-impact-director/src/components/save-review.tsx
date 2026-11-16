@@ -1,7 +1,7 @@
 "use client";
-import { useEffect, useState } from "react";
-import { api, useSession } from "./session";
-import { Arrow } from "./icons";
+import Link from "next/link";
+import { useSession } from "./session";
+import { Account } from "./account";
 export function SaveReview({
   id,
   returning = false,
@@ -9,137 +9,85 @@ export function SaveReview({
   id?: string;
   returning?: boolean;
 }) {
-  const { user } = useSession();
-  const [enabled, setEnabled] = useState<boolean | null>(null),
-    [sent, setSent] = useState(false),
-    [busy, setBusy] = useState(false),
-    [error, setError] = useState("");
-  useEffect(() => {
-    let active = true;
-    api("/api/save")
-      .then((d) => {
-        if (active) setEnabled(d.emailEnabled);
-      })
-      .catch(() => {
-        if (active) setEnabled(false);
-      });
-    return () => {
-      active = false;
-    };
-  }, []);
-  async function submit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const email = new FormData(e.currentTarget).get("email");
-    setBusy(true);
-    setError("");
-    try {
-      await api("/api/visitor", { method: "POST" });
-      const result = await api("/api/save", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          email,
-          account: true,
-          ...(id ? { reviewId: id } : {}),
-        }),
-      });
-      if (result.verified) {
-        window.location.assign(id ? "/reviews/" + id : "/reviews");
-        return;
-      }
-      setSent(true);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Please try again.");
-    } finally {
-      setBusy(false);
-    }
-  }
+  const { user, loading } = useSession();
+  if (loading) return <p role="status">Opening your account options…</p>;
   if (user?.emailVerified)
     return (
       <section className="workspace-saved">
-        <strong>Your workspace is saved.</strong>
+        <strong>Your assessment is saved.</strong>
         <p>
-          Signed in as {user.email}. Reports are retained until their displayed
-          deletion dates. Completed detailed reviews are delivered to this
-          address.
+          We’ll email your full report to {user.email} when it’s ready. You can
+          close this page and return to My Reports on any device.
         </p>
+        {!user.passwordAccount && (
+          <Link href="/register">Create a password for this account →</Link>
+        )}
+      </section>
+    );
+  if (user && !user.anonymous)
+    return (
+      <section className="verification-nudge">
+        <h2>Confirm your email. Keep your reports.</h2>
+        <p>
+          Your account is ready. Confirm {user.email} once to save your work,
+          download full assessments and receive completed reports.
+        </p>
+        <Link href="/verify-email" className="button primary">
+          Check your inbox & confirm email →
+        </Link>
+      </section>
+    );
+  if (returning)
+    return (
+      <section className="reports-welcome">
+        <p className="eyebrow">YOUR FREE PERSONAL WORKSPACE</p>
+        <h1>
+          Your reports.
+          <br />
+          Your progress.
+          <br />
+          <span>Your Impact Director.</span>
+        </h1>
+        <p>
+          Log in to pick up where you left off, or create a free account to
+          start saving your work.
+        </p>
+        <div className="toolbar">
+          <Link href="/login" className="button primary">
+            Log in →
+          </Link>
+          <Link href="/register" className="button secondary">
+            Create free account →
+          </Link>
+        </div>
+        {user?.anonymous && (
+          <p className="report-adoption-note">
+            Your current report is still here. Create an account and confirm
+            your email to keep it across devices.
+          </p>
+        )}
       </section>
     );
   return (
-    <section
-      className={"keep-review " + (returning ? "return-review" : "")}
-      id={returning ? "login" : id ? "keep-review" : undefined}
-    >
+    <section className="processing-account" id="keep-review">
       <div>
-        <p className="eyebrow">
-          {returning
-            ? "PICK UP WHERE YOU LEFT OFF"
-            : "YOURS TO KEEP. ENTIRELY OPTIONAL."}
-        </p>
-        <h2>
-          {returning
-            ? "Log in to your Impact Director."
-            : "Make this your Impact Director."}
-        </h2>
+        <p className="eyebrow">YOUR FULL REPORTS. FREE.</p>
+        <h2>Your Impact Director is working on your report.</h2>
         <p>
-          {returning
-            ? "Find your saved reports, check their progress and continue a review. Enter your email and we’ll send a secure sign-in link. No password required."
-            : "Save your reports, track your reviews and pick up where you left off — on any device. One secure email link, no password. The same verified address receives your completed detailed reports."}
+          Create your free account and we’ll email your full assessment when
+          it’s ready. You can close this page and return whenever you like.
         </p>
+        <ul>
+          <li>Save your document and all three assessments.</li>
+          <li>Download and securely share your findings.</li>
+          <li>Pick up where you left off on any device.</li>
+        </ul>
       </div>
-      <div>
-        {sent ? (
-          <div className="email-confirmation" role="status">
-            <h3>Check your inbox.</h3>
-            <p>
-              {returning
-                ? "A secure sign-in link is on its way. Confirm it within 30 minutes to open your workspace."
-                : "Confirm your address using the private link within 30 minutes. Your detailed report will then be delivered and retained for 180 days."}
-            </p>
-          </div>
-        ) : enabled ? (
-          <form onSubmit={submit}>
-            <label>
-              Email address
-              <input
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                maxLength={254}
-                placeholder="you@yourorganisation.org"
-              />
-            </label>
-            <button className="button primary" disabled={busy}>
-              {busy
-                ? "Sending…"
-                : returning
-                  ? "Send my sign-in link"
-                  : "Save my workspace — send a sign-in link"}
-              <Arrow />
-            </button>
-            <p className="fine-print">
-              No marketing. No password.{" "}
-              {id
-                ? "The email includes your assessment and private access to this review."
-                : "The link expires after 30 minutes."}
-            </p>
-          </form>
-        ) : (
-          <p className="email-unavailable">
-            {enabled === null
-              ? "Checking email availability…"
-              : "Email saving isn’t available yet."}{" "}
-            {id &&
-              "You can download your full PDF now. Your browser access continues until the deletion date below."}
-          </p>
-        )}
-        {error && (
-          <p className="alert error" role="alert">
-            {error}
-          </p>
-        )}
-      </div>
+      <Account
+        initialMode="signup"
+        compact
+        next={id ? "/reviews/" + id : "/reviews"}
+      />
     </section>
   );
 }

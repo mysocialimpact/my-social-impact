@@ -7,19 +7,34 @@ export function useSession() {
     [error, setError] = useState("");
   useEffect(() => {
     const c = new AbortController();
-    fetch("/api/account", { signal: c.signal })
-      .then(async (r) => {
-        const d = await r.json();
-        if (!r.ok) throw new Error(d.error);
-        setUser(d.user);
-      })
-      .catch((e) => {
-        if (!c.signal.aborted) setError(e.message);
-      })
-      .finally(() => {
-        if (!c.signal.aborted) setLoading(false);
-      });
-    return () => c.abort();
+    let timer: ReturnType<typeof setTimeout>;
+    const refresh = () => {
+      clearTimeout(timer);
+      fetch("/api/account", { signal: c.signal, cache: "no-store" })
+        .then(async (r) => {
+          const d = await r.json();
+          if (!r.ok) throw new Error(d.error);
+          setUser(d.user);
+          setError("");
+          if (d.user && !d.user.anonymous && !d.user.emailVerified)
+            timer = setTimeout(refresh, 5000);
+        })
+        .catch((e) => {
+          if (!c.signal.aborted) setError(e.message);
+        })
+        .finally(() => {
+          if (!c.signal.aborted) setLoading(false);
+        });
+    };
+    refresh();
+    window.addEventListener("mid-session-refresh", refresh);
+    window.addEventListener("focus", refresh);
+    return () => {
+      c.abort();
+      clearTimeout(timer);
+      window.removeEventListener("focus", refresh);
+      window.removeEventListener("mid-session-refresh", refresh);
+    };
   }, []);
   return { user, loading, error };
 }

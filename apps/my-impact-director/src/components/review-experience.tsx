@@ -1,4 +1,5 @@
 "use client";
+import { ShareReview } from "./share-review";
 import { CreativeCaveat } from "./creative-caveat";
 import { SaveReview } from "./save-review";
 import { useSearchParams } from "next/navigation";
@@ -176,153 +177,22 @@ function EmailInvitation({
   delivery?: ExperienceReview["delivery"];
   modal?: boolean;
 }) {
-  const { user } = useSession();
-  const [enabled, setEnabled] = useState<boolean | null>(null),
-    [sent, setSent] = useState(false),
-    [reusedVerification, setReusedVerification] = useState(false),
-    [error, setError] = useState(""),
-    [busy, setBusy] = useState(false);
-  useEffect(() => {
-    let live = true;
-    api("/api/save")
-      .then((d) => {
-        if (live) setEnabled(d.emailEnabled);
-      })
-      .catch(() => {
-        if (live) setEnabled(false);
-      });
-    return () => {
-      live = false;
-    };
-  }, []);
   return (
-    <section className="review-email" id={modal ? undefined : "email-delivery"}>
-      <div>
-        <h2>
-          {full || reusedVerification
-            ? "Email confirmed."
-            : "Your full report, emailed."}
-        </h2>
-        <p>
-          {full || reusedVerification
-            ? "We’ll send your complete report as soon as it’s ready. You can continue exploring or leave this page."
-            : "Confirm your email. We’ll send your full report when it’s ready. You can close this page and get on with your day."}
+    <section
+      className="review-account-invitation"
+      id={modal ? undefined : "email-delivery"}
+    >
+      <SaveReview id={id} />
+      {full && delivery?.state === "failed" && (
+        <p className="alert">
+          Email delivery needs attention. You can download your full report from
+          the results below.
         </p>
-      </div>
-      <div>
-        {full || reusedVerification ? (
-          <div role="status">
-            <p>Your address is verified for this report.</p>
-            {delivery?.state === "accepted" ? (
-              <p>
-                The email service has accepted your full report for delivery.
-                Check your inbox or spam folder.
-              </p>
-            ) : delivery?.state === "failed" ? (
-              <>
-                <p>
-                  We’re sorry — your report is ready, but email delivery could
-                  not be completed. You can download it from your results or
-                  retry delivery.
-                </p>
-                <button
-                  className="button primary"
-                  disabled={busy}
-                  onClick={async () => {
-                    setBusy(true);
-                    setError("");
-                    try {
-                      await api("/api/reviews/" + id, {
-                        method: "POST",
-                        headers: { "content-type": "application/json" },
-                        body: JSON.stringify({ action: "retry-delivery" }),
-                      });
-                      setSent(true);
-                      window.dispatchEvent(new Event("mid-review-refresh"));
-                    } catch (e) {
-                      setError(
-                        e instanceof Error ? e.message : "Please try again.",
-                      );
-                    } finally {
-                      setBusy(false);
-                    }
-                  }}
-                >
-                  {sent ? "Delivery retry requested" : "Retry email delivery"}
-                </button>
-              </>
-            ) : (
-              <p>
-                We’ll email your complete report as soon as it’s ready. You can
-                leave this page.
-              </p>
-            )}
-          </div>
-        ) : sent ? (
-          <div role="status">
-            <p>
-              Check your inbox and confirm your address. Once confirmed, you can
-              leave — we’ll send your report when it’s ready.
-            </p>
-            <button className="subtle-button" onClick={() => setSent(false)}>
-              Use another address or resend
-            </button>
-          </div>
-        ) : enabled ? (
-          <form
-            onSubmit={async (e) => {
-              e.preventDefault();
-              setBusy(true);
-              setError("");
-              try {
-                const saved = await api("/api/save", {
-                  method: "POST",
-                  headers: { "content-type": "application/json" },
-                  body: JSON.stringify({
-                    reviewId: id,
-                    email: new FormData(e.currentTarget).get("email"),
-                  }),
-                });
-                setReusedVerification(saved.verified === true);
-                setSent(true);
-              } catch (e) {
-                setError(e instanceof Error ? e.message : "Please try again.");
-              } finally {
-                setBusy(false);
-              }
-            }}
-          >
-            <label>
-              Email address
-              <input
-                name="email"
-                defaultValue={user?.anonymous ? "" : user?.email || ""}
-                type="email"
-                autoComplete="email"
-                required
-                maxLength={254}
-              />
-            </label>
-            <button className="button primary" disabled={busy}>
-              {busy ? "Sending verification…" : "Email me my full report"}
-            </button>
-            <p className="fine-print">
-              Free. No password or marketing. Confirmed reports: 180 days. Email
-              links: 30 minutes.
-            </p>
-          </form>
-        ) : (
-          <p className="email-unavailable">
-            {enabled === null
-              ? "Checking email delivery…"
-              : "Email delivery is temporarily unavailable. Your free headline snapshot will remain available in this browser. We can’t send or unlock a detailed report by email until delivery is restored."}
-          </p>
-        )}
-        {error && <p role="alert">{error}</p>}
-      </div>
+      )}
     </section>
   );
 }
+
 function EmailDialog({
   id,
   full,
@@ -372,6 +242,8 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
     if (searchParams.get("results") === "1") setResults(true);
   }, [searchParams]);
   const setAction = useReportAction();
+  const { user } = useSession();
+  const verificationPending = !!user && !user.anonymous && !user.emailVerified;
   const framework = r.framework === "document" ? null : r.framework,
     complete = r.status === "complete" && !!r.result;
   const siblings = (r.siblings || []).map((s) =>
@@ -416,66 +288,78 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
             ? complete
               ? r.full
                 ? "Your results are ready to explore."
-                : "Headline results now. Full report after email verification."
+                : "Headline results now. Full reports free with a verified account."
               : r.full
                 ? "We’ll email you when it’s ready."
                 : "Save your work and return on any device."
             : "Choose any review. We reuse this document.",
-      primaryLabel: !framework
-        ? allDone
-          ? "Explore your reports"
-          : completedCount
-            ? "Explore your next review"
-            : "Start your first free review"
-        : complete
-          ? nextAfterResults
+      primaryLabel:
+        verificationPending && !r.full
+          ? "Confirm your email to save your reports"
+          : !framework
             ? allDone
               ? "Explore your reports"
-              : "Explore your next review"
-            : "View your results"
-          : r.status === "failed"
-            ? "Resolve review issue"
-            : r.full
-              ? "Explore the methodology"
-              : "Save your work & get the full report",
-      primaryHref: !framework
-        ? allDone
-          ? "/reviews"
-          : "#choose-review"
-        : nextAfterResults && allDone
-          ? "/reviews"
-          : complete
-            ? "#review-results"
-            : r.full
-              ? "#learning"
-              : "#email-delivery",
-      onPrimary: !framework
-        ? undefined
-        : complete
-          ? nextAfterResults
+              : completedCount
+                ? "Start your next free review"
+                : "Start your first free review"
+            : complete
+              ? nextAfterResults
+                ? allDone
+                  ? "Explore your reports"
+                  : "Start your next free review"
+                : "View your results"
+              : r.status === "failed"
+                ? "Resolve review issue"
+                : r.full
+                  ? "Explore the methodology"
+                  : "Save your work & get the full report",
+      primaryHref:
+        verificationPending && !r.full
+          ? "/verify-email"
+          : !framework
             ? allDone
-              ? () => window.location.assign("/reviews")
-              : () => {
-                  document
-                    .querySelector(".next-review")
-                    ?.scrollIntoView({ behavior: "smooth", block: "start" });
-                }
-            : viewResults
-          : r.status === "failed"
-            ? () => document.querySelector(".honest-status")?.scrollIntoView()
-            : () =>
-                r.full
-                  ? goStep(0)
-                  : step === 0
-                    ? document
-                        .querySelector<HTMLInputElement>(
-                          '#email-delivery input[name="email"]',
-                        )
-                        ?.focus()
-                    : setEmailOpen(true),
+              ? "/reviews"
+              : "#choose-review"
+            : nextAfterResults && allDone
+              ? "/reviews"
+              : complete
+                ? "#review-results"
+                : r.full
+                  ? "#learning"
+                  : "#email-delivery",
+      onPrimary:
+        verificationPending && !r.full
+          ? () => window.location.assign("/verify-email")
+          : !framework
+            ? undefined
+            : complete
+              ? nextAfterResults
+                ? allDone
+                  ? () => window.location.assign("/reviews")
+                  : () => {
+                      document.querySelector(".next-review")?.scrollIntoView({
+                        behavior: "smooth",
+                        block: "start",
+                      });
+                    }
+                : viewResults
+              : r.status === "failed"
+                ? () =>
+                    document.querySelector(".honest-status")?.scrollIntoView()
+                : () =>
+                    r.full
+                      ? goStep(0)
+                      : step === 0
+                        ? document
+                            .querySelector<HTMLInputElement>(
+                              '#email-delivery input[name="email"]',
+                            )
+                            ?.focus()
+                        : setEmailOpen(true),
       processingLabel: "Processing continues when you leave",
     });
   }, [
+    verificationPending,
     r.id,
     r.status,
     r.stage,
@@ -575,7 +459,8 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
         </p>
         <p className="review-disclosure">
           <strong>A useful headline snapshot: no email needed.</strong> The full
-          detailed report is also free, delivered after email verification.
+          detailed report is also free. Create an account and confirm your email
+          to save, download, share and return to it.
           {!r.emailEnabled &&
             "Email delivery is currently unavailable; you can still use all three headline reviews."}
         </p>
@@ -788,6 +673,7 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
                 >
                   Download my full {names[framework]} report
                 </a>
+                <ShareReview id={r.id} />
                 <details className="full-review-details">
                   <summary>
                     Explore the complete criterion-level assessment
@@ -829,8 +715,8 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
                   {lesson[3] && <blockquote>{lesson[3]}</blockquote>}
                   {step === 0 && (
                     <p className="stay-invitation">
-                      Confirm your email, then you can close this page. Or stay
-                      and explore.
+                      Create your free account to save your work and receive
+                      your full report. Or stay and explore your free snapshot.
                     </p>
                   )}
                   {step === 6 && framework === "excellence" && (
@@ -885,7 +771,7 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
           </section>
         )}
       </div>
-      {results && (
+      {results && complete && (
         <EmailInvitation id={r.id} full={r.full} delivery={r.delivery} />
       )}
       {emailOpen && (

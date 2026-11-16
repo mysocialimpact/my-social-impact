@@ -2,6 +2,12 @@
 
 Evidence-grounded reviews of impact reports against the Social Impact Claims Code and Social Impact Excellence frameworks. This is a standalone Next.js application in the `my-social-impact` repository; the parent website has a separate deployment. Its TypeScript and ESLint configurations narrowly exclude this independent app. Existing website runtime code and deployment settings are unchanged.
 
+## Password accounts and personal workspace
+
+The account experience now uses conventional email-and-password registration and login through the existing My Social Impact identity provider. Confirm an address once to save documents across devices, download full assessments, securely share completed findings and receive report emails. Existing email-link accounts can establish a password without losing their verified workspace. Registration remains optional for the free headline snapshot. News consent is separate and unticked, with unsubscribe in Account. Migration 008 extends existing private tables with no additional runtime grants. See [the account release notes](docs/accounts-workspace.md) for ownership, migration, security, tests and operational limits. Earlier release sections below are historical.
+
+Live on 16 November 2026: real registration, email confirmation, fresh-session password login, password recovery, background processing, received PDF delivery, PDF download, secure share/revocation and logout passed. Automated validation passed 31 unit checks, 31 real validation-database checks and 21 responsive browser contracts. Password-reset email branding still belongs to the shared SORP service; see the release notes for details.
+
 ## Immersive review and human contact
 
 Learning uses the measured space between the header and permanent action bar. Each methodology retains seven independent, manually controlled moments, horizontal transitions, focus movement, direct navigation, immediate ready results and reduced-motion support. Standard desktop and laptop screens fit without page or internal scrolling. Mobile and accessibility-sized viewports keep readable type and allow scrolling within the learning panel; short mobile menus scroll above the bottom bar. Back to My Impact Director preserves private access and background processing.

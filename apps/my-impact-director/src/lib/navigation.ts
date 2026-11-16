@@ -59,8 +59,20 @@ export function pageLabel(path: string) {
     MAIN_LINKS.find((l) => isPageActive(path, l.href))?.label ||
     (path.startsWith("/services")
       ? "Expert Help"
-      : path === "/login"
-        ? "Sign In"
+      : [
+            "/login",
+            "/register",
+            "/account",
+            "/verify-email",
+            "/forgot-password",
+          ].includes(path)
+        ? {
+            "/login": "Log in",
+            "/register": "Create account",
+            "/account": "Account",
+            "/verify-email": "Confirm email",
+            "/forgot-password": "Password recovery",
+          }[path] || "Account"
         : path === "/admin"
           ? "Founder Centre"
           : "Information")

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useReportAction } from "./action-bar";
 import { useEffect, useState } from "react";
 import { api, useSession } from "./session";
+import { ShareReview } from "./share-review";
 import { SaveReview } from "./save-review";
 import { FRAMEWORKS, frameworkNames, type Framework } from "@/lib/rubric";
 import { stateLabel, stateAction, type Workspace } from "./workspace-types";
@@ -57,13 +58,19 @@ export function SavedReviews() {
         : "Your personal Impact Director.",
       contextDetail: user?.emailVerified
         ? "Your reports are saved to this account."
-        : "Try anonymously. Verify email to return on any device.",
+        : "Create a free account to save your work and get full reports.",
       primaryLabel: w
         ? count === 3
           ? "Explore your reports"
           : "Continue your workspace"
-        : "Start your first free review",
-      primaryHref: w ? "/reviews/" + w.root_id : "/#upload",
+        : !user || user.anonymous
+          ? "Create your free account"
+          : "Confirm your email to save your reports",
+      primaryHref: w
+        ? "/reviews/" + w.root_id
+        : !user || user.anonymous
+          ? "/register"
+          : "/verify-email",
     });
     return () => setAction(null);
   }, [rows, user?.emailVerified, setAction]);
@@ -101,11 +108,19 @@ export function SavedReviews() {
   }
   return (
     <>
+      {(!user || user.anonymous) && <SaveReview returning />}
+      {user && !user.anonymous && (
+        <div className="workspace-title">
+          <p className="eyebrow">YOUR PERSONAL WORKSPACE</p>
+          <h1>My Reports.</h1>
+          <p>One upload. Three perspectives. Your next step.</p>
+        </div>
+      )}
       <div className="dashboard-actions">
         <div>
           <p>
             {user?.anonymous
-              ? "Temporary workspace in this browser."
+              ? "Your current review"
               : user
                 ? `Signed in as ${user.email}`
                 : "One upload. Three reviews. Your progress."}
@@ -116,27 +131,6 @@ export function SavedReviews() {
           <Link className="button primary small" href="/#upload">
             Upload a report →
           </Link>
-          {user && !user.anonymous && (
-            <button
-              className="button secondary small"
-              onClick={async () => {
-                try {
-                  await api("/api/account", {
-                    method: "POST",
-                    headers: { "content-type": "application/json" },
-                    body: JSON.stringify({ action: "logout" }),
-                  });
-                  window.location.assign("/reviews");
-                } catch (e) {
-                  setError(
-                    e instanceof Error ? e.message : "Please try again.",
-                  );
-                }
-              }}
-            >
-              Sign out
-            </button>
-          )}
         </div>
       </div>
       {(error || sessionError) && (
@@ -144,15 +138,15 @@ export function SavedReviews() {
           {error || sessionError}
         </p>
       )}
-      {!user?.emailVerified && <SaveReview returning />}
+      {user && !user.anonymous && !user.emailVerified && <SaveReview />}
       {loading || !rows ? (
         <p role="status">Opening your reports…</p>
       ) : !rows.length ? (
         <div className="empty">
           <h2>Your Impact Director starts here.</h2>
           <p>
-            Upload your first report to begin, or use a secure email link to
-            return to your saved work.
+            Upload your first report to begin. Already have saved work? Log in
+            using your email and password.
           </p>
           <Link href="/#upload" className="button primary">
             Review my report — free →
@@ -218,6 +212,9 @@ export function SavedReviews() {
                           </a>
                         </p>
                       )}
+                      {a && label === "Completed" && w.full && (
+                        <ShareReview id={a.id} />
+                      )}
                       {a?.delivery && (
                         <p className="fine-print">
                           Email:{" "}
@@ -234,11 +231,13 @@ export function SavedReviews() {
               </div>
               <div className="workspace-retention">
                 <p>
-                  {w.full ? "Saved report" : "Temporary browser access"} ·
-                  Available until{" "}
+                  {w.full
+                    ? "Saved report"
+                    : "Available in your current browser"}{" "}
+                  · Available until{" "}
                   {new Date(w.expires_at).toLocaleDateString("en-GB")}.{" "}
                   {user?.anonymous
-                    ? "Verify your email to keep this report for 180 days and return on another device."
+                    ? "Create your free account to keep this report for 180 days and return on another device."
                     : ""}
                 </p>
                 {w.can_delete && (

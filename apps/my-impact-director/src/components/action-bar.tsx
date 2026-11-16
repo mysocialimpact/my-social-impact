@@ -49,7 +49,15 @@ export function ActionShell({ children }: { children: React.ReactNode }) {
   const review = /^\/reviews\/([a-f0-9-]{36})(\/source)?$/.exec(path);
   const active =
     (review && report?.id === review[1]) ||
-    (path === "/reviews" && report?.id === "workspace")
+    (path === "/reviews" && report?.id === "workspace") ||
+    ([
+      "/login",
+      "/register",
+      "/forgot-password",
+      "/verify-email",
+      "/account",
+    ].includes(path) &&
+      report?.id === "account")
       ? report
       : null;
   const source = !!review?.[2];
@@ -148,7 +156,7 @@ export function ActionShell({ children }: { children: React.ReactNode }) {
             review ? `/services/expert-review?review=${review[1]}` : "/contact"
           }
         >
-          {complete ? "Talk to your Impact Director" : "Contact Us"}
+          {review && complete ? "Talk to your Impact Director" : "Contact Us"}
         </Link>
         <Link
           className="action-feedback"
