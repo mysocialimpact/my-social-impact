@@ -184,7 +184,7 @@ export function Admin() {
                 ["workspace_opened", "Workspace visits"],
                 ["selected_claims", "Claims Code selected"],
                 ["selected_excellence", "Excellence selected"],
-                ["selected_report", "Report Excellence selected"],
+                ["selected_report", "The Impact Edit selected"],
                 ["snapshot_viewed", "Snapshots opened"],
                 ["email_requested", "Verification emails requested"],
                 ["email_saved", "Email verified"],

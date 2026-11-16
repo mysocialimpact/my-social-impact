@@ -3,10 +3,11 @@ export const services = {
     name: "Expert Impact Report Review",
     heading: "A fresh pair of expert eyes.",
     intro:
-      "Want to go deeper? Our team can review your report, discuss the findings and help you turn recommendations into practical improvements.",
+      "Go deeper with a professional human review of your Claims Code, Social Impact Excellence or The Impact Edit findings. Discuss the evidence, editorial choices and practical improvements with our team.",
     benefits: [
       "Professional scrutiny of your most important impact claims",
       "A discussion of the evidence, context and limitations",
+      "Human creative judgement on writing, storytelling, design and reader engagement",
       "Clear priorities for a more credible, useful report",
     ],
   },

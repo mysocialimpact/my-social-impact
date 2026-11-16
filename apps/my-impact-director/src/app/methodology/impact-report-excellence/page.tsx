@@ -1,22 +1,27 @@
+import { CreativeCaveat } from "@/components/creative-caveat";
 import Image from "next/image";
 import Link from "next/link";
 import { rubrics, reportAnchors } from "@/lib/rubric";
 import { reportGuidance } from "@/lib/report-guidance";
 export const metadata = {
-  title: "Impact Report Excellence Methodology — Version 1.0",
+  title: "Impact Report Excellence Methodology v1.0",
 };
 export default function Methodology() {
   return (
     <section className="section content-prose">
       <Image
-        src="/brand/impact-report-excellence-horizontal.svg"
-        alt="Impact Report Excellence"
+        src="/brand/the-impact-edit-horizontal.svg"
+        alt="The Impact Edit"
         style={{ maxWidth: "100%", height: "auto" }}
         width={480}
         height={120}
       />
       <p className="eyebrow">MY SOCIAL IMPACT · METHODOLOGY VERSION 1.0</p>
-      <h1>Does your impact report make an impact?</h1>
+      <h1 id="overview">Impact Report Excellence Methodology v1.0</h1>
+      <p className="methodology-question">
+        The Impact Edit · Does your impact report make an impact?
+      </p>
+      <CreativeCaveat />
       <p>
         Our editorial and creative assessment examines clarity, storytelling,
         design, engagement and communication. It measures how the report
@@ -24,7 +29,7 @@ export default function Methodology() {
         organisational maturity.{" "}
         <Link href="/methodology">Compare all three methodologies.</Link>
       </p>
-      <h2>How we inspect your report</h2>
+      <h2 id="visual-inspection">How we inspect your report</h2>
       <p>
         We reuse the extracted text and shared document understanding. A
         separate visual pass renders actual PDF pages at 1,600 pixels wide.
@@ -34,7 +39,9 @@ export default function Methodology() {
         inspected. Unseen pages are not verified. Source text supports writing
         observations; inspected images support design observations.
       </p>
-      <h2>Five pillars. Twenty-five criteria. One hundred points.</h2>
+      <h2 id="scoring">
+        Five pillars. Twenty-five criteria. One hundred points.
+      </h2>
       <p>
         Each criterion scores 0–4. Five equally weighted pillars contribute up
         to twenty points each. Fully assessable scores are added directly. When
@@ -49,6 +56,7 @@ export default function Methodology() {
           <li key={a}>{a}</li>
         ))}
       </ol>
+      <h2 id="criteria">Twenty-five practical editorial criteria</h2>
       {rubrics.report.map(([pillar, ...tests]) => (
         <section key={pillar}>
           <h2>{pillar}</h2>
@@ -68,7 +76,7 @@ export default function Methodology() {
           })}
         </section>
       ))}
-      <h2>Judgement, proportionality and limits</h2>
+      <h2 id="limitations">Judgement, proportionality and limits</h2>
       <p>
         A modest report can communicate brilliantly. We do not require expensive
         imagery, interactive PDFs or inappropriate personal stories. Ethical

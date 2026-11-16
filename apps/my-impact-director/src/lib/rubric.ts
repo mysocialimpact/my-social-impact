@@ -13,7 +13,7 @@ export type Framework = "claims" | "excellence" | "report";
 export const frameworkNames = {
   claims: "Social Impact Claims Code",
   excellence: "Social Impact Excellence",
-  report: "Impact Report Excellence",
+  report: "The Impact Edit",
 };
 export const rubrics = {
   report: [
@@ -148,7 +148,7 @@ export const FRAMEWORKS: Framework[] = ["claims", "excellence", "report"];
 export const frameworkLogos = {
   claims: "/brand/claims-code.png",
   excellence: "/brand/excellence.png",
-  report: "/brand/impact-report-excellence.svg",
+  report: "/brand/the-impact-edit.svg",
 };
 export const testsPerPillar = (framework: Framework) =>
   framework === "report" ? 5 : 4;

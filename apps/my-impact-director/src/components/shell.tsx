@@ -5,9 +5,9 @@ export function Brand({ className = "" }: { className?: string }) {
   return (
     <Image
       className={className}
-      src="/brand/my-impact-director.png"
-      width={2171}
-      height={724}
+      src="/brand/my-impact-director-horizontal.svg"
+      width={580}
+      height={190}
       alt="My Impact Director"
       sizes="(max-width: 700px) 164px, 222px"
     />
@@ -41,7 +41,7 @@ export function Footer() {
       <div className="campaign-width footer-legal">
         <span>© {new Date().getFullYear()} My Social Impact</span>
         <nav aria-label="Footer navigation">
-          <Link href="/#contact">Contact Us</Link>
+          <Link href="/contact">Contact Us</Link>
           <Link href="/methodology">Methodology</Link>
           <Link href="/your-impact-director">Your Impact Director</Link>
           <Link href="/services">Expert help</Link>

@@ -10,8 +10,8 @@ export default function Review() {
         title="Let’s look at the evidence."
       >
         <p>
-          Share a report. Get two thoughtful assessments and a clear place to
-          start improving.
+          Share a report. Choose from three thoughtful assessments and a clear
+          place to start improving.
         </p>
       </PageIntro>
       <Intake enabled={ready()} />

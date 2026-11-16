@@ -3,7 +3,11 @@ import { Arrow } from "./icons";
 import { supportTiers } from "@/lib/services";
 export function SupportIntroduction() {
   return (
-    <section className="support-introduction" aria-labelledby="support-title">
+    <section
+      id="human-support"
+      className="support-introduction"
+      aria-labelledby="support-title"
+    >
       <div className="campaign-width">
         <div className="support-intro-heading">
           <h2 id="support-title">

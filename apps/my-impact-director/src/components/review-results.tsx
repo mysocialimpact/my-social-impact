@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CreativeCaveat } from "./creative-caveat";
 import type { ReviewResult } from "@/lib/pipeline";
 import type { Criterion, Scores } from "@/lib/assessment";
 import { criteria, frameworkNames, type Framework } from "@/lib/rubric";
@@ -16,7 +17,7 @@ export function ScoreCard({
         {framework === "claims"
           ? "The credibility of your claims"
           : framework === "report"
-            ? "How effectively your report communicates"
+            ? "Indicative Creative Assessment"
             : "What your report demonstrates"}
       </p>
       <h2>{frameworkNames[framework]}</h2>
@@ -223,7 +224,7 @@ export function ReviewResults({
       <nav className="tabs-nav" aria-label="Review sections">
         {result.scores.claims && <a href="#claims">Claims Code</a>}
         {result.scores.excellence && <a href="#excellence">Excellence</a>}
-        {result.scores.report && <a href="#report">Report Excellence</a>}
+        {result.scores.report && <a href="#report">The Impact Edit</a>}
         {!result.scores.report && (
           <a href="#claims-register">Material claims</a>
         )}
@@ -276,6 +277,7 @@ export function ReviewResults({
                   : "02 · Understanding, managing & communicating"}
             </p>
             <h2>{frameworkNames[framework]} Review</h2>
+            {framework === "report" && <CreativeCaveat />}
             <p>
               {framework === "claims"
                 ? "How responsibly the report makes and supports its material impact claims."

@@ -1084,6 +1084,34 @@ test(
             pdfPages.map((p) => p.text).join(" "),
             /Visual inspection coverage/,
           );
+          const exportedText = pdfPages.map((p) => p.text).join(" ");
+          assert.match(exportedText, /The Impact Edit/);
+          assert.match(exportedText, /Indicative Creative Assessment/);
+          assert.match(
+            exportedText,
+            /Creative judgements are partly subjective/,
+          );
+          process.env.EMAIL_ENABLED = "true";
+          const sentBefore = emails.length;
+          await query(
+            "INSERT INTO director.report_deliveries(review_id,owner_id,email) VALUES($1,$2,$3) ON CONFLICT DO NOTHING",
+            [selected.id, uid, user.email],
+          );
+          await sendPendingReports();
+          assert.equal(emails.length, sentBefore + 1);
+          assert.equal(
+            emails.at(-1)!.subject,
+            "The Impact Edit — your review is ready",
+          );
+          assert.match(
+            emails.at(-1)!.text,
+            /An Impact Report Excellence assessment developed by My Social Impact/,
+          );
+          assert.match(
+            emails.at(-1)!.text,
+            /Creative judgements are partly subjective/,
+          );
+          assert.ok(emails.at(-1)!.attachments[0].content);
           await writeFile(
             "artifacts/report-review.json",
             JSON.stringify({ ...done, full: false, siblings: [] }, null, 2),

@@ -1,4 +1,6 @@
 "use client";
+import { MAIN_LINKS, isPageActive, pageLabel } from "@/lib/navigation";
+import { SectionNavigation } from "./section-navigation";
 import { Arrow } from "./icons";
 import Link from "next/link";
 import Image from "next/image";
@@ -39,10 +41,10 @@ export function Header() {
       <header ref={header} className="site-header campaign-header">
         <Link href="/" className="brand" onClick={() => setOpen(false)}>
           <Image
-            src="/brand/my-impact-director.png"
+            src="/brand/my-impact-director-horizontal.svg"
             alt="My Impact Director"
-            width={2171}
-            height={724}
+            width={580}
+            height={190}
             sizes="(max-width: 700px) 164px, 222px"
             priority
           />
@@ -58,23 +60,18 @@ export function Header() {
           aria-label="Main navigation"
           className={open ? "is-open" : ""}
         >
-          <Link href="/#how-it-works" onClick={() => setOpen(false)}>
-            How it works
-          </Link>
-          <Link href="/methodology" onClick={() => setOpen(false)}>
-            Methodology
-          </Link>
-          <Link href="/your-impact-director" onClick={() => setOpen(false)}>
-            Your Impact Director
-          </Link>
-          <Link href="/reviews" onClick={() => setOpen(false)}>
-            Saved reports
-          </Link>
-          <Link href="/#contact" onClick={() => setOpen(false)}>
-            Contact Us
-          </Link>
+          {MAIN_LINKS.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              aria-current={isPageActive(path, item.href) ? "page" : undefined}
+              onClick={() => setOpen(false)}
+            >
+              {item.label}
+            </Link>
+          ))}
           <Link
-            href="/#upload"
+            href="/review"
             className="mobile-nav-review"
             onClick={() => setOpen(false)}
           >
@@ -89,7 +86,7 @@ export function Header() {
           LOGIN
         </Link>
         <Link
-          href="/#upload"
+          href="/review"
           className="header-review"
           onClick={() => setOpen(false)}
         >
@@ -104,10 +101,14 @@ export function Header() {
           aria-controls="main-nav"
           onClick={() => setOpen(!open)}
         >
-          {open ? "Close" : "Menu"}
-          <span aria-hidden="true">{open ? "×" : "+"}</span>
+          <span className="mobile-current-page">{pageLabel(path)}</span>
+          <span className="mobile-menu-label">
+            {open ? "Close" : "Menu"}{" "}
+            <span aria-hidden="true">{open ? "×" : "+"}</span>
+          </span>
         </button>
       </header>
+      <SectionNavigation path={path} />
     </>
   );
 }

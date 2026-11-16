@@ -1,3 +1,4 @@
+import { EDIT_ATTRIBUTION, EDIT_CAVEAT } from "./branding";
 import { PDFDocument, rgb, type PDFFont } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
 import { readFile } from "node:fs/promises";
@@ -116,17 +117,14 @@ export async function exportPdf(result: ReviewResult) {
   if (result.framework === "report") {
     const frameworkLogo = await pdf.embedPng(
       await readFile(
-        join(
-          process.cwd(),
-          "public/brand/impact-report-excellence-horizontal.png",
-        ),
+        join(process.cwd(), "public/brand/the-impact-edit-horizontal.png"),
       ),
     );
     page.drawImage(frameworkLogo, {
       x: 325,
       y: 795 - 60,
       width: 220,
-      height: 55,
+      height: (220 * frameworkLogo.height) / frameworkLogo.width,
     });
   }
   write("Your impact report,\nreviewed.", 34, "serif");
@@ -142,6 +140,11 @@ export async function exportPdf(result: ReviewResult) {
     "normal",
     muted,
   );
+  if (result.framework === "report" || result.scores.report) {
+    heading("Indicative Creative Assessment");
+    write(EDIT_ATTRIBUTION, 10, "bold");
+    write(EDIT_CAVEAT, 10);
+  }
   heading("Executive summary");
   write(result.actions.summary, 11);
   for (const key of (["claims", "excellence", "report"] as Framework[]).filter(

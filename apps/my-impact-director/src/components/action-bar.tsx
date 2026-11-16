@@ -53,6 +53,7 @@ export function ActionShell({ children }: { children: React.ReactNode }) {
       ? report
       : null;
   const source = !!review?.[2];
+  const support = path === "/your-impact-director";
   const complete = active?.status === "complete";
   const processing = active && !["complete", "failed"].includes(active.status);
   const href =
@@ -65,7 +66,9 @@ export function ActionShell({ children }: { children: React.ReactNode }) {
             ? "#keep-review"
             : "#review-progress"
           : "/reviews"
-      : "/#upload");
+      : support
+        ? "#enquire"
+        : "/review");
   const label =
     active?.primaryLabel ||
     (review
@@ -78,7 +81,9 @@ export function ActionShell({ children }: { children: React.ReactNode }) {
             : active
               ? "Review needs attention"
               : "Open my saved reports"
-      : "Review your impact report — FREE");
+      : support
+        ? "Talk to us about your Impact Director"
+        : "Review your impact report — FREE");
   return (
     <ReportContext.Provider value={setReport}>
       {children}
@@ -109,8 +114,16 @@ export function ActionShell({ children }: { children: React.ReactNode }) {
             </>
           ) : (
             <>
-              <strong>Your first review. £0.</strong>
-              <span>No registration required.</span>
+              <strong>
+                {support
+                  ? "Your own Impact Director."
+                  : "Your first review. £0."}
+              </strong>
+              <span>
+                {support
+                  ? "Human experience. Support that fits."
+                  : "No registration required."}
+              </span>
             </>
           )}
         </div>
@@ -132,9 +145,7 @@ export function ActionShell({ children }: { children: React.ReactNode }) {
         <Link
           className="action-talk"
           href={
-            review
-              ? `/services/expert-review?review=${review[1]}`
-              : "/your-impact-director#enquire"
+            review ? `/services/expert-review?review=${review[1]}` : "/contact"
           }
         >
           {complete ? "Talk to your Impact Director" : "Contact Us"}

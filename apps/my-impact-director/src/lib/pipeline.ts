@@ -59,11 +59,11 @@ export const STAGES = [
   "Validating findings and preparing your action plan",
   "Review complete",
   "Inspecting rendered page images",
-  "Report Excellence · Clarity",
-  "Report Excellence · Storytelling",
-  "Report Excellence · Design",
-  "Report Excellence · Engagement",
-  "Report Excellence · Communication",
+  "The Impact Edit · Clarity",
+  "The Impact Edit · Storytelling",
+  "The Impact Edit · Design",
+  "The Impact Edit · Engagement",
+  "The Impact Edit · Communication",
 ];
 type Job = {
   framework: "document" | Framework | null;

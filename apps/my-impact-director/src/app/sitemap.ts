@@ -2,6 +2,8 @@ import type { MetadataRoute } from "next";
 export default function sitemap(): MetadataRoute.Sitemap {
   return [
     "",
+    "/review",
+    "/contact",
     "/methodology",
     "/methodology/impact-report-excellence",
     "/services",

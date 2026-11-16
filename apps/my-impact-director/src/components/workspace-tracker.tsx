@@ -104,7 +104,7 @@ export function WorkspaceTracker({ id }: { id: string }) {
               ? "Claims Code"
               : f === "excellence"
                 ? "Impact management"
-                : "Report quality"}
+                : "The Impact Edit"}
           </span>
         </span>
         <strong>{label}</strong>

@@ -1,73 +1,103 @@
+import Image from "next/image";
+import Link from "next/link";
 import { PageIntro } from "@/components/shell";
-import {
-  rubrics,
-  VERSION,
-  ANCHORS,
-  frameworkNames,
-  type Framework,
-} from "@/lib/rubric";
+import { CreativeCaveat } from "@/components/creative-caveat";
+import { rubrics, VERSION, ANCHORS, frameworkNames } from "@/lib/rubric";
 export default function Methodology() {
   return (
-    <section className="section">
-      <PageIntro
-        label={`Our methodology · Version ${VERSION}`}
-        title="Evidence before scores."
+    <div className="section methodology-overview">
+      <section id="overview" className="content-prose">
+        <PageIntro
+          label={`Our methodology · Version ${VERSION}`}
+          title="Evidence before scores."
+        >
+          <p>
+            Three different questions. Transparent methods. Specific
+            observations from your actual report.
+          </p>
+        </PageIntro>
+        <p>
+          We extract the PDF’s content and map physical page numbers, using
+          visual transcription for scans, charts and tables. Shared document
+          understanding identifies the context and material impact claims. Each
+          methodology then asks its own questions.
+        </p>
+        <p>
+          We check quoted evidence against the extracted pages, calculate scores
+          in application code and prepare practical recommendations. Visual
+          transcription can make mistakes; page references help you check the
+          source but do not independently verify the underlying data.
+        </p>
+      </section>
+      {(["claims", "excellence"] as const).map((f) => (
+        <section id={f} className="methodology-family content-prose" key={f}>
+          <Image
+            src={
+              f === "claims"
+                ? "/brand/claims-code.png"
+                : "/brand/excellence.png"
+            }
+            width={110}
+            height={110}
+            alt={frameworkNames[f]}
+          />
+          <p className="eyebrow">
+            {f === "claims"
+              ? "Can we trust the claims?"
+              : "How is impact managed?"}
+          </p>
+          <h2>{frameworkNames[f]}</h2>
+          <p>
+            {f === "claims"
+              ? "We examine the credibility, proportionality, transparency and integrity of the report’s material impact claims. Stronger claims need appropriately stronger evidence."
+              : "We examine what the report demonstrates about understanding, managing and communicating impact. This is separate from the full Social Impact Excellence Maturity Assessment."}
+          </p>
+          {rubrics[f].map(([name, ...questions]) => (
+            <details className="finding" key={name}>
+              <summary>{name}</summary>
+              <div className="finding-content">
+                <ol>
+                  {questions.map((q) => (
+                    <li key={q}>{q}</li>
+                  ))}
+                </ol>
+              </div>
+            </details>
+          ))}
+        </section>
+      ))}
+      <section
+        id="impact-edit"
+        className="methodology-family impact-edit-feature content-prose"
       >
+        <Image
+          src="/brand/the-impact-edit-horizontal.svg"
+          width={500}
+          height={120}
+          alt="The Impact Edit"
+        />
+        <p className="eyebrow">Does your impact report make an impact?</p>
+        <h2>The Impact Edit.</h2>
         <p>
-          A useful review should show its working. Here’s what we look for, how
-          the scores are calculated and what a report alone cannot tell us.
+          Clarity. Storytelling. Design. Engagement. Communication. Twenty-five
+          criteria examine how effectively your report communicates, including
+          inspection of its actual page design.
         </p>
-      </PageIntro>
-      <div className="content-prose">
-        <h2>Three different questions</h2>
+        <CreativeCaveat />
+        <Link
+          className="text-link"
+          href="/methodology/impact-report-excellence"
+        >
+          Read the Impact Report Excellence Methodology v1.0 →
+        </Link>
+      </section>
+      <section id="scoring" className="methodology-family content-prose">
+        <h2>Clear scores. Honest limits.</h2>
         <p>
-          <a href="/methodology/impact-report-excellence">
-            Impact Report Excellence
-          </a>{" "}
-          examines how effectively the report communicates, using 25 criteria
-          and actual visual inspection. Its separate scoring and coverage rules
-          are documented in full.
+          Each of the five pillars contributes up to 20 points. The Claims Code
+          and Social Impact Excellence each have four tests per pillar. The
+          Impact Edit has five.
         </p>
-        <p>
-          The <strong>Social Impact Claims Code Review</strong> examines the
-          credibility, proportionality, transparency and integrity of impact
-          claims. The <strong>Social Impact Excellence Review</strong> examines
-          what the report demonstrates about understanding, managing and
-          communicating impact.
-        </p>
-        <p>
-          Neither review establishes an organisation’s actual impact or
-          undisclosed practice. The Excellence review is separate from the full{" "}
-          <a href="https://socialimpactexcellence.org">
-            Social Impact Excellence Maturity Assessment
-          </a>
-          .
-        </p>
-        <h2>How the review works</h2>
-        <ol>
-          <li>
-            We extract the PDF’s content and map physical page numbers, using
-            visual transcription for scans, charts and tables.
-          </li>
-          <li>
-            We identify the reporting context, material impact claims and the
-            evidence that supports them.
-          </li>
-          <li>
-            We assess four detailed tests under each of five principles in each
-            framework.
-          </li>
-          <li>
-            We check quoted evidence against the extracted pages, calculate
-            scores in application code and prepare specific recommendations.
-          </li>
-        </ol>
-        <p>
-          Visual transcription can make mistakes. Page references and extracts
-          help you check the source, but they do not independently verify the
-          underlying data.
-        </p>
-        <h2>What the scores mean</h2>
         <table className="rubric-table">
           <thead>
             <tr>
@@ -85,85 +115,63 @@ export default function Methodology() {
           </tbody>
         </table>
         <p>
-          Each principle contributes up to 20 points. With all four tests
-          assessable, we add their scores and multiply by 1.25. If a test is
-          genuinely inapplicable or unassessable, the principle score is the
-          average of its assessable scores multiplied by five.
+          For Claims Code and Social Impact Excellence, fully assessable test
+          scores are added and multiplied by 1.25. When tests are genuinely
+          inapplicable or unassessable, the pillar score is the average of
+          assessable tests multiplied by five. Overall scores require at least
+          three assessable tests per pillar and sixteen overall.
         </p>
-        <h3>Missing is not the same as inapplicable</h3>
+        <p>
+          The Impact Edit adds its five fully assessable criterion scores
+          directly to give each pillar’s score out of twenty. With exclusions it
+          normalises the remaining scores to twenty. An overall indicative
+          creative score requires at least four assessable criteria per pillar,
+          twenty-two overall and actual visual inspection. Otherwise the review
+          is provisional.
+        </p>
+        <h3>Missing is not the same as inapplicable.</h3>
         <ul>
           <li>
             <strong>Not demonstrated:</strong> relevant information is expected
             but not shown in a readable report. It can receive zero.
           </li>
           <li>
-            <strong>Not applicable:</strong> a test is genuinely irrelevant to
-            the context. We exclude it and explain why.
+            <strong>Not applicable:</strong> genuinely irrelevant to the
+            context. Excluded with an explanation.
           </li>
           <li>
             <strong>Unassessable:</strong> available material cannot support a
-            reliable judgement. We exclude it and state the limitation.
+            reliable judgement. Excluded with a stated limitation.
           </li>
         </ul>
         <p>
-          We do not give a definitive overall numerical score unless every
-          principle has at least three assessable tests and at least 16 of the
-          framework’s 20 tests are assessable. Otherwise, the review is
-          provisional and shows its coverage.
+          A small or modestly designed report can score strongly. We judge
+          evidence in proportion to the claim. Material concerns inform relevant
+          judgements; there are no hidden score caps.
         </p>
-        <h2>Proportionate to the claim</h2>
+        <h3>What a report cannot establish.</h3>
         <p>
-          A short, modestly designed report from a small organisation can score
-          strongly. We look for evidence appropriate to the nature and
-          significance of its claims, not expensive research or polished design
-          for its own sake.
-        </p>
-        <p>
-          Material concerns such as unsupported causal claims or confusion
-          between participation and outcomes are highlighted separately. They
-          inform relevant judgements; we do not apply hidden score caps.
-        </p>
-        {(["claims", "excellence"] as Framework[]).map((f) => (
-          <section key={f}>
-            <h2>{frameworkNames[f]}</h2>
-            {rubrics[f].map(([name, ...questions]) => (
-              <details className="finding" key={name}>
-                <summary>
-                  <span>{name}</span>
-                </summary>
-                <div className="finding-content">
-                  <ol>
-                    {questions.map((q) => (
-                      <li key={q}>{q}</li>
-                    ))}
-                  </ol>
-                </div>
-              </details>
-            ))}
-          </section>
-        ))}
-        <h2>What this review cannot establish</h2>
-        <p>
-          An automated review is not professional assurance, certification or
-          independent verification. We cannot establish that the underlying data
-          is accurate, infer missing internal practices, or prove an
-          organisation caused a change from its report alone.
+          These automated reviews are not professional assurance, certification
+          or independent verification. They cannot establish underlying data
+          accuracy, infer undisclosed internal practice or prove causation.
+          Engineering checks verify calculations and source references; they do
+          not replace human professional calibration. Each review retains its
+          original methodology version.
         </p>
         <p>
-          Methodology 1.0 is an initial, version-controlled assessment approach.
-          Engineering checks verify calculations and source references. They do
-          not replace human professional calibration. We retain the methodology
-          version with each review so changes remain transparent.
-        </p>
-        <p>
-          Read the{" "}
           <a href="https://mysocialimpact.org/social-impact-claims-code">
-            published Social Impact Claims Code
+            Published Social Impact Claims Code
           </a>{" "}
-          or <a href="/services/expert-review">discuss a professional review</a>
-          .
+          ·{" "}
+          <a href="https://socialimpactexcellence.org">
+            Full Social Impact Excellence assessment
+          </a>{" "}
+          ·{" "}
+          <Link href="/services/expert-review">
+            Discuss a professional human review
+          </Link>
         </p>
-      </div>
-    </section>
+      </section>
+    </div>
   );
 }

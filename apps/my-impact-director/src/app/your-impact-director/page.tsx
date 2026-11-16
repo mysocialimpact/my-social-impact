@@ -31,6 +31,7 @@ export default async function YourImpactDirector({
   return (
     <div className="support-page">
       <section
+        id="introduction"
         className="support-hero campaign-width"
         aria-labelledby="support-heading"
       >
@@ -88,7 +89,11 @@ export default async function YourImpactDirector({
           </figcaption>
         </figure>
       </section>
-      <section className="someone-section" aria-labelledby="someone-title">
+      <section
+        id="human-support"
+        className="someone-section"
+        aria-labelledby="someone-title"
+      >
         <div className="campaign-width someone-grid">
           <div>
             <p className="eyebrow">AN AFFORDABLE MEMBER OF THE SENIOR TEAM.</p>
@@ -181,7 +186,11 @@ export default async function YourImpactDirector({
           </a>
         </div>
       </section>
-      <section className="ai-support" aria-labelledby="ai-support-title">
+      <section
+        id="ai"
+        className="ai-support"
+        aria-labelledby="ai-support-title"
+      >
         <div className="campaign-width">
           <h2 id="ai-support-title">
             AI DOES THE HEAVY LIFTING.

@@ -6,12 +6,12 @@ const config: NextConfig = {
     "/api/reviews/*/export": [
       "./assets/fonts/*.ttf",
       "./public/brand/my-impact-director.png",
-      "./public/brand/impact-report-excellence-horizontal.png",
+      "./public/brand/the-impact-edit-horizontal.png",
     ],
     "/api/save": [
       "./assets/fonts/*.ttf",
       "./public/brand/my-impact-director.png",
-      "./public/brand/impact-report-excellence-horizontal.png",
+      "./public/brand/the-impact-edit-horizontal.png",
     ],
   },
   async headers() {

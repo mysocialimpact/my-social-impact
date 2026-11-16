@@ -9,7 +9,11 @@ export const dynamic = "force-dynamic";
 export default function Home() {
   return (
     <div className="campaign">
-      <section className="director-opening" aria-labelledby="director-title">
+      <section
+        id="introduction"
+        className="director-opening"
+        aria-labelledby="director-title"
+      >
         <div className="director-identity">
           <h1 id="director-title">
             MY IMPACT
@@ -129,8 +133,8 @@ export default function Home() {
             className="framework-line"
           >
             <Image
-              src="/brand/impact-report-excellence.svg"
-              alt="Impact Report Excellence"
+              src="/brand/the-impact-edit.svg"
+              alt="The Impact Edit"
               width={120}
               height={120}
             />
@@ -158,7 +162,11 @@ export default function Home() {
         </div>
       </section>
       <SupportIntroduction />
-      <section className="purpose-moment" aria-labelledby="purpose-title">
+      <section
+        id="our-vision"
+        className="purpose-moment"
+        aria-labelledby="purpose-title"
+      >
         <div className="campaign-width">
           <h2 id="purpose-title">
             Imagine a world where <em>social impact</em> was taken as seriously

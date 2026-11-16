@@ -1,7 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Arrow } from "./icons";
-export function Contact() {
+export function Contact({ standalone = false }: { standalone?: boolean }) {
+  const Heading = standalone ? "h1" : "h2";
   return (
     <section
       className="human-contact"
@@ -11,11 +12,11 @@ export function Contact() {
       <div className="campaign-width contact-composition">
         <div className="contact-heading">
           <p className="eyebrow">REAL PEOPLE. SHARED AMBITION.</p>
-          <h2 id="contact-title">
+          <Heading id="contact-title">
             Let’s talk
             <br />
             about your <em>impact.</em>
-          </h2>
+          </Heading>
           <p>
             Whether you’d like to discuss your report, strengthen your impact
             management or explore what we could do together, we’d love to hear

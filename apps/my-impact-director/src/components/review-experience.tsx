@@ -1,4 +1,5 @@
 "use client";
+import { CreativeCaveat } from "./creative-caveat";
 import { SaveReview } from "./save-review";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -20,7 +21,7 @@ const lessons = {
     [
       "The introduction",
       "A GREAT IMPACT REPORT SHOULD MAKE AN IMPACT.",
-      "Having a powerful story isn’t enough. You have to communicate it well. We inspect the writing and actual page design across five pillars. This is an indicative creative review by My Social Impact, not accreditation.",
+      "Having a powerful story isn’t enough. You have to communicate it well. We inspect the writing and actual page design across five pillars. This is an indicative creative review by My Social Impact, not accreditation. Creative judgements are partly subjective; different readers may respond differently.",
     ],
     [
       "01 · Clarity",
@@ -609,6 +610,12 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
                     ? "Does your impact report make an impact?"
                     : "What does your report reveal about how you manage impact?"}
               </h2>
+              {f === "report" && (
+                <p className="edit-attribution">
+                  An Impact Report Excellence assessment developed by My Social
+                  Impact.
+                </p>
+              )}
               <p>
                 {f === "claims"
                   ? "Evidence. Proportion. Transparency. Balance. Learning."
@@ -652,7 +659,7 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
           <Image
             src={
               framework === "report"
-                ? "/brand/impact-report-excellence-symbol.svg"
+                ? "/brand/the-impact-edit-symbol.svg"
                 : frameworkLogos[framework]
             }
             alt={names[framework]}
@@ -727,6 +734,7 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
                   ? "Does your impact report make an impact?"
                   : "Beyond reporting. Towards better impact management."}
             </h2>
+            {framework === "report" && <CreativeCaveat />}
             <ScoreCard
               framework={framework}
               score={r.result.scores[framework]!}
