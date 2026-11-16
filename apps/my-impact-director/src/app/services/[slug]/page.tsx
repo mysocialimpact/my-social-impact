@@ -1,4 +1,6 @@
-import { notFound } from "next/navigation";
+import { LinkedServiceContact } from "@/components/linked-service-contact";
+import { DigitalOffer } from "@/components/report-services";
+import { notFound, permanentRedirect } from "next/navigation";
 import { PageIntro } from "@/components/shell";
 import { Enquiry } from "@/components/enquiry";
 import { services, type Service } from "@/lib/services";
@@ -11,6 +13,7 @@ export default async function ServicePage({
 }) {
   const { slug } = await params;
   if (!Object.hasOwn(services, slug)) notFound();
+  if (slug === "essentials") permanentRedirect("/#human-support");
   const service = services[slug as Service];
   const review = (await searchParams).review;
   return (
@@ -31,6 +34,17 @@ export default async function ServicePage({
           </a>
         </aside>
       </div>
+      <LinkedServiceContact
+        service={slug as Service}
+        reviewId={
+          review && /^[a-f0-9-]{36}$/i.test(review) ? review : undefined
+        }
+      />
+      <p className="fine-print">
+        Your email app opens; nothing is sent until you send it. Prefer to
+        contact us here? Use the short form below.
+      </p>
+      {slug === "digitisation" && <DigitalOffer />}
       <Enquiry
         service={slug as Service}
         reviewId={review && /^[a-f0-9-]{36}$/i.test(review) ? review : null}

@@ -21,7 +21,7 @@ export function UploadShortcut() {
     >
       <span>First job: review your report. Free.</span>
       <strong>
-        Upload your impact report <Arrow />
+        Let’s get started — free <Arrow />
       </strong>
     </button>
   );
@@ -168,7 +168,7 @@ export function Intake({
         </p>
       )}
       <div className="upload-topline">
-        <span>Upload your impact report</span>
+        <span>Give your Impact Director its first job.</span>
         <span>No registration required.</span>
       </div>
       {!find ? (
@@ -194,7 +194,11 @@ export function Intake({
               : "or choose a PDF from your device"}
           </span>
           <span className="choose-file">
-            {file ? "Choose a different file" : "Choose a PDF"}
+            {file
+              ? "Choose a different file"
+              : hero
+                ? "Let’s get started — free"
+                : "Choose a PDF"}
             <Arrow />
           </span>
           <input

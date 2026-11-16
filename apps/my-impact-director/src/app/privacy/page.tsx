@@ -3,7 +3,7 @@ export default function Privacy() {
   return (
     <section className="section">
       <PageIntro
-        label="Privacy notice · Version 3.1 · 16 November 2026"
+        label="Privacy notice · Version 3.2 · 16 November 2026"
         title="Your report stays yours."
       />
       <div className="content-prose">
@@ -81,11 +81,21 @@ export default function Privacy() {
         <p>
           We count daily totals for review starts, completions, first result
           views, methodology selections, snapshots, email verification and
-          delivery, enquiries and feedback. These aggregate counts contain no
-          visitor identifiers. To enforce fair-use limits we store keyed,
-          rotating hashes of network addresses, never raw network addresses in
-          our application rate-limit records. Hosting providers may keep their
-          own security logs.
+          delivery, service contact-link clicks, browser sessions, enquiries and
+          feedback. A local browser flag helps estimate returning sessions; it
+          is not a visitor identifier. These aggregate counts contain no visitor
+          identifiers. To enforce fair-use limits we store keyed, rotating
+          hashes of network addresses, never raw network addresses in our
+          application rate-limit records. Hosting providers may keep their own
+          security logs.
+        </p>
+        <p>
+          Clicking a professional-service email link records interest, not proof
+          that an email was sent. For a verified signed-in account we record the
+          service interest with your account so the team can follow up. You may
+          explicitly link a completed review; this records its reference, not
+          permission to read its findings. Anonymous contact clicks are
+          aggregate only. Email subjects never include report contents.
         </p>
         <h2>Who can see your report</h2>
         <p>

@@ -2,8 +2,9 @@ import { Contact } from "@/components/contact";
 import { Arrow } from "@/components/icons";
 import Link from "next/link";
 import Image from "next/image";
-import { Intake, UploadShortcut } from "@/components/intake";
+import { Intake } from "@/components/intake";
 import { SupportIntroduction } from "@/components/support-introduction";
+import { ReportServices } from "@/components/report-services";
 import { ready } from "@/lib/reviews";
 export const dynamic = "force-dynamic";
 export default function Home() {
@@ -11,7 +12,7 @@ export default function Home() {
     <div className="campaign">
       <section
         id="introduction"
-        className="director-opening"
+        className="director-opening commercial-opening"
         aria-labelledby="director-title"
       >
         <div className="director-identity">
@@ -21,18 +22,18 @@ export default function Home() {
             <span>DIRECTOR.</span>
           </h1>
           <p className="director-proposition">
-            Your own Impact Director.
-            <br />
-            <em>Without the full-time salary.</em>
+            Imagine every organisation having its own <em>Impact Director.</em>
           </p>
           <p className="director-promise">
-            Making expert impact management affordable for every organisation.
-            Human-led. AI-powered.
+            We’re building an intelligent, AI-powered Impact Director, combining
+            powerful technology with experienced human professionals to help
+            organisations understand, manage and improve their social impact.
           </p>
           <p className="director-audience">
-            Charities. Social enterprises. NGOs.
+            AI-powered. Human-led.
             <br />
-            Purpose-driven businesses.
+            The ambition is developing. The professional human service is
+            available now.
           </p>
           <p className="director-credit">
             A social enterprise initiative
@@ -42,23 +43,24 @@ export default function Home() {
               My Social Impact <Arrow diagonal />
             </a>
           </p>
-          <UploadShortcut />
         </div>
         <div className="director-first-job">
           <div className="first-job-heading">
-            <p>Your new Impact Director’s first job?</p>
-            <h2>
-              REVIEW YOUR
+            <h2 className="first-job-ready">
+              YOUR IMPACT DIRECTOR’S
               <br />
-              IMPACT REPORT.
+              FIRST JOB IS READY.
             </h2>
-            <div className="job-price">
-              <strong>For free.</strong>
-              <span>£0</span>
-            </div>
-            <p>
-              Upload your PDF. Choose any of three complementary reviews, with
-              practical recommendations.
+            <p className="first-job-action">
+              LET’S REVIEW YOUR IMPACT REPORT.<strong>FOR FREE.</strong>
+            </p>
+            <p className="first-job-explanation">
+              Upload your report. Explore its evidence, approach to managing
+              impact and creative communication.
+            </p>
+            <p className="first-job-reassurance">
+              Three complementary reviews. Practical recommendations. No payment
+              required.
             </p>
           </div>
           <Intake enabled={ready()} hero />
@@ -99,7 +101,8 @@ export default function Home() {
               id: "excellence",
               logo: "excellence.png",
               name: "Social Impact Excellence",
-              question: "What does your report show about managing impact?",
+              question:
+                "What does your report demonstrate about how you manage impact?",
               pillars:
                 "Purpose · Leadership · Data · Delivery · Communications",
               explanation:
@@ -159,32 +162,8 @@ export default function Home() {
           </Link>
         </div>
       </section>
+      <ReportServices />
       <SupportIntroduction />
-      <section
-        id="our-vision"
-        className="purpose-moment"
-        aria-labelledby="purpose-title"
-      >
-        <div className="campaign-width">
-          <h2 id="purpose-title">
-            Imagine a world where <em>social impact</em> was taken as seriously
-            as financial performance.
-          </h2>
-          <div className="purpose-base">
-            <p>
-              That’s the vision of My Social Impact — and the reason we’re
-              making expert impact management accessible to everyone.
-            </p>
-            <div>
-              <h3>What if every organisation had its own Impact Director?</h3>
-              <p>
-                Experienced people. Social Impact Excellence. Powerful AI.
-                <Link href="/#human-support"> Explore ongoing support →</Link>
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
       <Contact />
     </div>
   );

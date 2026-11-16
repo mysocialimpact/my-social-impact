@@ -1,4 +1,5 @@
 "use client";
+import { ContextualOffers } from "./contextual-offers";
 import {
   isReportV2,
   reportPillars,
@@ -1003,78 +1004,8 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
             {error && <p role="alert">{error}</p>}
           </section>
         ))}
-      {complete && results && framework === "report" && (
-        <section className="bigger-conversation">
-          <h2>Let’s make your next impact report better.</h2>
-          <p>
-            Professional editing, copywriting and creative guidance from My
-            Social Impact, with digital and creative technology from The Ideas
-            Shed.
-          </p>
-          <p>
-            <Link href={`/services/expert-review?review=${r.id}#enquire`}>
-              Improve your report →
-            </Link>
-          </p>
-          <p>
-            <Link href={`/services/preparation?review=${r.id}#enquire`}>
-              Create your next report →
-            </Link>
-          </p>
-          <p>
-            <Link href={`/services/digitisation?review=${r.id}#enquire`}>
-              Bring your report to life →
-            </Link>
-          </p>
-          <Link href="mailto:marcus@mysocialimpact.org">Talk to Marcus →</Link>
-        </section>
-      )}
       {complete && results && (
-        <section className="bigger-conversation">
-          <p className="eyebrow">
-            IMPACT ISN’T SOMETHING YOU MANAGE ONCE A YEAR.
-          </p>
-          <h2>
-            {framework === "claims"
-              ? "Want someone to help you strengthen your next report?"
-              : "What if someone helped you manage this throughout the year?"}
-          </h2>
-          <p>
-            You’ve reviewed your impact report. Now imagine having someone help
-            you improve your impact all year round. A real person who knows your
-            organisation, helps you interpret the evidence and keeps you moving
-            forward.
-          </p>
-          <p>
-            Social Impact Excellence brings impact into regular management
-            conversations, decisions and learning. Your Impact Director helps
-            you put it into practice, with intelligent technology behind the
-            scenes.
-          </p>
-          <Link
-            className="button primary"
-            href={`/services/human-director?review=${r.id}#enquire`}
-          >
-            Meet your Impact Director <Arrow diagonal />
-          </Link>
-          <p>
-            Human support from an indicative £149 per month; a more hands-on
-            Director service from £495. Scope and involvement agreed together.
-          </p>
-          <p>
-            <Link href={`/services/expert-review?review=${r.id}#enquire`}>
-              Discuss this report
-            </Link>{" "}
-            ·{" "}
-            <Link href={`/services/preparation?review=${r.id}#enquire`}>
-              Create your next report
-            </Link>{" "}
-            ·{" "}
-            <Link href={`/services/digitisation?review=${r.id}#enquire`}>
-              Digitise your report
-            </Link>
-          </p>
-        </section>
+        <ContextualOffers framework={framework} reviewId={r.id} />
       )}
     </div>
   );

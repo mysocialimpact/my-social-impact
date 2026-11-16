@@ -1,4 +1,26 @@
 export const services = {
+  discussion: {
+    name: "Free introductory conversation",
+    heading: "Let’s discuss your report.",
+    intro:
+      "Talk to an experienced My Social Impact professional about your findings and what could be improved. A free introductory conversation, with no obligation to purchase.",
+    benefits: [
+      "Understand your assessment",
+      "Discuss the most useful next steps",
+      "Decide whether professional help would be useful",
+    ],
+  },
+  improvement: {
+    name: "Improve an existing report",
+    heading: "Let’s make your existing report better.",
+    intro:
+      "Creative improvements from £500 for a clearly scoped project: sharper structure, clearer writing, stronger storytelling and more effective design.",
+    benefits: [
+      "Structure, copy editing and storytelling",
+      "Typography, layout and charts",
+      "Clearer communication of findings; substantial research, rewriting or redesign quoted separately",
+    ],
+  },
   "expert-review": {
     name: "Expert Impact Report Review",
     heading: "A fresh pair of expert eyes.",
@@ -15,7 +37,7 @@ export const services = {
     name: "Create an Impact Report",
     heading: "A report that does your impact justice.",
     intro:
-      "Need an impact report from scratch? We can help you understand your impact, collect the evidence and produce a compelling, credible report.",
+      "Complete impact reports from £1,000 for an appropriately scoped project. We can help review evidence, research meaningful outcomes, structure, write, design and publish your next report. Price depends on size, complexity, evidence and production needs.",
     benefits: [
       "A clear purpose, audience and reporting structure",
       "Practical evidence collection and impact analysis",
@@ -26,7 +48,7 @@ export const services = {
     name: "Digitise Your Impact Report",
     heading: "Your report deserves more than a PDF.",
     intro:
-      "Turn your existing impact report into an engaging, interactive digital experience that helps more people explore, understand and connect with your impact.",
+      "Digital report starter from £500. My Social Impact and The Ideas Shed can turn an agreed part of your PDF into a useful digital experience. A limited-scope one-day starter; larger or more sophisticated builds quoted separately.",
     benefits: [
       "An accessible experience across phones, tablets and desktops",
       "Interactive presentation and useful data visualisation",
@@ -37,7 +59,7 @@ export const services = {
     name: "Human Impact Director support",
     heading: "Someone in your corner.",
     intro:
-      "Your own Impact Director. Without the full-time salary. Experienced people, intelligent technology and practical support shaped around your organisation.",
+      "Someone in your corner, all year round. Experienced professionals combine judgement, strategic thinking and accountability with AI-assisted analysis. Human-led support is available now; the fuller agentic service is in development.",
     benefits: [
       "Someone who understands your purpose and priorities",
       "Help interpreting evidence and making better decisions",
@@ -45,10 +67,10 @@ export const services = {
     ],
   },
   essentials: {
-    name: "Essentials",
+    name: "Essentials (retired)",
     heading: "A little guidance. A clearer direction.",
     intro:
-      "From £49 per month, indicatively. Light-touch intelligent digital guidance, structured recommendations and help monitoring impact priorities.",
+      "This former package is no longer offered. Existing enquiry records are preserved; current support starts with Supported.",
     benefits: [
       "Primarily AI-enabled guidance",
       "Help organising priorities and next steps",
@@ -57,9 +79,9 @@ export const services = {
   },
   supported: {
     name: "Supported",
-    heading: "A professional helping you stay on track.",
+    heading: "Regular guidance. Useful next steps.",
     intro:
-      "From £149 per month, indicatively. Ongoing intelligent support with periodic human review, with the level of involvement agreed together.",
+      "From £149 per month, indicatively. Regular professional guidance: a defined check-in, practical advice, priority and progress reviews, and AI-assisted recommendations. Scope and frequency agreed together.",
     benefits: [
       "A professional perspective on your progress",
       "Help interpreting evidence and identifying improvements",
@@ -68,9 +90,9 @@ export const services = {
   },
   director: {
     name: "Director",
-    heading: "Senior expertise. Without the full-time salary.",
+    heading: "A named adviser. A meaningful relationship.",
     intro:
-      "From £495 per month, indicatively. A more hands-on Impact Director service, with strategic input and regular interaction with an experienced professional.",
+      "From £495 per month, indicatively. A named experienced adviser, regular strategic conversations, measurement and reporting guidance, and progress reviews. Selected management or board involvement can be agreed within scope.",
     benefits: [
       "A professional who gets to know your organisation",
       "Support for management and leadership decisions",
@@ -81,7 +103,7 @@ export const services = {
     name: "Bespoke",
     heading: "Your organisation. Your particular challenges.",
     intro:
-      "From £1,500+ per month, indicatively. Tailored support for larger or more complex organisations, with scope agreed together.",
+      "From £1,500 per month, indicatively. Tailored support for larger or more complex organisations, with scope agreed together.",
     benefits: [
       "Potential for greater senior involvement",
       "Additional analysis and leadership engagement",
@@ -122,43 +144,84 @@ export function serviceLabel(value: string) {
 }
 export const supportTiers = [
   {
-    id: "free",
-    name: "Free",
-    price: "£0",
-    summary: "Your first report review.",
-    detail:
-      "Initial automated assessment and practical recommendations. An accessible introduction, with no registration before you start.",
-  },
-  {
-    id: "essentials",
-    name: "Essentials",
-    price: "£49",
-    summary: "Intelligent digital guidance.",
-    detail:
-      "Light-touch, primarily AI-enabled guidance, structured recommendations and help monitoring impact priorities. No routine personal meetings.",
-  },
-  {
     id: "supported",
     name: "Supported",
     price: "£149",
-    summary: "Periodic human review.",
+    summary: "Regular professional guidance.",
     detail:
-      "Ongoing intelligent support with a professional perspective to help your organisation stay on track.",
+      "A defined check-in, practical advice, priorities and progress reviews, with AI-assisted analysis. Frequency and scope agreed together.",
   },
   {
     id: "director",
     name: "Director",
     price: "£495",
-    summary: "Your ongoing human adviser.",
+    summary: "Your named experienced adviser.",
     detail:
-      "More hands-on personal involvement, strategic input and regular interaction with an experienced professional.",
+      "Strategic conversations, measurement and reporting guidance, and leadership advice. Selected management or board involvement by agreement.",
   },
   {
     id: "bespoke",
     name: "Bespoke",
-    price: "£1,500+",
-    summary: "Tailored senior support.",
+    price: "£1,500",
+    summary: "Tailored senior involvement.",
     detail:
-      "For larger or more complex organisations: potentially greater senior involvement, additional analysis, leadership engagement and custom projects.",
+      "Strategic oversight, specialist analysis, management or board participation and additional projects. Exact commitments agreed together.",
   },
 ] as const;
+
+export const activeServices = Object.entries(services).filter(
+  ([id]) => id !== "essentials",
+);
+export const MARCUS_EMAIL = "marcus@mysocialimpact.org";
+const subjects: Partial<Record<Service, string>> = {
+  discussion: "Discuss my impact report",
+  improvement: "Improve my existing report",
+  digitisation: "Digitise my impact report",
+  preparation: "Prepare my next impact report",
+  "expert-review": "Discuss my impact report",
+  consultancy: "Professional impact consultancy",
+  "ai-readiness": "AI readiness advice",
+};
+export function serviceMailto(service: Service) {
+  return `mailto:${MARCUS_EMAIL}?subject=${encodeURIComponent("My Impact Director — " + (subjects[service] || "Ongoing support enquiry"))}`;
+}
+export const reportOffers = [
+  {
+    service: "discussion",
+    title: "Let’s discuss your report.",
+    price: "Free introductory conversation",
+    copy: "An experienced My Social Impact professional. Your findings, your questions and a useful next step. No obligation.",
+    cta: "Let’s talk about your report",
+  },
+  {
+    service: "improvement",
+    title: "Let’s make your existing report better.",
+    price: "Creative improvements from £500",
+    copy: "Sharper structure and writing. Stronger stories, typography, layout and charts. A clearly scoped improvement project; substantial research, rewriting or redesign quoted separately.",
+    cta: "Improve my report",
+  },
+  {
+    service: "digitisation",
+    title: "Let’s bring your report to life.",
+    price: "Digital report starter from £500",
+    copy: "Digital storytelling, accessible online presentation or interactive charts, built with The Ideas Shed. One agreed, limited-scope day; larger builds quoted separately.",
+    cta: "Bring my report to life",
+  },
+  {
+    service: "preparation",
+    title: "Let’s make your next report.",
+    price: "Complete impact reports from £1,000",
+    copy: "Evidence, research, structure, writing, design and publication support. A starting price for an appropriately scoped project; size, complexity and evidence needs shape the quote.",
+    cta: "Let’s make your next report",
+  },
+] as const;
+
+export const IDEAS_SHED_PROJECT =
+  "https://www.theideasshed.com/project-in-a-day";
+// Verified against the live project page, 16 November 2026. No live slot is promised here.
+export function novemberOfferActive(now = new Date()) {
+  return (
+    now >= new Date("2026-11-01T00:00:00+00:00") &&
+    now < new Date("2026-12-01T00:00:00+00:00")
+  );
+}

@@ -58,6 +58,9 @@ try {
           reducedMotion: width === 640 ? "reduce" : "no-preference",
         }),
         p = await c.newPage();
+      await c.route("**/api/service-intents", (x) =>
+        x.fulfill({ json: { recorded: "intent_only", emailSent: false } }),
+      );
       const errors = [];
       p.on("pageerror", (e) => errors.push(e.message));
       await c.route("**/api/account", (x) =>
@@ -169,6 +172,9 @@ try {
         viewport: { width: 1366, height: 768 },
       }),
       p = await c.newPage();
+    await c.route("**/api/service-intents", (x) =>
+      x.fulfill({ json: { recorded: "intent_only", emailSent: false } }),
+    );
     await c.route("**/api/account", (x) =>
       x.fulfill({ json: { user: { id: "guest", anonymous: true } } }),
     );
