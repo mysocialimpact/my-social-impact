@@ -332,7 +332,7 @@ export function Intake({
         </section>
       )}
       <div className="upload-foot">
-        <p>No sign-up. No email. Your results first.</p>
+        <p>Try your free headline snapshot without registration.</p>
         <button
           className="subtle-button"
           disabled={busy}
@@ -347,7 +347,8 @@ export function Intake({
       </div>
       <p className="review-disclosure">
         Choose any free methodology after upload. Headline results need no
-        email. Full detailed reports are free with verified email delivery .
+        account. Create and verify a free account to save, download, share and
+        return to full detailed assessments.
       </p>
       <p className="upload-privacy">
         Private to this browser for 7 days. Download or save after your review.

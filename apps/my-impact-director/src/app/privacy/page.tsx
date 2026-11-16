@@ -3,7 +3,7 @@ export default function Privacy() {
   return (
     <section className="section">
       <PageIntro
-        label="Privacy notice · Version 3.0 · 15 November 2026"
+        label="Privacy notice · Version 4.0 · 16 November 2026"
         title="Your report stays yours."
       />
       <div className="content-prose">
@@ -17,13 +17,13 @@ export default function Privacy() {
         </p>
         <h2>What we process and why</h2>
         <p>
-          You can upload a report and see the complete review without giving us
-          a name or email address. We process the report, extracted content,
-          assessment findings and minimal processing records to deliver the
-          review. An unguessable browser session protects your access. A report
-          may contain information about other people. Only submit documents you
-          are entitled to share for this purpose. Remove unnecessary personal or
-          sensitive information first.
+          You can upload a report and see a useful headline snapshot without
+          giving us a name or email address. We process the report, extracted
+          content, assessment findings and minimal processing records to deliver
+          the review. An unguessable browser session protects your access. A
+          report may contain information about other people. Only submit
+          documents you are entitled to share for this purpose. Remove
+          unnecessary personal or sensitive information first.
         </p>
         <p>
           Essential, secure cookies keep guest reviews available in the same
@@ -35,8 +35,12 @@ export default function Privacy() {
           verification. Previously completed combined reviews retain their
           existing access. Opening it gives you a 30-day saved-review session.
           Existing My Social Impact / SORP accounts remain supported; we do not
-          store their passwords. We do not add advertising trackers or subscribe
-          you to marketing.
+          store their passwords. Marketing updates require a separate, optional,
+          unticked choice. We record your choice, its date, wording version and
+          source. You can unsubscribe at any time in Account → News & practical
+          ideas. Account verification, password recovery and requested report
+          delivery continue regardless of marketing preference. We do not add
+          advertising trackers.
         </p>
         <p>
           Larger uploads are transferred in private parts to the same protected
@@ -44,6 +48,24 @@ export default function Privacy() {
           deleted by the scheduled cleanup. Once your review is created,
           temporary parts are removed; your report follows the retention period
           below.
+        </p>
+        <h2>Accounts and secure sharing</h2>
+        <p>
+          Email and password accounts use the existing My Social Impact account
+          service. This application stores no passwords. Confirm your email
+          address once to bind your saved workspace to that account. Existing
+          email-link sessions remain supported; create a password account using
+          the same address to keep your reports.
+        </p>
+        <p>
+          Assessments are private by default. A verified account can explicitly
+          generate a share link for a completed detailed assessment. Anyone
+          holding that link can read the assessment and quoted evidence for up
+          to 30 days, unless you revoke it sooner or the report expires. The
+          original uploaded PDF is never included. Shared pages are excluded
+          from indexing and share tokens are kept in the URL fragment.
+          Recipients may retain copies of what they read, which revocation
+          cannot remove.
         </p>
         <h2>Document processing and providers</h2>
         <p>
@@ -70,8 +92,9 @@ export default function Privacy() {
         <p>
           Where email saving is configured, Resend delivers the requested PDF
           and secure return link to your chosen email address. The PDF then
-          follows your email provider’s retention rules. No email is sent unless
-          you request it.
+          follows your email provider’s retention rules. We send account
+          verification, password recovery and completed assessments as requested
+          through registration or review actions.
         </p>
         <h2>Usage and security</h2>
         <p>

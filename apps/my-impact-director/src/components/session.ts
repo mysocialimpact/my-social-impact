@@ -7,19 +7,26 @@ export function useSession() {
     [error, setError] = useState("");
   useEffect(() => {
     const c = new AbortController();
-    fetch("/api/account", { signal: c.signal })
-      .then(async (r) => {
-        const d = await r.json();
-        if (!r.ok) throw new Error(d.error);
-        setUser(d.user);
-      })
-      .catch((e) => {
-        if (!c.signal.aborted) setError(e.message);
-      })
-      .finally(() => {
-        if (!c.signal.aborted) setLoading(false);
-      });
-    return () => c.abort();
+    const refresh = () => {
+      fetch("/api/account", { signal: c.signal })
+        .then(async (r) => {
+          const d = await r.json();
+          if (!r.ok) throw new Error(d.error);
+          setUser(d.user);
+        })
+        .catch((e) => {
+          if (!c.signal.aborted) setError(e.message);
+        })
+        .finally(() => {
+          if (!c.signal.aborted) setLoading(false);
+        });
+    };
+    refresh();
+    window.addEventListener("mid-session-refresh", refresh);
+    return () => {
+      c.abort();
+      window.removeEventListener("mid-session-refresh", refresh);
+    };
   }, []);
   return { user, loading, error };
 }

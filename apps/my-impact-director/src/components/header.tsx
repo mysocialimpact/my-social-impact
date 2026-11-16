@@ -1,6 +1,7 @@
 "use client";
 import { MAIN_LINKS, isPageActive, pageLabel } from "@/lib/navigation";
 import { SectionNavigation } from "./section-navigation";
+import { useSession, api } from "./session";
 import { Arrow } from "./icons";
 import Link from "next/link";
 import Image from "next/image";
@@ -9,6 +10,8 @@ import { usePathname } from "next/navigation";
 export function Header() {
   const [open, setOpen] = useState(false),
     path = usePathname();
+  const { user, loading } = useSession();
+  const signedIn = !!user && !user.anonymous;
   const header = useRef<HTMLElement>(null);
   useEffect(() => {
     const el = header.current;
@@ -78,13 +81,46 @@ export function Header() {
             Review for free <Arrow diagonal />
           </Link>
         </nav>
-        <Link
-          href="/reviews#login"
-          className="header-login"
-          onClick={() => setOpen(false)}
-        >
-          LOGIN
-        </Link>
+        <div className="header-account-actions" aria-label="Account navigation">
+          {loading ? null : signedIn ? (
+            <>
+              <Link
+                href="/account"
+                aria-current={path === "/account" ? "page" : undefined}
+              >
+                Account
+              </Link>
+              <button
+                onClick={async () => {
+                  await api("/api/account", {
+                    method: "POST",
+                    headers: { "content-type": "application/json" },
+                    body: JSON.stringify({ action: "logout" }),
+                  });
+                  window.location.assign("/reviews");
+                }}
+              >
+                Log out
+              </button>
+            </>
+          ) : (
+            <>
+              <Link
+                href="/login"
+                aria-current={path === "/login" ? "page" : undefined}
+              >
+                Log in
+              </Link>
+              <Link
+                href="/register"
+                className="account-create"
+                aria-current={path === "/register" ? "page" : undefined}
+              >
+                Create free account
+              </Link>
+            </>
+          )}
+        </div>
         <Link
           href="/review"
           className="header-review"

@@ -11,6 +11,7 @@ import {
   metric,
   privateNetworkKey,
   tokenHash,
+  accessToken,
 } from "./access";
 import { getReview } from "./reviews";
 import { exportPdf } from "./export";
@@ -40,6 +41,7 @@ export async function requestEmailSave(req: Request, input: unknown) {
     email = rawEmail.trim().toLowerCase();
   await rateLimit(`email-ip:${privateNetworkKey(req)}`, 8, 3600);
   await rateLimit(`email-recipient:${email}`, 3, 3600);
+  let authSubject: string | null = null;
   let ownerId = emailId(email),
     attachment: Buffer | undefined;
   if (reviewId) {
@@ -67,6 +69,11 @@ export async function requestEmailSave(req: Request, input: unknown) {
   } else {
     if (account) {
       const current = await visitor(req);
+      if (current.passwordAccount && current.email.toLowerCase() !== email)
+        throw new AppError(
+          400,
+          "Use the email address on your signed-in account.",
+        );
       const verified = await localIdentity(req);
       if (
         verified &&
@@ -75,6 +82,8 @@ export async function requestEmailSave(req: Request, input: unknown) {
       )
         return { verified: true };
       ownerId = current.id;
+      if (current.passwordAccount && current.email.toLowerCase() === email)
+        authSubject = current.authSubject || null;
     } else {
       const existing = await query(
         "SELECT id FROM director.users WHERE lower(email)=$1 AND is_anonymous=false LIMIT 1",
@@ -84,11 +93,25 @@ export async function requestEmailSave(req: Request, input: unknown) {
       ownerId = String(existing[0].id);
     }
   }
+  const guestToken = accessToken(req);
+  const [guest] = guestToken
+    ? await query<{ owner_id: string }>(
+        "SELECT owner_id FROM director.access_sessions WHERE token_hash=$1 AND kind='guest' AND expires_at>now()",
+        [tokenHash(guestToken)],
+      )
+    : [];
   const token = randomBytes(32).toString("base64url"),
     hash = tokenHash(token);
   await query(
-    "INSERT INTO director.email_links(token_hash,owner_id,review_id,email,expires_at) VALUES($1,$2,$3,$4,now()+interval '30 minutes')",
-    [hash, ownerId, reviewId || null, email],
+    "INSERT INTO director.email_links(token_hash,owner_id,review_id,email,expires_at,auth_subject,guest_owner_id) VALUES($1,$2,$3,$4,now()+interval '30 minutes',$5,$6)",
+    [
+      hash,
+      ownerId,
+      reviewId || null,
+      email,
+      authSubject,
+      guest?.owner_id || null,
+    ],
   );
   const origin =
     process.env.APP_ORIGIN ||
@@ -112,8 +135,10 @@ export async function requestEmailSave(req: Request, input: unknown) {
         reply_to: "marcus@mysocialimpact.org",
         subject: reviewId
           ? "Confirm your email for your free detailed review"
-          : "Your My Impact Director sign-in link",
-        text: `${reviewId ? (attachment ? "Your full impact report review is attached. Open this private link to keep it in your saved reviews for 180 days:" : "Confirm your email to receive your free detailed report when it is ready:") : "Open this private link to return to your saved reviews:"}\n\n${destination.href}\n\nThis single-use link expires in 30 minutes. You have not been subscribed to marketing. If you did not request this email, you can ignore it.`,
+          : authSubject
+            ? "Confirm your My Impact Director email address"
+            : "Your My Impact Director sign-in link",
+        text: `${reviewId ? (attachment ? "Your full impact report review is attached. Open this private link to keep it in your saved reviews for 180 days:" : "Confirm your email to receive your free detailed report when it is ready:") : authSubject ? "Check your inbox to confirm your email address. Confirm once to save your reports, get your full assessments and return using your email and password:" : "Open this private link to return to your saved reviews:"}\n\n${destination.href}\n\nThis single-use link expires in 30 minutes. You have not been subscribed to marketing. If you did not request this email, you can ignore it.`,
         ...(attachment
           ? {
               attachments: [
@@ -158,8 +183,10 @@ export async function redeemEmailLink(token: string) {
       email: string;
       review_id: string | null;
       owner_id: string;
+      auth_subject: string | null;
+      guest_owner_id: string | null;
     }>(
-      "SELECT email,review_id,owner_id FROM director.email_links WHERE token_hash=$1 AND used_at IS NULL AND expires_at>now() FOR UPDATE",
+      "SELECT email,review_id,owner_id,auth_subject,guest_owner_id FROM director.email_links WHERE token_hash=$1 AND used_at IS NULL AND expires_at>now() FOR UPDATE",
       [tokenHash(token)],
     );
     if (!link)
@@ -174,17 +201,41 @@ export async function redeemEmailLink(token: string) {
       "SELECT id FROM director.users WHERE lower(email)=$1 AND is_anonymous=false ORDER BY (id=$2) DESC,created_at LIMIT 1",
       [link.email, emailId(link.email)],
     );
-    const id = existing?.id || emailId(link.email);
+    const id =
+      existing?.id || (link.auth_subject ? link.owner_id : emailId(link.email));
     await c.query(
-      "INSERT INTO director.users(id,email,name,email_verified_at) VALUES($1,$2,'',now()) ON CONFLICT(id) DO UPDATE SET last_seen=now(),email_verified_at=COALESCE(director.users.email_verified_at,now())",
+      "INSERT INTO director.users(id,email,name,email_verified_at) VALUES($1,$2,'',now()) ON CONFLICT(id) DO UPDATE SET email=excluded.email,is_anonymous=false,last_seen=now(),email_verified_at=COALESCE(director.users.email_verified_at,now())",
       [id, link.email],
     );
+    if (link.auth_subject) {
+      await c.query(
+        "UPDATE director.account_identities SET owner_id=$2,verified_at=now() WHERE subject=$1 AND email=$3 AND owner_id=$4",
+        [link.auth_subject, id, link.email, link.owner_id],
+      );
+      if (id !== link.owner_id) {
+        await c.query(
+          "INSERT INTO director.marketing_consent(owner_id,opted_in,wording_version,wording,source,recorded_at) SELECT $2,opted_in,wording_version,wording,source,recorded_at FROM director.marketing_consent WHERE owner_id=$1 ON CONFLICT(owner_id) DO NOTHING",
+          [link.owner_id, id],
+        );
+      }
+    }
+    // Provider-subject ownership and captured guest ownership are both explicit.
+    const { rows: currentReports } = await c.query<{ id: string }>(
+      "SELECT v.id FROM director.reviews v JOIN director.reports r ON r.id=v.report_id JOIN director.users u ON u.id=r.owner_id WHERE r.owner_id=ANY($1::text[]) AND r.expires_at>now() AND (v.framework='document' OR v.framework IS NULL)",
+      [
+        [link.auth_subject ? link.owner_id : null, link.guest_owner_id].filter(
+          Boolean,
+        ),
+      ],
+    );
+    for (const row of currentReports)
+      await grantVerifiedReport(c, row.id, id, link.email);
     if (link.review_id)
       await grantVerifiedReport(c, link.review_id, id, link.email);
     // The email proves the account; the captured authenticated guest session proves its documents.
     // Never subscribe other existing accounts' historical documents merely because they share an email.
     const { rows: guestReports } = await c.query<{ id: string }>(
-      "SELECT v.id FROM director.reviews v JOIN director.reports r ON r.id=v.report_id JOIN director.users u ON u.id=r.owner_id WHERE r.owner_id=$1 AND u.is_anonymous AND r.expires_at>now() AND (v.framework='document' OR v.framework IS NULL)",
+      "SELECT v.id FROM director.reviews v JOIN director.reports r ON r.id=v.report_id JOIN director.users u ON u.id=r.owner_id WHERE r.owner_id=$1 AND u.is_anonymous AND EXISTS(SELECT 1 FROM director.access_sessions gs WHERE gs.owner_id=r.owner_id AND gs.kind='guest' AND gs.expires_at>now()) AND r.expires_at>now() AND (v.framework='document' OR v.framework IS NULL)",
       [link.owner_id],
     );
     for (const row of guestReports)
@@ -214,7 +265,7 @@ export async function redeemEmailLink(token: string) {
   };
 }
 
-async function grantVerifiedReport(
+export async function grantVerifiedReport(
   c: PoolClient,
   reviewId: string,
   id: string,

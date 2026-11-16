@@ -18,7 +18,8 @@ export function AccessLink() {
       <h2>Confirm your email.</h2>
       <p>
         Confirm this address to receive your detailed review when it is ready,
-        and return securely to your personal workspace. No password required.
+        and open your personal workspace. Once you have a password account, you
+        can log in normally on your next visit.
       </p>
       <button
         className="button primary"
@@ -52,7 +53,8 @@ export function AccessLink() {
         </p>
       )}
       <p>
-        <Link href="/reviews">Request a new sign-in link</Link>
+        <Link href="/verify-email">Resend confirmation</Link> ·{" "}
+        <Link href="/login">Log in</Link>
       </p>
     </div>
   );

@@ -89,6 +89,7 @@ function SourceLink({
   page: number;
   admin?: boolean;
 }) {
+  if (!id) return <span>PDF page {page} · evidence reference</span>;
   return admin ? (
     <a href={`#inspection-page-${page}`}>
       PDF page {page} · inspection below ↓
