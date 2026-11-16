@@ -59,7 +59,7 @@ export function Enquiry({
           Tell us a little about your organisation and what you’d like to
           achieve. No account needed.
         </p>
-        <ServiceContact service={service} source="service">
+        <ServiceContact service={service} source="service" destination="email">
           Or email Marcus directly
         </ServiceContact>
       </div>

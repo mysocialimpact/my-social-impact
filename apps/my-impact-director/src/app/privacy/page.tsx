@@ -90,12 +90,13 @@ export default function Privacy() {
           security logs.
         </p>
         <p>
-          Clicking a professional-service email link records interest, not proof
-          that an email was sent. For a verified signed-in account we record the
-          service interest with your account so the team can follow up. You may
-          explicitly link a completed review; this records its reference, not
-          permission to read its findings. Anonymous contact clicks are
-          aggregate only. Email subjects never include report contents.
+          Clicking a professional-service contact or email link records
+          interest, not proof that an email was sent. For a verified signed-in
+          account we record the service interest with your account so the team
+          can follow up. You may explicitly link a completed review; this
+          records its reference, not permission to read its findings. Anonymous
+          contact clicks are aggregate only. Email subjects never include report
+          contents.
         </p>
         <h2>Who can see your report</h2>
         <p>

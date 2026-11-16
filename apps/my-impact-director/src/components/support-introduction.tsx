@@ -4,11 +4,12 @@ export function SupportIntroduction() {
   return (
     <section
       id="human-support"
-      className="support-introduction"
+      className="support-introduction chapter-support"
       aria-labelledby="support-title"
     >
       <div className="campaign-width">
-        <div className="support-intro-heading">
+        <p className="chapter-label">04 / A RELATIONSHIP, NOT JUST A REPORT</p>
+        <div className="support-intro-heading" data-reveal>
           <h2 id="support-title">
             SOMEONE IN YOUR CORNER.
             <br />
@@ -16,14 +17,14 @@ export function SupportIntroduction() {
           </h2>
           <div>
             <p>
-              From regular professional check-ins to senior strategic
-              involvement, we combine experienced people with the power of AI to
-              help you understand your impact, monitor progress and make better
-              decisions.
+              Experienced social impact professionals who get to know your
+              organisation, check in regularly and help you make better
+              decisions — with AI working behind the scenes.
             </p>
             <p>
               <strong>
-                AI does the groundwork. People help you move forward.
+                Human judgement, challenge and strategic understanding.
+                Technology that makes the groundwork more affordable.
               </strong>
             </p>
           </div>
@@ -66,17 +67,8 @@ export function SupportIntroduction() {
             engagement.
           </p>
           <ServiceContact service="human-director" source="pricing">
-            Let’s discuss the right level of support
+            Let’s talk about ongoing support
           </ServiceContact>
-        </div>
-        <div className="ambition-note">
-          <strong>THIS IS JUST THE BEGINNING.</strong>
-          <p>
-            Today: three complementary report reviews. We’re building towards an
-            intelligent partner that helps you monitor impact, understand
-            evidence and improve throughout the year. The fuller agentic service
-            is in development—experienced human support is available now.
-          </p>
         </div>
       </div>
     </section>

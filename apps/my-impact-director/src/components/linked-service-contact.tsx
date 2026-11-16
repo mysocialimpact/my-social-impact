@@ -18,7 +18,7 @@ export function LinkedServiceContact({
       canLinkReview={!!user && !user.anonymous && !!user.emailVerified}
       className="button primary"
     >
-      Email Marcus about this service
+      Talk to Marcus about this service
     </ServiceContact>
   );
 }

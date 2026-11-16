@@ -1,7 +1,12 @@
 "use client";
 import { useState } from "react";
 import { Arrow } from "./icons";
-import { MARCUS_EMAIL, serviceMailto, type Service } from "@/lib/services";
+import {
+  MARCUS_EMAIL,
+  serviceMailto,
+  serviceContactUrl,
+  type Service,
+} from "@/lib/services";
 
 export function ServiceContact({
   service,
@@ -10,6 +15,7 @@ export function ServiceContact({
   reviewId,
   canLinkReview = false,
   className = "text-link",
+  destination,
 }: {
   service: Service;
   children: React.ReactNode;
@@ -17,6 +23,7 @@ export function ServiceContact({
   reviewId?: string;
   canLinkReview?: boolean;
   className?: string;
+  destination?: "contact" | "email";
 }) {
   const [linkReview, setLinkReview] = useState(false);
   return (
@@ -35,9 +42,14 @@ export function ServiceContact({
       )}
       <a
         className={className}
-        href={serviceMailto(service)}
+        href={
+          (destination ?? (source === "contact" ? "email" : "contact")) ===
+          "email"
+            ? serviceMailto(service)
+            : serviceContactUrl(service)
+        }
         onClick={() => {
-          // The email opens immediately. Tracking must never block contact or claim it was sent.
+          // Contact navigation is immediate. Tracking never blocks it or claims an enquiry was sent.
           void fetch("/api/service-intents", {
             method: "POST",
             headers: { "content-type": "application/json" },

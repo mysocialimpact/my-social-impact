@@ -41,8 +41,8 @@ export default async function ServicePage({
         }
       />
       <p className="fine-print">
-        Your email app opens; nothing is sent until you send it. Prefer to
-        contact us here? Use the short form below.
+        Choose direct email or copy Marcus’s address on the Contact page. Prefer
+        to contact us here? Use the short form below.
       </p>
       {slug === "digitisation" && <DigitalOffer />}
       <Enquiry
