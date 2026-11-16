@@ -5,11 +5,17 @@ import { Arrow } from "./icons";
 export function SaveReview({
   id,
   returning = false,
+  recovery = false,
 }: {
   id?: string;
   returning?: boolean;
+  recovery?: boolean;
 }) {
   const { user } = useSession();
+  const [address, setAddress] = useState("");
+  useEffect(() => {
+    if (user && !user.anonymous && !recovery) setAddress(user.email);
+  }, [user, recovery]);
   const [enabled, setEnabled] = useState<boolean | null>(null),
     [sent, setSent] = useState(false),
     [busy, setBusy] = useState(false),
@@ -54,7 +60,7 @@ export function SaveReview({
       setBusy(false);
     }
   }
-  if (user?.emailVerified)
+  if (user?.emailVerified && !recovery)
     return (
       <section className="workspace-saved">
         <strong>Your workspace is saved.</strong>
@@ -68,7 +74,7 @@ export function SaveReview({
   return (
     <section
       className={"keep-review " + (returning ? "return-review" : "")}
-      id={returning ? "login" : id ? "keep-review" : undefined}
+      id={returning ? "verify-email" : id ? "keep-review" : undefined}
     >
       <div>
         <p className="eyebrow">
@@ -78,13 +84,17 @@ export function SaveReview({
         </p>
         <h2>
           {returning
-            ? "Log in to your Impact Director."
-            : "Make this your Impact Director."}
+            ? recovery
+              ? "Recover your saved reports."
+              : "Verify your email."
+            : "Keep your reports."}
         </h2>
         <p>
           {returning
-            ? "Find your saved reports, check their progress and continue a review. Enter your email and we’ll send a secure sign-in link. No password required."
-            : "Save your reports, track your reviews and pick up where you left off — on any device. One secure email link, no password. The same verified address receives your completed detailed reports."}
+            ? recovery
+              ? "We’ll send a one-time link to recover your existing saved work. You can then set a password in Account."
+              : "Verify your address once to connect reports previously saved by email, and keep or receive detailed results."
+            : "Confirm your email to receive your detailed report and keep your work. You can choose a password in Account for next time."}
         </p>
       </div>
       <div>
@@ -103,6 +113,9 @@ export function SaveReview({
               Email address
               <input
                 name="email"
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                readOnly={!!user && !user.anonymous && !recovery}
                 type="email"
                 autoComplete="email"
                 required
@@ -114,12 +127,14 @@ export function SaveReview({
               {busy
                 ? "Sending…"
                 : returning
-                  ? "Send my sign-in link"
-                  : "Save my workspace — send a sign-in link"}
+                  ? recovery
+                    ? "Send recovery link"
+                    : "Send verification email"
+                  : "Email my full report"}
               <Arrow />
             </button>
             <p className="fine-print">
-              No marketing. No password.{" "}
+              No marketing.{" "}
               {id
                 ? "The email includes your assessment and private access to this review."
                 : "The link expires after 30 minutes."}
@@ -140,6 +155,23 @@ export function SaveReview({
           </p>
         )}
       </div>
+      {!returning && (!user || user.anonymous) && (
+        <p className="save-account-options">
+          Prefer email and password?{" "}
+          <a
+            href={`/login?mode=signup&next=${encodeURIComponent(id ? "/reviews/" + id : "/reviews")}`}
+          >
+            Create your free account
+          </a>{" "}
+          or{" "}
+          <a
+            href={`/login?next=${encodeURIComponent(id ? "/reviews/" + id : "/reviews")}`}
+          >
+            log in
+          </a>
+          .
+        </p>
+      )}
     </section>
   );
 }

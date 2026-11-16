@@ -15,7 +15,7 @@ export async function sendPendingReports() {
     token: string | null;
     result: ReviewResult;
   }>(
-    `WITH picked AS (SELECT id FROM director.report_deliveries WHERE delivered_at IS NULL AND attempts<8 AND next_attempt_at<=now() AND (lease_until IS NULL OR lease_until<now()) ORDER BY next_attempt_at FOR UPDATE SKIP LOCKED LIMIT 3), claimed AS (UPDATE director.report_deliveries d SET lease_until=now()+interval '5 minutes',attempts=attempts+1 FROM picked WHERE d.id=picked.id RETURNING d.*) SELECT c.*,v.result FROM claimed c JOIN director.reviews v ON v.id=c.review_id JOIN director.reports r ON r.id=v.report_id WHERE v.status='complete' AND v.result IS NOT NULL AND r.expires_at>now()`,
+    `WITH picked AS (SELECT id FROM director.report_deliveries WHERE delivered_at IS NULL AND attempts<8 AND next_attempt_at<=now() AND (lease_until IS NULL OR lease_until<now()) ORDER BY next_attempt_at FOR UPDATE SKIP LOCKED LIMIT 3), claimed AS (UPDATE director.report_deliveries d SET lease_until=now()+interval '5 minutes',attempts=attempts+1 FROM picked WHERE d.id=picked.id RETURNING d.*) SELECT c.*,v.result FROM claimed c JOIN director.reviews v ON v.id=c.review_id JOIN director.reports r ON r.id=v.report_id WHERE v.status='complete' AND v.framework IS DISTINCT FROM 'document' AND jsonb_typeof(v.result)='object' AND r.expires_at>now()`,
   );
   for (const row of rows) {
     try {

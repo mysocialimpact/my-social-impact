@@ -1,15 +1,15 @@
 "use client";
-import { MAIN_LINKS, isPageActive, pageLabel } from "@/lib/navigation";
-import { SectionNavigation } from "./section-navigation";
-import { Arrow } from "./icons";
 import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
+import { useSession } from "./session";
 export function Header() {
   const [open, setOpen] = useState(false),
-    path = usePathname();
-  const header = useRef<HTMLElement>(null);
+    path = usePathname(),
+    header = useRef<HTMLElement>(null);
+  const { user } = useSession(),
+    signedIn = !!user && !user.anonymous;
   useEffect(() => {
     const el = header.current;
     if (!el) return;
@@ -19,12 +19,18 @@ export function Header() {
         `${el.getBoundingClientRect().height}px`,
       );
     measure();
-    const observer = new ResizeObserver(measure);
-    observer.observe(el);
-    return () => observer.disconnect();
+    const o = new ResizeObserver(measure);
+    o.observe(el);
+    return () => o.disconnect();
   }, []);
   useEffect(() => {
     setOpen(false);
+    if (path === "/" && location.hash === "#upload")
+      requestAnimationFrame(() =>
+        document
+          .getElementById("hero-report-file")
+          ?.focus({ preventScroll: true }),
+      );
   }, [path]);
   useEffect(() => {
     const close = (e: KeyboardEvent) => {
@@ -38,62 +44,73 @@ export function Header() {
       <a className="skip" href="#main">
         Skip to content
       </a>
-      <header ref={header} className="site-header campaign-header">
-        <Link href="/" className="brand" onClick={() => setOpen(false)}>
+      <header
+        ref={header}
+        className="site-header campaign-header simple-header"
+      >
+        <Link className="brand" href="/" onClick={() => setOpen(false)}>
           <Image
             src="/brand/my-impact-director-horizontal.svg"
-            alt="My Impact Director"
+            alt="My Impact Director — Home"
             width={580}
             height={190}
-            sizes="(max-width: 700px) 164px, 222px"
+            sizes="(max-width:700px) 130px, 194px"
             priority
           />
         </Link>
-        <a className="header-attribution" href="https://mysocialimpact.org">
-          By{" "}
-          <strong>
-            My Social Impact <Arrow diagonal />
-          </strong>
-        </a>
         <nav
           id="main-nav"
           aria-label="Main navigation"
           className={open ? "is-open" : ""}
         >
-          {MAIN_LINKS.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              aria-current={isPageActive(path, item.href) ? "page" : undefined}
-              onClick={() => setOpen(false)}
-            >
-              {item.label}
-            </Link>
-          ))}
           <Link
-            href="/review"
-            className="mobile-nav-review"
+            href="/contact"
+            aria-current={path === "/contact" ? "page" : undefined}
             onClick={() => setOpen(false)}
           >
-            Review for free <Arrow diagonal />
+            Contact
+          </Link>
+          <Link
+            href="/reviews"
+            aria-current={path.startsWith("/reviews") ? "page" : undefined}
+            onClick={() => setOpen(false)}
+          >
+            My Reports
+          </Link>
+          <Link
+            href={signedIn ? "/account" : "/login"}
+            aria-current={
+              path === (signedIn ? "/account" : "/login") ? "page" : undefined
+            }
+            onClick={() => setOpen(false)}
+          >
+            {signedIn ? "Account" : "Log in"}
           </Link>
         </nav>
         <Link
-          href="/reviews#login"
-          className="header-login"
-          onClick={() => setOpen(false)}
-        >
-          LOGIN
-        </Link>
-        <Link
-          href="/review"
+          href="/#upload"
           className="header-review"
-          onClick={() => setOpen(false)}
+          onClick={(e) => {
+            setOpen(false);
+            if (path === "/") {
+              e.preventDefault();
+              history.pushState(null, "", "/#upload");
+              document
+                .getElementById("upload")
+                ?.scrollIntoView({
+                  behavior: matchMedia("(prefers-reduced-motion: reduce)")
+                    .matches
+                    ? "instant"
+                    : "smooth",
+                  block: "start",
+                });
+              document
+                .getElementById("hero-report-file")
+                ?.focus({ preventScroll: true });
+            }
+          }}
         >
-          Review for free{" "}
-          <span aria-hidden="true">
-            <Arrow diagonal />
-          </span>
+          Upload a report
         </Link>
         <button
           className="menu-toggle"
@@ -101,14 +118,10 @@ export function Header() {
           aria-controls="main-nav"
           onClick={() => setOpen(!open)}
         >
-          <span className="mobile-current-page">{pageLabel(path)}</span>
-          <span className="mobile-menu-label">
-            {open ? "Close" : "Menu"}{" "}
-            <span aria-hidden="true">{open ? "×" : "+"}</span>
-          </span>
+          {open ? "Close" : "Menu"}
+          <span aria-hidden="true">{open ? "×" : "+"}</span>
         </button>
       </header>
-      <SectionNavigation path={path} />
     </>
   );
 }

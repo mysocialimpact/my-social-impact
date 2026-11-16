@@ -23,7 +23,7 @@ export async function POST(req: Request) {
         .object({ action: z.literal("redeem"), token: z.string().max(100) })
         .strict()
         .parse(input);
-      const result = await redeemEmailLink(data.token);
+      const result = await redeemEmailLink(data.token, req);
       after(() => sendPendingReports());
       return Response.json(
         { destination: result.destination },

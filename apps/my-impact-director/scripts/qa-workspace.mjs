@@ -205,9 +205,7 @@ try {
     );
     assert.equal(await p.locator("input[type=password]").count(), 0);
     assert.equal(
-      await p
-        .getByRole("heading", { name: "Make this your Impact Director." })
-        .count(),
+      await p.getByRole("heading", { name: "Keep your reports." }).count(),
       1,
     );
     checks.push({

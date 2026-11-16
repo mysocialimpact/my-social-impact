@@ -1,17 +1,34 @@
 "use client";
-import { useState } from "react";
-import { Arrow } from "./icons";
-export function Account({ next = "/review" }: { next?: string }) {
-  const [mode, setMode] = useState<"signup" | "login">("signup"),
+import Link from "next/link";
+import { useId, useState } from "react";
+import { api } from "./session";
+import { SaveReview } from "./save-review";
+import { safeReturnPath } from "@/lib/return-path";
+export function Account({
+  next = "/reviews",
+  initialMode = "login",
+  setup = false,
+  email = "",
+  name = "",
+}: {
+  next?: string;
+  initialMode?: "login" | "signup";
+  setup?: boolean;
+  email?: string;
+  name?: string;
+}) {
+  const passwordHelp = useId();
+  const [mode, setMode] = useState(initialMode),
     [busy, setBusy] = useState(false),
     [error, setError] = useState("");
+  const Heading = setup ? "h2" : "h1";
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setBusy(true);
     setError("");
     const f = new FormData(e.currentTarget);
     try {
-      const r = await fetch("/api/account", {
+      await api("/api/account", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
@@ -21,40 +38,32 @@ export function Account({ next = "/review" }: { next?: string }) {
           ...(mode === "signup" ? { name: f.get("name") } : {}),
         }),
       });
-      const d = await r.json();
-      if (!r.ok) throw new Error(d.error);
-      window.location.assign(
-        next.startsWith("/") && !next.startsWith("//") ? next : "/review",
-      );
+      window.location.assign(safeReturnPath(next));
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Please try again.");
+      setError(
+        e instanceof Error
+          ? e.message
+          : "We couldn’t complete sign-in. Please try again.",
+      );
       setBusy(false);
     }
   }
   return (
-    <div className="account-card">
-      <div className="segmented" aria-label="Account options">
-        <button
-          type="button"
-          aria-pressed={mode === "signup"}
-          onClick={() => setMode("signup")}
-        >
-          Create account
-        </button>
-        <button
-          type="button"
-          aria-pressed={mode === "login"}
-          onClick={() => setMode("login")}
-        >
-          Sign in
-        </button>
-      </div>
-      <h2>{mode === "signup" ? "A little introduction." : "Welcome back."}</h2>
+    <div className="account-card simple-account">
+      <p className="eyebrow">My Reports</p>
+      <Heading>
+        {setup
+          ? "Choose your password."
+          : mode === "login"
+            ? "Log in."
+            : "Create your free account."}
+      </Heading>
       <p>
-        Your free account keeps your reports and reviews private, and ready
-        whenever you need them.
+        {setup
+          ? "Keep your existing reports and use email and password next time."
+          : "Your reports, progress and results. Ready when you are."}
       </p>
-      <form onSubmit={submit}>
+      <form onSubmit={submit} key={mode} method="post">
         {mode === "signup" && (
           <label>
             Your name
@@ -64,6 +73,7 @@ export function Account({ next = "/review" }: { next?: string }) {
               minLength={2}
               maxLength={120}
               required
+              defaultValue={name}
             />
           </label>
         )}
@@ -75,50 +85,87 @@ export function Account({ next = "/review" }: { next?: string }) {
             autoComplete="email"
             maxLength={254}
             required
+            defaultValue={email}
+            readOnly={setup}
           />
         </label>
-        <label>
-          Password
-          <input
-            type="password"
-            name="password"
-            autoComplete={
-              mode === "signup" ? "new-password" : "current-password"
-            }
-            minLength={mode === "signup" ? 10 : 8}
-            maxLength={200}
-            required
-          />
-          <small>
+        <div className="account-password-field">
+          <label>
+            Password
+            <input
+              type="password"
+              name="password"
+              aria-describedby={passwordHelp}
+              autoComplete={
+                mode === "signup" ? "new-password" : "current-password"
+              }
+              minLength={mode === "signup" ? 10 : 8}
+              maxLength={200}
+              required
+            />
+          </label>
+          <small id={passwordHelp}>
             {mode === "signup"
               ? "At least 10 characters."
-              : "Your existing account password."}
+              : "Your My Social Impact account password."}
           </small>
-        </label>
+        </div>
         {error && (
-          <div className="alert error" role="alert">
+          <p className="alert error" role="alert">
             {error}
-          </div>
+          </p>
         )}
         <button className="button primary" disabled={busy}>
           {busy
             ? "Please wait…"
-            : mode === "signup"
-              ? "Create my free account"
-              : "Sign in"}
-          <Arrow />
+            : setup
+              ? "Set my password"
+              : mode === "login"
+                ? "Log in"
+                : "Create my free account"}
         </button>
       </form>
+      {mode === "login" && (
+        <p>
+          <Link href="/forgot-password">Forgot your password?</Link>
+        </p>
+      )}
+      {!setup && (
+        <p>
+          {mode === "login" ? "New here? " : "Already have an account? "}
+          <button
+            className="text-link"
+            type="button"
+            onClick={() => {
+              setError("");
+              setMode(mode === "login" ? "signup" : "login");
+            }}
+          >
+            {mode === "login" ? "Create your free account." : "Log in."}
+          </button>
+        </p>
+      )}
+      {setup && (
+        <p>
+          Already have a My Social Impact password?{" "}
+          <Link href="/login">Log in</Link> or{" "}
+          <Link href="/forgot-password">reset it</Link>.
+        </p>
+      )}
+      {!setup && (
+        <details className="legacy-account-help">
+          <summary>Previously used an email link?</summary>
+          <p>
+            Open a saved report email, then choose a password in Account. If
+            your link has expired, recover access here first.
+          </p>
+          <SaveReview returning recovery />
+        </details>
+      )}
       <p className="fine-print">
-        Use your My Social Impact account. If you already have an account, sign
-        in with the same details.{" "}
-        <a href="https://sorp2026.org/forgot-password/">
-          Forgot your password?
-        </a>
-      </p>
-      <p className="fine-print">
-        By continuing, you agree to our <a href="/terms">terms</a> and{" "}
-        <a href="/privacy">privacy notice</a>. No marketing subscription.
+        Your My Social Impact login works here too. By continuing, you agree to
+        our <Link href="/terms">terms</Link> and{" "}
+        <Link href="/privacy">privacy notice</Link>. No marketing subscription.
       </p>
     </div>
   );

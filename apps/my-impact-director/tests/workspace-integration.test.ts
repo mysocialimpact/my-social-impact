@@ -48,7 +48,7 @@ test(
     }
     try {
       await query(
-        "INSERT INTO director.users(id,email,name) VALUES($1,$2,'Existing account')",
+        "INSERT INTO director.users(id,email,name,email_verified_at) VALUES($1,$2,'Existing account',now())",
         [existingId, email],
       );
       const existing = {
@@ -113,7 +113,7 @@ test(
           "x-forwarded-for": prefix,
         },
       });
-      await requestEmailSave(req, { email, account: true, reviewId: a.id });
+      await requestEmailSave(req, { email, account: true });
       assert.equal(emails.length, 1);
       const token = emails[0].text.match(/access#([A-Za-z0-9_-]{43})/)[1],
         redeemed = await redeemEmailLink(token);

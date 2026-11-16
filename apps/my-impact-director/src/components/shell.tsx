@@ -43,7 +43,7 @@ export function Footer() {
         <nav aria-label="Footer navigation">
           <Link href="/contact">Contact Us</Link>
           <Link href="/methodology">Methodology</Link>
-          <Link href="/your-impact-director">Your Impact Director</Link>
+          <Link href="/#human-support">Ongoing support</Link>
           <Link href="/services">Expert help</Link>
           <Link href="/feedback">Feedback</Link>
           <Link href="/privacy">Privacy</Link>

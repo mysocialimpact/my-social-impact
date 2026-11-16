@@ -1,5 +1,4 @@
 import Image from "next/image";
-import Link from "next/link";
 import { Arrow } from "./icons";
 export function Contact({ standalone = false }: { standalone?: boolean }) {
   const Heading = standalone ? "h1" : "h2";
@@ -43,21 +42,9 @@ export function Contact({ standalone = false }: { standalone?: boolean }) {
             Chartered Accountant · Social Impact Consultant
           </p>
           <p>
-            I’m a Chartered Accountant and co-founder of My Social Impact. I
-            help organisations turn good intentions into meaningful results. I
-            believe social impact should be taken as seriously as financial
-            performance.
-          </p>
-          <p>
-            Sometimes you need a report, better evidence or a clearer strategy.
-            Sometimes you need someone experienced to talk things through with
-            regularly, keep you focused and help you make progress.
-          </p>
-          <p>
-            My Impact Director combines human judgement with intelligent
-            technology to make that support more affordable. I’m one of the
-            experienced My Social Impact professionals you can talk to; we’ll
-            agree who is best placed to support you and how.
+            {standalone
+              ? "Let’s talk about your report, your impact management or the support your organisation needs. An experienced human perspective can help you turn evidence into useful next steps."
+              : "A real person to talk things through with. Get in touch about your report or ongoing impact support."}
           </p>
           <a
             className="contact-address"
@@ -70,11 +57,8 @@ export function Contact({ standalone = false }: { standalone?: boolean }) {
               className="button primary"
               href="mailto:marcus@mysocialimpact.org?subject=Let%E2%80%99s%20talk%20about%20impact"
             >
-              Talk to Marcus <Arrow diagonal />
+              Email Marcus <Arrow diagonal />
             </a>
-            <Link href="/your-impact-director#enquire">
-              Find your level of support <Arrow diagonal />
-            </Link>
           </div>
           <p className="contact-locations">
             Somerset · London · Kampala

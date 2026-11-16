@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { Arrow } from "./icons";
 import { supportTiers } from "@/lib/services";
 export function SupportIntroduction() {
   return (
@@ -18,48 +17,59 @@ export function SupportIntroduction() {
           <div>
             <p>
               <strong>
-                AI helps us do more. Human experience helps us do what matters.
+                Your own Impact Director. Without the full-time salary.
               </strong>
             </p>
             <p>
-              Your review is the first step. An experienced professional can get
-              to know your organisation, challenge your thinking and help you
-              improve throughout the year.
+              AI helps us do more. Experienced professionals help you interpret
+              evidence, make decisions and monitor progress throughout the year.
             </p>
-            <Link href="/your-impact-director">
-              Meet your Impact Director <Arrow diagonal />
-            </Link>
+            <a href="#contact">Talk about ongoing support →</a>
           </div>
         </div>
-        <ol className="support-preview" aria-label="Indicative support levels">
-          {supportTiers.map((tier) => (
+        <ol
+          className="support-preview simple-pricing"
+          aria-label="Indicative support levels"
+        >
+          {supportTiers.map((t) => (
             <li
-              key={tier.id}
-              className={tier.id === "director" ? "director-tier" : ""}
+              id={t.id}
+              key={t.id}
+              className={t.id === "director" ? "director-tier" : ""}
             >
-              <Link
-                href={
-                  tier.id === "free"
-                    ? "/#upload"
-                    : `/your-impact-director#${tier.id}`
-                }
-              >
-                <span>{tier.name}</span>
-                <strong>
-                  {tier.id !== "free" && <small>from </small>}
-                  {tier.price}
-                </strong>
-                <span>
-                  {tier.id === "free" ? "Free report review" : "/ month"}
-                </span>
-                <p>{tier.summary}</p>
-              </Link>
+              <details>
+                <summary>
+                  <span>{t.name}</span>
+                  <strong>
+                    {t.id !== "free" && <small>from </small>}
+                    {t.price}
+                  </strong>
+                  <span>
+                    {t.id === "free" ? "Free report review" : "/ month"}
+                  </span>
+                  <p>{t.summary}</p>
+                  <span className="tier-expand">What’s included +</span>
+                </summary>
+                <div className="tier-description">
+                  <p>{t.detail}</p>
+                  <Link
+                    href={
+                      t.id === "free" ? "/#upload" : `/services/${t.id}#enquire`
+                    }
+                  >
+                    {t.id === "free"
+                      ? "Upload a report"
+                      : `Enquire about ${t.name}`}{" "}
+                    →
+                  </Link>
+                </div>
+              </details>
             </li>
           ))}
         </ol>
         <p className="pricing-qualification">
-          Indicative pricing. We’ll agree the right level of involvement for
-          your organisation.
+          Indicative pricing. Human involvement, meetings and deliverables are
+          agreed before any engagement.
         </p>
       </div>
     </section>

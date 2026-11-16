@@ -968,7 +968,7 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
           </p>
           <Link
             className="button primary"
-            href={`/your-impact-director?review=${r.id}`}
+            href={`/services/human-director?review=${r.id}#enquire`}
           >
             Meet your Impact Director <Arrow diagonal />
           </Link>

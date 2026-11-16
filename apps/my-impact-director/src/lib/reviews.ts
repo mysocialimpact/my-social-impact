@@ -43,11 +43,15 @@ export async function createReview(
     if (user.emailVerified && user.email)
       await transaction(async (c) => {
         await c.query(
+          "SELECT r.id FROM director.reports r JOIN director.reviews v ON v.report_id=r.id WHERE v.id=$1 FOR UPDATE OF r",
+          [previous.id],
+        );
+        await c.query(
           "INSERT INTO director.review_grants(review_id,owner_id) VALUES($1,$2) ON CONFLICT DO NOTHING",
           [previous.id, user.id],
         );
         await c.query(
-          "INSERT INTO director.report_subscriptions(report_id,owner_id,email) SELECT report_id,$2,$3 FROM director.reviews WHERE id=$1 ON CONFLICT DO NOTHING",
+          "INSERT INTO director.report_subscriptions(report_id,owner_id,email) SELECT report_id,$2,$3 FROM director.reviews v WHERE id=$1 AND NOT EXISTS(SELECT 1 FROM director.report_subscriptions s WHERE s.report_id=v.report_id AND lower(s.email)=lower($3)) ON CONFLICT DO NOTHING",
           [previous.id, user.id, user.email],
         );
         await c.query(
@@ -82,7 +86,7 @@ export async function createReview(
     if (Number(limits.total) >= 20)
       throw new AppError(
         429,
-        "I’m sorry — your saved report storage is full. You can keep 20 reports; please delete an old report from Saved reports to make space.",
+        "I’m sorry — your saved report storage is full. You can keep 20 reports; please delete an old report from My Reports to make space.",
         "REPORT_STORAGE_LIMIT",
       );
     if (Number(limits.completed) >= 3)
@@ -94,7 +98,7 @@ export async function createReview(
     if (Number(limits.active) >= 3)
       throw new AppError(
         429,
-        "I’m sorry — three of your reports are still being prepared. Please open Saved reports to continue them, or try again when one has finished. Unfinished reviews haven’t used your daily allowance.",
+        "I’m sorry — three of your reports are still being prepared. Please open My Reports to continue them, or try again when one has finished. Unfinished reviews haven’t used your daily allowance.",
         "REVIEWS_IN_PROGRESS",
         60,
       );
@@ -133,7 +137,7 @@ export async function createReview(
         [review.id, user.id],
       );
       await c.query(
-        "INSERT INTO director.report_subscriptions(report_id,owner_id,email) VALUES($1,$2,$3) ON CONFLICT DO NOTHING",
+        "INSERT INTO director.report_subscriptions(report_id,owner_id,email) SELECT $1,$2,$3 WHERE NOT EXISTS(SELECT 1 FROM director.report_subscriptions WHERE report_id=$1 AND lower(email)=lower($3)) ON CONFLICT DO NOTHING",
         [report.id, user.id, user.email],
       );
       await c.query(
@@ -219,14 +223,27 @@ export async function startFramework(
     ],
   );
   if (user.emailVerified && user.email) {
-    await query(
-      "INSERT INTO director.report_subscriptions(report_id,owner_id,email) VALUES($1,$2,$3) ON CONFLICT DO NOTHING",
-      [reportId, user.id, user.email],
-    );
-    await query(
-      "INSERT INTO director.report_deliveries(review_id,owner_id,email) SELECT id,$2,$3 FROM director.reviews WHERE id=$1 AND status='complete' AND result IS NOT NULL ON CONFLICT DO NOTHING",
-      [review.id, user.id, user.email],
-    );
+    await transaction(async (c) => {
+      await c.query("SELECT id FROM director.reports WHERE id=$1 FOR UPDATE", [
+        reportId,
+      ]);
+      await c.query(
+        "INSERT INTO director.review_grants(review_id,owner_id) VALUES($1,$2) ON CONFLICT DO NOTHING",
+        [review.id, user.id],
+      );
+      await c.query(
+        "UPDATE director.reports SET expires_at=GREATEST(expires_at,now()+interval '180 days') WHERE id=$1",
+        [reportId],
+      );
+      await c.query(
+        "INSERT INTO director.report_subscriptions(report_id,owner_id,email) SELECT $1,$2,$3 WHERE NOT EXISTS(SELECT 1 FROM director.report_subscriptions WHERE report_id=$1 AND lower(email)=lower($3)) ON CONFLICT DO NOTHING",
+        [reportId, user.id, user.email],
+      );
+      await c.query(
+        "INSERT INTO director.report_deliveries(review_id,owner_id,email) SELECT id,$2,$3 FROM director.reviews v WHERE id=$1 AND status='complete' AND result IS NOT NULL AND NOT EXISTS(SELECT 1 FROM director.report_deliveries d WHERE d.review_id=v.id AND lower(d.email)=lower($3)) ON CONFLICT DO NOTHING",
+        [review.id, user.id, user.email],
+      );
+    });
   }
   if (review.created)
     await query(

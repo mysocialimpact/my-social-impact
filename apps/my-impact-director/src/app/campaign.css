@@ -3325,198 +3325,192 @@ html:has(.report-workspace) {
   }
 }
 
-/* Keep returning visitors' login visible outside the mobile menu. */
-.campaign-header .header-login {
-  display: inline-flex;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
-  min-height: 48px;
-  padding: 10px 16px;
-  border: 2px solid var(--ink);
-  color: var(--ink);
-  background: white;
-  font-size: 14px;
-  font-weight: 800;
-  text-decoration: none;
-}
-.campaign-header .header-login:hover {
-  background: var(--ink);
-  color: white;
-}
-.campaign-header .mobile-nav-review {
-  display: none;
-}
-.return-review {
-  scroll-margin-top: calc(var(--header-height, 96px) + 24px);
-}
-.keep-review .fine-print {
-  color: #d9deec;
-}
-@media (max-width: 1550px) {
-  .campaign-header .header-attribution {
-    display: none;
-  }
-}
-@media (max-width: 1280px) {
-  .campaign-header nav {
-    display: none;
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    padding: 22px 28px;
-    margin: 0;
-    background: white;
-    border-bottom: 2px solid var(--ink);
-    gap: 0;
-    align-items: stretch;
-  }
-  .campaign-header nav.is-open {
-    display: flex;
-    flex-direction: column;
-  }
-  .campaign-header nav > a {
-    padding: 13px 5px;
-    min-height: 46px;
-  }
-  .campaign-header .menu-toggle {
-    display: flex;
-  }
-  .campaign-header .header-login {
-    margin-left: auto;
-  }
-  .campaign-header > .header-review {
-    margin-left: 0;
-  }
-}
-@media (max-width: 700px) {
-  .campaign-header .header-login {
-    min-height: 44px;
-    padding: 9px 12px;
-    font-size: 13px;
-  }
-  .campaign-header > .header-review {
-    display: none;
-  }
-  .campaign-header .mobile-nav-review {
-    display: block;
-    font-weight: 800;
-  }
-}
-
-/* Two navigation levels: pages above, sections below. Workflow remains separate. */
-:root {
-  --section-nav-height: 0px;
-}
+/* Simple public shell. Workflow controls belong only to report reviews. */
 html {
-  scroll-padding-top: calc(
-    var(--header-height, 88px) + var(--section-nav-height) + 16px
-  );
+  scroll-padding-top: calc(var(--header-height, 88px) + 16px);
 }
-[id] {
-  scroll-margin-top: 16px;
+body:not(:has(.permanent-actions)) {
+  padding-bottom: 0;
+  --action-height: 0px;
 }
-.campaign-header.site-header {
-  padding: 12px 30px;
-  gap: 18px;
-  min-height: 86px;
+.campaign #upload {
+  scroll-margin-top: 0;
 }
-.campaign-header .brand {
-  width: 186px;
-  flex-basis: 186px;
+.campaign-header.simple-header {
+  min-height: 88px;
+  padding: 12px 32px;
+  gap: 28px;
 }
-.campaign-header .header-attribution {
-  display: none;
+.campaign-header.simple-header .brand {
+  width: 194px;
+  flex-basis: 194px;
 }
-.campaign-header nav {
-  gap: 18px;
+.campaign-header.simple-header nav {
+  display: flex;
+  position: static;
+  margin-left: auto;
+  padding: 0;
+  gap: 28px;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
 }
-.campaign-header nav a {
-  font-size: 13px;
+.campaign-header.simple-header nav a {
+  font-size: 15px;
+  font-weight: 600;
+  padding: 8px 0;
   white-space: nowrap;
 }
-.campaign-header nav a[aria-current="page"] {
+.campaign-header.simple-header nav a[aria-current="page"] {
+  box-shadow: 0 3px 0 var(--orange);
   text-decoration: none;
-  box-shadow: 0 4px 0 var(--orange);
-  padding-bottom: 8px;
-  font-weight: 800;
 }
-.campaign-header .header-login {
-  padding: 10px 13px;
-  font-size: 13px;
+.campaign-header.simple-header .header-review {
+  display: flex;
+  margin-left: 0;
+  min-height: 48px;
+  font-size: 15px;
+  padding: 12px 20px;
 }
-.campaign-header .header-review {
-  padding: 12px 16px;
-  font-size: 13px;
-  gap: 12px;
-}
-.mobile-current-page {
+.campaign-header.simple-header .menu-toggle {
   display: none;
 }
-.section-navigation {
-  position: sticky;
-  top: var(--header-height, 86px);
-  z-index: 45;
-  display: flex;
-  align-items: stretch;
-  gap: 4px;
-  padding: 0 30px;
-  height: 50px;
-  overflow-x: auto;
-  overscroll-behavior-x: contain;
-  scrollbar-width: thin;
-  background: var(--navy);
-  color: white;
-  border-bottom: 1px solid #ffffff24;
+.simple-assessments .framework-line > div {
+  min-width: 0;
+  flex: 1;
 }
-.section-navigation a {
-  display: flex;
-  align-items: center;
-  flex-shrink: 0;
-  min-height: 48px;
-  padding: 0 16px;
-  font-size: 13px;
-  font-weight: 600;
-  text-decoration: none;
-  border-bottom: 4px solid transparent;
+.assessment-method {
+  margin-top: 16px;
 }
-.section-navigation a[aria-current="location"] {
-  border-bottom-color: var(--orange);
-  background: #ffffff10;
-  color: white;
-  font-weight: 800;
+.assessment-method summary {
+  font-size: 15px;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  min-height: 44px;
+  padding: 10px 0;
 }
-.section-navigation a:hover {
-  background: #ffffff18;
+.assessment-method > div {
+  max-width: 720px;
+  padding: 12px 0;
 }
-.section-nav-label {
-  display: flex;
-  align-items: center;
-  flex-shrink: 0;
-  margin-right: 14px;
-  color: #c8cddd;
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.12em;
+.assessment-method > div p {
+  font-size: 15px;
+  margin: 0 0 14px;
 }
-.methodology-family {
-  padding-top: 72px;
-  margin-top: 65px;
-  border-top: 1px solid var(--ink);
+.assessment-method a {
+  font-size: 14px;
+  font-weight: 700;
 }
-.methodology-family > img {
-  object-fit: contain;
-  width: auto;
-  max-width: 100%;
+.simple-pricing {
+  align-items: start;
+}
+.simple-pricing summary {
+  display: block;
+  padding: 18px 20px;
+  min-height: 44px;
+  cursor: pointer;
+}
+.simple-pricing summary::marker {
+  content: "";
+}
+.simple-pricing .tier-expand {
+  font-size: 12px;
+  margin-top: 14px;
+}
+.simple-pricing .tier-description {
+  padding: 0 20px 22px;
+}
+.simple-pricing .tier-description p {
+  font-size: 14px;
+  margin-bottom: 14px;
+}
+.simple-pricing .tier-description a {
+  display: inline;
+  padding: 0;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: underline;
+}
+.auth-page {
+  max-width: 680px;
+  margin: auto;
+  min-height: 58vh;
+}
+.simple-account {
+  width: 100%;
+}
+.simple-account h1,
+.account-settings h1 {
+  font-size: clamp(42px, 5vw, 64px);
+  line-height: 1;
   margin-bottom: 24px;
 }
-.methodology-family.impact-edit-feature > img {
-  width: 500px;
-  height: auto;
+.simple-account form {
+  display: grid;
+  gap: 18px;
+  margin: 26px 0 20px;
+}
+.simple-account form label {
+  font-size: 15px;
+}
+.simple-account input {
+  width: 100%;
+}
+.simple-account input[readonly] {
+  background: #f1f2f5;
+}
+.simple-account .text-link {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  text-decoration: underline;
+  font: inherit;
+  font-weight: 700;
+  color: inherit;
+  cursor: pointer;
+}
+.legacy-account-help {
+  margin-top: 28px;
+  border-top: 1px solid var(--line);
+  padding-top: 18px;
+}
+.legacy-account-help summary {
+  min-height: 44px;
+  font-size: 14px;
+  padding: 10px 0;
+}
+.legacy-account-help .keep-review {
+  display: block;
+  padding: 24px;
+  margin: 18px 0;
+}
+.legacy-account-help .keep-review h2 {
+  font-size: 28px;
+}
+.account-settings > section {
+  border-top: 1px solid var(--line);
+  margin-top: 30px;
+  padding-top: 24px;
+}
+.account-settings .simple-account h2 {
+  font-size: 30px;
+}
+.workspace-return {
+  padding: 20px 0;
+  margin: 18px 0 28px;
+  border-block: 1px solid var(--line);
+}
+.workspace-return p {
+  margin-bottom: 10px;
+}
+.save-account-options {
+  grid-column: 1 / -1;
+  font-size: 14px;
+  margin: 0;
 }
 .creative-caveat {
-  background: #fff;
+  background: white;
   color: var(--ink);
   border-left: 5px solid var(--orange);
   padding: 24px 28px;
@@ -3525,23 +3519,34 @@ html {
 }
 .creative-caveat .eyebrow {
   color: var(--ink);
-  font-weight: 800;
   font-size: 12px;
+  font-weight: 800;
 }
 .creative-caveat p {
   margin-bottom: 12px;
 }
-.creative-attribution {
+.creative-attribution,
+.edit-attribution {
   font-size: 13px;
 }
 .creative-caveat a {
   font-size: 14px;
   font-weight: 700;
-  text-underline-offset: 4px;
 }
-.edit-attribution {
-  font-size: 13px;
-  line-height: 1.5;
+.methodology-family {
+  padding-top: 60px;
+  margin-top: 50px;
+  border-top: 1px solid var(--ink);
+}
+.methodology-family > img {
+  object-fit: contain;
+  max-width: 100%;
+  width: auto;
+  margin-bottom: 24px;
+}
+.methodology-family.impact-edit-feature > img {
+  width: 500px;
+  height: auto;
 }
 .review-choices img[src*="the-impact-edit"] {
   width: 185px;
@@ -3554,112 +3559,97 @@ html {
   height: 50px;
   object-fit: contain;
 }
-@media (max-width: 1280px) {
-  .campaign-header nav a {
-    font-size: 16px;
-  }
-  .campaign-header nav a[aria-current="page"] {
-    box-shadow: none;
-    border-left: 5px solid var(--orange);
-    padding-left: 14px;
-    background: #f2f3f6;
-  }
-  .campaign-header .menu-toggle {
-    flex-direction: column;
-    align-items: flex-end;
-    justify-content: center;
-    gap: 0;
-    font-size: 13px;
-  }
-  .campaign-header .mobile-current-page {
-    display: block;
-    font-size: 12px;
-    font-weight: 800;
-    max-width: 130px;
-  }
-  .campaign-header .mobile-menu-label {
-    font-size: 12px;
-  }
-  .campaign-header .mobile-menu-label > span {
-    font-size: 14px;
-  }
-  .section-navigation {
-    padding: 0 18px;
-  }
+.keep-review .fine-print {
+  color: #d9deec;
+}
+.return-review {
+  scroll-margin-top: 0;
 }
 @media (max-width: 700px) {
-  .campaign-header.site-header {
-    min-height: 76px;
-    padding: 10px 16px;
+  .campaign-header.simple-header {
+    min-height: 70px;
+    padding: 10px 14px;
     gap: 12px;
   }
-  .campaign-header .brand {
-    width: 150px;
-    flex-basis: 150px;
+  .campaign-header.simple-header .brand {
+    width: 130px;
+    flex-basis: 130px;
   }
-  .campaign-header .header-login {
-    padding: 8px 10px;
-    min-height: 44px;
-    font-size: 12px;
-  }
-  .campaign-header .menu-toggle {
-    min-width: 64px;
-    max-width: 100px;
-    padding: 0;
-  }
-  .campaign-header .mobile-current-page {
-    max-width: 96px;
-    white-space: normal;
-    line-height: 1.2;
-    text-align: right;
-  }
-  .section-navigation {
-    padding: 0 10px;
-    height: 48px;
-    gap: 0;
-  }
-  .section-navigation a {
-    padding: 0 13px;
+  .campaign-header.simple-header .header-review {
+    margin-left: auto;
+    padding: 10px 12px;
     font-size: 13px;
-    min-height: 46px;
+    min-height: 44px;
   }
-  .section-nav-label {
+  .campaign-header.simple-header .menu-toggle {
+    display: flex;
+    padding: 6px 0;
+    font-size: 12px;
+    gap: 4px;
+    min-height: 44px;
+  }
+  .campaign-header.simple-header .menu-toggle span {
+    font-size: 18px;
+  }
+  .campaign-header.simple-header nav {
     display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    margin: 0;
+    background: white;
+    padding: 14px 22px 22px;
+    border-bottom: 2px solid var(--ink);
+  }
+  .campaign-header.simple-header nav.is-open {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    align-items: stretch;
+  }
+  .campaign-header.simple-header nav a {
+    font-size: 18px;
+    min-height: 48px;
+    padding: 12px 4px;
+  }
+  .simple-pricing summary {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 4px 16px;
+    padding: 16px 12px;
+  }
+  .simple-pricing .tier-expand {
+    grid-column: 1 / -1;
+    grid-row: 3;
+    margin: 6px 0 0;
+  }
+  .simple-pricing .tier-description {
+    padding: 0 12px 22px;
   }
   .creative-caveat {
     padding: 20px;
   }
-  .methodology-family {
-    padding-top: 38px;
-    margin-top: 38px;
+  .auth-page {
+    padding-top: 30px;
   }
 }
 @media (max-width: 360px) {
-  .campaign-header.site-header {
-    padding-left: 10px;
-    padding-right: 10px;
+  .campaign-header.simple-header {
+    padding-inline: 10px;
     gap: 8px;
   }
-  .campaign-header .brand {
-    width: 130px;
-    flex-basis: 130px;
+  .campaign-header.simple-header .brand {
+    width: 112px;
+    flex-basis: 112px;
   }
-  .campaign-header .menu-toggle {
-    max-width: 82px;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  html {
-    scroll-behavior: auto;
-  }
-}
-.campaign #upload,
-.return-review {
-  scroll-margin-top: 0;
-}
-@media (max-width: 1280px) {
-  .campaign-header .menu-toggle .mobile-current-page,
-  .campaign-header .menu-toggle .mobile-menu-label {
+  .campaign-header.simple-header .header-review {
+    padding-inline: 10px;
     font-size: 12px;
   }
+}
+.account-password-field small {
+  display: block;
+  margin-top: 4px;
+  font-size: 13px;
 }

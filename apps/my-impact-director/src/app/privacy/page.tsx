@@ -3,7 +3,7 @@ export default function Privacy() {
   return (
     <section className="section">
       <PageIntro
-        label="Privacy notice · Version 3.0 · 15 November 2026"
+        label="Privacy notice · Version 3.1 · 16 November 2026"
         title="Your report stays yours."
       />
       <div className="content-prose">
@@ -17,8 +17,8 @@ export default function Privacy() {
         </p>
         <h2>What we process and why</h2>
         <p>
-          You can upload a report and see the complete review without giving us
-          a name or email address. We process the report, extracted content,
+          You can upload a report and see headline review results without giving
+          us a name or email address. We process the report, extracted content,
           assessment findings and minimal processing records to deliver the
           review. An unguessable browser session protects your access. A report
           may contain information about other people. Only submit documents you
@@ -34,9 +34,13 @@ export default function Privacy() {
           snapshots require no email; new full reports require email
           verification. Previously completed combined reviews retain their
           existing access. Opening it gives you a 30-day saved-review session.
-          Existing My Social Impact / SORP accounts remain supported; we do not
-          store their passwords. We do not add advertising trackers or subscribe
-          you to marketing.
+          Normal sign-in uses email and password through your shared My Social
+          Impact account. We do not store those passwords in this application.
+          Existing saved email links remain valid. After you verify ownership of
+          an email-link workspace, you can connect it to password login without
+          losing reports. Password recovery resets your shared My Social Impact
+          password. We do not add advertising trackers or subscribe you to
+          marketing.
         </p>
         <p>
           Larger uploads are transferred in private parts to the same protected

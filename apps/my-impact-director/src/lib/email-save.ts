@@ -1,9 +1,9 @@
 import type { PoolClient } from "@neondatabase/serverless";
-import { localIdentity } from "./access";
+import { localIdentity, localGuest } from "./access";
 import { createHash, randomBytes } from "node:crypto";
 import { z } from "zod";
 import { query, transaction } from "./db";
-import { visitor } from "./auth";
+import { visitor, identity, sessionCookie } from "./auth";
 import { AppError, rateLimit } from "./security";
 import {
   accessCookie,
@@ -51,10 +51,10 @@ export async function requestEmailSave(req: Request, input: unknown) {
         "Your review needs to finish before it can be emailed.",
       );
     await rateLimit(`email-save:${user.id}`, 5, 86400);
-    ownerId = user.id;
-    const verified = await localIdentity(req);
+    ownerId = (await localGuest(req))?.id || user.id;
+    const verified = user.emailVerified ? user : await localIdentity(req);
     if (
-      verified &&
+      verified?.emailVerified &&
       !verified.anonymous &&
       verified.email.toLowerCase() === email
     ) {
@@ -67,14 +67,16 @@ export async function requestEmailSave(req: Request, input: unknown) {
   } else {
     if (account) {
       const current = await visitor(req);
-      const verified = await localIdentity(req);
+      const verified = current.emailVerified
+        ? current
+        : await localIdentity(req);
       if (
-        verified &&
+        verified?.emailVerified &&
         !verified.anonymous &&
         verified.email.toLowerCase() === email
       )
         return { verified: true };
-      ownerId = current.id;
+      ownerId = (await localGuest(req))?.id || current.id;
     } else {
       const existing = await query(
         "SELECT id FROM director.users WHERE lower(email)=$1 AND is_anonymous=false LIMIT 1",
@@ -147,9 +149,17 @@ export async function requestEmailSave(req: Request, input: unknown) {
   );
   await metric("email_requested");
 }
-export async function redeemEmailLink(token: string) {
+export async function redeemEmailLink(token: string, req?: Request) {
   if (!/^[A-Za-z0-9_-]{43}$/.test(token))
     throw new AppError(400, "This link is invalid or expired.");
+  let passwordIdentity: Awaited<ReturnType<typeof identity>> | null = null;
+  if (req && sessionCookie(req)) {
+    try {
+      passwordIdentity = await identity(req);
+    } catch (e) {
+      if (!(e instanceof AppError && e.status === 401)) throw e;
+    }
+  }
   const session = randomBytes(32).toString("base64url");
   const destination = await transaction(async (c) => {
     const {
@@ -165,16 +175,23 @@ export async function redeemEmailLink(token: string) {
     if (!link)
       throw new AppError(
         410,
-        "This link has expired or has already been used. Request a fresh email from Saved reviews.",
+        "This link has expired or has already been used. Log in, or request a recovery link from the login page.",
+      );
+    if (passwordIdentity && passwordIdentity.email.toLowerCase() !== link.email)
+      throw new AppError(
+        409,
+        "This link is for a different account. Log out before opening it; the link has not been used.",
       );
     await c.query("SELECT pg_advisory_xact_lock(hashtext($1))", [link.email]);
     const {
       rows: [existing],
     } = await c.query<{ id: string }>(
-      "SELECT id FROM director.users WHERE lower(email)=$1 AND is_anonymous=false ORDER BY (id=$2) DESC,created_at LIMIT 1",
+      "SELECT id FROM director.users WHERE lower(email)=$1 AND is_anonymous=false AND email_verified_at IS NOT NULL ORDER BY (id=$2) DESC,created_at LIMIT 1",
       [link.email, emailId(link.email)],
     );
-    const id = existing?.id || emailId(link.email);
+    // An unverified password account may have merely claimed this address.
+    // Bind it only when this browser also proves its password session.
+    const id = passwordIdentity?.id || existing?.id || emailId(link.email);
     await c.query(
       "INSERT INTO director.users(id,email,name,email_verified_at) VALUES($1,$2,'',now()) ON CONFLICT(id) DO UPDATE SET last_seen=now(),email_verified_at=COALESCE(director.users.email_verified_at,now())",
       [id, link.email],
@@ -183,14 +200,23 @@ export async function redeemEmailLink(token: string) {
       await grantVerifiedReport(c, link.review_id, id, link.email);
     // The email proves the account; the captured authenticated guest session proves its documents.
     // Never subscribe other existing accounts' historical documents merely because they share an email.
-    const { rows: guestReports } = await c.query<{ id: string }>(
-      "SELECT v.id FROM director.reviews v JOIN director.reports r ON r.id=v.report_id JOIN director.users u ON u.id=r.owner_id WHERE r.owner_id=$1 AND u.is_anonymous AND r.expires_at>now() AND (v.framework='document' OR v.framework IS NULL)",
-      [link.owner_id],
-    );
-    for (const row of guestReports)
-      await grantVerifiedReport(c, row.id, id, link.email);
+    // Report-delivery links grant their selected report. Account/recovery
+    // links without a review ID can adopt the captured guest workspace.
+    if (!link.review_id) {
+      const { rows: guestReports } = await c.query<{ id: string }>(
+        "SELECT v.id FROM director.reviews v JOIN director.reports r ON r.id=v.report_id JOIN director.users u ON u.id=r.owner_id WHERE r.owner_id=$1 AND u.is_anonymous AND r.expires_at>now() AND (v.framework='document' OR v.framework IS NULL)",
+        [link.owner_id],
+      );
+      for (const row of guestReports)
+        await grantVerifiedReport(c, row.id, id, link.email);
+    }
     const { rows: priorReports } = await c.query<{ id: string }>(
-      "SELECT v.id FROM director.reviews v JOIN director.reports r ON r.id=v.report_id JOIN director.users u ON u.id=r.owner_id WHERE lower(u.email)=$1 AND NOT u.is_anonymous AND r.expires_at>now() AND (v.framework='document' OR v.framework IS NULL)",
+      `WITH verified_owners AS (SELECT id FROM director.users WHERE lower(email)=$1 AND NOT is_anonymous AND email_verified_at IS NOT NULL)
+       SELECT DISTINCT v.id FROM director.reviews v JOIN director.reports r ON r.id=v.report_id
+       WHERE r.expires_at>now() AND (v.framework='document' OR v.framework IS NULL)
+       AND (r.owner_id IN(SELECT id FROM verified_owners) OR EXISTS(
+         SELECT 1 FROM director.review_grants g JOIN director.reviews gv ON gv.id=g.review_id
+         WHERE gv.report_id=r.id AND g.owner_id IN(SELECT id FROM verified_owners)))`,
       [link.email],
     );
     for (const row of priorReports)
@@ -239,11 +265,11 @@ async function grantVerifiedReport(
   }
   if (subscribe) {
     await c.query(
-      "INSERT INTO director.report_subscriptions(report_id,owner_id,email) SELECT report_id,$2,$3 FROM director.reviews WHERE id=$1 ON CONFLICT DO NOTHING",
+      "INSERT INTO director.report_subscriptions(report_id,owner_id,email) SELECT report_id,$2,$3 FROM director.reviews v WHERE id=$1 AND NOT EXISTS(SELECT 1 FROM director.report_subscriptions s WHERE s.report_id=v.report_id AND lower(s.email)=lower($3)) ON CONFLICT DO NOTHING",
       [reviewId, id, email],
     );
     await c.query(
-      "INSERT INTO director.report_deliveries(review_id,owner_id,email) SELECT v.id,$2,$3 FROM director.reviews v WHERE v.report_id=(SELECT report_id FROM director.reviews WHERE id=$1) AND (v.framework IN ('claims','excellence','report') OR v.id=$1) AND v.status='complete' AND v.result IS NOT NULL ON CONFLICT DO NOTHING",
+      "INSERT INTO director.report_deliveries(review_id,owner_id,email) SELECT v.id,$2,$3 FROM director.reviews v WHERE v.report_id=(SELECT report_id FROM director.reviews WHERE id=$1) AND (v.framework IN ('claims','excellence','report') OR v.id=$1) AND v.status='complete' AND v.framework IS DISTINCT FROM 'document' AND jsonb_typeof(v.result)='object' AND NOT EXISTS(SELECT 1 FROM director.report_deliveries d WHERE d.review_id=v.id AND lower(d.email)=lower($3)) ON CONFLICT DO NOTHING",
       [reviewId, id, email],
     );
   }

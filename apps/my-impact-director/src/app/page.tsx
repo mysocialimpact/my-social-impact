@@ -81,75 +81,73 @@ export default function Home() {
             Three distinct questions. Your evidence. Clear next steps.
           </p>
         </div>
-        <div className="framework-lines">
-          <a
-            href="https://mysocialimpact.org/social-impact-claims-code"
-            className="framework-line"
-          >
-            <Image
-              src="/brand/claims-code.png"
-              alt="Social Impact Claims Code"
-              width={1078}
-              height={1090}
-              sizes="(max-width: 700px) 85px, 120px"
-            />
-            <div>
-              <h3>
-                Can your impact claims
-                <br />
-                stand up to scrutiny?
-              </h3>
-              <p>Evidence. Proportion. Transparency. Balance. Learning.</p>
-            </div>
-            <span className="line-arrow" aria-hidden="true">
-              <Arrow diagonal />
-            </span>
-          </a>
-          <a
-            href="https://socialimpactexcellence.org"
-            className="framework-line"
-          >
-            <Image
-              src="/brand/excellence.png"
-              alt="Social Impact Excellence"
-              width={1200}
-              height={1200}
-              sizes="(max-width: 700px) 85px, 120px"
-            />
-            <div>
-              <h3>
-                What does your report show
-                <br />
-                about managing impact?
-              </h3>
-              <p>Purpose. Leadership. Data. Delivery. Communications.</p>
-            </div>
-            <span className="line-arrow" aria-hidden="true">
-              <Arrow diagonal />
-            </span>
-          </a>
-          <Link
-            href="/methodology/impact-report-excellence"
-            className="framework-line"
-          >
-            <Image
-              src="/brand/the-impact-edit.svg"
-              alt="The Impact Edit"
-              width={120}
-              height={120}
-            />
-            <div>
-              <h3>
-                Does your impact report
-                <br />
-                make an impact?
-              </h3>
-              <p>Clarity. Storytelling. Design. Engagement. Communication.</p>
-            </div>
-            <span className="line-arrow" aria-hidden="true">
-              <Arrow diagonal />
-            </span>
-          </Link>
+        <div className="framework-lines simple-assessments">
+          {[
+            {
+              id: "claims",
+              logo: "claims-code.png",
+              name: "Social Impact Claims Code",
+              question: "Can your impact claims stand up to scrutiny?",
+              pillars:
+                "Evidence · Proportion · Transparency · Balance · Learning",
+              explanation:
+                "We examine how responsibly your report makes and supports its impact claims. Stronger claims need stronger evidence. Twenty tests consider evidence, proportionality, transparency, balance and learning.",
+              href: "https://mysocialimpact.org/social-impact-claims-code",
+              link: "Read the published Claims Code",
+            },
+            {
+              id: "excellence",
+              logo: "excellence.png",
+              name: "Social Impact Excellence",
+              question: "What does your report show about managing impact?",
+              pillars:
+                "Purpose · Leadership · Data · Delivery · Communications",
+              explanation:
+                "We look at what your report demonstrates about understanding and managing impact. Twenty tests explore five management pillars. This is a report-based review, separate from a full organisational maturity assessment.",
+              href: "/methodology#excellence",
+              link: "Explore the detailed methodology",
+            },
+            {
+              id: "report",
+              logo: "the-impact-edit.svg",
+              name: "The Impact Edit",
+              question: "Does your impact report make an impact?",
+              pillars:
+                "Clarity · Storytelling · Design · Engagement · Communication",
+              explanation:
+                "An indicative creative assessment of your report’s writing and actual page design. Twenty-five criteria examine readability, storytelling, design, engagement and communication. Creative judgements are partly subjective; different readers may respond differently.",
+              href: "/methodology/impact-report-excellence",
+              link: "Read Impact Report Excellence Methodology v1.0",
+            },
+          ].map((f) => (
+            <article className="assessment-introduction" key={f.id}>
+              <div className="framework-line">
+                <Image
+                  src={`/brand/${f.logo}`}
+                  alt={f.name}
+                  width={120}
+                  height={120}
+                />
+                <div>
+                  <h3>{f.question}</h3>
+                  <p>{f.pillars}</p>
+                  <details className="assessment-method">
+                    <summary>How this assessment works</summary>
+                    <div>
+                      <p>{f.explanation}</p>
+                      <p>
+                        Findings refer to your actual report, with specific
+                        observations and practical improvements. Scores are
+                        indicative; they do not independently verify your
+                        organisation’s impact.
+                      </p>
+                      <a href={f.href}>{f.link} →</a>
+                    </div>
+                  </details>
+                </div>
+              </div>
+            </article>
+          ))}
         </div>
         <div className="methodology-line">
           <p>
@@ -181,10 +179,7 @@ export default function Home() {
               <h3>What if every organisation had its own Impact Director?</h3>
               <p>
                 Experienced people. Social Impact Excellence. Powerful AI.
-                <Link href="/your-impact-director">
-                  {" "}
-                  Explore ongoing support →
-                </Link>
+                <Link href="/#human-support"> Explore ongoing support →</Link>
               </p>
             </div>
           </div>

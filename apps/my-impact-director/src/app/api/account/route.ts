@@ -1,8 +1,13 @@
-import { visitor, accountAction } from "@/lib/auth";
+import { visitor, accountAction, passwordResetAvailable } from "@/lib/auth";
 import { failure, AppError, readJson } from "@/lib/security";
 export const dynamic = "force-dynamic";
 export async function GET(req: Request) {
   try {
+    if (new URL(req.url).searchParams.get("feature") === "password-reset")
+      return Response.json(
+        { available: await passwordResetAvailable() },
+        { headers: { "cache-control": "no-store" } },
+      );
     return Response.json(
       { user: await visitor(req) },
       { headers: { "cache-control": "no-store" } },

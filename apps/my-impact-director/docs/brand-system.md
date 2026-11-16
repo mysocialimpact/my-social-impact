@@ -17,13 +17,11 @@ The main application uses the horizontal SVG. PDF reports use the corresponding 
 
 ## Navigation hierarchy
 
-The permanent primary navigation links to stable pages: Home, Review a Report (`/review`), Methodology, Your Impact Director, Contact (`/contact`) and My Reports (`/reviews`). LOGIN remains a visible separate action linking directly to the passwordless form. Selected page links have an orange marker and `aria-current="page"`. On mobile, the menu control also names the current page.
+The primary navigation is Contact, My Reports, Log in (Account when signed in) and Upload a report. The logo returns home. Registration sits inside the conventional email/password login experience; Account provides verification, password setup for existing email-link users, password recovery and logout.
 
-A separate navy strip provides section links for Home, Methodology, the detailed Impact Report Excellence methodology and Your Impact Director. `src/lib/navigation.ts` defines the routes and their actual section IDs. The strip uses `aria-current="location"`, IntersectionObserver and measured sticky-bar geometry. A bounded end-of-document correction handles short final sections that cannot reach the observation band. The active mobile section scrolls into view within the strip without moving the page horizontally.
+There is no secondary section strip. Upload a report always opens the homepage uploader without reloading the homepage. `/review` permanently redirects to `/#upload`; `/your-impact-director` redirects to homepage support or preserves existing service enquiries. The three homepage assessment disclosures link to the full professional methodologies. Five expandable indicative pricing tiers retain the human-led proposition without a duplicate marketing page.
 
-Anchors preserve meaningful hashes, browser history and reduced-motion preferences. Clicking a section moves keyboard focus to its target. Header and section heights are measured; anchor padding keeps headings visible. Contact and My Reports do not show irrelevant marketing section links. Review pages retain their existing live status tracker as the contextual workflow navigation, without a duplicate strip. Educational steps and the persistent bottom action bar remain separate controls.
-
-The existing bottom bar retains its true review-state actions. On the ongoing-support page, its primary action opens the service enquiry instead of a report upload.
+The header remains visible on desktop and mobile. Mobile keeps the brand, upload action and a compact menu. Browser history, reduced motion and keyboard focus are preserved. Marketing pages have no persistent bottom action bar or reserved bottom padding. Active review pages retain their compact status tracker, educational controls and contextual next action.
 
 ## The Impact Edit and historical reports
 
@@ -33,6 +31,6 @@ Creative results are labelled “Indicative Creative Assessment” and explain t
 
 ## Verification
 
-Run `npm test`, `npm run test:database`, `npm run build`, `node scripts/qa-brand-navigation.mjs <origin>` and `node scripts/qa-workspace.mjs <origin>`. The navigation test covers page and section state, native scrolling, direct hashes, history, mobile menus, login, sticky geometry and tested axe checks. Workspace contracts cover all three learning journeys across laptop, desktop, phone and landscape sizes. Database contracts cover third-framework analysis, unchanged source reuse/scoring, privacy, verified accounts, PDF content and requested email delivery. Email transport and AI are mocked only in validation-database tests; no customer emails are sent by these checks.
+Run `npm test`, `npm run test:database`, `npm run build`, `node scripts/qa-brand-navigation.mjs <origin>` and `node scripts/qa-workspace.mjs <origin>`. The navigation test covers the single public header, uploader focus, disclosures, redirects, history, mobile menus, login/signup/logout, recovery and axe checks. Workspace contracts cover all three learning journeys across laptop, desktop, phone and landscape sizes. Database contracts cover third-framework analysis, unchanged source reuse/scoring, privacy, verified accounts, PDF content and requested email delivery. Email transport and AI are mocked only in validation-database tests; no customer emails are sent by these checks.
 
-Latest release checks: 31 unit checks and 22 real validation-database checks passed, including a branded third-assessment PDF and a requested delivery through the mocked email transport. Visual inspection includes the wordmarks, expressive primary/horizontal/compact marks, desktop marketing pages and mobile layouts. The production verification checks existing private workspaces and regenerates existing PDFs; it does not rescore historical records or email customers.
+Release verification is recorded in `docs/ux-simplification.md`. Production checks preserve existing scores and private reports and do not send unsolicited customer communications.

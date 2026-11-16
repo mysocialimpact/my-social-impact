@@ -1,13 +1,11 @@
 "use client";
 import Link from "next/link";
-import { useReportAction } from "./action-bar";
 import { useEffect, useState } from "react";
 import { api, useSession } from "./session";
 import { SaveReview } from "./save-review";
 import { FRAMEWORKS, frameworkNames, type Framework } from "@/lib/rubric";
 import { stateLabel, stateAction, type Workspace } from "./workspace-types";
 export function SavedReviews() {
-  const setAction = useReportAction();
   const { user, loading, error: sessionError } = useSession();
   const [rows, setRows] = useState<Workspace[] | null>(null),
     [error, setError] = useState(""),
@@ -42,31 +40,6 @@ export function SavedReviews() {
       clearTimeout(timer);
     };
   }, [user, loading]);
-  useEffect(() => {
-    const w = rows?.[0],
-      count =
-        w?.assessments.filter((a) => stateLabel(a) === "Completed").length || 0;
-    setAction({
-      id: "workspace",
-      status: "complete",
-      stage: 0,
-      contextTitle: w
-        ? count === 3
-          ? "All three reviews complete."
-          : `You’ve completed ${count} of 3 reviews.`
-        : "Your personal Impact Director.",
-      contextDetail: user?.emailVerified
-        ? "Your reports are saved to this account."
-        : "Try anonymously. Verify email to return on any device.",
-      primaryLabel: w
-        ? count === 3
-          ? "Explore your reports"
-          : "Continue your workspace"
-        : "Start your first free review",
-      primaryHref: w ? "/reviews/" + w.root_id : "/#upload",
-    });
-    return () => setAction(null);
-  }, [rows, user?.emailVerified, setAction]);
   async function start(w: Workspace, f: Framework) {
     setBusy(w.id + f);
     setError("");
@@ -112,50 +85,41 @@ export function SavedReviews() {
           </p>
           {user?.founder && <Link href="/admin">Founder control centre →</Link>}
         </div>
-        <div className="toolbar">
-          <Link className="button primary small" href="/#upload">
-            Upload a report →
-          </Link>
-          {user && !user.anonymous && (
-            <button
-              className="button secondary small"
-              onClick={async () => {
-                try {
-                  await api("/api/account", {
-                    method: "POST",
-                    headers: { "content-type": "application/json" },
-                    body: JSON.stringify({ action: "logout" }),
-                  });
-                  window.location.assign("/reviews");
-                } catch (e) {
-                  setError(
-                    e instanceof Error ? e.message : "Please try again.",
-                  );
-                }
-              }}
-            >
-              Sign out
-            </button>
-          )}
-        </div>
+        {user && !user.anonymous && <Link href="/account">Account →</Link>}
       </div>
       {(error || sessionError) && (
         <p className="alert error" role="alert">
           {error || sessionError}
         </p>
       )}
-      {!user?.emailVerified && <SaveReview returning />}
+      {user && !user.anonymous && !user.emailVerified && (
+        <SaveReview returning />
+      )}
+      {(!user || user.anonymous) && !loading && (
+        <div className="workspace-return">
+          <p>Log in to save and return on another device.</p>
+          <Link href="/login">Log in</Link>
+          <span> · </span>
+          <Link href="/login?mode=signup">Create your free account</Link>
+        </div>
+      )}
+      {user?.emailVerified && !user.passwordAccount && (
+        <p className="workspace-return">
+          Previously used an email link?{" "}
+          <Link href="/account">Set a password for next time →</Link>
+        </p>
+      )}
       {loading || !rows ? (
         <p role="status">Opening your reports…</p>
       ) : !rows.length ? (
         <div className="empty">
-          <h2>Your Impact Director starts here.</h2>
+          <h2>Your reports start here.</h2>
           <p>
-            Upload your first report to begin, or use a secure email link to
-            return to your saved work.
+            Upload your first report to begin, or log in to return to your saved
+            work.
           </p>
           <Link href="/#upload" className="button primary">
-            Review my report — free →
+            Upload a report →
           </Link>
         </div>
       ) : (
@@ -257,7 +221,7 @@ export function SavedReviews() {
       )}
       {user?.emailVerified && (
         <p className="workspace-service">
-          <Link href="/your-impact-director">
+          <Link href="/#human-support">
             Want someone in your corner all year round? Meet your Impact
             Director →
           </Link>

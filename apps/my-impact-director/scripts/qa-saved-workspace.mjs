@@ -18,6 +18,7 @@ try {
           id: "synthetic",
           email: verified ? "qa@example.invalid" : "",
           emailVerified: verified,
+          passwordAccount: verified,
           anonymous: !verified,
         };
       const id = "12345678-1234-4234-8234-123456789012";
@@ -102,28 +103,16 @@ try {
         verified ? 1 : 0,
       );
       assert.equal(await p.locator("input[type=password]").count(), 0);
-      assert.equal(
-        await p.locator("input[type=email]").count(),
-        verified ? 0 : 1,
-      );
-      if (!verified) {
-        await p
-          .getByLabel("Email address", { exact: true })
-          .fill("qa@example.invalid");
-        await p
-          .getByRole("button", { name: "Send my sign-in link", exact: true })
-          .click();
-        await p.getByRole("alert").waitFor();
+      assert.equal(await p.locator("input[type=email]").count(), 0);
+      assert.equal(await p.locator(".permanent-actions").count(), 0);
+      if (!verified)
         assert.equal(
-          await p.getByLabel("Email address", { exact: true }).inputValue(),
-          "qa@example.invalid",
+          await p
+            .locator(".workspace-return")
+            .getByRole("link", { name: "Log in", exact: true })
+            .count(),
+          1,
         );
-        await p
-          .getByRole("button", { name: "Send my sign-in link", exact: true })
-          .click();
-        await p.getByRole("heading", { name: "Check your inbox." }).waitFor();
-        assert.equal(payload.account, true);
-      }
       const axe = await new AxeBuilder({ page: p }).analyze();
       assert.deepEqual(
         axe.violations.map((v) => ({
@@ -146,9 +135,9 @@ try {
         verified,
         grouped: true,
         accurateStates: true,
-        noPasswords: true,
+        noPasswordsInReportList: true,
         noRepeatedEmail: verified,
-        errorRecovery: !verified,
+        conventionalLoginEntry: !verified,
         axe: 0,
       });
       await c.close();

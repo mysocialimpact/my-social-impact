@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { localIdentity, clearLocalSession } from "./access";
+import { connectVerifiedWorkspace } from "./account-workspace";
+import { localIdentity, localGuest, clearLocalSession } from "./access";
 import { query } from "./db";
 import { AppError, rateLimit, sameOrigin } from "./security";
 const identitySchema = z.object({
@@ -21,6 +22,7 @@ export type Identity = {
   anonymous?: boolean;
   emailVerified?: boolean;
   accessIds?: string[];
+  passwordAccount?: boolean;
 };
 const accountUrl = () =>
   new URL(
@@ -62,24 +64,45 @@ export async function identity(req: Request): Promise<Identity> {
     ...parsed.data.account,
     founder: parsed.data.platformAccess?.founder === true,
   };
-  await query(
-    `INSERT INTO director.users(id,email,name,organisation) VALUES($1,$2,$3,$4) ON CONFLICT(id) DO UPDATE SET email=$2,name=$3,organisation=$4,last_seen=now()`,
+  const [stored] = await query<{ email_verified_at: string | null }>(
+    `INSERT INTO director.users(id,email,name,organisation) VALUES($1,$2,$3,$4) ON CONFLICT(id) DO UPDATE SET email=$2,name=$3,organisation=$4,last_seen=now(),email_verified_at=CASE WHEN lower(director.users.email)=lower($2) THEN director.users.email_verified_at ELSE NULL END RETURNING email_verified_at`,
     [user.id, user.email, user.name, user.organisation || null],
   );
-  return user;
+  const aliases = stored.email_verified_at
+    ? await query<{ id: string }>(
+        "SELECT id FROM director.users WHERE lower(email)=lower($1) AND email_verified_at IS NOT NULL AND NOT is_anonymous",
+        [user.email],
+      )
+    : [];
+  return {
+    ...user,
+    emailVerified: !!stored.email_verified_at,
+    passwordAccount: true,
+    accessIds: [...new Set([user.id, ...aliases.map((a) => a.id)])],
+  };
 }
 export async function visitor(req: Request): Promise<Identity> {
   if (sessionCookie(req)) {
     try {
       const user = await identity(req);
       const local = await localIdentity(req, true);
+      const matched =
+        !!local?.emailVerified &&
+        local.email.toLowerCase() === user.email.toLowerCase();
+      const guest = local?.anonymous ? local : await localGuest(req);
+      if (matched && !user.emailVerified)
+        await connectVerifiedWorkspace(user, local!.accessIds || [local!.id]);
       return {
         ...user,
-        emailVerified:
-          !!local &&
-          !local.anonymous &&
-          local.email.toLowerCase() === user.email.toLowerCase(),
-        accessIds: [user.id, ...(local?.accessIds || [])],
+        emailVerified: user.emailVerified || matched,
+        accessIds: [
+          ...new Set([
+            ...(user.accessIds || [user.id]),
+            ...(matched
+              ? local!.accessIds || [local!.id]
+              : guest?.accessIds || []),
+          ]),
+        ],
       };
     } catch (e) {
       if (!(e instanceof AppError && e.status === 401)) throw e;
@@ -102,10 +125,17 @@ export async function accountAction(req: Request, input: unknown) {
   sameOrigin(req);
   const data = z
     .object({
-      action: z.enum(["login", "signup", "logout"]),
+      action: z.enum([
+        "login",
+        "signup",
+        "logout",
+        "request-reset",
+        "reset-password",
+      ]),
       email: z.email().optional(),
       password: z.string().min(8).max(200).optional(),
       name: z.string().trim().min(1).max(120).optional(),
+      token: z.string().min(16).max(500).optional(),
     })
     .strict()
     .parse(input);
@@ -115,7 +145,10 @@ export async function accountAction(req: Request, input: unknown) {
       headers.append("set-cookie", cookie);
     return Response.json({ ok: true }, { headers });
   }
-  if (data.action !== "logout" && (!data.email || !data.password))
+  if (
+    ["login", "signup"].includes(data.action) &&
+    (!data.email || !data.password)
+  )
     throw new AppError(400, "Enter your email and password.");
   if (
     data.action === "signup" &&
@@ -128,6 +161,16 @@ export async function accountAction(req: Request, input: unknown) {
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0] || "unknown";
   await rateLimit(`auth-ip:${ip}`, 30, 900);
   await rateLimit(`auth-email:${data.email || ip}`, 10, 900);
+  if (data.action === "request-reset" && !data.email)
+    throw new AppError(400, "Enter your email address.");
+  if (
+    data.action === "reset-password" &&
+    (!data.token || (data.password?.length || 0) < 10)
+  )
+    throw new AppError(
+      400,
+      "Use the complete recovery link and a password of at least ten characters.",
+    );
   const body =
     data.action === "signup"
       ? {
@@ -160,6 +203,28 @@ export async function accountAction(req: Request, input: unknown) {
     for (const cookie of await clearLocalSession(req))
       headers.append("set-cookie", cookie);
   }
+  if (r.ok && ["login", "signup"].includes(data.action)) {
+    const session = r.headers
+      .getSetCookie()
+      .find((c) => c.startsWith("msi_sorp_session="))
+      ?.split(";")[0];
+    if (!session)
+      throw new AppError(
+        503,
+        "Sign-in did not create a secure session. Please try again.",
+      );
+    const signedRequest = new Request(req.url, {
+      headers: {
+        cookie: [session, req.headers.get("cookie") || ""]
+          .filter(Boolean)
+          .join("; "),
+      },
+    });
+    const signed = await visitor(signedRequest);
+    const guest = await localGuest(req);
+    if (signed.emailVerified && guest)
+      await connectVerifiedWorkspace(signed, guest.accessIds || [guest.id]);
+  }
   return Response.json(
     r.ok
       ? { ok: true }
@@ -171,4 +236,15 @@ export async function accountAction(req: Request, input: unknown) {
         },
     { status: r.status, headers },
   );
+}
+
+export async function passwordResetAvailable() {
+  const url = accountUrl();
+  url.searchParams.set("feature", "password-reset");
+  const r = await fetch(url, {
+    cache: "no-store",
+    signal: AbortSignal.timeout(15000),
+  });
+  const data = await r.json();
+  return r.ok && data.available === true;
 }

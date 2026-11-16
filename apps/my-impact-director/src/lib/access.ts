@@ -37,8 +37,9 @@ export async function localIdentity(
     name: string;
     organisation: string;
     kind: string;
+    email_verified_at: string | null;
   }>(
-    `SELECT u.id,u.email,u.name,u.organisation,s.kind FROM director.access_sessions s JOIN director.users u ON u.id=s.owner_id WHERE s.token_hash=ANY($1::text[]) AND s.expires_at>now() AND ($2 OR s.kind='email') ORDER BY s.kind`,
+    `SELECT u.id,u.email,u.name,u.organisation,s.kind,u.email_verified_at FROM director.access_sessions s JOIN director.users u ON u.id=s.owner_id WHERE s.token_hash=ANY($1::text[]) AND s.expires_at>now() AND ($2 OR s.kind='email') ORDER BY s.kind`,
     [tokens.map(tokenHash), allowGuest],
   );
   const row = rows[0];
@@ -47,10 +48,20 @@ export async function localIdentity(
         ...row,
         founder: false,
         anonymous: row.kind === "guest",
-        emailVerified: row.kind === "email",
+        emailVerified: row.kind === "email" && !!row.email_verified_at,
         accessIds: rows.map((x) => x.id),
       }
     : null;
+}
+
+export async function localGuest(req: Request) {
+  const token = accessToken(req);
+  if (!token) return null;
+  const user = await localIdentity(
+    new Request(req.url, { headers: { cookie: `${ACCESS_COOKIE}=${token}` } }),
+    true,
+  );
+  return user?.anonymous ? user : null;
 }
 
 export function privateNetworkKey(req: Request) {

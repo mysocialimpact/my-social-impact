@@ -52,7 +52,7 @@ export function AccessLink() {
         </p>
       )}
       <p>
-        <Link href="/reviews">Request a new sign-in link</Link>
+        <Link href="/login">Log in or recover access</Link>
       </p>
     </div>
   );

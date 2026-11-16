@@ -137,7 +137,7 @@ export function WorkspaceTracker({ id }: { id: string }) {
       aria-label="Your Impact Director workspace"
     >
       <div className="workspace-heading">
-        <Link href="/reviews">YOUR IMPACT DIRECTOR</Link>
+        <Link href="/reviews">MY REPORTS</Link>
         <p title={workspace.title}>
           <span className="workspace-organisation">
             {workspace.organisation || "Your report"}

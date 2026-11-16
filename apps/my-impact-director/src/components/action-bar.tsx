@@ -30,9 +30,14 @@ export function ActionShell({ children }: { children: React.ReactNode }) {
   const path = usePathname(),
     [report, setReport] = useState<ReportAction>(null),
     bar = useRef<HTMLElement>(null);
+  const review = /^\/reviews\/([a-f0-9-]{36})(\/source)?$/.exec(path);
+  const inReview = !!review;
   useEffect(() => {
     const el = bar.current;
-    if (!el) return;
+    if (!el) {
+      document.documentElement.style.setProperty("--action-height", "0px");
+      return;
+    }
     const measure = () =>
       document.documentElement.style.setProperty(
         "--action-height",
@@ -45,8 +50,7 @@ export function ActionShell({ children }: { children: React.ReactNode }) {
       observer.disconnect();
       document.documentElement.style.removeProperty("--action-height");
     };
-  }, []);
-  const review = /^\/reviews\/([a-f0-9-]{36})(\/source)?$/.exec(path);
+  }, [inReview]);
   const active =
     (review && report?.id === review[1]) ||
     (path === "/reviews" && report?.id === "workspace")
@@ -68,7 +72,7 @@ export function ActionShell({ children }: { children: React.ReactNode }) {
           : "/reviews"
       : support
         ? "#enquire"
-        : "/review");
+        : "/#upload");
   const label =
     active?.primaryLabel ||
     (review
@@ -87,76 +91,84 @@ export function ActionShell({ children }: { children: React.ReactNode }) {
   return (
     <ReportContext.Provider value={setReport}>
       {children}
-      <aside ref={bar} className="permanent-actions" aria-label="Page actions">
-        <div className="action-context">
-          {active?.contextTitle ? (
-            <>
-              <strong>{active.contextTitle}</strong>
-              <span>{active.contextDetail}</span>
-            </>
-          ) : processing ? (
-            <>
-              <strong>Reviewing your report</strong>
-              <span>
-                {active.processingLabel ||
-                  `Stage ${Math.min(active.stage + 1, 15)} of 15 · You can return in this browser`}
-              </span>
-            </>
-          ) : complete ? (
-            <>
-              <strong>Your review. Your next step.</strong>
-              <span>Download it. Keep it. Put it to work.</span>
-            </>
-          ) : active ? (
-            <>
-              <strong>Your report is saved.</strong>
-              <span>Open your review for recovery options.</span>
-            </>
-          ) : (
-            <>
-              <strong>
-                {support
-                  ? "Your own Impact Director."
-                  : "Your first review. £0."}
-              </strong>
-              <span>
-                {support
-                  ? "Human experience. Support that fits."
-                  : "No registration required."}
-              </span>
-            </>
-          )}
-        </div>
-        <Link
-          className="action-primary"
-          href={href}
-          onClick={(event) => {
-            if (active?.onPrimary) {
-              event.preventDefault();
-              active.onPrimary();
+      {inReview && (
+        <aside
+          ref={bar}
+          className="permanent-actions"
+          aria-label="Review actions"
+        >
+          <div className="action-context">
+            {active?.contextTitle ? (
+              <>
+                <strong>{active.contextTitle}</strong>
+                <span>{active.contextDetail}</span>
+              </>
+            ) : processing ? (
+              <>
+                <strong>Reviewing your report</strong>
+                <span>
+                  {active.processingLabel ||
+                    `Stage ${Math.min(active.stage + 1, 15)} of 15 · You can return in this browser`}
+                </span>
+              </>
+            ) : complete ? (
+              <>
+                <strong>Your review. Your next step.</strong>
+                <span>Download it. Keep it. Put it to work.</span>
+              </>
+            ) : active ? (
+              <>
+                <strong>Your report is saved.</strong>
+                <span>Open your review for recovery options.</span>
+              </>
+            ) : (
+              <>
+                <strong>
+                  {support
+                    ? "Your own Impact Director."
+                    : "Your first review. £0."}
+                </strong>
+                <span>
+                  {support
+                    ? "Human experience. Support that fits."
+                    : "No registration required."}
+                </span>
+              </>
+            )}
+          </div>
+          <Link
+            className="action-primary"
+            href={href}
+            onClick={(event) => {
+              if (active?.onPrimary) {
+                event.preventDefault();
+                active.onPrimary();
+              }
+            }}
+          >
+            {label}
+            <span aria-hidden="true">
+              <Arrow diagonal />
+            </span>
+          </Link>
+          <Link
+            className="action-talk"
+            href={
+              review
+                ? `/services/expert-review?review=${review[1]}`
+                : "/contact"
             }
-          }}
-        >
-          {label}
-          <span aria-hidden="true">
-            <Arrow diagonal />
-          </span>
-        </Link>
-        <Link
-          className="action-talk"
-          href={
-            review ? `/services/expert-review?review=${review[1]}` : "/contact"
-          }
-        >
-          {complete ? "Talk to your Impact Director" : "Contact Us"}
-        </Link>
-        <Link
-          className="action-feedback"
-          href={`/feedback?from=${encodeURIComponent(path)}`}
-        >
-          Help us make this better
-        </Link>
-      </aside>
+          >
+            {complete ? "Talk to your Impact Director" : "Contact Us"}
+          </Link>
+          <Link
+            className="action-feedback"
+            href={`/feedback?from=${encodeURIComponent(path)}`}
+          >
+            Help us make this better
+          </Link>
+        </aside>
+      )}
     </ReportContext.Provider>
   );
 }
