@@ -1,12 +1,9 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 import { api, useSession } from "./session";
 import { useReportAction } from "./action-bar";
-export function VerifyEmail() {
-  const search = useSearchParams();
-  const notSent = search.get("resend") === "1";
+export function VerifyEmail({ notSent = false }: { notSent?: boolean }) {
   const { user, loading } = useSession(),
     [message, setMessage] = useState(""),
     [busy, setBusy] = useState(false),
