@@ -64,7 +64,7 @@ export function ReviewView({
         setError("");
         if (
           !["complete", "failed"].includes(d.status) ||
-          (d.framework && !d.full)
+          (d.framework && (!d.full || d.delivery?.state === "pending"))
         )
           timer = setTimeout(refresh, 5000);
       } catch (e) {

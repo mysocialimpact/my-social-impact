@@ -32,9 +32,10 @@ export async function POST(req: Request) {
         },
       );
     }
-    await requestEmailSave(req, input);
+    const result = await requestEmailSave(req, input);
+    after(() => sendPendingReports());
     return Response.json(
-      { ok: true },
+      { ok: true, verified: result?.verified || false },
       { headers: { "cache-control": "no-store" } },
     );
   } catch (e) {

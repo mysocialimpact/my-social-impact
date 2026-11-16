@@ -33,6 +33,16 @@ export function ServiceStories() {
           <Arrow diagonal />
         </span>
       </Link>
+      <Link href="/#contact">
+        <span>04</span>
+        <div>
+          <h3>Ongoing impact management.</h3>
+          <p>Embed impact into strategy, leadership and daily decisions.</p>
+        </div>
+        <span aria-hidden="true">
+          <Arrow diagonal />
+        </span>
+      </Link>
     </div>
   );
 }

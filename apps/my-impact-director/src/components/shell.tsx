@@ -41,6 +41,7 @@ export function Footer() {
       <div className="campaign-width footer-legal">
         <span>© {new Date().getFullYear()} My Social Impact</span>
         <nav aria-label="Footer navigation">
+          <Link href="/#contact">Contact Us</Link>
           <Link href="/methodology">Methodology</Link>
           <Link href="/services">Expert help</Link>
           <Link href="/feedback">Feedback</Link>

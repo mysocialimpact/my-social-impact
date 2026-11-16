@@ -1,3 +1,4 @@
+import { sendPendingReports } from "@/lib/report-delivery";
 import { emailEnabled } from "@/lib/email-save";
 import { z } from "zod";
 import { query } from "@/lib/db";
@@ -11,7 +12,7 @@ import {
   startFramework,
   reviewAccess,
 } from "@/lib/reviews";
-import { failure, sameOrigin } from "@/lib/security";
+import { failure, sameOrigin, rateLimit } from "@/lib/security";
 import { drain } from "@/lib/pipeline";
 export const maxDuration = 300;
 type Context = { params: Promise<{ id: string }> };
@@ -51,8 +52,21 @@ export async function GET(req: Request, ctx: Context) {
           [r.report_id],
         )
       : [];
+    const [delivery] = full
+      ? await query(
+          "SELECT CASE WHEN delivered_at IS NOT NULL THEN 'accepted' WHEN attempts>=8 AND (lease_until IS NULL OR lease_until<now()) THEN 'failed' ELSE 'pending' END AS state,attempts FROM director.report_deliveries WHERE review_id=$1 AND owner_id=ANY($2::text[])",
+          [r.id, user.accessIds || [user.id]],
+        )
+      : [];
     return Response.json(
-      { ...safe, full, siblings, ingestion, emailEnabled: emailEnabled() },
+      {
+        ...safe,
+        full,
+        siblings,
+        ingestion,
+        delivery,
+        emailEnabled: emailEnabled(),
+      },
       { headers: { "cache-control": "no-store" } },
     );
   } catch (e) {
@@ -67,6 +81,21 @@ export async function POST(req: Request, ctx: Context) {
     const data = req.headers.get("content-type")?.includes("application/json")
       ? await readJson(req)
       : {};
+    if (data.action === "retry-delivery") {
+      const review = await getReview(user, id);
+      if (!(await reviewAccess(user, review)))
+        return Response.json(
+          { error: "Confirm your email first." },
+          { status: 403 },
+        );
+      await rateLimit(`delivery-retry:${user.id}`, 3, 86400);
+      await query(
+        "UPDATE director.report_deliveries SET attempts=LEAST(attempts,7),next_attempt_at=now() WHERE review_id=$1 AND owner_id=ANY($2::text[]) AND delivered_at IS NULL AND (lease_until IS NULL OR lease_until<now())",
+        [id, user.accessIds || [user.id]],
+      );
+      after(() => sendPendingReports());
+      return Response.json({ ok: true });
+    }
     if (data.action === "snapshot") {
       const review = await getReview(user, id);
       if (review.status === "complete") {

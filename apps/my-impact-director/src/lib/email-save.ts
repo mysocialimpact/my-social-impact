@@ -1,3 +1,5 @@
+import type { PoolClient } from "@neondatabase/serverless";
+import { localIdentity } from "./access";
 import { createHash, randomBytes } from "node:crypto";
 import { z } from "zod";
 import { query, transaction } from "./db";
@@ -46,6 +48,18 @@ export async function requestEmailSave(req: Request, input: unknown) {
       );
     await rateLimit(`email-save:${user.id}`, 5, 86400);
     ownerId = user.id;
+    const verified = await localIdentity(req);
+    if (
+      verified &&
+      !verified.anonymous &&
+      verified.email.toLowerCase() === email
+    ) {
+      await transaction((c) =>
+        grantVerifiedReport(c, reviewId, verified.id, email),
+      );
+      await metric("email_requested");
+      return { verified: true };
+    }
   } else {
     const existing = await query(
       "SELECT id FROM director.users WHERE id=$1 AND is_anonymous=false",
@@ -141,32 +155,8 @@ export async function redeemEmailLink(token: string) {
       "INSERT INTO director.users(id,email,name) VALUES($1,$2,'') ON CONFLICT(id) DO UPDATE SET last_seen=now()",
       [id, link.email],
     );
-    if (link.review_id) {
-      const { rowCount } = await c.query(
-        "SELECT v.id FROM director.reviews v JOIN director.reports r ON r.id=v.report_id WHERE v.id=$1 AND r.expires_at>now() ",
-        [link.review_id],
-      );
-      if (!rowCount)
-        throw new AppError(410, "This review has expired or was deleted.");
-      await c.query(
-        "INSERT INTO director.review_grants(review_id,owner_id) VALUES($1,$2) ON CONFLICT DO NOTHING",
-        [link.review_id, id],
-      );
-      await c.query(
-        "UPDATE director.reports r SET expires_at=GREATEST(expires_at,now()+interval '180 days') FROM director.reviews v WHERE v.report_id=r.id AND v.id=$1",
-        [link.review_id],
-      );
-    }
-    if (link.review_id) {
-      await c.query(
-        "INSERT INTO director.report_subscriptions(report_id,owner_id,email) SELECT report_id,$2,$3 FROM director.reviews WHERE id=$1 ON CONFLICT DO NOTHING",
-        [link.review_id, id, link.email],
-      );
-      await c.query(
-        "INSERT INTO director.report_deliveries(review_id,owner_id,email) SELECT v.id,$2,$3 FROM director.reviews v WHERE v.report_id=(SELECT report_id FROM director.reviews WHERE id=$1) AND (v.framework IN ('claims','excellence') OR v.id=$1) AND v.status='complete' AND v.result IS NOT NULL ON CONFLICT DO NOTHING",
-        [link.review_id, id, link.email],
-      );
-    }
+    if (link.review_id)
+      await grantVerifiedReport(c, link.review_id, id, link.email);
     await c.query(
       "UPDATE director.email_links SET used_at=now() WHERE token_hash=$1",
       [tokenHash(token)],
@@ -184,4 +174,38 @@ export async function redeemEmailLink(token: string) {
     destination,
     cookie: accessCookie(session, 30 * 86400, EMAIL_COOKIE),
   };
+}
+
+async function grantVerifiedReport(
+  c: PoolClient,
+  reviewId: string,
+  id: string,
+  email: string,
+) {
+  {
+    const { rowCount } = await c.query(
+      "SELECT v.id FROM director.reviews v JOIN director.reports r ON r.id=v.report_id WHERE v.id=$1 AND r.expires_at>now() ",
+      [reviewId],
+    );
+    if (!rowCount)
+      throw new AppError(410, "This review has expired or was deleted.");
+    await c.query(
+      "INSERT INTO director.review_grants(review_id,owner_id) VALUES($1,$2) ON CONFLICT DO NOTHING",
+      [reviewId, id],
+    );
+    await c.query(
+      "UPDATE director.reports r SET expires_at=GREATEST(expires_at,now()+interval '180 days') FROM director.reviews v WHERE v.report_id=r.id AND v.id=$1",
+      [reviewId],
+    );
+  }
+  {
+    await c.query(
+      "INSERT INTO director.report_subscriptions(report_id,owner_id,email) SELECT report_id,$2,$3 FROM director.reviews WHERE id=$1 ON CONFLICT DO NOTHING",
+      [reviewId, id, email],
+    );
+    await c.query(
+      "INSERT INTO director.report_deliveries(review_id,owner_id,email) SELECT v.id,$2,$3 FROM director.reviews v WHERE v.report_id=(SELECT report_id FROM director.reviews WHERE id=$1) AND (v.framework IN ('claims','excellence') OR v.id=$1) AND v.status='complete' AND v.result IS NOT NULL ON CONFLICT DO NOTHING",
+      [reviewId, id, email],
+    );
+  }
 }

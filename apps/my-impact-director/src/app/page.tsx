@@ -1,3 +1,4 @@
+import { Contact } from "@/components/contact";
 import { Arrow } from "@/components/icons";
 import Link from "next/link";
 import Image from "next/image";
@@ -171,6 +172,7 @@ export default function Home() {
           </div>
         </div>
       </section>
+      <Contact />
     </div>
   );
 }

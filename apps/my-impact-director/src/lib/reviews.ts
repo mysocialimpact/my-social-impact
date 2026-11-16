@@ -168,6 +168,11 @@ export async function startFramework(
       "INSERT INTO director.daily_metrics(event,count) VALUES($1,1) ON CONFLICT(day,event) DO UPDATE SET count=daily_metrics.count+1",
       ["selected_" + framework],
     );
+  if (review.created)
+    await query(
+      "INSERT INTO director.daily_metrics(event,count) SELECT 'second_framework_selected',1 WHERE EXISTS(SELECT 1 FROM director.reviews WHERE report_id=$1 AND framework IN ('claims','excellence') AND framework<>$2) ON CONFLICT(day,event) DO UPDATE SET count=daily_metrics.count+1",
+      [reportId, framework],
+    );
   return review;
 }
 export async function reviewAccess(

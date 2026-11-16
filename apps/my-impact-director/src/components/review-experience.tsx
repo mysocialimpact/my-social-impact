@@ -1,9 +1,9 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Arrow } from "./icons";
 import Image from "next/image";
-import { api } from "./session";
+import { api, useSession } from "./session";
 import { useReportAction } from "./action-bar";
 import { ScoreCard, ReviewResults } from "./review-results";
 import type { ReviewResult } from "@/lib/pipeline";
@@ -17,7 +17,7 @@ const lessons = {
     [
       "The introduction",
       "GOOD IMPACT CLAIMS NEED GOOD EVIDENCE.",
-      "Your Impact Director is applying the Social Impact Claims Code, developed by My Social Impact. Five principles help us ask whether your claims stand up to scrutiny.",
+      "Five principles from My Social Impact help us ask whether your impact claims stand up to scrutiny.",
     ],
     [
       "01 · Evidence",
@@ -59,7 +59,7 @@ const lessons = {
     [
       "The introduction",
       "SOCIAL IMPACT IS A MANAGEMENT DISCIPLINE.",
-      "Financial performance is managed. Measured. Discussed. Improved. Why shouldn’t social impact receive the same seriousness? Social Impact Excellence is My Social Impact’s methodology for embedding impact throughout an organisation.",
+      "Financial performance is managed. Measured. Discussed. Improved. Social Impact Excellence brings that same seriousness to social impact.",
     ],
     [
       "01 · Purpose",
@@ -106,6 +106,7 @@ export type ExperienceReview = {
   understanding_ready: boolean;
   full: boolean;
   emailEnabled: boolean;
+  delivery?: { state: "accepted" | "pending" | "failed"; attempts: number };
   ingestion?: { id: string; status: string; error_message: string | null };
   organisation: string;
   title: string;
@@ -113,7 +114,18 @@ export type ExperienceReview = {
   result: ReviewResult | null;
   siblings: { id: string; framework: Framework; status: string }[];
 };
-function EmailInvitation({ id, full }: { id: string; full: boolean }) {
+function EmailInvitation({
+  id,
+  full,
+  delivery,
+  modal = false,
+}: {
+  id: string;
+  full: boolean;
+  delivery?: ExperienceReview["delivery"];
+  modal?: boolean;
+}) {
+  const { user } = useSession();
   const [enabled, setEnabled] = useState<boolean | null>(null),
     [sent, setSent] = useState(false),
     [error, setError] = useState(""),
@@ -124,29 +136,81 @@ function EmailInvitation({ id, full }: { id: string; full: boolean }) {
       .then((d) => {
         if (live) setEnabled(d.emailEnabled);
       })
-      .catch(() => {});
+      .catch(() => {
+        if (live) setEnabled(false);
+      });
     return () => {
       live = false;
     };
   }, []);
   return (
-    <section className="review-email" id="email-delivery">
+    <section className="review-email" id={modal ? undefined : "email-delivery"}>
       <div>
-        <h2>{full ? "Email confirmed." : "Want your full report?"}</h2>
+        <h2>{full ? "Email confirmed." : "Your full report, emailed."}</h2>
         <p>
           {full
-            ? "Your complete review will be delivered when it’s ready. You can return securely, with no password."
-            : "Your headline snapshot needs no email. The complete detailed report is also free — confirm your email and we’ll send it when it’s ready."}
+            ? "We’ll send your complete report as soon as it’s ready. You can continue exploring or leave this page."
+            : "Confirm your email. We’ll send your full report when it’s ready. You can close this page and get on with your day."}
         </p>
       </div>
       <div>
         {full ? (
-          <p role="status">Your address is verified for this report.</p>
+          <div role="status">
+            <p>Your address is verified for this report.</p>
+            {delivery?.state === "accepted" ? (
+              <p>
+                The email service has accepted your full report for delivery.
+                Check your inbox or spam folder.
+              </p>
+            ) : delivery?.state === "failed" ? (
+              <>
+                <p>
+                  We’re sorry — your report is ready, but email delivery could
+                  not be completed. You can download it from your results or
+                  retry delivery.
+                </p>
+                <button
+                  className="button primary"
+                  disabled={busy}
+                  onClick={async () => {
+                    setBusy(true);
+                    setError("");
+                    try {
+                      await api("/api/reviews/" + id, {
+                        method: "POST",
+                        headers: { "content-type": "application/json" },
+                        body: JSON.stringify({ action: "retry-delivery" }),
+                      });
+                      setSent(true);
+                    } catch (e) {
+                      setError(
+                        e instanceof Error ? e.message : "Please try again.",
+                      );
+                    } finally {
+                      setBusy(false);
+                    }
+                  }}
+                >
+                  {sent ? "Delivery retry requested" : "Retry email delivery"}
+                </button>
+              </>
+            ) : (
+              <p>
+                We’ll email your complete report as soon as it’s ready. You can
+                leave this page.
+              </p>
+            )}
+          </div>
         ) : sent ? (
-          <p role="status">
-            Check your inbox and confirm your address. You can carry on learning
-            while your assessment is prepared.
-          </p>
+          <div role="status">
+            <p>
+              Check your inbox and confirm your address. Once confirmed, you can
+              leave — we’ll send your report when it’s ready.
+            </p>
+            <button className="subtle-button" onClick={() => setSent(false)}>
+              Use another address or resend
+            </button>
+          </div>
         ) : enabled ? (
           <form
             onSubmit={async (e) => {
@@ -174,6 +238,7 @@ function EmailInvitation({ id, full }: { id: string; full: boolean }) {
               Email address
               <input
                 name="email"
+                defaultValue={user?.anonymous ? "" : user?.email || ""}
                 type="email"
                 autoComplete="email"
                 required
@@ -181,10 +246,11 @@ function EmailInvitation({ id, full }: { id: string; full: boolean }) {
               />
             </label>
             <button className="button primary" disabled={busy}>
-              {busy ? "Sending verification…" : "Send my confirmation link"}
+              {busy ? "Sending verification…" : "Email me my full report"}
             </button>
             <p className="fine-print">
-              Report delivery only. No marketing subscription.
+              Free. No password or marketing. Confirmed reports: 180 days. Email
+              links: 30 minutes.
             </p>
           </form>
         ) : (
@@ -199,11 +265,50 @@ function EmailInvitation({ id, full }: { id: string; full: boolean }) {
     </section>
   );
 }
+function EmailDialog({
+  id,
+  full,
+  close,
+}: {
+  id: string;
+  full: boolean;
+  close: () => void;
+}) {
+  const dialog = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    const el = dialog.current;
+    el?.showModal();
+    return () => el?.close();
+  }, []);
+  return (
+    <dialog
+      className="email-dialog"
+      ref={dialog}
+      aria-label="Email your full report"
+      onCancel={close}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) close();
+      }}
+    >
+      <button
+        className="dialog-close"
+        onClick={close}
+        aria-label="Close email options"
+      >
+        Close ×
+      </button>
+      <EmailInvitation id={id} full={full} modal />
+    </dialog>
+  );
+}
 export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
   const [step, setStep] = useState(0),
+    [direction, setDirection] = useState("forward"),
+    [emailOpen, setEmailOpen] = useState(false),
     [results, setResults] = useState(false),
     [busy, setBusy] = useState(false),
     [error, setError] = useState("");
+  const lessonHeading = useRef<HTMLHeadingElement>(null);
   const setAction = useReportAction();
   const framework = r.framework === "document" ? null : r.framework,
     complete = r.status === "complete" && !!r.result;
@@ -212,15 +317,22 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
       id: r.id,
       status: r.status,
       stage: r.stage,
-      onPrimary: complete ? viewResults : undefined,
+      onPrimary: complete
+        ? viewResults
+        : framework
+          ? () => (r.full ? goStep(0) : setEmailOpen(true))
+          : undefined,
+      processingLabel: framework
+        ? "Processing continues when you leave"
+        : undefined,
       primaryLabel:
         r.framework === "document"
           ? "Choose your free review"
           : complete
             ? "View results"
             : r.full
-              ? "Email confirmed — report will be sent when ready"
-              : "Get your full report by email",
+              ? "Email confirmed — you can leave"
+              : "Email me my full report",
       primaryHref:
         r.framework === "document"
           ? "#choose-review"
@@ -232,12 +344,12 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
     });
   }, [r.id, r.status, r.stage, r.full, r.framework, complete, setAction]);
   function goStep(value: number) {
+    setDirection(value < step ? "backward" : "forward");
     setStep(value);
-    requestAnimationFrame(() =>
-      document
-        .getElementById("learning")
-        ?.scrollIntoView({ block: "start", behavior: "instant" }),
-    );
+    requestAnimationFrame(() => {
+      lessonHeading.current?.focus({ preventScroll: true });
+      document.querySelector(".lesson-scroll")?.scrollTo({ top: 0 });
+    });
   }
   function viewResults() {
     setResults(true);
@@ -357,68 +469,81 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
   const lesson = lessons[framework][step],
     other = framework === "claims" ? "excellence" : "claims";
   return (
-    <div className={"two-review two-review-" + framework}>
-      <div className="review-product-heading">
-        <Image
-          src={
-            framework === "claims"
-              ? "/brand/claims-code.png"
-              : "/brand/excellence.png"
-          }
-          alt={names[framework]}
-          width={110}
-          height={110}
-        />
-        <div>
-          <p>
-            Developed by{" "}
-            <a href="https://mysocialimpact.org">My Social Impact</a>
-          </p>
-          <h1>{names[framework]}</h1>
-          <p>{r.organisation || r.title}</p>
+    <div
+      className={
+        "two-review two-review-" +
+        framework +
+        (results ? " review-result-page" : " immersive-review")
+      }
+    >
+      <div className="immersive-meta">
+        <Link className="review-back" href="/">
+          ← Back to My Impact Director
+        </Link>
+        <div className="review-product-heading">
+          <Image
+            src={
+              framework === "claims"
+                ? "/brand/claims-code.png"
+                : "/brand/excellence.png"
+            }
+            alt={names[framework]}
+            width={110}
+            height={110}
+          />
+          <div>
+            <p>
+              Developed by{" "}
+              <a href="https://mysocialimpact.org">My Social Impact</a>
+            </p>
+            <h1>{names[framework]}</h1>
+            <p className="report-name" title={r.organisation || r.title}>
+              {r.organisation || r.title}
+            </p>
+          </div>
+        </div>
+        <div className="honest-status" role="status">
+          {complete ? (
+            <>
+              <strong>Your results are ready.</strong>{" "}
+              <button onClick={viewResults}>
+                See my results <Arrow diagonal />
+              </button>
+            </>
+          ) : r.status === "failed" || r.ingestion?.status === "failed" ? (
+            <>
+              <strong>
+                We’re really sorry — we couldn’t complete this review.
+              </strong>{" "}
+              {r.error_message || r.ingestion?.error_message}{" "}
+              <button
+                disabled={busy}
+                onClick={() =>
+                  retrySaved(
+                    r.ingestion?.status === "failed" ? r.ingestion.id : r.id,
+                  )
+                }
+              >
+                Retry the saved review
+              </button>
+              <Link href={"/feedback?from=/reviews/" + r.id}>
+                Help us make this better
+              </Link>
+            </>
+          ) : (
+            <>
+              <strong>
+                {r.understanding_ready
+                  ? "Your Impact Director is preparing your report."
+                  : "Your Impact Director is reading your report."}
+              </strong>{" "}
+              {r.error_message ||
+                "You can leave this page; processing continues in the background."}
+            </>
+          )}
         </div>
       </div>
-      <div className="honest-status" role="status">
-        {complete ? (
-          <>
-            <strong>Your results are ready.</strong>{" "}
-            <button onClick={viewResults}>
-              See my results <Arrow diagonal />
-            </button>
-          </>
-        ) : r.status === "failed" || r.ingestion?.status === "failed" ? (
-          <>
-            <strong>
-              We’re really sorry — we couldn’t complete this review.
-            </strong>{" "}
-            {r.error_message || r.ingestion?.error_message}{" "}
-            <button
-              disabled={busy}
-              onClick={() =>
-                retrySaved(
-                  r.ingestion?.status === "failed" ? r.ingestion.id : r.id,
-                )
-              }
-            >
-              Retry the saved review
-            </button>
-            <Link href={"/feedback?from=/reviews/" + r.id}>
-              Help us make this better
-            </Link>
-          </>
-        ) : (
-          <>
-            <strong>
-              {r.understanding_ready
-                ? "Your selected assessment is being prepared."
-                : "We’re understanding your document first."}
-            </strong>{" "}
-            {r.error_message ||
-              "You can leave this page; processing continues in the background."}
-          </>
-        )}
-      </div>
-      <div id="review-results">
+      <div id="review-results" className="review-stage">
         {complete && results && r.result ? (
           <>
             <h2 className="snapshot-heading">
@@ -493,60 +618,99 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
           </>
         ) : (
           <section
-            className={"methodology-lesson lesson-" + step}
+            className={
+              "methodology-lesson lesson-" + step + " slide-" + direction
+            }
             id="learning"
           >
-            <p className="lesson-position">
-              {lesson[0]}{" "}
-              <span>
-                {step + 1} / {lessons[framework].length}
-              </span>
-            </p>
-            <h2 key={step}>{lesson[1]}</h2>
-            <p className="lesson-explanation">{lesson[2]}</p>
-            {lesson[3] && <blockquote>{lesson[3]}</blockquote>}
-            <nav aria-label="Learning sequence">
-              <button disabled={step === 0} onClick={() => goStep(step - 1)}>
-                ← Previous
-              </button>
-              <span>
-                Explore at your own pace. Separate from processing progress.
-              </span>
-              <button
-                disabled={step === lessons[framework].length - 1}
-                onClick={() => goStep(step + 1)}
+            <div className="lesson-scroll" key={step}>
+              <div
+                className={
+                  step === 0
+                    ? "lesson-composition opening-slide"
+                    : "lesson-composition"
+                }
               >
-                Next →
-              </button>
-            </nav>
-            <div className="lesson-jump">
-              {lessons[framework].map((l, i) => (
-                <button
-                  key={l[0]}
-                  aria-current={step === i ? "step" : undefined}
-                  onClick={() => goStep(i)}
-                  aria-label={l[0]}
-                >
-                  {i === 0
-                    ? "Introduction"
-                    : i === 6
-                      ? "The bigger picture"
-                      : l[0]}
-                </button>
-              ))}
+                <div className="lesson-copy">
+                  <p className="lesson-position">
+                    {lesson[0]}{" "}
+                    <span>
+                      {step + 1} / {lessons[framework].length} · Learning
+                    </span>
+                  </p>
+                  <h2 ref={lessonHeading} tabIndex={-1}>
+                    {lesson[1]}
+                  </h2>
+                  <p className="lesson-explanation">{lesson[2]}</p>
+                  {lesson[3] && <blockquote>{lesson[3]}</blockquote>}
+                  {step === 0 && (
+                    <p className="stay-invitation">
+                      Confirm your email, then you can close this page. Or stay
+                      and explore.
+                    </p>
+                  )}
+                  {step === 6 && framework === "excellence" && (
+                    <a href="https://socialimpactexcellence.org">
+                      Explore the full framework & maturity assessment{" "}
+                      <Arrow diagonal />
+                    </a>
+                  )}
+                </div>
+                {step === 0 && (
+                  <EmailInvitation
+                    id={r.id}
+                    full={r.full}
+                    delivery={r.delivery}
+                  />
+                )}
+              </div>
             </div>
-            <Link href="/methodology">
-              Read the detailed methodology <Arrow diagonal />
-            </Link>
-            {complete && (
-              <button className="button primary" onClick={viewResults}>
-                Skip to my ready results
-              </button>
-            )}
+            <div className="lesson-controls">
+              <nav aria-label="Learning sequence">
+                <button disabled={step === 0} onClick={() => goStep(step - 1)}>
+                  ← Previous
+                </button>
+                <span>
+                  Explore at your own pace. This is learning, not processing
+                  progress.
+                </span>
+                <button
+                  disabled={step === lessons[framework].length - 1}
+                  onClick={() => goStep(step + 1)}
+                >
+                  Next →
+                </button>
+              </nav>
+              <div className="lesson-jump">
+                {lessons[framework].map((l, i) => (
+                  <button
+                    key={l[0]}
+                    aria-current={step === i ? "step" : undefined}
+                    onClick={() => goStep(i)}
+                    aria-label={l[0]}
+                  >
+                    {i === 0
+                      ? "Introduction"
+                      : i === 6
+                        ? "The bigger picture"
+                        : l[0]}
+                  </button>
+                ))}
+              </div>
+            </div>
           </section>
         )}
       </div>
-      <EmailInvitation id={r.id} full={r.full} />
+      {results && (
+        <EmailInvitation id={r.id} full={r.full} delivery={r.delivery} />
+      )}
+      {emailOpen && (
+        <EmailDialog
+          id={r.id}
+          full={r.full}
+          close={() => setEmailOpen(false)}
+        />
+      )}
       {complete && results && (
         <section className="next-methodology">
           <h2>Your Impact Director has another way to look at this report.</h2>
@@ -571,14 +735,18 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
       )}
       {complete && results && (
         <section className="bigger-conversation">
-          <h2>Your impact report is just the beginning.</h2>
+          <h2>
+            {framework === "claims"
+              ? "Want to discuss your findings?"
+              : "Want to take your impact management further?"}
+          </h2>
           <p>
             Use what you learn to make better decisions throughout the year. My
             Social Impact helps embed impact in strategy, leadership, data,
             delivery and communications.
           </p>
           <Link href={`/services/expert-review?review=${r.id}`}>
-            Talk to us about your impact <Arrow diagonal />
+            Discuss your impact report <Arrow diagonal />
           </Link>
           <p>
             <Link href="/services/preparation">Create your next report</Link> ·{" "}
@@ -589,6 +757,9 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
             partner is an emerging ambition. Professional support is available
             by enquiry.
           </p>
+          <Link href="/#contact">
+            Meet Marcus & contact us <Arrow diagonal />
+          </Link>
         </section>
       )}
     </div>

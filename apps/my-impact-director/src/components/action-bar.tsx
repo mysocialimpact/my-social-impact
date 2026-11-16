@@ -13,6 +13,7 @@ import {
 import { usePathname } from "next/navigation";
 type ReportAction = {
   primaryLabel?: string;
+  processingLabel?: string;
   primaryHref?: string;
   onPrimary?: () => void;
   id: string;
@@ -81,8 +82,8 @@ export function ActionShell({ children }: { children: React.ReactNode }) {
             <>
               <strong>Reviewing your report</strong>
               <span>
-                Stage {Math.min(active.stage + 1, 15)} of 15 · You can return in
-                this browser
+                {active.processingLabel ||
+                  `Stage ${Math.min(active.stage + 1, 15)} of 15 · You can return in this browser`}
               </span>
             </>
           ) : complete ? (
@@ -105,7 +106,12 @@ export function ActionShell({ children }: { children: React.ReactNode }) {
         <Link
           className="action-primary"
           href={href}
-          onClick={() => active?.onPrimary?.()}
+          onClick={(event) => {
+            if (active?.onPrimary) {
+              event.preventDefault();
+              active.onPrimary();
+            }
+          }}
         >
           {label}
           <span aria-hidden="true">

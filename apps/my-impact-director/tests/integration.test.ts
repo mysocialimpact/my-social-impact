@@ -455,6 +455,72 @@ test(
           );
           await sendPendingReports();
           assert.equal(emails.length, 3, "Delivery retries are idempotent");
+          const verifiedRequest = new Request(
+            "https://test.example/api/reviews/" + selected.id,
+            { headers: { cookie: redeemed.cookie.split(";")[0] } },
+          );
+          const delivered = await (
+            await reviewGet(verifiedRequest, {
+              params: Promise.resolve({ id: selected.id }),
+            })
+          ).json();
+          assert.equal(delivered.delivery.state, "accepted");
+          const unverified = await (
+            await reviewGet(req("/api/reviews/" + selected.id), {
+              params: Promise.resolve({ id: selected.id }),
+            })
+          ).json();
+          assert.equal(
+            unverified.delivery,
+            undefined,
+            "Delivery information is private to the verified recipient",
+          );
+          await query(
+            "UPDATE director.report_deliveries SET delivered_at=NULL,attempts=8 WHERE review_id=$1 AND owner_id=$2",
+            [selected.id, verified.id],
+          );
+          const failedDelivery = await (
+            await reviewGet(verifiedRequest, {
+              params: Promise.resolve({ id: selected.id }),
+            })
+          ).json();
+          assert.equal(failedDelivery.delivery.state, "failed");
+          await sendPendingReports();
+          assert.equal(
+            emails.length,
+            3,
+            "Exhausted delivery waits for an explicit retry",
+          );
+          const extra = await createReview(
+            verified,
+            bytes,
+            "reuse-verified.pdf",
+            true,
+            false,
+            null,
+            true,
+          );
+          const reused = await requestEmailSave(
+            new Request("https://test.example/api/save", {
+              headers: {
+                cookie: redeemed.cookie.split(";")[0],
+                origin: "https://test.example",
+                "x-forwarded-for": uid,
+              },
+            }),
+            { email: recipient, reviewId: extra.id },
+          );
+          assert.equal(reused?.verified, true);
+          assert.equal(
+            emails.length,
+            3,
+            "An already verified address needs no new confirmation email",
+          );
+          assert.equal(
+            await reviewAccess(verified, await getReview(verified, extra.id)),
+            true,
+          );
+          await deleteReview(verified, extra.id);
           await query("DELETE FROM director.email_links WHERE email=$1", [
             recipient,
           ]);

@@ -2,11 +2,25 @@
 import { Arrow } from "./icons";
 import Link from "next/link";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 export function Header() {
   const [open, setOpen] = useState(false),
     path = usePathname();
+  const header = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const el = header.current;
+    if (!el) return;
+    const measure = () =>
+      document.documentElement.style.setProperty(
+        "--header-height",
+        `${el.getBoundingClientRect().height}px`,
+      );
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
   useEffect(() => {
     setOpen(false);
   }, [path]);
@@ -22,7 +36,7 @@ export function Header() {
       <a className="skip" href="#main">
         Skip to content
       </a>
-      <header className="site-header campaign-header">
+      <header ref={header} className="site-header campaign-header">
         <Link href="/" className="brand" onClick={() => setOpen(false)}>
           <Image
             src="/brand/my-impact-director.png"
@@ -55,6 +69,9 @@ export function Header() {
           </Link>
           <Link href="/reviews" onClick={() => setOpen(false)}>
             Saved reports
+          </Link>
+          <Link href="/#contact" onClick={() => setOpen(false)}>
+            Contact Us
           </Link>
         </nav>
         <Link
