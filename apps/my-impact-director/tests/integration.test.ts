@@ -142,6 +142,7 @@ test(
               limitations:
                 "Synthetic visual contract, not professional judgement.",
               readable: true,
+              ...(p.pdfChecks ? { contentKinds: [] } : {}),
             })),
           };
         else if (p.pageMapping)
@@ -158,8 +159,18 @@ test(
           data = {
             findings: p.criteria.map((c: { id: string }) => ({
               id: c.id,
-              status: "assessed",
-              score: 3,
+              status:
+                p.anchors && c.id === "report.5.5"
+                  ? "unassessable"
+                  : p.anchors && c.id === "report.5.3"
+                    ? "not_demonstrated"
+                    : "assessed",
+              score:
+                p.anchors && c.id === "report.5.5"
+                  ? null
+                  : p.anchors && c.id === "report.5.3"
+                    ? 0
+                    : 3,
               explanation:
                 "Synthetic fixture judgement for testing persistence, not professional calibration.",
               evidenceIds: [forgeQuote ? "INVENTED" : p.passages[0].id],
@@ -169,12 +180,47 @@ test(
               confidence: "medium",
               claimIds: c.id.startsWith("report.") ? [] : ["C1"],
               ...(c.id.startsWith("report.")
-                ? { visualPages: [p.visualObservations[0].page] }
+                ? {
+                    visualPages: [p.visualObservations[0].page],
+                    ...(p.anchors
+                      ? {
+                          anchorReason:
+                            "The synthetic fixture meets this anchor, not the higher anchor; this tests transport only.",
+                          barrier: "none",
+                        }
+                      : {}),
+                  }
                 : {}),
             })),
           };
         else if (p.findings)
           data = {
+            ...(p.pdfChecks
+              ? {
+                  editorial: {
+                    verdict:
+                      "Synthetic editorial verdict: this tests persistence and not professional calibration.",
+                    attention:
+                      "A synthetic attention judgement for transport validation only.",
+                    scoreConsistency: "consistent",
+                    scoreExplanation:
+                      "Synthetic score consistency check; no claim of creative calibration.",
+                    readerTest: Object.fromEntries(
+                      ["outcomes", "scale", "limitations", "nextSteps"].map(
+                        (k) => [
+                          k,
+                          {
+                            finding:
+                              "Synthetic answer for the reader test on the original physical page.",
+                            page: p.visualObservations[0].page,
+                            access: "easy",
+                          },
+                        ],
+                      ),
+                    ),
+                  },
+                }
+              : {}),
             summary: "Synthetic review for the integration test.",
             strengths: ["Training reach is disclosed."],
             opportunities: ["Measure changes in income."],
@@ -1053,8 +1099,11 @@ test(
             result = done.result as ReviewResult;
           assert.equal(done.status, "complete");
           assert.equal(result.framework, "report");
-          assert.equal(result.scores.report!.coverage, 25);
-          assert.equal(result.scores.report!.overall, 75);
+          assert.equal(result.scores.report!.coverage, 24);
+          assert.equal(result.scores.report!.overall, 72.19);
+          assert.equal(result.version, "2.0.0");
+          assert.ok(result.editorial);
+          assert.notEqual(result.rating?.label, "Excellent");
           assert.ok(result.visualInspection!.pages.length);
           assert.equal(result.scores.claims, undefined);
           assert.equal(result.scores.excellence, undefined);

@@ -1,4 +1,5 @@
 "use client";
+import { pillarMaximum } from "@/lib/report-methodology";
 import { useEffect, useState } from "react";
 import { useSession, api } from "./session";
 import { Account } from "./account";
@@ -258,7 +259,8 @@ export function Admin() {
                           : "Not yet assessed"}
                         {r.scores?.report?.principles.map((p) => (
                           <p key={p.name}>
-                            {p.name}: {p.score ?? "Unassessable"}/20
+                            {p.name}: {p.score ?? "Unassessable"}/
+                            {pillarMaximum(p)}
                           </p>
                         ))}
                       </td>

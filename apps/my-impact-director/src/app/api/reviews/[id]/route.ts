@@ -25,7 +25,7 @@ export async function GET(req: Request, ctx: Context) {
     void lease_token;
     const siblings = r.framework
       ? await query(
-          "SELECT id,framework,status,COALESCE(jsonb_typeof(result->'scores'->framework)='object',false) AS has_result FROM director.reviews WHERE report_id=$1 AND framework IN ('claims','excellence','report')",
+          "SELECT id,framework,version,status,COALESCE(jsonb_typeof(result->'scores'->framework)='object',false) AS has_result FROM director.reviews WHERE report_id=$1 AND framework IN ('claims','excellence','report') ORDER BY created_at DESC",
           [r.report_id],
         )
       : [];
@@ -42,6 +42,7 @@ export async function GET(req: Request, ctx: Context) {
           for (const p of score!.principles) p.tests = [];
         result.claims = [];
         delete result.creativeDirection;
+        delete result.pdfChecks;
         if (result.visualInspection) result.visualInspection.observations = [];
         result.actions.actions = result.actions.actions.slice(0, 3);
         result.actions.strengths = result.actions.strengths.slice(0, 3);

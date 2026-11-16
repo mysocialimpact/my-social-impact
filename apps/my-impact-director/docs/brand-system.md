@@ -25,9 +25,9 @@ The header remains visible on desktop and mobile. Mobile keeps the brand, upload
 
 ## The Impact Edit and historical reports
 
-Visitor-facing labels, selection, learning, results, dashboard, administration, PDF and requested-email delivery use The Impact Edit. The formal attribution is “An Impact Report Excellence assessment developed by My Social Impact.” Detailed methodology documentation remains Impact Report Excellence Methodology v1.0 at its existing stable URL.
+Visitor-facing labels, selection, learning, results, dashboard, administration, PDF and requested-email delivery use The Impact Edit. The formal attribution is “An Impact Report Excellence assessment developed by My Social Impact.” The current methodology is The Impact Edit v2; the archived Impact Report Excellence v1.0 documentation remains directly accessible. See `docs/impact-edit-v2-release.md` for the versioned rubric, weighted pillars and calibration status.
 
-Creative results are labelled “Indicative Creative Assessment” and explain that creative judgements are partly subjective. Actual visual inspection, five pillars, 25 criteria, scoring/coverage rules and evidence validation are preserved. The internal `report` framework identifier, methodology version, original stored scores, reports, grants and subscriptions are unchanged. Historical reviews remain accessible; regenerated PDFs receive the current identity and retain their original methodology version.
+Creative results are labelled “Indicative Creative Assessment” and explain that creative judgements are partly subjective. Version 2 adds execution-specific anchors, direct image input to scoring, five weighted pillars, honest accessibility checks and a whole-report reader test. Historical v1 scoring and evidence records remain preserved. The internal `report` framework identifier, methodology version, original stored scores, reports, grants and subscriptions are unchanged. Historical reviews remain accessible; regenerated PDFs receive the current identity and retain their original methodology version.
 
 ## Verification
 

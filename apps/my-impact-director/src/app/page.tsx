@@ -113,11 +113,11 @@ export default function Home() {
               name: "The Impact Edit",
               question: "Does your impact report make an impact?",
               pillars:
-                "Clarity · Storytelling · Design · Engagement · Communication",
+                "Readability · Storytelling · Visual design · Data · Accessibility",
               explanation:
-                "An indicative creative assessment of your report’s writing and actual page design. Twenty-five criteria examine readability, storytelling, design, engagement and communication. Creative judgements are partly subjective; different readers may respond differently.",
+                "An indicative creative assessment of your report’s writing and actual page design. Twenty-five anchored criteria examine readability and hierarchy, storytelling, visual design, data communication and accessibility. Creative judgements are partly subjective; different readers may respond differently.",
               href: "/methodology/impact-report-excellence",
-              link: "Read Impact Report Excellence Methodology v1.0",
+              link: "Read The Impact Edit Methodology v2.0.0",
             },
           ].map((f) => (
             <article className="assessment-introduction" key={f.id}>
