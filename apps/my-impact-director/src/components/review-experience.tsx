@@ -128,6 +128,7 @@ function EmailInvitation({
   const { user } = useSession();
   const [enabled, setEnabled] = useState<boolean | null>(null),
     [sent, setSent] = useState(false),
+    [reusedVerification, setReusedVerification] = useState(false),
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false);
   useEffect(() => {
@@ -146,15 +147,19 @@ function EmailInvitation({
   return (
     <section className="review-email" id={modal ? undefined : "email-delivery"}>
       <div>
-        <h2>{full ? "Email confirmed." : "Your full report, emailed."}</h2>
+        <h2>
+          {full || reusedVerification
+            ? "Email confirmed."
+            : "Your full report, emailed."}
+        </h2>
         <p>
-          {full
+          {full || reusedVerification
             ? "We’ll send your complete report as soon as it’s ready. You can continue exploring or leave this page."
             : "Confirm your email. We’ll send your full report when it’s ready. You can close this page and get on with your day."}
         </p>
       </div>
       <div>
-        {full ? (
+        {full || reusedVerification ? (
           <div role="status">
             <p>Your address is verified for this report.</p>
             {delivery?.state === "accepted" ? (
@@ -182,6 +187,7 @@ function EmailInvitation({
                         body: JSON.stringify({ action: "retry-delivery" }),
                       });
                       setSent(true);
+                      window.dispatchEvent(new Event("mid-review-refresh"));
                     } catch (e) {
                       setError(
                         e instanceof Error ? e.message : "Please try again.",
@@ -218,7 +224,7 @@ function EmailInvitation({
               setBusy(true);
               setError("");
               try {
-                await api("/api/save", {
+                const saved = await api("/api/save", {
                   method: "POST",
                   headers: { "content-type": "application/json" },
                   body: JSON.stringify({
@@ -226,6 +232,7 @@ function EmailInvitation({
                     email: new FormData(e.currentTarget).get("email"),
                   }),
                 });
+                setReusedVerification(saved.verified === true);
                 setSent(true);
               } catch (e) {
                 setError(e instanceof Error ? e.message : "Please try again.");

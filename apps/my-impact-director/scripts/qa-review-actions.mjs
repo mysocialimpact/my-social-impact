@@ -21,7 +21,8 @@ try {
     r.full = false;
     r.emailEnabled = true;
     let emails = 0,
-      retries = 0;
+      retries = 0,
+      reuseMode = false;
     const c = await b.newContext({ viewport: { width, height: 844 } }),
       p = await c.newPage();
     await c.route("**/api/account", (x) =>
@@ -41,11 +42,17 @@ try {
                 "We’re sorry — delivery could not be confirmed. Please try again.",
             },
           })
-        : x.fulfill({ json: { ok: true } });
+        : x.fulfill({ json: { ok: true, verified: reuseMode } });
     });
     await c.route("**/api/reviews/*", (x) => {
       if (x.request().method() === "POST") {
-        if (x.request().postDataJSON()?.action === "retry-delivery") retries++;
+        if (x.request().postDataJSON()?.action === "retry-delivery") {
+          retries++;
+          r.delivery = { state: "pending", attempts: 7 };
+          setTimeout(() => {
+            r.delivery = { state: "accepted", attempts: 8 };
+          }, 200);
+        }
         return x.fulfill({ json: { ok: true } });
       }
       return x.fulfill({ json: r });
@@ -90,9 +97,23 @@ try {
       .getByRole("button", { name: "Retry email delivery", exact: true })
       .click();
     assert.equal(retries, 1);
-    r.delivery = { state: "accepted", attempts: 1 };
+    await p
+      .getByText(/The email service has accepted/)
+      .waitFor({ timeout: 15000 });
+    r.full = false;
+    delete r.delivery;
+    reuseMode = true;
     await p.reload({ waitUntil: "networkidle" });
-    await p.getByText(/The email service has accepted/).waitFor();
+    await p
+      .getByLabel("Email address", { exact: true })
+      .fill("qa@example.invalid");
+    await p
+      .getByRole("button", { name: "Email me my full report", exact: true })
+      .click();
+    await p
+      .getByRole("heading", { name: "Email confirmed.", exact: true })
+      .waitFor();
+    assert.equal(await p.locator("input[name=email]").count(), 0);
     const a = await new AxeBuilder({ page: p })
       .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
       .analyze();
@@ -118,6 +139,7 @@ try {
       readyResults: true,
       deliveryRetry: true,
       acceptedStatus: true,
+      reusedVerificationIsImmediate: true,
       contact: g,
       axeViolations: 0,
     });

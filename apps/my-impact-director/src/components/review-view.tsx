@@ -72,8 +72,14 @@ export function ReviewView({
           setError(e instanceof Error ? e.message : "Please try again.");
       }
     }
+    const requestedRefresh = () => {
+      clearTimeout(timer);
+      void refresh();
+    };
+    window.addEventListener("mid-review-refresh", requestedRefresh);
     void refresh();
     return () => {
+      window.removeEventListener("mid-review-refresh", requestedRefresh);
       stopped = true;
       clearTimeout(timer);
     };
