@@ -15,7 +15,7 @@ const browser = await chromium.launch({
 const checks = [];
 try {
   for (const [width, height] of [
-    [1440, 900],
+    [1920, 1080],
     [1366, 768],
     [390, 844],
     [320, 812],
@@ -28,10 +28,39 @@ try {
       events = [],
       errors = [];
     let founderMode = false,
+      guestUpload = false,
+      uploadedBytes = 0,
       reviewFixture = null;
     p.on("pageerror", (e) => errors.push(e.message));
     await c.route("**/api/**", (route) => {
       const path = new URL(route.request().url()).pathname;
+      if (path === "/api/visitor") return route.fulfill({ json: { ok: true } });
+      if (path === "/api/uploads")
+        return route.fulfill({
+          json: { id: "synthetic-upload", chunkSize: 3000000 },
+        });
+      if (path === "/api/uploads/synthetic-upload") {
+        if (route.request().method() === "PUT")
+          uploadedBytes += route.request().postDataBuffer().length;
+        return route.fulfill({ json: { id: reviewFixture.id } });
+      }
+      if (
+        guestUpload &&
+        path.startsWith("/api/reviews/") &&
+        route.request().method() === "POST"
+      ) {
+        reviewFixture.framework = route.request().postDataJSON().framework;
+        reviewFixture.status = "queued";
+        reviewFixture.siblings = [
+          {
+            id: reviewFixture.id,
+            framework: reviewFixture.framework,
+            status: "queued",
+            has_result: false,
+          },
+        ];
+        return route.fulfill({ json: { id: reviewFixture.id } });
+      }
       if (path === "/api/account")
         return route.fulfill({
           json: {
@@ -42,13 +71,19 @@ try {
                   emailVerified: true,
                   anonymous: false,
                 }
-              : reviewFixture
+              : guestUpload
                 ? {
-                    id: "synthetic-owner",
-                    emailVerified: true,
-                    anonymous: false,
+                    id: "synthetic-guest",
+                    anonymous: true,
+                    emailVerified: false,
                   }
-                : null,
+                : reviewFixture
+                  ? {
+                      id: "synthetic-owner",
+                      emailVerified: true,
+                      anonymous: false,
+                    }
+                  : null,
           },
         });
       if (path === "/api/service-intents") {
@@ -114,31 +149,37 @@ try {
     });
     const response = await p.goto(base, { waitUntil: "networkidle" });
     assert.equal(response.status(), 200);
-    await p
-      .getByRole("heading", {
-        name: "YOUR IMPACT DIRECTOR’S FIRST JOB IS READY.",
-        exact: true,
-      })
-      .waitFor();
-    const ready = p.locator(".first-job-ready"),
-      bounds = await ready.boundingBox();
+    await p.locator(".meet-director").waitFor();
+    const cue = await p.locator(".first-job-cue").boundingBox();
     assert.ok(
-      bounds.y < height,
-      "The first job should begin within the first screen",
+      cue.y < height + 80,
+      "First-job invitation is visible near the opening screen",
     );
-    assert.ok(
-      await p
-        .locator(".director-identity")
-        .innerText()
-        .then((t) => /building.*AI-powered.*human professionals/s.test(t)),
+    assert.match(
+      await p.locator(".meet-proposition").innerText(),
+      /building.*AI.*human professionals/s,
     );
+    assert.equal(await p.locator(".creative-home > section").count(), 5);
+    assert.equal(await p.locator('input[type="file"]').count(), 1);
+    assert.equal(await p.locator(".studio-framework").count(), 3);
+    for (const d of await p.locator(".assessment-method").all()) {
+      assert.equal(await d.getAttribute("open"), null);
+      await d.locator("summary").focus();
+      await p.keyboard.press("Enter");
+      assert.notEqual(await d.getAttribute("open"), null);
+      await p.waitForTimeout(250);
+      assert.ok(await d.locator("a").isVisible());
+      await p.keyboard.press("Enter");
+      assert.equal(await d.getAttribute("open"), null);
+    }
     assert.equal(await p.locator(".permanent-actions").count(), 0);
-    assert.equal(await p.locator(".report-offers > li").count(), 4);
+    assert.equal(await p.locator(".report-offers > li").count(), 3);
     assert.equal(await p.locator(".monthly-pricing > li").count(), 3);
     assert.doesNotMatch(await p.locator("body").innerText(), /£49\b/);
     for (const price of ["£500", "£1,000", "£149", "£495", "£1,500"])
       assert.ok((await p.locator("body").innerText()).includes(price));
     await p.locator(".digital-offer").first().locator("summary").click();
+    await p.waitForTimeout(250);
     assert.match(
       await p.locator(".digital-offer").first().innerText(),
       /30 November 2026/,
@@ -147,33 +188,72 @@ try {
       await p.locator(".digital-offer").first().innerText(),
       /cannot be combined/,
     );
+    await p.locator(".digital-offer summary").click();
+    const services = ["discussion", "improvement", "preparation"];
     const subjects = [
       "Discuss my impact report",
-      "Improve my existing report",
-      "Digitise my impact report",
+      "Improve or digitise my report",
       "Prepare my next impact report",
     ];
-    const links = p.locator(".report-offers .service-contact-action a");
-    for (let i = 0; i < 4; i++) {
-      const url = new URL(await links.nth(i).getAttribute("href"));
+    for (let i = 0; i < 3; i++) {
+      const a = p.locator(".report-offers .service-contact-action a").nth(i);
+      assert.equal(
+        await a.getAttribute("href"),
+        "/contact?service=" + services[i],
+      );
+      await a.click();
+      await p.waitForURL("**/contact?service=" + services[i]);
+      await p.locator(".contact-context").waitFor();
+      const email = p.getByRole("link", { name: "Email Marcus", exact: true });
+      const url = new URL(await email.getAttribute("href"));
       assert.equal(url.pathname, "marcus@mysocialimpact.org");
       assert.equal(
         url.searchParams.get("subject"),
         "My Impact Director — " + subjects[i],
       );
-      assert.equal(url.searchParams.has("body"), false);
+      assert.deepEqual([...url.searchParams.keys()], ["subject"]);
+      await p
+        .getByRole("button", { name: "Copy email address", exact: true })
+        .click();
+      await p.getByText("Email address copied.", { exact: true }).waitFor();
+      assert.ok(
+        await p.evaluate(
+          () => document.documentElement.scrollWidth <= innerWidth + 1,
+        ),
+      );
+      if (i === 1)
+        await p.screenshot({
+          path: `artifacts/commercial/contact-route-${width}.png`,
+          fullPage: true,
+        });
+      await p.goto(base, { waitUntil: "networkidle" });
     }
-    await p.evaluate(() =>
-      document.addEventListener(
-        "click",
-        (e) => {
-          if (e.target.closest('a[href^="mailto:"]')) e.preventDefault();
-        },
-        { capture: true },
-      ),
-    );
-    await links.nth(1).click();
-    await p.waitForTimeout(200);
+    for (const service of [
+      "supported",
+      "director",
+      "bespoke",
+      "human-director",
+    ]) {
+      if (service !== "human-director")
+        await p.locator("#" + service + " summary").click();
+      await p
+        .locator(`.chapter-support a[href="/contact?service=${service}"]`)
+        .click();
+      await p.waitForURL("**/contact?service=" + service);
+      assert.match(
+        await p.locator(".contact-context").innerText(),
+        /ongoing Impact Director support/,
+      );
+      assert.match(
+        decodeURIComponent(
+          await p
+            .getByRole("link", { name: "Email Marcus", exact: true })
+            .getAttribute("href"),
+        ),
+        /Ongoing support enquiry/,
+      );
+      await p.goto(base, { waitUntil: "networkidle" });
+    }
     assert.ok(
       events.some(
         (e) =>
@@ -182,10 +262,6 @@ try {
           e.reviewId === null,
       ),
     );
-    await p
-      .getByRole("button", { name: "Copy email address", exact: true })
-      .click();
-    await p.getByText("Email address copied.", { exact: true }).waitFor();
     const nav = p.locator(".header-review");
     assert.equal((await nav.innerText()).trim(), "Try your first free review");
     await nav.click();
@@ -201,7 +277,42 @@ try {
       .locator("#hero-report-file")
       .setInputFiles("artifacts/impact-edit-v2/simple-effective.pdf");
     await p.getByText("simple-effective.pdf", { exact: true }).waitFor();
-    await p.reload({ waitUntil: "networkidle" });
+    reviewFixture = JSON.parse(
+      await fs.readFile("artifacts/claims-review.json", "utf8"),
+    );
+    Object.assign(reviewFixture, {
+      framework: "document",
+      status: "ingested",
+      result: null,
+      full: false,
+      emailEnabled: true,
+      understanding_ready: true,
+      siblings: [],
+    });
+    guestUpload = true;
+    await p
+      .getByRole("checkbox", { name: /I have permission to share this report/ })
+      .check();
+    await p
+      .getByRole("button", { name: "Review my report — free", exact: true })
+      .click();
+    await p.locator(".review-choice").waitFor();
+    assert.equal(
+      uploadedBytes,
+      (await fs.stat("artifacts/impact-edit-v2/simple-effective.pdf")).size,
+    );
+    assert.equal(await p.locator(".review-choices > section").count(), 3);
+    await p
+      .getByRole("button", {
+        name: "Start Social Impact Claims Code — free",
+        exact: true,
+      })
+      .click();
+    await p.locator(".methodology-lesson").waitFor();
+    assert.equal(reviewFixture.framework, "claims");
+    guestUpload = false;
+    reviewFixture = null;
+    await p.goto(base, { waitUntil: "networkidle" });
     await p.evaluate(() => scrollTo(0, 0));
     assert.ok(
       await p.evaluate(
@@ -221,6 +332,16 @@ try {
       0,
       "all genuine portraits and brand images load",
     );
+    for (const section of await p.locator(".creative-home > section").all()) {
+      await section.scrollIntoViewIfNeeded();
+      await p.waitForTimeout(400);
+      await section.screenshot({
+        style: ".site-header { visibility: hidden !important; }",
+        path: `artifacts/commercial/${await section.getAttribute("id")}-${width}.png`,
+      });
+    }
+    await p.evaluate(() => scrollTo(0, 0));
+    await p.waitForTimeout(400);
     await p.screenshot({
       path: `artifacts/commercial/home-${width}.png`,
       fullPage: true,
@@ -245,7 +366,7 @@ try {
         .waitFor();
       await p.keyboard.press("Escape");
     }
-    if (width === 1440) {
+    if (width === 1920) {
       for (const path of [
         "/services/discussion",
         "/services/improvement",
@@ -273,7 +394,7 @@ try {
       await p.goto(base + "/services/essentials", { waitUntil: "networkidle" });
       assert.equal(new URL(p.url()).pathname, "/");
     }
-    if (width === 1440) {
+    if (width === 1920) {
       for (const framework of ["claims", "excellence", "report"]) {
         reviewFixture = JSON.parse(
           await fs.readFile(`artifacts/${framework}-review.json`, "utf8"),
@@ -312,7 +433,10 @@ try {
           document.addEventListener(
             "click",
             (e) => {
-              if (e.target.closest('a[href^="mailto:"]')) e.preventDefault();
+              if (
+                e.target.closest(".contextual-offers .service-contact-action a")
+              )
+                e.preventDefault();
             },
             { capture: true },
           ),
@@ -349,11 +473,33 @@ try {
         .getByText(/Confirmed paid clients and revenue: not recorded/)
         .waitFor();
     }
+    await p.goto(base, { waitUntil: "networkidle" });
+    await p.emulateMedia({ reducedMotion: "reduce" });
+    await p.reload({ waitUntil: "networkidle" });
+    await p.locator(".header-review").click();
+    assert.equal(
+      await p
+        .locator("#hero-report-file")
+        .evaluate((el) => document.activeElement === el),
+      true,
+    );
+    await p.locator(".assessment-method summary").first().click();
+    await p.waitForTimeout(100);
+    assert.equal(
+      await p.evaluate(
+        () =>
+          document.getAnimations().filter((a) => a.playState === "running")
+            .length,
+      ),
+      0,
+    );
+    assert.equal(await p.locator(".creative-home > section").count(), 5);
     assert.deepEqual(errors, []);
     checks.push({
       width,
-      firstJobWithinFirstScreen: true,
-      fourServices: true,
+      fiveChapters: true,
+      threeServices: true,
+      sevenContextualContactRoutes: true,
       threeMonthlyTiers: true,
       workingUploadShortcut: true,
       contactIntentOnly: true,

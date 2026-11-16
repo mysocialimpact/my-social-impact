@@ -350,8 +350,8 @@ export function Intake({
         </button>
       </div>
       <p className="review-disclosure">
-        Choose any free methodology after upload. Headline results need no
-        email. Full detailed reports are free with verified email delivery .
+        A free headline review. Create an account to save, download and share
+        your detailed report. Choose your assessment after upload.
       </p>
       <p className="upload-privacy">
         Private to this browser for 7 days. Download or save after your review.

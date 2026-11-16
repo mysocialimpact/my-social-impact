@@ -1,4 +1,6 @@
-# Homepage proposition and commercial conversion
+# Homepage proposition and commercial conversion — initial release
+
+The subsequent [creative homepage refinement](creative-homepage-refinement.md) supersedes this release’s hero composition, four-offer layout and direct-mailto service CTAs. The privacy and intent safeguards below remain in place.
 
 The existing orange/navy identity and upload/review journey are preserved. The hero connects the developing AI-and-human Impact Director ambition to its first working job, free impact report review. The first-job statement is a large heading, not an eyebrow. Navigation says “Try your first free review” and focuses the existing homepage uploader; an active review keeps a workspace action. Contact, My Reports and Log in/Account remain.
 

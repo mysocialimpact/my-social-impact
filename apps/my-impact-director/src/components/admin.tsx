@@ -232,10 +232,10 @@ export function Admin() {
           <section className="result-section">
             <h2>Contact intent · not received enquiries</h2>
             <p>
-              Email-link clicks do not confirm an email was sent. Anonymous
-              clicks appear only in aggregate totals. Verified account interest
-              appears below; review references are opt-in and grant no access to
-              findings.
+              Contact and email-link clicks do not confirm an enquiry was
+              received. Anonymous clicks appear only in aggregate totals.
+              Verified account interest appears below; review references are
+              opt-in and grant no access to findings.
             </p>
             <p>
               Confirmed paid clients and revenue: not recorded by this

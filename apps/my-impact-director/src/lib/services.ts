@@ -11,10 +11,10 @@ export const services = {
     ],
   },
   improvement: {
-    name: "Improve an existing report",
-    heading: "Let’s make your existing report better.",
+    name: "Improve or digitise my report",
+    heading: "Let’s bring your report to life.",
     intro:
-      "Creative improvements from £500 for a clearly scoped project: sharper structure, clearer writing, stronger storytelling and more effective design.",
+      "Creative improvements or a digital starter from £500 for a clearly scoped project: sharper writing, stronger storytelling, more effective design or an engaging online experience. Larger projects are quoted separately.",
     benefits: [
       "Structure, copy editing and storytelling",
       "Typography, layout and charts",
@@ -175,7 +175,7 @@ export const activeServices = Object.entries(services).filter(
 export const MARCUS_EMAIL = "marcus@mysocialimpact.org";
 const subjects: Partial<Record<Service, string>> = {
   discussion: "Discuss my impact report",
-  improvement: "Improve my existing report",
+  improvement: "Improve or digitise my report",
   digitisation: "Digitise my impact report",
   preparation: "Prepare my next impact report",
   "expert-review": "Discuss my impact report",
@@ -195,22 +195,15 @@ export const reportOffers = [
   },
   {
     service: "improvement",
-    title: "Let’s make your existing report better.",
-    price: "Creative improvements from £500",
-    copy: "Sharper structure and writing. Stronger stories, typography, layout and charts. A clearly scoped improvement project; substantial research, rewriting or redesign quoted separately.",
-    cta: "Improve my report",
-  },
-  {
-    service: "digitisation",
     title: "Let’s bring your report to life.",
-    price: "Digital report starter from £500",
-    copy: "Digital storytelling, accessible online presentation or interactive charts, built with The Ideas Shed. One agreed, limited-scope day; larger builds quoted separately.",
+    price: "From £500",
+    copy: "Sharper writing, stronger storytelling, better design and charts — or an engaging digital experience. A focused creative improvement or digital starter, with scope agreed together.",
     cta: "Bring my report to life",
   },
   {
     service: "preparation",
     title: "Let’s make your next report.",
-    price: "Complete impact reports from £1,000",
+    price: "From £1,000",
     copy: "Evidence, research, structure, writing, design and publication support. A starting price for an appropriately scoped project; size, complexity and evidence needs shape the quote.",
     cta: "Let’s make your next report",
   },
@@ -224,4 +217,28 @@ export function novemberOfferActive(now = new Date()) {
     now >= new Date("2026-11-01T00:00:00+00:00") &&
     now < new Date("2026-12-01T00:00:00+00:00")
   );
+}
+
+export function contactService(value: unknown): Service {
+  return typeof value === "string" &&
+    value !== "essentials" &&
+    Object.hasOwn(services, value)
+    ? (value as Service)
+    : "discussion";
+}
+export function serviceContactUrl(service: Service) {
+  return `/contact?service=${encodeURIComponent(service)}`;
+}
+export function contactContext(service: Service) {
+  if (service === "discussion" || service === "expert-review")
+    return "Discuss my report";
+  if (service === "improvement" || service === "digitisation")
+    return "Improve or digitise my report";
+  if (service === "preparation") return "Prepare my next impact report";
+  if (["human-director", "supported", "director", "bespoke"].includes(service))
+    return (
+      "Discuss ongoing Impact Director support" +
+      (service === "human-director" ? "" : ` · ${services[service].name}`)
+    );
+  return services[service].name;
 }

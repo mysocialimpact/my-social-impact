@@ -17,7 +17,8 @@ export function DigitalOffer() {
   return (
     <details className="digital-offer">
       <summary>
-        Eligible charity, social enterprise or B Corp? £250 starter ↗
+        Eligible charity, social enterprise or B Corp? Starter projects from
+        £250 with the 50% offer.
       </summary>
       <p>
         50% off the standard £500 agreed day project through 30 November 2026.
@@ -36,11 +37,12 @@ export function ReportServices() {
   return (
     <section
       id="report-services"
-      className="report-services"
+      className="report-services chapter-services"
       aria-labelledby="report-services-title"
     >
       <div className="campaign-width">
-        <div className="report-services-heading">
+        <p className="chapter-label">03 / EXPERT HELP, AVAILABLE NOW</p>
+        <div className="report-services-heading" data-reveal>
           <h2 id="report-services-title">
             YOUR REPORT IS
             <br />
@@ -59,7 +61,7 @@ export function ReportServices() {
               <div>
                 <h3>{offer.title}</h3>
                 <p>{offer.copy}</p>
-                {offer.service === "digitisation" && <DigitalOffer />}
+                {offer.service === "improvement" && <DigitalOffer />}
               </div>
               <div className="offer-action">
                 <strong>{offer.price}</strong>
@@ -72,8 +74,8 @@ export function ReportServices() {
         </ol>
         <p className="offer-terms">
           One-off projects. Indicative starting prices, with scope and price
-          agreed before work starts. Email Marcus directly—no login or lengthy
-          form.
+          agreed before work starts. Start a conversation with Marcus — no login
+          or lengthy form.
         </p>
       </div>
     </section>

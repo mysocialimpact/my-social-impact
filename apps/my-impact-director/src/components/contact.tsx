@@ -1,26 +1,54 @@
 import Image from "next/image";
+import { contactContext, serviceMailto, type Service } from "@/lib/services";
 import { ServiceContact, CopyMarcusEmail } from "./service-contact";
-export function Contact({ standalone = false }: { standalone?: boolean }) {
+export function Contact({
+  standalone = false,
+  service = "discussion",
+}: {
+  standalone?: boolean;
+  service?: Service;
+}) {
   const Heading = standalone ? "h1" : "h2";
   return (
     <section
-      className="human-contact"
+      className={
+        "human-contact purpose-contact" +
+        (standalone ? " standalone-contact" : "")
+      }
       id="contact"
       aria-labelledby="contact-title"
     >
-      <div className="campaign-width contact-composition">
-        <div className="contact-heading">
-          <p className="eyebrow">REAL PEOPLE. SHARED AMBITION.</p>
-          <Heading id="contact-title">
-            Let’s talk
-            <br />
-            about your <em>impact.</em>
-          </Heading>
-          <p>
-            Whether you’d like to discuss your report, strengthen your impact
-            management or explore what we could do together, we’d love to hear
-            from you.
+      <div className="campaign-width purpose-composition">
+        <div className="purpose-heading" data-reveal>
+          <p className="chapter-label">
+            {standalone
+              ? "A REAL PERSON. A USEFUL CONVERSATION."
+              : "05 / OUR PURPOSE. OUR PEOPLE."}
           </p>
+          <Heading id="contact-title">
+            {standalone ? (
+              <>
+                Let’s talk about <em>your impact.</em>
+              </>
+            ) : (
+              <>
+                Imagine a world where social impact was taken as seriously as{" "}
+                <em>financial performance.</em>
+              </>
+            )}
+          </Heading>
+          {standalone ? (
+            <p className="contact-context">
+              You’d like to: <strong>{contactContext(service)}</strong>
+            </p>
+          ) : (
+            <p>
+              That’s the ambition behind My Social Impact. We’re building
+              towards an intelligent Impact Director to help you throughout the
+              year. The full agentic service is developing. The people are here
+              now.
+            </p>
+          )}
         </div>
         <figure className="marcus-portrait">
           <Image
@@ -28,7 +56,7 @@ export function Contact({ standalone = false }: { standalone?: boolean }) {
             width={1122}
             height={1402}
             alt="Marcus Warry, co-founder of My Social Impact"
-            sizes="(max-width: 700px) 100vw, 42vw"
+            sizes="(max-width: 700px) 90vw, 32vw"
           />
           <figcaption>
             Marcus Warry ACA · Co-founder, My Social Impact
@@ -42,19 +70,15 @@ export function Contact({ standalone = false }: { standalone?: boolean }) {
             Chartered Accountant · Social Impact Consultant
           </p>
           <p>
-            {standalone
-              ? "Let’s talk about your report, your impact management or the support your organisation needs. An experienced human perspective can help you turn evidence into useful next steps."
-              : "A real person to talk things through with. Get in touch about your report or ongoing impact support."}
+            A real person to talk things through with. No account needed. No
+            obligation.
           </p>
-          <a
-            className="contact-address"
-            href="mailto:marcus@mysocialimpact.org"
-          >
+          <a className="contact-address" href={serviceMailto(service)}>
             marcus@mysocialimpact.org
           </a>
           <div className="contact-actions">
             <ServiceContact
-              service="discussion"
+              service={service}
               source="contact"
               className="button primary"
             >
@@ -65,11 +89,7 @@ export function Contact({ standalone = false }: { standalone?: boolean }) {
           <p className="fine-print">
             Your email app opens. Nothing is sent until you send it.
           </p>
-          <p className="contact-locations">
-            Somerset · London · Kampala
-            <br />
-            <span>Places we work. One shared ambition.</span>
-          </p>
+          <p className="contact-locations">Somerset · London · Kampala</p>
         </div>
       </div>
     </section>

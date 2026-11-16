@@ -54,8 +54,9 @@ export function ContextualOffers({
             : "Your impact deserves to be brilliantly communicated."}
       </h2>
       <p>
-        Talk directly to Marcus. Starting prices are indicative; scope is agreed
-        together. Opening an email records contact interest, not an email sent.
+        Start a conversation with Marcus. Starting prices are indicative; scope
+        is agreed together. Following a contact link records interest, not a
+        received enquiry.
       </p>
       <ul>
         {offers.map((o) => (
