@@ -33,12 +33,40 @@ export async function POST(req: Request) {
   if (raw.length > 4200000) return new Response(null, { status: 413 });
   let body;
   try {
-    body = JSON.parse(
-      (req.headers.get("content-encoding") === "gzip"
-        ? gunzipSync(raw, { maxOutputLength: 16000000 })
-        : raw
-      ).toString("utf8"),
-    );
+    let payload = raw;
+    if (req.headers.get("content-type")?.includes("application/json")) {
+      const ref = JSON.parse(raw.toString("utf8"));
+      if (
+        !/^[a-f0-9-]{36}$/.test(ref.uploadId) ||
+        !/^[a-f0-9]{64}$/.test(ref.payloadHash)
+      )
+        return new Response(null, { status: 400 });
+      const parts = await query<{
+        part: number;
+        bytes: Buffer;
+        file_size: number;
+      }>(
+        "SELECT p.part,p.bytes,u.file_size FROM director.uploads u JOIN director.upload_parts p ON p.upload_id=u.id WHERE u.id=$1 AND u.owner_id=$2 AND u.expires_at>now() ORDER BY p.part",
+        [ref.uploadId, "qa-calibration-" + hash],
+      );
+      if (!parts.length || parts.some((p, i) => p.part !== i))
+        return new Response(null, { status: 404 });
+      payload = Buffer.concat(parts.map((p) => p.bytes));
+      if (
+        payload.length !== parts[0].file_size ||
+        createHash("sha256").update(payload).digest("hex") !== ref.payloadHash
+      )
+        return new Response(null, { status: 400 });
+      body = JSON.parse(
+        gunzipSync(payload, { maxOutputLength: 16000000 }).toString("utf8"),
+      );
+    } else
+      body = JSON.parse(
+        (req.headers.get("content-encoding") === "gzip"
+          ? gunzipSync(payload, { maxOutputLength: 16000000 })
+          : payload
+        ).toString("utf8"),
+      );
   } catch {
     return new Response(null, { status: 400 });
   }
