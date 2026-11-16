@@ -16,7 +16,7 @@ const review = JSON.parse(
   ),
 );
 const result = review.result as ReviewResult;
-const frameworks = (["claims", "excellence"] as const).filter(
+const frameworks = (["claims", "excellence", "report"] as const).filter(
   (f) => !!result.scores[f],
 );
 const claims = validateClaims({ claims: result.claims }, review.pages);
@@ -50,7 +50,9 @@ for (const framework of frameworks)
     content.includes(
       framework === "claims"
         ? "Social Impact Claims Code"
-        : "Social Impact Excellence",
+        : framework === "report"
+          ? "Impact Report Excellence"
+          : "Social Impact Excellence",
     ),
   );
 assert.match(content, /Methodology/);
@@ -86,7 +88,7 @@ const checks = {
   organisation: result.context.organisation,
   sourcePages: review.pages.length,
   claims: claims.length,
-  validatedTests: frameworks.length * 20,
+  validatedTests: frameworks.reduce((n, f) => n + criteria(f).length, 0),
   scores: Object.fromEntries(
     frameworks.map((f) => [f, result.scores[f]!.overall]),
   ),
