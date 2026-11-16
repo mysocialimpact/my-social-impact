@@ -3312,3 +3312,15 @@ html:has(.report-workspace) {
     display: inline;
   }
 }
+@media (max-width: 700px) and (min-height: 501px) {
+  .workspace-heading p .workspace-organisation,
+  .workspace-heading p .workspace-document {
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .workspace-heading p {
+    white-space: normal;
+  }
+}

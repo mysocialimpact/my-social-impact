@@ -568,8 +568,9 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
           <em>Three ways to look closer.</em>
         </h1>
         <p>
-          Choose your first free review. We’ll read and understand your document
-          once, then apply the methodology you select.
+          {completedCount
+            ? "Your workspace is ready. Open your results or explore another perspective. We reuse this document for each review."
+            : "Choose your first free review. We’ll read and understand your document once, then apply the methodology you select."}
         </p>
         <p className="review-disclosure">
           <strong>A useful headline snapshot: no email needed.</strong> The full

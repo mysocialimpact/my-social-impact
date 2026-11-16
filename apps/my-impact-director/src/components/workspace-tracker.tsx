@@ -139,8 +139,10 @@ export function WorkspaceTracker({ id }: { id: string }) {
       <div className="workspace-heading">
         <Link href="/reviews">YOUR IMPACT DIRECTOR</Link>
         <p title={workspace.title}>
-          {workspace.organisation || "Your report"}{" "}
-          <span>· {workspace.title}</span>
+          <span className="workspace-organisation">
+            {workspace.organisation || "Your report"}
+          </span>{" "}
+          <span className="workspace-document">· {workspace.title}</span>
         </p>
       </div>
       <div className="workspace-assessments">

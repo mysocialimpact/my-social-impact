@@ -1,3 +1,4 @@
+import { visitor } from "../src/lib/auth";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
@@ -32,6 +33,12 @@ test(
         emails.push(JSON.parse(String(init?.body)));
         return Response.json({ id: "synthetic-receipt" });
       }
+      if (String(input).includes("/api/readiness-account"))
+        return Response.json({
+          signedIn: true,
+          account: { id: existingId, email, name: "Existing account" },
+          platformAccess: { founder: false },
+        });
       return originalFetch(input, init);
     };
     async function pdf(label: string) {
@@ -125,6 +132,20 @@ test(
       );
       assert.equal(verified!.id, existingId);
       assert.equal(verified!.emailVerified, true);
+      const combined = await visitor(
+        new Request("https://test.example/api/account", {
+          headers: {
+            cookie:
+              "msi_sorp_session=existing; " + redeemed.cookie.split(";")[0],
+          },
+        }),
+      );
+      assert.equal(
+        combined.emailVerified,
+        true,
+        "a matching legacy session retains the verified-email proof",
+      );
+
       assert.equal(
         (
           await query(

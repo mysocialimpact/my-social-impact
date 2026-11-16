@@ -73,7 +73,14 @@ export async function visitor(req: Request): Promise<Identity> {
     try {
       const user = await identity(req);
       const local = await localIdentity(req, true);
-      return { ...user, accessIds: [user.id, ...(local?.accessIds || [])] };
+      return {
+        ...user,
+        emailVerified:
+          !!local &&
+          !local.anonymous &&
+          local.email.toLowerCase() === user.email.toLowerCase(),
+        accessIds: [user.id, ...(local?.accessIds || [])],
+      };
     } catch (e) {
       if (!(e instanceof AppError && e.status === 401)) throw e;
     }
