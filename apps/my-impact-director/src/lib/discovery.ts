@@ -60,7 +60,7 @@ export async function discoverReports(
         const fetched = await publicFetch(link.url, MAX_FILE, 0, true, signal);
         if (fetched.status !== 200) return [];
         if (fetched.bytes.subarray(0, 5).toString() === "%PDF-") {
-          validatePdf(fetched.bytes, "report.pdf");
+          await validatePdf(fetched.bytes, "report.pdf");
           return [{ url: fetched.url, title: link.title, verified: true }];
         }
         if (!fetched.type.includes("html")) return [];
@@ -102,7 +102,7 @@ export async function discoverReports(
         if (!c.verified) {
           const f = await publicFetch(c.url, MAX_FILE, 0, true, signal);
           if (f.status !== 200) return null;
-          validatePdf(f.bytes, "report.pdf");
+          await validatePdf(f.bytes, "report.pdf");
           url = f.url;
         }
         const expires = Date.now() + 1800000;

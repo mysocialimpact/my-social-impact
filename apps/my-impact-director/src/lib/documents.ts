@@ -1,5 +1,5 @@
 import { getDocumentProxy, extractText } from "unpdf";
-import { PDFDocument } from "pdf-lib";
+import { PDFDocument, PDFDict, PDFArray, PDFName, PDFStream } from "pdf-lib";
 import { z } from "zod";
 import { structured } from "./ai";
 import { type Page, pageSchema } from "./assessment";
@@ -8,7 +8,7 @@ import { MAX_FILE, MAX_FILE_LABEL } from "./file-limits";
 export { MAX_FILE } from "./file-limits";
 export const MAX_PAGES = 100,
   MAX_TEXT = 240000;
-export function validatePdf(bytes: Buffer, name: string) {
+export async function validatePdf(bytes: Buffer, name: string) {
   if (!/\.pdf$/i.test(name) || bytes.length > MAX_FILE || bytes.length < 40)
     throw new AppError(
       400,
@@ -19,19 +19,65 @@ export function validatePdf(bytes: Buffer, name: string) {
     !bytes.subarray(-2048).includes(Buffer.from("%%EOF"))
   )
     throw new AppError(400, "This file is not a complete PDF.");
-  // Never execute embedded active content; reject it before parsing or downloading.
-  if (
-    /\/(JavaScript|JS|Launch|EmbeddedFile|RichMedia)\b/.test(
-      bytes.toString("latin1"),
-    )
-  )
+  let document: PDFDocument;
+  try {
+    document = await PDFDocument.load(bytes, {
+      ignoreEncryption: false,
+      updateMetadata: false,
+      throwOnInvalidObject: true,
+    });
+  } catch {
     throw new AppError(
       400,
-      "This PDF contains active or embedded content. Export a flattened PDF and try again.",
+      "We couldn’t read this PDF. If it needs a password, please save an unlocked copy and try again.",
     );
+  }
+  if (document.getPageCount() > MAX_PAGES)
+    throw new AppError(
+      400,
+      `Please use a report with at most ${MAX_PAGES} pages.`,
+    );
+  // Inspect parsed names and dictionaries. Compressed image/content bytes may
+  // contain arbitrary /JS-like sequences and must never be scanned as PDF syntax.
+  const rejectActiveContent = () => {
+    throw new AppError(
+      400,
+      "This PDF includes embedded scripts, files or interactive media. Please save a standard PDF copy and try again.",
+    );
+  };
+  const names = document.catalog.lookupMaybe(PDFName.of("Names"), PDFDict);
+  if (
+    names?.has(PDFName.of("JavaScript")) ||
+    names?.has(PDFName.of("EmbeddedFiles"))
+  )
+    rejectActiveContent();
+  const nameOf = (dictionary: PDFDict, key: string) => {
+    const value = document.context.lookup(dictionary.get(PDFName.of(key)));
+    return value instanceof PDFName ? value.decodeText() : "";
+  };
+  const visited = new Set<unknown>();
+  function inspect(object: unknown) {
+    if (visited.has(object)) return;
+    visited.add(object);
+    if (object instanceof PDFStream) inspect(object.dict);
+    else if (object instanceof PDFDict) {
+      if (
+        ["JavaScript", "Launch", "RichMediaExecute"].includes(
+          nameOf(object, "S"),
+        ) ||
+        nameOf(object, "Type") === "EmbeddedFile" ||
+        ["RichMedia", "FileAttachment"].includes(nameOf(object, "Subtype"))
+      )
+        rejectActiveContent();
+      for (const [, value] of object.entries()) inspect(value);
+    } else if (object instanceof PDFArray)
+      for (const value of object.asArray()) inspect(value);
+  }
+  for (const [, object] of document.context.enumerateIndirectObjects())
+    inspect(object);
 }
 export async function extractPages(bytes: Buffer): Promise<Page[]> {
-  validatePdf(bytes, "report.pdf");
+  await validatePdf(bytes, "report.pdf");
   const pdf = await getDocumentProxy(new Uint8Array(bytes), {
     isEvalSupported: false,
     stopAtErrors: true,

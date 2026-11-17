@@ -1,6 +1,12 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { PDFDocument, StandardFonts } from "pdf-lib";
+import {
+  PDFDocument,
+  StandardFonts,
+  PDFName,
+  PDFRawStream,
+  PDFHexString,
+} from "pdf-lib";
 import { MAX_FILE, extractPages, validatePdf } from "../src/lib/documents";
 import { publicUrl, assertPublicAddress } from "../src/lib/public-fetch";
 import { sameOrigin, secretMatches, readJson } from "../src/lib/security";
@@ -25,23 +31,49 @@ test("scanned blank page is identified for visual extraction", async () => {
   const p = await extractPages(Buffer.from(await d.save()));
   assert.equal(p[0].readable, false);
 });
-test("rejects invalid file type, oversized, truncated and active PDFs", () => {
-  assert.throws(() => validatePdf(Buffer.from("not a PDF"), "file.pdf"));
-  assert.throws(() => validatePdf(Buffer.alloc(MAX_FILE + 1), "file.pdf"));
-  assert.throws(() =>
-    validatePdf(
-      Buffer.from("%PDF-1.7 /JavaScript " + "x".repeat(50) + " %%EOF"),
-      "file.pdf",
-    ),
+test("rejects invalid file type, oversized and truncated PDFs", async () => {
+  await assert.rejects(() => validatePdf(Buffer.from("not a PDF"), "file.pdf"));
+  await assert.rejects(() =>
+    validatePdf(Buffer.alloc(MAX_FILE + 1), "file.pdf"),
   );
-  assert.throws(() =>
+  await assert.rejects(() =>
     validatePdf(Buffer.from("%PDF-1.7 " + "x".repeat(50)), "file.pdf"),
   );
-  assert.throws(() =>
+  await assert.rejects(() =>
     validatePdf(
       Buffer.from("%PDF-1.7 " + "x".repeat(50) + " %%EOF"),
       "file.exe",
     ),
+  );
+});
+test("binary streams containing /JS are accepted while real compressed script actions are rejected", async () => {
+  const d = await PDFDocument.create();
+  d.addPage();
+  const raw = PDFRawStream.of(
+    d.context.obj({}),
+    Buffer.from([0, 255, 47, 74, 83, 0, 128, 255]),
+  );
+  const ref = d.context.register(raw);
+  d.catalog.set(PDFName.of("CustomPayload"), ref);
+  d.catalog.set(
+    PDFName.of("ResourceLabels"),
+    d.context.obj({ JS: PDFName.of("JavaScript") }),
+  );
+  const benign = Buffer.from(await d.save({ useObjectStreams: false }));
+  assert.ok(benign.includes(Buffer.from("/JS")));
+  await validatePdf(benign, "ordinary.pdf");
+  d.catalog.set(
+    PDFName.of("OpenAction"),
+    d.context.register(
+      d.context.obj({
+        S: PDFName.of("JavaScript"),
+        JS: PDFHexString.fromText("app.alert('test')"),
+      }),
+    ),
+  );
+  await assert.rejects(
+    async () => validatePdf(Buffer.from(await d.save()), "script.pdf"),
+    { status: 400 },
   );
 });
 test("SSRF safeguards reject credentials, schemes, local names and reserved IP ranges", () => {
