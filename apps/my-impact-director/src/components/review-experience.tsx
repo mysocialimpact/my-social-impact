@@ -758,7 +758,9 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
       {complete && results && (
         <ContextualOffers framework={framework} reviewId={r.id} />
       )}
-      {complete && results && <ContributionPanel reviewId={r.id} />}
+      {complete && results && !accountLoading && accountUser && (
+        <ContributionPanel key={`${r.id}:${accountUser.id}`} reviewId={r.id} />
+      )}
     </div>
   );
 }

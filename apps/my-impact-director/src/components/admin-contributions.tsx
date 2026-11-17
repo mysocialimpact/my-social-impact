@@ -129,9 +129,11 @@ export function AdminContributions() {
                       {p.name || "Private browser contributor"}
                       {p.email && <p>{p.email}</p>}
                       {p.review_id ? (
-                        <a href={`/reviews/${p.review_id}?results=1`}>
+                        <p>
                           {p.title || "Assessment"}
-                        </a>
+                          <br />
+                          <small>Assessment reference: {p.review_id}</small>
+                        </p>
                       ) : (
                         <p>{p.title || "Report no longer retained"}</p>
                       )}

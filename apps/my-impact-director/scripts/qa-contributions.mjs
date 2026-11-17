@@ -17,6 +17,7 @@ async function setup({
   framework = "report",
   available = true,
   processing = false,
+  guest = false,
 } = {}) {
   const fixture = JSON.parse(
     await fs.readFile(`artifacts/${framework}-review.json`, "utf8"),
@@ -39,6 +40,7 @@ async function setup({
   }
   const c = await b.newContext({ viewport: { width, height } }),
     p = await c.newPage();
+  let userId = "support-qa";
   let state = "pending",
     supported = false,
     starts = [],
@@ -80,7 +82,8 @@ async function setup({
     if (path === "/api/account")
       data = {
         user: {
-          id: "support-qa",
+          id: userId,
+          anonymous: guest,
           name: "QA reviewer",
           email: "qa@example.invalid",
           emailVerified: true,
@@ -107,7 +110,7 @@ async function setup({
     else if (path === "/api/contributions" && req.method() === "GET") {
       configs++;
       data = {
-        available,
+        available: available && userId === "support-qa",
         supported,
         scope: "fixture",
         report: fixture.report_id,
@@ -148,6 +151,9 @@ async function setup({
     fixture,
     starts,
     stats: () => ({ configs, external }),
+    setUserId: (id) => {
+      userId = id;
+    },
     setState: (s) => {
       state = s;
     },
@@ -246,6 +252,31 @@ try {
     await t.c.close();
     checks++;
   }
+  const changed = await setup();
+  await changed.p.locator(".contribution-panel").waitFor();
+  await changed.p
+    .getByRole("button", { name: "Support our work →", exact: true })
+    .click();
+  await changed.p
+    .getByRole("button", { name: "Simulate Stripe completion" })
+    .waitFor();
+  changed.setUserId("different-account");
+  await changed.p.evaluate(() =>
+    window.dispatchEvent(new Event("mid-session-refresh")),
+  );
+  await changed.p.locator(".contribution-panel").waitFor({ state: "detached" });
+  assert.equal(
+    await changed.p
+      .getByRole("button", { name: "Simulate Stripe completion" })
+      .count(),
+    0,
+  );
+  await changed.c.close();
+  checks++;
+  const guest = await setup({ guest: true });
+  await guest.p.locator(".contribution-panel").waitFor();
+  await guest.c.close();
+  checks++;
   const off = await setup({ available: false });
   await off.p.waitForTimeout(300);
   assert.equal(await off.p.locator(".contribution-panel").count(), 0);
