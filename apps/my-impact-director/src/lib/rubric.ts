@@ -1,7 +1,7 @@
 import {
   REPORT_VERSION,
   isReportV2,
-  reportV2Rubric,
+  reportRubricFor,
 } from "./report-methodology";
 export const VERSION = "1.0.0";
 export const COVERAGE = { minimumPerPrinciple: 3, minimumTotal: 16 } as const;
@@ -145,7 +145,7 @@ export function criteria(
 ) {
   const rubric =
     framework === "report" && isReportV2(version)
-      ? reportV2Rubric
+      ? reportRubricFor(version)
       : rubrics[framework];
   return rubric.flatMap(([principle, ...tests], p) =>
     tests.map((question, t) => ({

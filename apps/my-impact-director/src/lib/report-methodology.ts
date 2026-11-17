@@ -1,272 +1,196 @@
-/** Locked Impact Edit v2 rubric. No report identities or calibration totals belong here. */
-export const REPORT_VERSION = "2.0.0";
-export const isReportV2 = (version?: string) => /^2\./.test(version || "");
-export const reportWeights = [20, 20, 25, 20, 15] as const;
+/** Methodology v2.0 revision 2.0.1. Released 2.0.0 remains immutable. */
+import * as legacy from "./report-methodology-2-0-0";
+export const REPORT_VERSION = "2.0.1";
+// Comparative calibration currently fails the data-design discrimination case.
+// Do not publish a precise overall number until independent editorial validation.
+export const REPORT_PUBLICATION_NOTICE =
+  "Overall numeric scoring is under calibration. These beta findings and recommendations need professional editorial judgement.";
+export const isReportV2 = legacy.isReportV2;
+export const isRevisedReport = (version = REPORT_VERSION) =>
+  /^2\./.test(version) && !/^2\.0\.0(?:-|$)/.test(version);
+export const reportWeights = [25, 30, 25, 10, 10] as const;
 export const reportPillars = [
-  "Readability and hierarchy",
+  "Readability & Copy",
+  "Information Hierarchy",
+  "Visual Design",
   "Storytelling",
-  "Visual design",
-  "Data communication",
-  "Accessibility",
+  "Data Presentation",
 ] as const;
 export const reportV2Anchors = [
-  "Absent or seriously obstructive",
+  "Seriously ineffective",
   "Weak",
-  "Adequate",
-  "Strong",
-  "Exceptional",
+  "Adequate or developing",
+  "Genuinely good",
+  "Excellent execution",
 ] as const;
-export function validateReportAnchorReason(reason: string) {
-  if (/\banchor\s*(?:[5-9]|[1-9]\d+|five)\b/i.test(reason))
-    throw Error("Execution reasoning must use only the supplied 0–4 anchors");
-}
-// 0/1/2/3/4 anchors describe execution. Presence of a device earns no automatic credit.
+export const validateReportAnchorReason = legacy.validateReportAnchorReason;
+// Evidence requirements and observable execution ladders, never report identities.
 const definitions = [
   [
     "R1",
-    "Physical text legibility",
-    "Body text is unreadable at ordinary page size",
-    "Persistent small type or crowded lines demand magnification",
-    "Body text is usable with some local strain",
-    "Comfortable body size, line length and spacing throughout inspected pages",
-    "Effortlessly legible at normal size, including demanding passages; intentional handling of exceptions",
+    "Clarity and simplicity",
+    "Source wording and rendered body copy; respect necessary technical language for the intended audience.",
+    "Meaning is obscured",
+    "Jargon or complexity repeatedly obstructs meaning",
+    "Understandable with avoidable complexity",
+    "Clear, precise language explains necessary complexity",
+    "Exceptionally direct, engaging precision makes demanding ideas effortless",
   ],
   [
     "R2",
-    "Editing and information load",
-    "Length and repetition obstruct the purpose",
-    "Long blocks, jargon or repetition bury useful information",
-    "Mostly understandable with some avoidable density",
-    "Concise, purposeful editing explains complexity without losing substance",
-    "Exceptional economy and precision; every passage earns its place for this audience",
+    "Sentences and paragraphs",
+    "Inspect opening, longest passages and typical body pages; quote representative source wording.",
+    "Sentence and paragraph construction prevents comprehension",
+    "Repeated long sentences or blocks overwhelm readers",
+    "Usable lengths with local strain",
+    "Well-paced sentences and manageable paragraphs support comprehension",
+    "Exceptionally controlled rhythm explains complexity with ease",
   ],
   [
     "R3",
-    "Meaningful headings and navigation",
-    "Readers cannot locate important material",
-    "Generic headings or misleading navigation leave readers searching",
-    "Useful section headings and a broadly navigable sequence",
-    "Specific headings, accurate wayfinding and quick routes to outcomes and limitations",
-    "A new reader can orient instantly at both whole-report and page level; no unnecessary navigation furniture",
+    "Editing and repetition",
+    "Compare recurring passages across the report; distinguish useful reinforcement from redundant copy.",
+    "Redundancy buries the purpose",
+    "Substantial duplication or digression obscures useful material",
+    "Some avoidable repetition remains",
+    "Purposeful editing removes repetition without losing meaning",
+    "Every passage earns its place; exceptional economy without oversimplifying",
   ],
   [
     "R4",
-    "Opening and outcome hierarchy",
-    "Opening hides or confuses the main findings",
-    "Mission, credentials or background crowd out actual outcomes",
-    "Main outcomes are findable but compete with background",
-    "Opening prioritises actual outcomes, scale and caveats with useful supporting detail",
-    "A sharply edited opening lets different readers grasp the main outcomes, their scale and limitations almost immediately",
+    "Text density and reading effort",
+    "Rendered ordinary-size and enlarged dense and typical pages, text metrics and word load; no automatic penalty for length.",
+    "Text load makes ordinary reading unusable",
+    "Dense blocks and sustained effort overwhelm the message",
+    "Readable but demanding passages need relief",
+    "Proportionate copy and breathing space sustain comfortable reading",
+    "Exceptional control of copy load makes demanding sections inviting",
   ],
   [
     "R5",
-    "Page structure and scanning",
-    "Page organisation prevents a useful reading path",
-    "Dense blocks and poor grouping make scanning laborious",
-    "Logical groups and a usable page reading path",
-    "Clear grouping, summaries and emphasis consistently guide readers",
-    "Complex pages remain exceptionally easy to scan and revisit without oversimplification",
+    "Getting to the point",
+    "Opening and section introductions plus substantive passages; consider what could be cut without losing meaning.",
+    "Useful meaning is persistently inaccessible",
+    "Long lead-ins or unnecessary copy repeatedly delay the point",
+    "The point emerges with avoidable effort",
+    "Writing reaches the point promptly and explains just enough",
+    "Unusually economical copy communicates rich meaning immediately",
   ],
   [
-    "S1",
-    "Problem, action and outcomes",
-    "No understandable account connects the work to change",
-    "Activities and aspirations substitute for a coherent account of change",
-    "Problem, action and outcomes are connected with gaps",
-    "Specific context, actions and changes form a clear narrative",
-    "An exceptionally precise, proportionate account makes the contribution and its boundaries memorable",
+    "H1",
+    "Main findings first",
+    "Cover, opening, summaries and outcome pages; record where achievements and caveats become apparent.",
+    "Main findings are hidden or confused",
+    "Background dominates and readers hunt for conclusions",
+    "Findings are findable but compete with background",
+    "Important outcomes and conclusions are immediately prominent",
+    "An exceptional opening reveals meaning, scale and limitations at a glance",
   ],
   [
-    "S2",
-    "Specific human experience",
-    "Irrelevant or exploitative stories obstruct understanding",
-    "Generic praise or loose quotations substitute for experience",
-    "Relevant, dignified human examples give some context",
-    "Specific experiences show what changed, for whom and in what context",
-    "Economical, authentic experiences illuminate the wider findings without manipulation; appropriate anonymity or non-personal examples are equally valid",
+    "H2",
+    "Logical architecture",
+    "Whole-document sequence and section relationships; distinguish appropriate length from poor organisation.",
+    "No coherent route through the material",
+    "Disconnected or repetitive sections make readers assemble the logic",
+    "Broadly logical with awkward joins",
+    "A purposeful sequence moves from purpose to findings and next steps",
+    "Exceptional architecture serves quick and deep reading alike",
   ],
   [
-    "S3",
-    "Integration of examples and evidence",
-    "Examples contradict or replace the main account",
-    "Stories and statistics sit beside each other without an explained connection",
-    "Examples generally relate to the wider findings",
-    "Examples clearly illuminate a finding and acknowledge their representativeness",
-    "Stories and aggregate evidence enrich each other with unusually clear scope and limitations",
+    "H3",
+    "Headings, summaries and emphasis",
+    "Compare specificity and usefulness with important content; do not reward the presence of headings.",
+    "Emphasis misdirects readers",
+    "Generic headings or competing emphasis obscure meaning",
+    "Useful signposting with weak prioritisation",
+    "Specific headings and summaries consistently prioritise meaning",
+    "An exceptionally clear hierarchy makes complex material instantly navigable",
   ],
   [
-    "S4",
-    "Candour, setbacks and limits",
-    "A wholly promotional account obscures material setbacks",
-    "Setbacks are vague or detached from lessons",
-    "Specific weaknesses or limitations are acknowledged",
-    "Candid setbacks, uncertainty and lessons inform the narrative",
-    "Unusually clear, balanced reflection explains difficult findings and how they changed decisions without performative negativity",
+    "H4",
+    "Skimming and navigation",
+    "AI-simulated scan for purpose, achievements, difference, challenges and next steps; physical pages and ease required.",
+    "Essential answers cannot be located",
+    "Laborious searching defeats a useful brief scan",
+    "A scan finds answers with avoidable effort",
+    "Readers quickly locate answers and return to detail",
+    "An effortless scan reveals the whole account without losing nuance",
   ],
   [
-    "S5",
-    "Narrative progression and next steps",
-    "The sequence has no understandable direction or ending",
-    "Disconnected sections and late stories make the reader assemble the arc",
-    "A coherent progression reaches a useful conclusion",
-    "The narrative builds naturally from context to findings, limits and specific next steps",
-    "Exceptional narrative control sustains understanding and closes with memorable, proportionate next steps",
-  ],
-  [
-    "V1",
-    "Composition and spacing",
-    "Collisions or composition seriously disrupt the message",
-    "Crowding, arbitrary gaps or poor alignment fragment pages",
-    "Mostly coherent layout with local imbalance",
-    "Purposeful grids, alignment and whitespace organise demanding material",
-    "Exceptionally assured composition and restraint across diverse content; neither empty space nor density is rewarded by itself",
-  ],
-  [
-    "V2",
-    "Typographic craft",
-    "Type treatment destroys hierarchy or coherence",
-    "Competing fonts, emphases or weak hierarchy feel mechanically assembled",
-    "A consistent usable type system with limited refinement",
-    "A well-controlled type hierarchy, rhythm and emphasis express the content",
-    "Exceptional typographic judgement creates distinctive clarity and character; physical text size is scored only under R1",
-  ],
-  [
-    "V3",
-    "Visual rhythm and cohesion",
-    "Visual devices create confusion or incoherence",
-    "Repeated templates, boxes or decorative motifs flatten or interrupt the flow",
-    "Basic coherent branding and some useful variation",
-    "A coherent visual system varies pace intentionally and supports the meaning",
-    "Art direction is sustained, distinctive and purposeful across the publication; matching colours alone never establishes strength",
-  ],
-  [
-    "V4",
-    "Imagery and graphic execution",
-    "Imagery misleads, degrades dignity or prevents understanding",
-    "Arbitrary crops, weak image quality or decorative graphics add little",
-    "Relevant, respectful imagery or deliberate text-led design is adequately executed",
-    "Selection, cropping, captions and graphics are well resolved and purposeful",
-    "Exceptional art direction makes each visual earn its place; an excellent text-only report can meet this anchor",
-  ],
-  [
-    "V5",
-    "Publication finish",
-    "The publication feels broken or unusable",
-    "Inconsistent detail, clumsy joins or unfinished elements undermine the whole",
-    "A competent, consistent publication with visible rough edges",
-    "A carefully finished publication integrates content and design well",
-    "Outstanding editorial art direction is evident in the details and the whole, proportionate to its purpose and budget",
-  ],
-  [
-    "D1",
-    "Choice of representation",
-    "Evidence is represented in a materially confusing way",
-    "Inappropriate pies, 3D effects, tables or text make comparison difficult",
-    "Representations are understandable with some friction",
-    "Appropriate charts, tables or well-edited prose make the evidence easy to compare",
-    "An exceptionally economical choice of form reveals the pattern without distortion; few or no charts can excel",
-  ],
-  [
-    "D2",
-    "Labels and data legibility",
-    "Important values or labels cannot be read or linked to the data",
-    "Small labels, clutter, awkward legends or tiny cells impede reading",
-    "Values and labels are usable with some local effort",
-    "Direct labels, units and readable tables support effortless interpretation",
-    "Complex data remain exceptionally easy to decode, with excellent typographic and spatial handling; count data-label size here, not again under R1",
-  ],
-  [
-    "D3",
-    "Denominators, periods and scope",
-    "Readers cannot tell what important figures refer to",
-    "Key numbers lack clear bases, periods or definitions",
-    "Most important figures have understandable scope with gaps",
-    "Important figures consistently state their bases, periods and useful comparisons",
-    "Exceptionally concise framing makes scale, coverage and limits immediately clear without burdening the graphic",
-  ],
-  [
-    "D4",
-    "Sources and uncertainty communication",
-    "Presentation materially obscures the provenance or limits of figures",
-    "Sources and caveats are hard to link to the numbers",
-    "Sources and relevant caveats are generally findable",
-    "Sources, uncertainty and qualifications sit close to the evidence they explain",
-    "Exceptionally clear disclosure helps readers interpret uncertainty at the point of use; this does not independently verify the underlying evidence",
-  ],
-  [
-    "D5",
-    "Takeaway and explanatory value",
-    "Data displays leave a misleading or unintelligible message",
-    "Figures are displayed without a clear takeaway",
-    "Readers can infer the main message with some effort",
-    "Titles, annotations or nearby prose explain the useful finding",
-    "A precise, honest takeaway makes the pattern and its practical meaning immediately apparent",
-  ],
-  [
-    "A1",
-    "Contrast and non-colour cues",
-    "Critical content depends on unreadable contrast or colour alone",
-    "Repeated low contrast or colour-only meaning creates barriers",
-    "Mostly usable contrast and redundant cues with local gaps",
-    "Inspected text and data use clear contrast and labels or patterns beyond colour",
-    "Exceptionally inclusive visual encoding is verified across the inspected material; distinguish measured contrast from visual estimates",
-  ],
-  [
-    "A2",
-    "Magnification and zoom usability",
-    "Critical content is unusable when magnified",
-    "Magnification exposes fragmented layout or unreadable raster text",
-    "Sampled pages remain usable when magnified with some panning",
-    "Magnified inspection preserves clear relationships and text quality",
-    "Purposeful alternatives or reflow support an unusually usable enlarged reading experience; do not claim reflow from a raster image",
-  ],
-  [
-    "A3",
-    "Structure and reading order",
-    "Verified structure creates a seriously misleading reading order",
-    "Missing or defective structure leaves important content poorly ordered",
-    "Tags and sampled reading order are broadly useful with gaps",
-    "Logical heading, paragraph and table structure is verified in sampled PDF tags",
-    "Exceptional structure and reading order are verified across varied content; a tag flag alone never establishes quality",
-  ],
-  [
-    "A4",
-    "Image and chart alternatives",
-    "Essential visual information has no usable verified alternative",
-    "Descriptions are missing, generic or fail to communicate the important content",
-    "Important images or charts have understandable text alternatives with gaps",
-    "Meaningful descriptions or adjacent textual equivalents communicate the important content",
-    "Exceptionally useful descriptions convey purpose, relationships and key data; decorative images may appropriately have no description",
-  ],
-  [
-    "A5",
-    "Assistive reading usability",
-    "A tested critical assistive-reading barrier prevents use",
-    "Verified assistive checks expose substantial navigation or interpretation problems",
-    "Available checks support basic use but reveal limitations",
-    "Actual assistive checks demonstrate useful navigation and comprehension",
-    "Comprehensive assistive-technology testing with users supports excellent usability; without an actual assistive test mark unassessable, never infer success from appearance",
+    "H5",
+    "Breaking down complexity",
+    "Demanding sections, grouping and chunking; do not score sentence length again here.",
+    "Organisation makes complex material unusable",
+    "Undifferentiated sections overload readers",
+    "Manageable groups with some weakly ordered sections",
+    "Intelligent chunks and summaries make complexity understandable",
+    "Exceptional grouping supports both orientation and detailed understanding",
   ],
 ] as const;
-export const reportV2Criteria = definitions.map(
-  ([code, title, ...anchors], i) => ({
-    id: `report.${Math.floor(i / 5) + 1}.${(i % 5) + 1}`,
-    code,
-    title,
-    principle: reportPillars[Math.floor(i / 5)],
-    question: `${code} · ${title}`,
-    anchors: anchors.map(
-      (description, score) =>
-        `${score} = ${reportV2Anchors[score]}: ${description}`,
-    ),
-  }),
-);
-export const reportV2Rubric = reportPillars.map((pillar, i) => [
-  pillar,
+const reused = (prefix: string) =>
+  legacy.reportV2Criteria
+    .filter((c) => c.code.startsWith(prefix))
+    .map((c) => ({
+      ...c,
+      title:
+        c.code === "V2"
+          ? "Typography and legibility"
+          : c.code === "V3"
+            ? "Colour, contrast and visual rhythm"
+            : c.title,
+      question:
+        c.code === "V2"
+          ? "V2 · Typography and legibility"
+          : c.code === "V3"
+            ? "V3 · Colour, contrast and visual rhythm"
+            : c.question,
+      anchors: c.anchors.map((a) =>
+        a
+          .replace(
+            "physical text size is scored only under R1",
+            "body-text size, line length and spacing must also be comfortably legible at ordinary page size",
+          )
+          .replace(
+            "count data-label size here, not again under R1",
+            "count data-label size here, not again under general typography",
+          )
+          .replace(
+            "matching colours alone never establishes strength",
+            "contrast and non-colour cues must support legibility; matching colours alone never establishes strength",
+          ),
+      ),
+    }));
+const first = definitions.map(([code, title, evidence, ...anchors]) => ({
+  code,
+  title,
+  question: `${code} · ${title}`,
+  evidence,
+  anchors: anchors.map((a, i) => `${i} = ${reportV2Anchors[i]}: ${a}`),
+}));
+export const reportV2Criteria = [
+  ...first,
+  ...reused("V"),
+  ...reused("S"),
+  ...reused("D"),
+].map((c, i) => ({
+  ...c,
+  id: `report.${Math.floor(i / 5) + 1}.${(i % 5) + 1}`,
+  principle: reportPillars[Math.floor(i / 5)],
+  evidence:
+    "evidence" in c
+      ? c.evidence
+      : "Inspect actual rendered typical and targeted pages and relevant source passages. Cite execution, consequence and physical page; presence earns no credit.",
+}));
+export const reportV2Rubric = reportPillars.map((p, i) => [
+  p,
   ...reportV2Criteria.slice(i * 5, i * 5 + 5).map((c) => c.question),
 ]);
+export const reportCriteriaFor = (version = REPORT_VERSION) =>
+  isRevisedReport(version) ? reportV2Criteria : legacy.reportV2Criteria;
+export const reportRubricFor = (version = REPORT_VERSION) =>
+  isRevisedReport(version) ? reportV2Rubric : legacy.reportV2Rubric;
+export const reportWeightsFor = (version = REPORT_VERSION) =>
+  isRevisedReport(version) ? reportWeights : legacy.reportWeights;
 export const REPORT_SCORING =
-  "Each assessable criterion scores 0–4. A pillar contributes its weight × sum(scores) ÷ (4 × assessable criteria). Weights: Readability and hierarchy 20; Storytelling 20; Visual design 25; Data communication 20; Accessibility 15. At least four criteria per pillar and 22 overall must be assessable. Missing required visual evidence means no overall score. Scores are rounded only for display; the total uses unrounded pillar contributions. Excellent additionally requires an unrounded raw total of at least 80, no pillar below 50% of its weight, no serious unresolved readability or accessibility barrier, and a successful simulated two-minute reader test consistent with the score. Critical legibility, contrast, reading-order or essential-alternative criteria scored 0/1 count as unresolved barriers. Rating rules never change the numerical total.";
-export function pillarMaximum(pillar: { maximum?: number }) {
-  return pillar.maximum ?? 20;
-}
+  "Each applicable criterion scores 0–4 against execution anchors. Pillar contribution = weight × sum(scores) ÷ (4 × assessable criteria). Weights: Readability & Copy 25; Information Hierarchy 30; Visual Design 25; Storytelling 10; Data Presentation 10. At least four criteria in every pillar and 22 overall must be assessable. Unassessable and genuinely inapplicable criteria are disclosed, never given invented scores. Missing required visual coverage or unresolved editorial inconsistency withholds the overall score. The total uses unrounded contributions. 0–39 Poor; 40–59 Significant improvement needed; 60–74 Adequate, with important weaknesses; 75–89 Strong professional communication; 90–100 Exceptional. This revised assessment is beta. Overall numeric publication is withheld while contrasting data-design judgements remain insufficiently reliable; criterion and pillar values are experimental diagnostic estimates, not independently validated professional scores.";
+export const pillarMaximum = legacy.pillarMaximum;

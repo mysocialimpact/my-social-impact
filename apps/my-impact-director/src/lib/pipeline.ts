@@ -1,7 +1,14 @@
-import { REPORT_VERSION, isReportV2 } from "./report-methodology";
+import { inspectReader, type ReaderInspection } from "./report-reader";
+import {
+  REPORT_VERSION,
+  REPORT_PUBLICATION_NOTICE,
+  isReportV2,
+  isRevisedReport,
+} from "./report-methodology";
 import { inspectPdfChecks, type PdfChecks } from "./report-accessibility";
 import {
   reportActionsSchema,
+  reportActionsFor,
   validateEditorial,
   reportRating,
   visualCoverage,
@@ -76,6 +83,8 @@ export const STAGES = [
   "The Impact Edit · Visual design",
   "The Impact Edit · Data communication",
   "The Impact Edit · Accessibility",
+  "The Impact Edit · Whole-document reading exercise",
+  "The Impact Edit · Checking criterion judgements",
 ];
 type Job = {
   version: string;
@@ -102,6 +111,20 @@ type Document = {
   extraction_notes: unknown[];
 };
 export type ReviewResult = {
+  publicationNotice?: string;
+  materialAccessibilityConcerns?: string[];
+  qualityControl?: {
+    method: "criterion-execution-audit";
+    calculatedOverall?: number | null;
+    changes: {
+      id: string;
+      before: number | null;
+      after: number | null;
+      reason: string;
+    }[];
+  };
+  readerInspection?: ReaderInspection;
+  beta?: boolean;
   editorial?: EditorialVerdict;
   rating?: ReportRating;
   pdfChecks?: PdfChecks;
@@ -237,7 +260,21 @@ export async function processOne(id?: string) {
         usage = response.usage;
         notes = [...notes, ...response.data];
         if (missing.length > 2) next = 16;
-      }
+        else if (isRevisedReport(job.version)) next = 22;
+      } else if (isRevisedReport(job.version)) next = 22;
+    } else if (job.framework === "report" && job.stage === 22) {
+      const r = await inspectReader(
+        pages!,
+        (notes as VisualObservation[]).filter((n) => n.kind === visualKind),
+      );
+      usage = r.usage;
+      notes = [
+        ...notes.filter(
+          (n) => (n as ReaderInspection).kind !== "report-reader-2.0.1",
+        ),
+        r.data,
+      ];
+      next = 17;
     } else if (
       job.framework === "report" &&
       job.stage >= 17 &&
@@ -253,6 +290,9 @@ export async function processOne(id?: string) {
         job.version,
         doc.file_bytes,
         pdfChecks,
+        notes.find(
+          (n) => (n as ReaderInspection).kind === "report-reader-2.0.1",
+        ),
       );
       usage = response.usage;
       const validated = validateFindings(
@@ -267,7 +307,52 @@ export async function processOne(id?: string) {
         ...findings.filter((f) => !validated.some((v) => v.id === f.id)),
         ...validated,
       ];
-      if (job.stage === 21) next = 14;
+      if (job.stage === 21) next = isRevisedReport(job.version) ? 23 : 14;
+    } else if (job.framework === "report" && job.stage === 23) {
+      const before = findings;
+      const response = await assessReportPillar(
+        pages!,
+        (notes as VisualObservation[]).filter((n) => n.kind === visualKind),
+        -1,
+        context,
+        job.error_code,
+        job.version,
+        doc.file_bytes,
+        pdfChecks,
+        {
+          readingInspection: notes.find(
+            (n) => (n as ReaderInspection).kind === "report-reader-2.0.1",
+          ),
+          initialFindings: findings,
+        },
+      );
+      usage = response.usage;
+      findings = validateFindings(
+        response.data,
+        "report",
+        pages!,
+        claims!,
+        undefined,
+        job.version,
+      );
+      notes = [
+        ...notes.filter(
+          (n) => (n as { kind: string }).kind !== "report-quality-2.0.1",
+        ),
+        {
+          kind: "report-quality-2.0.1",
+          method: "criterion-execution-audit",
+          changes: findings
+            .filter((f) => before.find((b) => b.id === f.id)?.score !== f.score)
+            .map((f) => ({
+              id: f.id,
+              before: before.find((b) => b.id === f.id)!.score,
+              after: f.score,
+              reason: f.anchorReason || f.explanation,
+            })),
+        },
+      ];
+      next = 14;
     } else if (job.stage >= 4 && job.stage <= 13) {
       const framework: Framework = job.stage < 9 ? "claims" : "excellence",
         principle = (job.stage - 4) % 5;
@@ -334,6 +419,7 @@ export async function processOne(id?: string) {
               notes.filter(
                 (n) => (n as VisualObservation).kind === visualKind,
               ) as VisualObservation[],
+              job.version,
             ))
         ) {
           scores[framework]!.overall = null;
@@ -341,8 +427,16 @@ export async function processOne(id?: string) {
         }
       }
       const r = await structured(
-        v2 ? reportActionsSchema : actionSchema,
-        actionInstructions(job.framework === "report", v2),
+        v2
+          ? isRevisedReport(job.version)
+            ? reportActionsFor(
+                notes.filter(
+                  (n) => (n as VisualObservation).kind === visualKind,
+                ) as VisualObservation[],
+              )
+            : reportActionsSchema
+          : actionSchema,
+        actionInstructions(job.framework === "report", v2, job.version),
         {
           context,
           claims,
@@ -354,6 +448,16 @@ export async function processOne(id?: string) {
                   (n) => (n as VisualObservation).kind === visualKind,
                 ),
                 pdfChecks,
+                materialAccessibilityConcerns:
+                  (
+                    notes.find(
+                      (n) =>
+                        (n as ReaderInspection).kind === "report-reader-2.0.1",
+                    ) as ReaderInspection | undefined
+                  )?.accessibilityConcerns || [],
+                readerInspection: notes.find(
+                  (n) => (n as ReaderInspection).kind === "report-reader-2.0.1",
+                ),
               }
             : {}),
         },
@@ -374,7 +478,42 @@ export async function processOne(id?: string) {
             ) as VisualObservation[],
           )
         : undefined;
+      const calculatedOverall = scores.report?.overall ?? null;
+      if (
+        isRevisedReport(job.version) &&
+        editorial?.scoreConsistency === "review_needed"
+      ) {
+        scores.report!.overall = null;
+        scores.report!.provisional = true;
+      }
+      if (job.framework === "report" && isRevisedReport(job.version)) {
+        scores.report!.overall = null;
+        scores.report!.provisional = true;
+      }
       result = {
+        ...(isRevisedReport(job.version) && job.framework === "report"
+          ? {
+              beta: true,
+              publicationNotice: REPORT_PUBLICATION_NOTICE,
+              qualityControl: {
+                ...(notes.find(
+                  (n) =>
+                    (n as { kind: string }).kind === "report-quality-2.0.1",
+                ) as NonNullable<ReviewResult["qualityControl"]>),
+                calculatedOverall,
+              },
+              materialAccessibilityConcerns:
+                (
+                  notes.find(
+                    (n) =>
+                      (n as ReaderInspection).kind === "report-reader-2.0.1",
+                  ) as ReaderInspection | undefined
+                )?.accessibilityConcerns || [],
+              readerInspection: notes.find(
+                (n) => (n as ReaderInspection).kind === "report-reader-2.0.1",
+              ) as ReaderInspection | undefined,
+            }
+          : {}),
         ...(editorial
           ? {
               editorial,
@@ -387,7 +526,9 @@ export async function processOne(id?: string) {
                   notes.filter(
                     (n) => (n as VisualObservation).kind === visualKind,
                   ) as VisualObservation[],
+                  job.version,
                 ),
+                job.version,
               ),
               pdfChecks,
             }
@@ -409,6 +550,7 @@ export async function processOne(id?: string) {
                   notes.filter(
                     (n) => (n as VisualObservation).kind === visualKind,
                   ) as VisualObservation[],
+                  job.version,
                 )
                   ? {
                       normalComparisonPages: normalComparisonPages(
@@ -440,12 +582,24 @@ export async function processOne(id?: string) {
         actions: r.data,
         limitations: [
           LIMITATION,
+          ...(isRevisedReport(job.version) && job.framework === "report"
+            ? [
+                "Beta AI-assisted creative assessment; independent human editorial calibration has not been performed. Technical PDF accessibility compliance is not established.",
+                REPORT_PUBLICATION_NOTICE,
+                ...(editorial?.scoreConsistency === "review_needed"
+                  ? [
+                      "Editorial quality control identified an unresolved inconsistency in criterion judgements. The overall score is withheld pending reassessment; it has not been arbitrarily adjusted.",
+                    ]
+                  : []),
+              ]
+            : []),
           ...(v2 &&
           !visualCoverage(
             pages!,
             notes.filter(
               (n) => (n as VisualObservation).kind === visualKind,
             ) as VisualObservation[],
+            job.version,
           )
             ? [
                 "Required rendered-page evidence was unavailable or incomplete. No overall score is published. This is an assessment limitation, not evidence of poor report design.",
@@ -466,17 +620,36 @@ export async function processOne(id?: string) {
         [job.id, token],
       );
       if (!rowCount) return;
-      await c.query(
-        `UPDATE director.reports SET pages=$2,extraction_notes=$3,organisation=COALESCE($4,organisation),reporting_period=COALESCE($5,reporting_period),title=COALESCE($6,title) WHERE id=$1`,
-        [
-          job.report_id,
-          JSON.stringify(pages),
-          JSON.stringify(notes),
-          context?.organisation,
-          context?.reportingPeriod,
-          context?.title,
-        ],
-      );
+      // Assessment stages read a shared immutable source. Do not write a stale
+      // copy of its notes over observations added by another assessment.
+      if (job.stage <= 3) {
+        await c.query(
+          `UPDATE director.reports SET pages=$2,extraction_notes=$3,organisation=COALESCE($4,organisation),reporting_period=COALESCE($5,reporting_period),title=COALESCE($6,title) WHERE id=$1`,
+          [
+            job.report_id,
+            JSON.stringify(pages),
+            JSON.stringify(notes),
+            context?.organisation,
+            context?.reportingPeriod,
+            context?.title,
+          ],
+        );
+      } else if (job.framework === "report") {
+        const additions = notes.filter(
+          (n) => !doc.extraction_notes.includes(n),
+        );
+        if (additions.length)
+          await c.query(
+            `UPDATE director.reports SET extraction_notes=(
+          SELECT COALESCE(jsonb_agg(existing.value),'[]'::jsonb)
+          FROM jsonb_array_elements(extraction_notes) AS existing(value)
+          WHERE NOT EXISTS(SELECT 1 FROM jsonb_array_elements($2::jsonb) AS added(value)
+            WHERE added.value->>'kind'=existing.value->>'kind'
+              AND COALESCE(added.value->>'page','')=COALESCE(existing.value->>'page',''))
+        ) || $2::jsonb WHERE id=$1`,
+            [job.report_id, JSON.stringify(additions)],
+          );
+      }
       if (ingested)
         await c.query(
           "UPDATE director.reports SET understanding_ready=true,understanding_context=$2,understanding_claims=$3 WHERE id=$1",

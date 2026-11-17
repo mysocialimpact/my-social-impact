@@ -106,12 +106,17 @@ export function ReviewLearning({
   const slide = slides[step];
   const intro = step === 0;
   const headline =
-    intro && state !== "preparing"
+    intro &&
+    state !== "preparing" &&
+    slide.headline === "WE’RE PREPARING YOUR REVIEW."
       ? "DISCOVER HOW WE ASSESS IT."
       : slide.headline;
   const explanation =
     intro && state !== "preparing"
-      ? slide.explanation.replace("While we work, discover", "Discover")
+      ? slide.explanation.replace(
+          "While we review your report, discover",
+          "Discover",
+        )
       : slide.explanation;
   return (
     <section
@@ -199,7 +204,20 @@ export function ReviewLearning({
             <h2 ref={heading} tabIndex={-1}>
               {headline}
             </h2>
-            <p className="learning-explanation">{explanation}</p>
+            <p className="learning-explanation">
+              {slide.why && (
+                <span className="learning-copy-label">
+                  What we’re looking for
+                </span>
+              )}
+              {explanation}
+            </p>
+            {slide.why && (
+              <p className="learning-why">
+                <span className="learning-copy-label">Why it matters</span>
+                {slide.why}
+              </p>
+            )}
             {slide.example && (
               <blockquote>
                 <span>For example</span>
@@ -219,12 +237,13 @@ export function ReviewLearning({
               <a
                 className="learning-more"
                 href={
-                  framework === "excellence"
+                  slide.href ||
+                  (framework === "excellence"
                     ? "https://socialimpactexcellence.org"
-                    : "https://www.mysocialimpact.org"
+                    : "https://www.mysocialimpact.org")
                 }
               >
-                Explore My Social Impact ↗
+                {slide.linkLabel || "Explore My Social Impact ↗"}
               </a>
             )}
           </div>

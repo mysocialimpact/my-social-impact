@@ -1,7 +1,7 @@
 import {
   REPORT_VERSION,
   isReportV2,
-  reportWeights,
+  reportWeightsFor,
 } from "./report-methodology";
 import { z } from "zod";
 import { COVERAGE, testsPerPillar, criteria, type Framework } from "./rubric";
@@ -224,7 +224,9 @@ export function scoreFramework(
     )
       throw new Error("Invalid scoring input.");
     const maximum =
-      framework === "report" && isReportV2(version) ? reportWeights[i] : 20;
+      framework === "report" && isReportV2(version)
+        ? reportWeightsFor(version)[i]
+        : 20;
     return {
       maximum,
       name: expected[i * testsPerPillar(framework)].principle,

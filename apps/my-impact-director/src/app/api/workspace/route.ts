@@ -1,12 +1,39 @@
 import { visitor } from "@/lib/auth";
 import { failure } from "@/lib/security";
-import { workspaces } from "@/lib/workspace";
+import {
+  workspaces,
+  selectedWorkspace,
+  selectWorkspace,
+} from "@/lib/workspace";
 import { z } from "zod";
 export async function GET(req: Request) {
   try {
-    const id = z.uuid().parse(new URL(req.url).searchParams.get("review"));
+    const value = new URL(req.url).searchParams.get("review");
+    const id = value ? z.uuid().parse(value) : undefined;
+    const user = await visitor(req);
     return Response.json(
-      { workspace: (await workspaces(await visitor(req), id))[0] },
+      {
+        workspace: id
+          ? (await workspaces(user, id))[0]
+          : await selectedWorkspace(user),
+      },
+      { headers: { "cache-control": "no-store" } },
+    );
+  } catch (e) {
+    return failure(e);
+  }
+}
+
+export async function PUT(req: Request) {
+  try {
+    const { sameOrigin } = await import("@/lib/security");
+    sameOrigin(req);
+    const { review } = z
+      .object({ review: z.uuid() })
+      .strict()
+      .parse(await req.json());
+    return Response.json(
+      { workspace: await selectWorkspace(await visitor(req), review) },
       { headers: { "cache-control": "no-store" } },
     );
   } catch (e) {

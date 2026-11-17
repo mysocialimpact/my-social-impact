@@ -1,18 +1,18 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { PDFDocument, StandardFonts } from "pdf-lib";
-import { criteria } from "../src/lib/rubric";
+import { criteria as allCriteria } from "../src/lib/rubric";
 import {
-  scoreFramework,
+  scoreFramework as aggregate,
   type Criterion,
   type Page,
 } from "../src/lib/assessment";
 import {
-  REPORT_VERSION,
+  LEGACY_REPORT_VERSION as REPORT_VERSION,
   reportWeights,
   reportV2Criteria,
   validateReportAnchorReason,
-} from "../src/lib/report-methodology";
+} from "../src/lib/report-methodology-2-0-0";
 import {
   visualSample,
   scoreImagePages,
@@ -27,6 +27,15 @@ import {
   type EditorialVerdict,
 } from "../src/lib/report-verdict";
 import { inspectPdfChecks } from "../src/lib/report-accessibility";
+// Immutable regression coverage for the released 2.0.0 methodology.
+const criteria = (f: Parameters<typeof allCriteria>[0], version = "2.0.0") =>
+  allCriteria(f, version);
+const scoreFramework = (
+  f: Criterion[],
+  framework: Parameters<typeof aggregate>[1],
+  thresholds?: Parameters<typeof aggregate>[2],
+  version = "2.0.0",
+) => aggregate(f, framework, thresholds, version);
 const page: Page = {
   page: 1,
   text: "Every household experience informed the next step.",

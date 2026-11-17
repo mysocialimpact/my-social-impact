@@ -6,7 +6,11 @@ import {
   type Page,
 } from "./assessment";
 import { visualSample, type VisualObservation } from "./report-visual";
-import { reportPillars } from "./report-methodology";
+import {
+  isRevisedReport,
+  REPORT_VERSION,
+  REPORT_PUBLICATION_NOTICE,
+} from "./report-methodology";
 const readerAnswer = z
   .object({
     finding: z.string().min(20).max(1500),
@@ -33,6 +37,39 @@ export const editorialSchema = z
 export const reportActionsSchema = actionSchema
   .extend({ editorial: editorialSchema })
   .strict();
+export function reportActionsFor(observations: VisualObservation[]) {
+  const pages = [
+    ...new Set(observations.filter((o) => o.readable).map((o) => o.page)),
+  ];
+  const missing = readerAnswer
+    .extend({ page: z.null(), access: z.literal("not_found") })
+    .strict();
+  const located = pages.length
+    ? readerAnswer
+        .extend({
+          page: z.literal(pages as [number, ...number[]]),
+          access: z.enum(["easy", "effortful"]),
+        })
+        .strict()
+    : missing;
+  const answer = z.union([located, missing]);
+  return actionSchema
+    .extend({
+      editorial: editorialSchema
+        .extend({
+          readerTest: z
+            .object({
+              outcomes: answer,
+              scale: answer,
+              limitations: answer,
+              nextSteps: answer,
+            })
+            .strict(),
+        })
+        .strict(),
+    })
+    .strict();
+}
 export type EditorialVerdict = z.infer<typeof editorialSchema>;
 export type ReportRating = {
   label:
@@ -40,7 +77,12 @@ export type ReportRating = {
     | "Strong"
     | "Adequate"
     | "Needs substantial improvement"
-    | "Provisional";
+    | "Provisional"
+    | "Poor"
+    | "Significant improvement needed"
+    | "Adequate, with important weaknesses"
+    | "Strong professional communication"
+    | "Exceptional";
   reasons: string[];
   readerTestPassed: boolean;
   rule: string;
@@ -72,6 +114,7 @@ export function reportRating(
   findings: Criterion[],
   editorial: EditorialVerdict,
   visualAvailable = true,
+  version = "2.0.0",
 ): ReportRating {
   const readerTestPassed = Object.values(editorial.readerTest).every(
       (a) => a.access === "easy",
@@ -81,7 +124,12 @@ export function reportRating(
     reasons.push(
       "Rendered-page inspection is incomplete or unavailable. No overall score is published; this is an assessment limitation, not evidence of poor report design.",
     );
-  if (score.provisional || score.overall === null)
+  if (
+    (score.provisional || score.overall === null) &&
+    (!isRevisedReport(version) ||
+      score.coverage < 22 ||
+      score.principles.some((p) => p.coverage < 4))
+  )
     reasons.push(
       "Coverage or visual evidence is insufficient for an overall rating.",
     );
@@ -94,9 +142,10 @@ export function reportRating(
     findings.some(
       (f) =>
         f.barrier === "serious" ||
-        (["report.1.1", "report.5.1", "report.5.3", "report.5.4"].includes(
-          f.id,
-        ) &&
+        (!isRevisedReport(version) &&
+          ["report.1.1", "report.5.1", "report.5.3", "report.5.4"].includes(
+            f.id,
+          ) &&
           f.score !== null &&
           f.score <= 1),
     )
@@ -122,6 +171,26 @@ export function reportRating(
         (4 * p.coverage),
     0,
   );
+  if (isRevisedReport(version)) {
+    reasons.unshift(REPORT_PUBLICATION_NOTICE);
+    return {
+      label:
+        score.provisional || score.overall === null
+          ? "Provisional"
+          : raw < 40
+            ? "Poor"
+            : raw < 60
+              ? "Significant improvement needed"
+              : raw < 75
+                ? "Adequate, with important weaknesses"
+                : raw < 90
+                  ? "Strong professional communication"
+                  : "Exceptional",
+      reasons,
+      readerTestPassed,
+      rule: "0–39 Poor; 40–59 Significant improvement needed; 60–74 Adequate, with important weaknesses; 75–89 Strong professional communication; 90–100 Exceptional. Derived from validated weighted criteria, never a model-selected total. Beta AI-assisted editorial judgement; no independent human validation. Editorial inconsistency or insufficient coverage withholds the overall score.",
+    };
+  }
   return {
     label: score.provisional
       ? "Provisional"
@@ -140,20 +209,31 @@ export function reportRating(
 export function visualCoverage(
   pages: Page[],
   observations: VisualObservation[],
+  version = REPORT_VERSION,
 ) {
   const inspected = new Set(
     observations.filter((o) => o.readable).map((o) => o.page),
   );
-  return visualSample(pages).every((n) => inspected.has(n));
+  return visualSample(pages, version).every((n) => inspected.has(n));
 }
 export const EDITORIAL_PROMPT = `Add a whole-report editorial verdict: does this publication hold a new reader's attention through purposeful editing and art direction? Attention is qualitative, never a sixth numerical pillar. Simulate a two-minute scan: could a new reader quickly find actual main outcomes, their scale, limitations and specific next steps? For each answer give what the reader learns, its inspected physical page (null if not found), and access easy/effortful/not_found. Mission or long-term ambition is not an achieved outcome. Do not claim a real timed user test. Compare the numeric score with that experience: flag review_needed if they conflict, explain why, and never rewrite or force the numerical total. Serious barriers and the rating rule are visible separately. Assess only supplied material, and acknowledge genuine candour and authentic human content.`;
 
-export function actionInstructions(report: boolean, v2: boolean) {
+const REVISED_EDITORIAL_PROMPT = `Write a whole-report editorial verdict of at most 40 words and an attention judgement. Simulate a brief scan for actual outcomes, scale, limitations and next steps, with inspected physical pages; easy/effortful answers need a page, not_found needs null. This is an AI-simulated scan, not a real human usability study. Check the calculated criterion total against observed execution. Mark review_needed only when a specific unsupported criterion judgement contradicts the reading evidence; name that criterion and the contradictory physical page. A mixture of strengths and weaknesses is normal and not itself an inconsistency: the weighted scores should already reflect those weaknesses. Never choose a target overall score or arbitrarily change the total. The five pillars are Readability & Copy, Information Hierarchy, Visual Design, Storytelling and Data Presentation. There is NO separately scored accessibility pillar. A high creative communication score does not assert technical accessibility compliance. Lack of screen-reader testing, reflow checks, independent human validation or external verification is an assessment limitation, not grounds by itself to lower or withhold this communication score. Record actual visible reading barriers, but never infer technical failure from missing testing. Assess communication of data, not independent verification of impact or organisational maturity. Do not treat a fictional calibration label as a defect in communication quality. Distinguish a genuine unsupported criterion score from an honestly qualified, indicative beta assessment.`;
+
+export function actionInstructions(
+  report: boolean,
+  v2: boolean,
+  version = "2.0.0",
+) {
   return (
     (report
-      ? "Write an editorial judgement and ranked creative improvement plan. Include a final action titled Suggested creative direction, a specific creative brief grounded in criterion IDs, with issue, why, physical page, improvement and likely benefit. Do not assess validity of underlying impact claims. "
+      ? "Write an editorial judgement and ranked creative improvement plan. Keep the verdict to at most 40 words and prioritise the three most useful changes first. Include a final action titled Suggested creative direction, a specific creative brief grounded in criterion IDs, with issue, why, physical page, improvement and likely benefit. Do not assess validity of underlying impact claims. "
       : "") +
-    (v2 ? EDITORIAL_PROMPT : "") +
+    (v2
+      ? isRevisedReport(version)
+        ? REVISED_EDITORIAL_PROMPT
+        : EDITORIAL_PROMPT
+      : "") +
     "Write a concise executive summary and specific prioritised action plan using ONLY validated findings. Each action must cite existing criterion IDs and say what to change, why, and how. Distinguish quick wording changes, important evidence/reporting improvements, and longer-term measurement/management improvements. Do not invent achievements, comparisons, benchmarks or new source facts. If evidence is weak, a strength may be a clearly qualified useful starting point. Do not describe provisional assessments as definitive scores."
   );
 }

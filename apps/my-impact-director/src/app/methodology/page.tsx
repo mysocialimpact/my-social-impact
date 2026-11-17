@@ -79,16 +79,17 @@ export default function Methodology() {
         <p className="eyebrow">Does your impact report make an impact?</p>
         <h2>The Impact Edit.</h2>
         <p>
-          Readability. Storytelling. Visual design. Data communication.
-          Accessibility. Twenty-five criteria examine how effectively your
-          report communicates, including inspection of its actual page design.
+          Readability & Copy. Information Hierarchy. Visual Design.
+          Storytelling. Data Presentation. Twenty-five criteria examine how
+          effectively your report communicates, including inspection of its
+          actual page design.
         </p>
         <CreativeCaveat />
         <Link
           className="text-link"
           href="/methodology/impact-report-excellence"
         >
-          Read The Impact Edit Methodology v2.0.0 →
+          Read The Impact Edit Methodology v2.0 — beta →
         </Link>
       </section>
       <section id="scoring" className="methodology-family content-prose">

@@ -1,8 +1,11 @@
 "use client";
+import { ImpactVerdict } from "./impact-verdict";
 import { ReviewLearning } from "./review-learning";
 import { ContextualOffers } from "./contextual-offers";
 import {
   isReportV2,
+  isRevisedReport,
+  reportRubricFor,
   reportPillars,
   REPORT_VERSION,
 } from "@/lib/report-methodology";
@@ -219,7 +222,7 @@ function EmailInvitation({
   );
 }
 export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
-  const { user: accountUser } = useSession();
+  const { user: accountUser, loading: accountLoading } = useSession();
   const searchParams = useSearchParams();
   const [results, setResults] = useState(searchParams.get("results") === "1"),
     [busy, setBusy] = useState(false),
@@ -365,6 +368,7 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
     }
   }
   async function choose(f: Framework) {
+    if (accountLoading) return;
     if (!accountUser || accountUser.anonymous) {
       window.location.assign(
         `/login?mode=signup&next=${encodeURIComponent("/reviews/" + r.id)}`,
@@ -393,6 +397,7 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
     }
   }
   function choiceLabel(f: Framework) {
+    if (accountLoading) return "Checking your account…";
     const sibling = r.siblings?.find((s) => s.framework === f);
     return !sibling
       ? `Start ${names[f]} — free`
@@ -428,7 +433,7 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
             <p>{r.error_message}</p>
             <button
               className="button primary"
-              disabled={busy}
+              disabled={busy || accountLoading}
               onClick={() => retrySaved(r.id)}
             >
               Retry reading the saved report
@@ -463,12 +468,12 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
                 {f === "claims"
                   ? "Evidence. Proportion. Transparency. Balance. Learning."
                   : f === "report"
-                    ? "Readability and hierarchy. Storytelling. Visual design. Data communication. Accessibility."
+                    ? "Readability & Copy. Information Hierarchy. Visual Design. Storytelling. Data Presentation."
                     : "Purpose. Leadership. Data. Delivery. Communications."}
               </p>
               <button
                 className="button primary"
-                disabled={busy}
+                disabled={busy || accountLoading}
                 onClick={() => choose(f)}
               >
                 {choiceLabel(f)}
@@ -534,7 +539,7 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
                 </strong>{" "}
                 {r.error_message || r.ingestion?.error_message}{" "}
                 <button
-                  disabled={busy}
+                  disabled={busy || accountLoading}
                   onClick={() =>
                     retrySaved(
                       r.ingestion?.status === "failed" ? r.ingestion.id : r.id,
@@ -555,7 +560,7 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
                       ? r.stage === 16
                         ? "Inspecting rendered pages."
                         : r.stage >= 17
-                          ? `Reviewing ${(isReportV2(r.version) ? reportPillars : ["Clarity", "Storytelling", "Design", "Engagement", "Communication"])[r.stage - 17] || "your findings"}.`
+                          ? `Reviewing ${(isReportV2(r.version) ? reportRubricFor(r.version).map((p) => p[0]) : ["Clarity", "Storytelling", "Design", "Engagement", "Communication"])[r.stage - 17] || "your findings"}.`
                           : "Preparing your creative recommendations."
                       : "Your Impact Director is preparing your report."
                     : "Your Impact Director is reading your report."}
@@ -577,18 +582,26 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
                   ? "Does your impact report make an impact?"
                   : "Beyond reporting. Towards better impact management."}
             </h2>
-            {framework === "report" && (
+            {framework === "report" && !isRevisedReport(r.result.version) && (
               <CreativeCaveat version={r.result.version} />
             )}
-            <ScoreCard
-              framework={framework}
-              score={r.result.scores[framework]!}
-              version={r.result.version}
-              rating={framework === "report" ? r.result.rating : undefined}
-            />
+            {framework === "report" && isRevisedReport(r.result.version) ? (
+              <ImpactVerdict result={r.result} />
+            ) : (
+              <ScoreCard
+                framework={framework}
+                score={r.result.scores[framework]!}
+                version={r.result.version}
+                rating={framework === "report" ? r.result.rating : undefined}
+              />
+            )}
             <section className="snapshot-copy">
-              <h2>The headline snapshot</h2>
-              <p>{r.result.actions.summary}</p>
+              <h2>
+                {framework === "report"
+                  ? "What works. What needs attention."
+                  : "The headline snapshot"}
+              </h2>
+              {framework !== "report" && <p>{r.result.actions.summary}</p>}
               <div className="strength-grid">
                 <div>
                   <h3>Main strengths</h3>
@@ -607,13 +620,19 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
                   </ul>
                 </div>
               </div>
-              <h3>Three priorities</h3>
-              {r.result.actions.actions.slice(0, 3).map((a) => (
-                <article key={a.title}>
-                  <h4>{a.title}</h4>
-                  <p>{a.detail}</p>
-                </article>
-              ))}
+              {!(
+                framework === "report" && isRevisedReport(r.result.version)
+              ) && (
+                <>
+                  <h3>Three priorities</h3>
+                  {r.result.actions.actions.slice(0, 3).map((a) => (
+                    <article key={a.title}>
+                      <h4>{a.title}</h4>
+                      <p>{a.detail}</p>
+                    </article>
+                  ))}
+                </>
+              )}
               <p>
                 Indicative automated document review, not independent assurance.
                 {framework === "excellence" && (
@@ -627,19 +646,20 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
                 )}
               </p>
             </section>
-            {framework === "report" && !isReportV2(r.result.version) && (
+            {framework === "report" && !isRevisedReport(r.result.version) && (
               <div className="notice">
                 <p>
                   This is your preserved v{r.result.version} assessment. The new
                   methodology uses revised pillars, weights and direct visual
-                  scoring.
+                  inspection. Overall numeric publication is paused during beta
+                  calibration.
                 </p>
                 <button
                   className="button secondary"
-                  disabled={busy}
+                  disabled={busy || accountLoading}
                   onClick={() => choose("report")}
                 >
-                  Run The Impact Edit v2 on this report
+                  Run the revised Impact Edit beta
                 </button>
               </div>
             )}
@@ -726,7 +746,7 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
             </p>
             <button
               className="button primary"
-              disabled={busy}
+              disabled={busy || accountLoading}
               onClick={() => choose(other)}
             >
               {choiceLabel(other)}

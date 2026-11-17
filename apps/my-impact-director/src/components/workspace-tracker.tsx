@@ -10,21 +10,43 @@ import {
   type Workspace,
   type AssessmentState,
 } from "./workspace-types";
-export function WorkspaceTracker({ id }: { id: string }) {
-  const { user } = useSession();
+export function WorkspaceTracker() {
+  const { user, loading } = useSession();
   const [workspace, setWorkspace] = useState<Workspace | null>(null),
+    [workspaceOwner, setWorkspaceOwner] = useState(""),
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false);
   const strip = useRef<HTMLElement>(null);
   const path = usePathname();
+  const id = path.match(/^\/reviews\/([0-9a-f-]{36})(?:\/|$)/i)?.[1];
   useEffect(() => {
+    if (loading) return;
+    if (!user) {
+      setWorkspace(null);
+      return;
+    }
     let stopped = false,
       timer: ReturnType<typeof setTimeout>;
+    let selected = false,
+      refreshing = false;
     async function refresh() {
+      if (refreshing) return;
+      refreshing = true;
       try {
-        const d = await api("/api/workspace?review=" + id);
+        const d = await api(
+          "/api/workspace",
+          id && !selected
+            ? {
+                method: "PUT",
+                headers: { "content-type": "application/json" },
+                body: JSON.stringify({ review: id }),
+              }
+            : undefined,
+        );
         if (!stopped) {
-          setWorkspace(d.workspace);
+          setWorkspace(d.workspace || null);
+          setWorkspaceOwner(user!.id);
+          selected = true;
           setError("");
         }
       } catch (e) {
@@ -33,7 +55,11 @@ export function WorkspaceTracker({ id }: { id: string }) {
             e instanceof Error ? e.message : "Unable to refresh status.",
           );
       }
-      if (!stopped) timer = setTimeout(refresh, 10000);
+      refreshing = false;
+      if (!stopped) {
+        clearTimeout(timer);
+        timer = setTimeout(refresh, 10000);
+      }
     }
     const requested = () => {
       clearTimeout(timer);
@@ -48,7 +74,7 @@ export function WorkspaceTracker({ id }: { id: string }) {
       window.removeEventListener("mid-workspace-refresh", requested);
       window.removeEventListener("mid-review-refresh", requested);
     };
-  }, [id]);
+  }, [id, path, user?.id, loading]);
   useEffect(() => {
     const el = strip.current;
     if (!el) return;
@@ -64,18 +90,18 @@ export function WorkspaceTracker({ id }: { id: string }) {
       o.disconnect();
       document.documentElement.style.removeProperty("--workspace-height");
     };
-  }, [!!workspace]);
+  }, [!!workspace, workspaceOwner, user?.id]);
   async function start(f: Framework) {
     if (!workspace) return;
     if (!user || user.anonymous) {
       window.location.assign(
-        `/login?mode=signup&next=${encodeURIComponent("/reviews/" + id)}`,
+        `/login?mode=signup&next=${encodeURIComponent("/reviews/" + workspace.root_id)}`,
       );
       return;
     }
     setBusy(true);
     try {
-      const d = await api("/api/reviews/" + id, {
+      const d = await api("/api/reviews/" + workspace.root_id, {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ framework: f }),
@@ -86,12 +112,7 @@ export function WorkspaceTracker({ id }: { id: string }) {
       setBusy(false);
     }
   }
-  if (!workspace)
-    return (
-      <div className="workspace-loading" role="status">
-        {error || "Opening your workspace…"}
-      </div>
-    );
+  if (!workspace || workspaceOwner !== user?.id) return null;
   function entry(f: Framework, a?: AssessmentState) {
     const label = stateLabel(a);
     return (
@@ -145,14 +166,15 @@ export function WorkspaceTracker({ id }: { id: string }) {
       ref={strip}
       className="workspace-tracker"
       aria-label="Your Impact Director workspace"
+      data-report={workspace.id}
     >
       <div className="workspace-heading">
-        <Link href="/reviews">MY REPORTS</Link>
+        <Link href={"/reviews/" + workspace.root_id}>MY REPORTS</Link>
         <p title={workspace.title}>
           <span className="workspace-organisation">
-            {workspace.organisation || "Your report"}
+            {workspace.organisation || "Your report"} ·
           </span>{" "}
-          <span className="workspace-document">· {workspace.title}</span>
+          <span className="workspace-document">{workspace.title}</span>
         </p>
       </div>
       <div

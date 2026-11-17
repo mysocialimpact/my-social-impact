@@ -18,7 +18,7 @@ import {
   scoreFramework,
 } from "../src/lib/assessment";
 import { structured } from "../src/lib/ai";
-import { REPORT_VERSION } from "../src/lib/report-methodology";
+import { LEGACY_REPORT_VERSION as REPORT_VERSION } from "../src/lib/report-methodology-2-0-0";
 import {
   reportActionsSchema,
   validateEditorial,

@@ -1,4 +1,4 @@
-import { isReportV2 } from "./report-methodology";
+import { isReportV2, isRevisedReport } from "./report-methodology";
 import type { Framework } from "./rubric";
 
 export type LearningSlide = {
@@ -6,14 +6,17 @@ export type LearningSlide = {
   headline: string;
   explanation: string;
   example?: string;
+  why?: string;
+  href?: string;
+  linkLabel?: string;
 };
 
 const claims: LearningSlide[] = [
   {
     label: "Introduction",
-    headline: "WE’RE PREPARING YOUR REVIEW.",
+    headline: "GOOD IMPACT CLAIMS NEED GOOD EVIDENCE.",
     explanation:
-      "While we work, discover the five principles behind making credible impact claims.",
+      "While we review your report, discover the five principles behind making credible impact claims.",
   },
   {
     label: "Evidence",
@@ -54,16 +57,19 @@ const claims: LearningSlide[] = [
   },
   {
     label: "The bigger picture",
-    headline: "GOOD CLAIMS BUILD TRUST.",
-    explanation: "But good reporting is only the beginning.",
+    headline: "CREDIBILITY BUILDS TRUST.",
+    explanation:
+      "The Social Impact Claims Code is My Social Impact’s framework for communicating impact responsibly.",
+    href: "https://mysocialimpact.org/social-impact-claims-code",
+    linkLabel: "Explore the Claims Code ↗",
   },
 ];
 const excellence: LearningSlide[] = [
   {
     label: "Introduction",
-    headline: "WE’RE PREPARING YOUR REVIEW.",
+    headline: "SOCIAL IMPACT IS A MANAGEMENT DISCIPLINE.",
     explanation:
-      "While we work, discover the five pillars of treating social impact as a serious management discipline.",
+      "While we review your report, discover how Social Impact Excellence helps organisations embed impact into everyday management.",
   },
   {
     label: "Purpose",
@@ -103,12 +109,14 @@ const excellence: LearningSlide[] = [
   },
   {
     label: "The bigger picture",
-    headline: "IMPACT IS A MANAGEMENT DISCIPLINE.",
+    headline: "IMPACT ISN’T AN ANNUAL EXERCISE.",
     explanation:
-      "It deserves attention throughout the year, not just at reporting time.",
+      "Social Impact Excellence treats impact as an ongoing management discipline. One report cannot establish an organisation’s complete maturity.",
+    href: "https://socialimpactexcellence.org",
+    linkLabel: "Explore the full maturity assessment ↗",
   },
 ];
-const report: LearningSlide[] = [
+const legacyReport: LearningSlide[] = [
   {
     label: "Introduction",
     headline: "WE’RE PREPARING YOUR REVIEW.",
@@ -158,12 +166,124 @@ const report: LearningSlide[] = [
   },
 ];
 
+const report: LearningSlide[] = [
+  {
+    label: "Introduction",
+    headline: "DOES YOUR REPORT MAKE AN IMPACT?",
+    explanation:
+      "While we review your report, discover what makes impact communication clear, compelling and memorable.",
+  },
+  {
+    label: "Readability & Copy",
+    headline: "MAKE EVERY WORD COUNT.",
+    explanation:
+      "We look at how easily people can read and understand your report: clear writing, manageable paragraphs and proportionate copy, with unnecessary jargon and repetition edited out.",
+    why: "Good writing makes important ideas easier to understand.",
+  },
+  {
+    label: "Information Hierarchy",
+    headline: "MAKE THE IMPORTANT THINGS OBVIOUS.",
+    explanation:
+      "We examine how findings are organised, prioritised and presented. Can someone quickly find your most important achievements and conclusions, then explore the supporting detail?",
+    why: "Great reports reward both a quick glance and a deeper read.",
+  },
+  {
+    label: "Visual Design",
+    headline: "DESIGN SHOULD DO SOMETHING.",
+    explanation:
+      "We inspect actual pages to see how typography, composition, colour and imagery improve clarity and engagement. Consistent colours or photographs alone don’t establish good design.",
+    why: "Beautiful design helps understanding; it is more than decoration.",
+  },
+  {
+    label: "Storytelling",
+    headline: "GIVE THE NUMBERS A HUMAN STORY.",
+    explanation:
+      "We examine how your report connects purpose, facts, experiences and meaningful change. Relevant examples should illuminate the evidence, without exaggeration or unnecessary emotional language.",
+    why: "Readers need to understand why the evidence matters.",
+  },
+  {
+    label: "Data Presentation",
+    headline: "MAKE THE NUMBERS TALK.",
+    explanation:
+      "We examine whether readers can interpret charts, tables and important figures quickly, with useful labels and context. We judge communication here; the Claims Code separately examines credibility.",
+    why: "The clearest format helps people understand what the numbers mean.",
+  },
+  {
+    label: "The bigger picture",
+    headline: "YOUR IMPACT DESERVES TO BE UNDERSTOOD.",
+    explanation:
+      "A good report makes evidence accessible, engaging and memorable. My Social Impact and The Ideas Shed can help with design, storytelling and digital presentation.",
+    href: "/contact?service=improvement",
+    linkLabel: "Let’s bring your report to life ↗",
+  },
+];
+const teaching = {
+  claims: [
+    [
+      "We examine the evidence behind important claims. Does it demonstrate the outcomes being described, or only the activities delivered? We distinguish what happened from what changed.",
+      "Credible claims need evidence that supports the difference being claimed.",
+    ],
+    [
+      "We examine whether conclusions go beyond what the evidence reasonably demonstrates, including the difference between contribution and causation. Stronger claims need appropriately stronger support.",
+      "Proportionate wording protects trust without understating useful findings.",
+    ],
+    [
+      "We look for clear sources, collection methods, definitions and limitations. Can readers follow where information came from and understand whose experiences it represents?",
+      "Showing your workings helps readers judge what the evidence can tell them.",
+    ],
+    [
+      "We examine whether the overall picture is fair: challenges, limitations, different experiences and things that didn’t work should sit alongside the successes.",
+      "A balanced account is more useful and credible than selective good news.",
+    ],
+    [
+      "We look for lessons that inform future decisions, practical improvement actions and follow-up on earlier learning where relevant. Evidence should lead to something useful.",
+      "Learning turns reporting into better decisions about what happens next.",
+    ],
+  ],
+  excellence: [
+    [
+      "We look for a clear social purpose, intended beneficiaries and outcomes, and an explanation of the change the organisation wants to create through its work.",
+      "Purpose gives strategy, delivery and measurement a shared direction.",
+    ],
+    [
+      "We look for evidence that leaders take responsibility for impact, involve stakeholders and use what they learn to make decisions. Responsibility should be visible in the report.",
+      "Impact should influence management, not just marketing.",
+    ],
+    [
+      "We examine whether the organisation measures meaningful changes rather than simply counting activities, using information that fits its intended outcomes and explains how it was gathered.",
+      "Useful data helps people understand progress and make informed decisions.",
+    ],
+    [
+      "We examine how activities connect to intended outcomes, and whether the report demonstrates progress, adaptation and improvement. We look at what the report shows, not undisclosed practice.",
+      "Connecting purpose to delivery helps organisations improve the difference they make.",
+    ],
+    [
+      "We examine whether impact is communicated clearly, credibly and appropriately for its audiences, with useful evidence, understandable findings and an honest account of limitations.",
+      "People need to understand the difference being made and how it is known.",
+    ],
+  ],
+};
+for (const [name, slides] of [
+  ["claims", claims],
+  ["excellence", excellence],
+] as const) {
+  slides.slice(1, 6).forEach((slide, i) => {
+    slide.explanation = teaching[name][i][0];
+    slide.why = teaching[name][i][1];
+    delete slide.example;
+  });
+}
+
 // Existing v1 reports retain their own five-pillar names. Scoring stays untouched.
 const reportV1: LearningSlide[] = [
-  report[0],
-  { ...report[1], label: "Clarity", headline: "MAKE IT EASY TO UNDERSTAND." },
-  report[2],
-  { ...report[3], label: "Design" },
+  legacyReport[0],
+  {
+    ...legacyReport[1],
+    label: "Clarity",
+    headline: "MAKE IT EASY TO UNDERSTAND.",
+  },
+  legacyReport[2],
+  { ...legacyReport[3], label: "Design" },
   {
     label: "Engagement",
     headline: "GIVE PEOPLE A REASON TO READ.",
@@ -178,7 +298,7 @@ const reportV1: LearningSlide[] = [
       "Help people understand the finding, remember it and see what happens next.",
     example: "Give a chart a title that tells readers what it means.",
   },
-  report[6],
+  legacyReport[6],
 ];
 
 export function learningSlides(framework: Framework, version: string) {
@@ -186,7 +306,9 @@ export function learningSlides(framework: Framework, version: string) {
     ? claims
     : framework === "excellence"
       ? excellence
-      : isReportV2(version)
+      : isRevisedReport(version)
         ? report
-        : reportV1;
+        : isReportV2(version)
+          ? legacyReport
+          : reportV1;
 }

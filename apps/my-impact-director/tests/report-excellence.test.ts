@@ -2,12 +2,19 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { criteria } from "../src/lib/rubric";
 import {
-  scoreFramework,
+  scoreFramework as aggregate,
   validateFindings,
   type Criterion,
 } from "../src/lib/assessment";
 import { visualSample, renderVisualPages } from "../src/lib/report-visual";
 import { PDFDocument, StandardFonts } from "pdf-lib";
+// v1 equal-weighting regression remains locked to its historical version.
+const scoreFramework = (
+  f: Criterion[],
+  framework: Parameters<typeof aggregate>[1],
+  thresholds?: Parameters<typeof aggregate>[2],
+  version = "1.0.0",
+) => aggregate(f, framework, thresholds, version);
 const findings = (): Criterion[] =>
   criteria("report").map((c) => ({
     id: c.id,
