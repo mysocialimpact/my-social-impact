@@ -36,7 +36,7 @@ const supportedModels = [
 export function artConfiguration() {
   const director = z
     .enum(supportedModels)
-    .parse(process.env.IMPACT_EDIT_DIRECTOR_MODEL || "openai/gpt-6-astra");
+    .parse(process.env.IMPACT_EDIT_DIRECTOR_MODEL || "openai/gpt-6.1-terra");
   const scoring = z
     .enum(supportedModels)
     .parse(process.env.IMPACT_EDIT_SCORING_MODEL || "openai/gpt-6.1-terra");
@@ -204,7 +204,10 @@ export async function artImages(bytes: Buffer, numbers: number[]) {
     for (const image of rendered) {
       const original = await loadImage(image.dataUrl),
         canvas = createCanvas(original.width, original.height);
-      canvas.getContext("2d").drawImage(original, 0, 0);
+      const ctx = canvas.getContext("2d");
+      ctx.fillStyle = "#fff";
+      ctx.fillRect(0, 0, original.width, original.height);
+      ctx.drawImage(original, 0, 0);
       const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
       renderCache.set(`${hash}:${image.page}`, {
         dataUrl,

@@ -1,4 +1,3 @@
-import { REPORT_VERSION } from "../src/lib/report-methodology";
 import { workspaces } from "../src/lib/workspace";
 import { sendPendingReports } from "../src/lib/report-delivery";
 import { GET as reviewGet } from "../src/app/api/reviews/[id]/route";
@@ -1151,6 +1150,12 @@ test(
             (await startFramework(user, id, "report")).id,
             selected.id,
           );
+          // Exercise the frozen historical 2.0.1 path with its original mock contract.
+          // The new all-page multimodal 2.1 pipeline has a separate durable test.
+          await query(
+            "UPDATE director.reviews SET version='2.0.1-report' WHERE id=$1",
+            [selected.id],
+          );
           const before = (
             await query<{ n: string }>(
               "SELECT count(*) AS n FROM director.reports WHERE id=(SELECT report_id FROM director.reviews WHERE id=$1)",
@@ -1172,7 +1177,7 @@ test(
           assert.equal(result.scores.report!.overall, null);
           assert.equal(result.qualityControl?.calculatedOverall, 75);
           assert.ok(result.publicationNotice);
-          assert.equal(result.version, REPORT_VERSION);
+          assert.equal(result.version, "2.0.1");
           assert.ok(result.readerInspection);
           assert.equal(result.beta, true);
           assert.ok(result.editorial);

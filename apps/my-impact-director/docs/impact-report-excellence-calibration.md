@@ -63,3 +63,7 @@ Migration 008 adds an owner-bound selected-report table and app-role grants. Mig
 A focused concurrent database test also pauses a Claims Code action-plan call, commits a new shared-source observation, then resumes the call. The observation survives, and Claims Code still completes at its unchanged 1.0.0 score. Read-only assessment stages no longer overwrite source pages/notes; visual and editorial stages atomically merge keyed additions.
 
 Live-browser verification additionally exposed a session-loading race in assessment selection: a signed-in visitor could click before the child component finished its account check and be sent to signup. Assessment actions now wait for the check. A delayed-identity browser regression verifies one start and no signup redirect.
+
+## Visual art-director engine 2.1.0
+
+The subsequent multimodal engine and new real-document comparison record are documented in [impact-edit-art-director.md](impact-edit-art-director.md). The earlier results and limitations above describe their historical engines; they are not overwritten by this release.

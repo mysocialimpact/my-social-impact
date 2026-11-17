@@ -222,7 +222,9 @@ export function ReviewResults({
               href={
                 isReportV2(result.version)
                   ? isRevisedReport(result.version)
-                    ? "/methodology/impact-report-excellence"
+                    ? result.version.startsWith("2.0.1")
+                      ? "/methodology/impact-report-excellence/v2-0-1"
+                      : "/methodology/impact-report-excellence"
                     : "/methodology/impact-report-excellence/v2-0-0"
                   : "/methodology/impact-report-excellence/v1"
               }
@@ -270,7 +272,7 @@ export function ReviewResults({
       )}
       {result.artDirector && (
         <details className="finding">
-          <summary>The independent art director’s first reading</summary>
+          <summary>The AI art director’s first reading</summary>
           <div className="finding-content">
             <p>
               This visual editorial opinion was recorded before criterion scores

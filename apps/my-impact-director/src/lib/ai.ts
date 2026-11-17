@@ -155,8 +155,12 @@ export async function structured<T extends z.ZodType>(
     inputTokens: it,
     outputTokens: ot,
     cost:
-      it * rates.input * (it > 272000 ? 2 : 1) +
-      ot * rates.output * (it > 272000 ? 1.5 : 1),
+      it *
+        rates.input *
+        (it > 272000 && model.startsWith("openai/gpt-6") ? 2 : 1) +
+      ot *
+        rates.output *
+        (it > 272000 && model.startsWith("openai/gpt-6") ? 1.5 : 1),
     duration: Date.now() - start,
   };
   const choice = r.choices?.[0];

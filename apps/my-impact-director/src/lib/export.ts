@@ -174,7 +174,7 @@ export async function exportPdf(result: ReviewResult) {
     );
   }
   if (result.artDirector) {
-    heading("Independent art director review · before scoring");
+    heading("AI art director review · before scoring");
     write(result.artDirector.review.firstImpression);
     write(result.artDirector.review.verdict);
     Object.entries(result.artDirector.review.dimensions).forEach(

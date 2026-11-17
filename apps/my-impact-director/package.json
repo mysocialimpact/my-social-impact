@@ -10,14 +10,15 @@
     "typecheck": "tsc --noEmit",
     "test": "tsx --test tests/*.test.ts",
     "db:migrate": "tsx scripts/migrate.ts",
-    "test:database": "RUN_DATABASE_TESTS=1 node --env-file=.env.local --import tsx --test tests/integration.test.ts tests/workspace-integration.test.ts tests/rate-limits.test.ts tests/password-workspace.test.ts tests/report-version.test.ts tests/commercial-integration.test.ts tests/workspace-selection.test.ts tests/assessment-quality-integration.test.ts tests/contributions-integration.test.ts",
+    "test:database": "RUN_DATABASE_TESTS=1 node --env-file=.env.local --import tsx --test tests/integration.test.ts tests/workspace-integration.test.ts tests/rate-limits.test.ts tests/password-workspace.test.ts tests/report-version.test.ts tests/commercial-integration.test.ts tests/workspace-selection.test.ts tests/assessment-quality-integration.test.ts tests/contributions-integration.test.ts tests/art-director-integration.test.ts",
     "test:browser": "node scripts/qa-browser.mjs",
     "fixtures": "tsx scripts/calibrate.ts",
     "format:check": "prettier --check src tests scripts next.config.ts postcss.config.mjs",
     "impact-edit:fixtures": "node --import tsx scripts/impact-edit-fixtures.ts",
     "impact-edit:reference": "node --import tsx scripts/impact-edit-reference.ts",
     "impact-edit:assess": "node --import tsx scripts/assess-impact-edit.ts",
-    "impact-edit:assess:revised": "node --import tsx scripts/assess-impact-edit-revised.ts"
+    "impact-edit:assess:revised": "node --import tsx scripts/assess-impact-edit-revised.ts",
+    "impact-edit:assess:art-director": "node --import tsx scripts/assess-impact-edit-art-director.ts"
   },
   "keywords": [],
   "author": "",
