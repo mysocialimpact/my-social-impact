@@ -368,7 +368,7 @@ try {
       await p.getByRole("button", { name: /Menu/ }).click();
       await p
         .getByRole("navigation", { name: "Main navigation" })
-        .getByRole("link", { name: "Log in", exact: true })
+        .getByRole("link", { name: "Account", exact: true })
         .waitFor();
       await p.keyboard.press("Escape");
     }
