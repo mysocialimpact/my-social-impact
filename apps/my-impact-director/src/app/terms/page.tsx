@@ -40,6 +40,17 @@ export default function Terms() {
           agreed through a conversation. An enquiry creates no purchase
           commitment.
         </p>
+        <h2>Voluntary support</h2>
+        <p>
+          Any contribution is entirely optional, one-off and in pounds sterling.
+          The receiving merchant and amount are shown before you confirm payment
+          through Stripe. Contributions do not purchase a review, change its
+          findings, or grant preferential access. Your reviews remain free
+          whether you contribute or not. This is social enterprise support, not
+          a tax-deductible charitable donation; Gift Aid is not offered. For a
+          payment question or refund request, contact marcus@mysocialimpact.org
+          with your Stripe reference. Do not send card details.
+        </p>
         <h2>Accessibility</h2>
         <p>
           We aim for WCAG 2.2 AA: readable contrast, responsive layouts,

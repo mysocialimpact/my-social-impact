@@ -1,5 +1,6 @@
 "use client";
 import { ImpactVerdict } from "./impact-verdict";
+import { ContributionPanel } from "./contribution-panel";
 import { ReviewLearning } from "./review-learning";
 import { ContextualOffers } from "./contextual-offers";
 import {
@@ -756,6 +757,9 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
         ))}
       {complete && results && (
         <ContextualOffers framework={framework} reviewId={r.id} />
+      )}
+      {complete && results && !accountLoading && accountUser && (
+        <ContributionPanel key={`${r.id}:${accountUser.id}`} reviewId={r.id} />
       )}
     </div>
   );

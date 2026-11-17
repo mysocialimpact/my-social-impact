@@ -1,0 +1,189 @@
+.contribution-panel {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: 48px;
+  margin: 56px 0 24px;
+  padding: 48px;
+  background: var(--navy);
+  color: #fff;
+  border-top: 6px solid var(--orange);
+}
+.contribution-panel h2 {
+  font-size: clamp(32px, 3.2vw, 50px);
+  line-height: 1.02;
+  margin: 16px 0 24px;
+  letter-spacing: -0.045em;
+}
+.contribution-panel h2 span {
+  color: var(--orange);
+}
+.contribution-panel p {
+  font-size: 16px;
+  line-height: 1.55;
+}
+.contribution-panel .eyebrow {
+  color: #ffac94;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+}
+.contribution-choice {
+  align-self: center;
+  min-width: 0;
+}
+.contribution-panel fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0 0 24px;
+}
+.contribution-panel legend {
+  font-size: 15px;
+  margin-bottom: 14px;
+  font-weight: 700;
+}
+.contribution-amounts {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+.contribution-amounts label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 54px;
+  border: 1px solid #969dab;
+  padding: 10px 6px;
+  cursor: pointer;
+  font-size: 18px;
+  font-weight: 700;
+}
+.contribution-amounts label.selected {
+  background: var(--orange);
+  border-color: var(--orange);
+  color: var(--navy);
+}
+.contribution-amounts input {
+  accent-color: var(--navy);
+  width: 15px;
+  height: 15px;
+  margin: 0;
+}
+.contribution-custom {
+  display: block;
+  margin-top: 18px;
+  font-size: 15px;
+}
+.contribution-custom input {
+  display: block;
+  width: 100%;
+  background: #fff;
+  color: var(--navy);
+  border: 1px solid #a3aab7;
+  padding: 12px;
+  margin: 8px 0;
+  min-height: 48px;
+}
+.contribution-custom small {
+  font-size: 12px;
+}
+.contribution-panel .button {
+  width: 100%;
+  min-height: 50px;
+}
+.contribution-panel .fine-print {
+  font-size: 12px;
+  color: #d6d8df;
+}
+.contribution-panel .contribution-reassurance {
+  font-size: 13px;
+  margin: 18px 0 12px;
+}
+.contribution-error {
+  background: #fff0eb;
+  color: #8b2500;
+  padding: 14px;
+  margin-top: 16px;
+}
+.contribution-payment {
+  padding: 18px;
+  background: #fff;
+  color: var(--navy);
+}
+.contribution-payment h3 {
+  font-size: 23px;
+  margin-bottom: 8px;
+}
+.contribution-payment p {
+  font-size: 13px;
+}
+.contribution-payment-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: space-between;
+  margin-top: 14px;
+}
+.contribution-payment-actions button,
+.contribution-discreet button {
+  border: 0;
+  background: transparent;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  padding: 10px 0;
+  color: inherit;
+  font-size: 14px;
+}
+.contribution-thanks {
+  border-top: 3px solid var(--orange);
+  padding: 24px 0;
+  margin-top: 32px;
+  max-width: 800px;
+}
+.contribution-thanks .eyebrow {
+  font-weight: 800;
+}
+.contribution-discreet {
+  margin-top: 32px;
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+}
+.contribution-table {
+  overflow-x: auto;
+}
+.admin-contributions input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  vertical-align: middle;
+}
+.admin-contributions td:last-child {
+  overflow-wrap: anywhere;
+  max-width: 240px;
+}
+@media (max-width: 800px) {
+  .contribution-panel {
+    grid-template-columns: 1fr;
+    gap: 20px;
+    padding: 28px 22px;
+    margin-top: 36px;
+  }
+  .contribution-panel h2 {
+    font-size: 40px;
+  }
+  .contribution-panel p {
+    font-size: 15px;
+  }
+  .contribution-panel .contribution-message p:last-child {
+    margin-bottom: 0;
+  }
+}
+@media (max-width: 360px) {
+  .contribution-panel {
+    padding: 24px 16px;
+  }
+  .contribution-panel h2 {
+    font-size: 34px;
+  }
+  .contribution-amounts {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
