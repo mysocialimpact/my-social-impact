@@ -219,6 +219,13 @@ test(
       const running = await getReview(guest.user, selected.id);
       assert.equal(running.stage, 24);
       assert.ok(running.engine_state);
+      assert.equal(
+        await processOne(selected.id, Date.now() - 1000),
+        false,
+        "A nearly expired function must defer the next expensive art stage",
+      );
+      assert.equal(calls, 1, "Deferral must not start or charge an inference");
+      assert.equal((await getReview(guest.user, selected.id)).stage, 24);
       const privateRequest = () =>
         new Request(`https://test.example/api/reviews/${selected.id}`, {
           headers: { cookie: guest.cookie!.split(";")[0] },

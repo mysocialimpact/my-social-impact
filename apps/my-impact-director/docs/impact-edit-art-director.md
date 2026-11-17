@@ -54,6 +54,8 @@ These are experimental pillar estimates, not published overall scores or human r
 | strong-data | 2/2 | 18.75 | 21 | 13.75 | 7 | 6 | $0.1171 |
 | weak-data | 2/2 | 18.75 | 21 | 11.25 | 7 | 4.5 | $0.1104 |
 
+| charity-water-2024 | 16/16 | 12.5 | 18 | 17.5 | 3 | 4.5 | $0.2497 |
+
 Profit Impact’s independent first reading described dense justified text, long paragraphs, uneven spacing, repeated domino illustrations, uneven pacing, perspective pie charts, small low-contrast labels, and a crowded risk table. The criterion evidence cites the actual relevant physical pages. Consistent branding did not become evidence of excellent design. No report identity or target score was added to the rubric.
 
 The two chart controls preserve the same surrounding copy. Clear bars received better data-presentation judgements than the weaker graphic. The final difference is modest and other shared weaknesses remain: this is directional discrimination, not proof of numerical calibration. A plain effective publication was recognised as good across all first-pass dimensions. The dense repetitive control was judged weak or seriously ineffective across the reading experience.
@@ -70,3 +72,9 @@ Actual source hashes, complete responses, page observations, initial and correct
 - Actual new-model results for Profit Impact, the simple control and the dense control passed 15 desktop/tablet/mobile layout checks; screenshots were inspected. Larger pillar headings, three priorities and no horizontal overflow were checked. Desktop verdict and priorities fit the first screen.
 - The actual Profit Impact PDF export has 26 pages and includes the first visual opinion, source evidence, saved prompt/model record and beta limitations.
 - Type checking, formatting, production build, and the new CLI’s no-inference plan mode passed. Migration 011 was applied to validation before production, without deleting results.
+
+The published comparison’s visual-design estimate was stronger than Profit Impact’s. It recognised generous image-led compositions, restrained grids and a coherent rhythm, while identifying fine labels and low-contrast type. The final audit explicitly explained why coherent sequence could coexist with weak contextualised storytelling. This comparison does not supply an independently validated excellent endpoint; broader independently rated excellent publications remain necessary before claiming calibrated numerical accuracy.
+
+All seven successful Terra assessments together had a token-based estimate of US$1.250090. Including the unreconciled Astra timeout reservation, the bounded private relay accounted for US$4.290630 before closure; separate tiny visual probes estimated US$0.005312. The unknown reservation is not a reported billed amount. The private budget and probe were sealed, temporary validation upload/owner records removed, preview enablement disabled and both created access links revoked. No production review data or emails were written by calibration.
+
+An additional focused database check verifies that a late worker defers the next expensive art-director stage without invoking the model, consuming an attempt or losing saved progress. The 300-second function reserves enough time for a 160-second inference plus rendering/database work; unchanged framework calls retain their existing drain window.

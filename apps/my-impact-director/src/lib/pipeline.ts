@@ -179,7 +179,7 @@ export type ReviewResult = {
   actions: Actions;
   limitations: string[];
 };
-export async function processOne(id?: string) {
+export async function processOne(id?: string, latestArtStart?: number) {
   if (process.env.REVIEWS_ENABLED !== "true") return false;
   const [backoff] = await query(
     "SELECT 1 FROM director.rate_limits WHERE key='ai-provider-backoff' AND reset_at>now()",
@@ -196,8 +196,14 @@ export async function processOne(id?: string) {
     const {
       rows: [j],
     } = await c.query<Job>(
-      `WITH candidate AS (SELECT id FROM director.reviews WHERE (framework IS NULL OR framework='document' OR EXISTS(SELECT 1 FROM director.reports r WHERE r.id=reviews.report_id AND r.understanding_ready)) AND ($1::uuid IS NULL OR id=$1) AND next_attempt_at<=now() AND stage_attempts<3 AND attempts<80 AND (status='queued' OR status='running' AND lease_until<now()) ORDER BY created_at FOR UPDATE SKIP LOCKED LIMIT 1) UPDATE director.reviews v SET status='running',lease_token=$2,lease_until=now()+interval '4 minutes',stage_attempts=stage_attempts+1,attempts=attempts+1,updated_at=now() FROM candidate c WHERE v.id=c.id RETURNING v.*`,
-      [id || null, token],
+      `WITH candidate AS (SELECT id FROM director.reviews WHERE (framework IS NULL OR framework='document' OR EXISTS(SELECT 1 FROM director.reports r WHERE r.id=reviews.report_id AND r.understanding_ready)) AND ($1::uuid IS NULL OR id=$1) AND ($3::timestamptz IS NULL OR NOT(version LIKE '2.1.%' AND stage IN(16,24,25)) OR now()<$3::timestamptz) AND next_attempt_at<=now() AND stage_attempts<3 AND attempts<80 AND (status='queued' OR status='running' AND lease_until<now()) ORDER BY created_at FOR UPDATE SKIP LOCKED LIMIT 1) UPDATE director.reviews v SET status='running',lease_token=$2,lease_until=now()+interval '4 minutes',stage_attempts=stage_attempts+1,attempts=attempts+1,updated_at=now() FROM candidate c WHERE v.id=c.id RETURNING v.*`,
+      [
+        id || null,
+        token,
+        latestArtStart === undefined
+          ? null
+          : new Date(latestArtStart).toISOString(),
+      ],
     );
     return j;
   });
@@ -863,7 +869,10 @@ export async function processOne(id?: string) {
 }
 export async function drain(id?: string) {
   const start = Date.now();
+  // Art-director requests may use 160 seconds plus rendering/DB work. Never
+  // begin another expensive request late in a 300-second function. The next
+  // worker resumes the saved stage; other frameworks retain their drain window.
   while (Date.now() - start < 220000) {
-    if (!(await processOne(id))) break;
+    if (!(await processOne(id, start + 100000))) break;
   }
 }
