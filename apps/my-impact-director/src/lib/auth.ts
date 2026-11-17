@@ -179,7 +179,9 @@ export async function accountAction(req: Request, input: unknown) {
           position: "Not supplied",
           organisation: "Not supplied",
         }
-      : data;
+      : data.action === "request-reset"
+        ? { ...data, product: "my-impact-director" }
+        : data;
   const r = await fetch(accountUrl(), {
     method: "POST",
     headers: {

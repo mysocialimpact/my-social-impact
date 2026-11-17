@@ -21,6 +21,15 @@ test('cross-site reset mutation is rejected before any service request',async t=
   configure(t);const fetch=t.mock.method(globalThis,'fetch',async()=>{throw Error('must not reach');});
   assert.equal((await POST(request({action:'request-reset',email:'person@example.org'},{origin:'https://evil.example'}))).status,403);assert.equal(fetch.mock.callCount(),0);
 });
+test('MID branding context reaches the recovery provider without arbitrary destinations',async t=>{
+  configure(t);
+  t.mock.method(globalThis,'fetch',async(_url,init)=>{
+    assert.deepEqual(JSON.parse(init.body),{action:'request-reset',email:'person@example.org',clientIp:'unknown',product:'my-impact-director'});
+    return Response.json({ok:true},{status:202});
+  });
+  assert.equal((await POST(request({action:'request-reset',email:'person@example.org',product:'my-impact-director',returnUrl:'https://evil.example'}))).status,202);
+  assert.equal((await POST(request({action:'request-reset',email:'person@example.org',product:'other'}))).status,400);
+});
 test('successful reset clears old session cookie without automatic login',async t=>{
   configure(t);t.mock.method(globalThis,'fetch',async()=>Response.json({ok:true,sessionToken:'must-never-return',token:'private',account:{email:'private'},password:'private'}));
   const result=await POST(request({action:'reset-password',token:'a'.repeat(64),password:'New password'}));
