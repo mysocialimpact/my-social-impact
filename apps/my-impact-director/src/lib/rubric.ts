@@ -160,7 +160,7 @@ export const FRAMEWORKS: Framework[] = ["claims", "excellence", "report"];
 export const frameworkLogos = {
   claims: "/brand/claims-code.png",
   excellence: "/brand/excellence.png",
-  report: "/brand/impact-design-review-artwork.webp",
+  report: "/brand/impact-design-review-transparent.png",
 };
 export const testsPerPillar = (framework: Framework) =>
   framework === "report" ? 5 : 4;

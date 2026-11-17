@@ -1,3 +1,4 @@
+import { suppliedPillarSummary } from "./pillar-summary";
 import { buildArtResult } from "./art-result";
 import { inspectReader, type ReaderInspection } from "./report-reader";
 import {
@@ -585,6 +586,11 @@ export async function processOne(id?: string, latestArtStart?: number) {
         scores.report!.overall = null;
         scores.report!.provisional = true;
       }
+      for (const score of Object.values(scores))
+        for (const p of score!.principles)
+          p.summary =
+            suppliedPillarSummary(p.name, p.tests, r.data.pillarSummaries) ??
+            p.summary;
       result = {
         ...(isRevisedReport(job.version) && job.framework === "report"
           ? {

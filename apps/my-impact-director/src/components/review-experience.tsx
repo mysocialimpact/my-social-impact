@@ -558,7 +558,7 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
             <Image
               src={
                 framework === "report"
-                  ? "/brand/impact-design-review-artwork.webp"
+                  ? "/brand/impact-design-review-transparent.png"
                   : frameworkLogos[framework]
               }
               alt={names[framework]}

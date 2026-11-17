@@ -1,3 +1,4 @@
+import { pillarSummary, validPillarSummary } from "@/lib/pillar-summary";
 import { reportTotal } from "@/lib/report-total";
 import { sendPendingReports } from "@/lib/report-delivery";
 import { emailEnabled } from "@/lib/email-save";
@@ -43,7 +44,12 @@ export async function GET(req: Request, ctx: Context) {
         if (result.framework === "report")
           result.displayOverall = reportTotal(result);
         for (const score of Object.values(result.scores))
-          for (const p of score!.principles) p.tests = [];
+          for (const p of score!.principles) {
+            p.summary = validPillarSummary(p.summary)
+              ? p.summary
+              : pillarSummary(p.tests);
+            p.tests = [];
+          }
         result.claims = [];
         delete result.creativeDirection;
         delete result.pdfChecks;

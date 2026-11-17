@@ -495,3 +495,92 @@
 .reports-content {
   padding-bottom: 2.5rem;
 }
+.publication > .pub-mast {
+  background: #f5f2e9;
+  color: #0b1428;
+  border: 0;
+  border-top: 8px solid var(--orange);
+  padding: clamp(1.3rem, 3vw, 3rem);
+  margin: 0;
+  flex-wrap: wrap;
+}
+.publication > .pub-mast img {
+  width: min(100%, 520px);
+  height: 320px;
+  object-fit: contain;
+  object-position: left center;
+  background: transparent;
+  padding: 0;
+  max-height: none;
+}
+.publication > .pub-mast span {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+.publication > .pub-cover {
+  border-top: 0;
+}
+.pub-scores > div {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 2.2rem;
+}
+.pub-scores h3 {
+  font-size: clamp(1.5rem, 2.3vw, 2.3rem);
+  min-height: 2.2em;
+}
+.pub-scores .pillar-explanation {
+  font-size: 1.12rem;
+  line-height: 1.6;
+  max-width: 42ch;
+}
+.pub-scores section > a {
+  display: block;
+  margin-top: 0.8rem;
+  font-weight: 700;
+}
+.workspace-review-logo-report {
+  background: transparent;
+}
+@media (max-width: 1000px) {
+  .pub-scores > div {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 650px) {
+  .publication > .pub-mast img {
+    height: 220px;
+    width: 100%;
+  }
+  .pub-scores > div {
+    grid-template-columns: 1fr;
+    gap: 1.8rem;
+  }
+  .pub-scores h3 {
+    min-height: 0;
+  }
+  .pub-scores .pillar-explanation {
+    font-size: 1.08rem;
+    line-height: 1.6;
+  }
+}
+.learning-product img {
+  width: 64px;
+  height: 64px;
+}
+.learning-product img[src*="impact-design-review"] {
+  width: 112px;
+  height: 74px;
+}
+@media (max-width: 650px) {
+  .learning-product img {
+    width: 48px;
+    height: 48px;
+  }
+  .learning-product img[src*="impact-design-review"] {
+    width: 88px;
+    height: 59px;
+  }
+}

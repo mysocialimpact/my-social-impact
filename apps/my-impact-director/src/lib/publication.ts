@@ -1,6 +1,11 @@
+import {
+  pillarSummary,
+  validPillarSummary,
+  suppliedPillarSummary,
+} from "./pillar-summary";
 import { reportTotal } from "./report-total";
 import type { ReviewResult } from "./pipeline";
-import { criteria, type Framework } from "./rubric";
+import { type Framework } from "./rubric";
 import { pillarMaximum } from "./report-methodology";
 
 export const bands = [
@@ -56,7 +61,7 @@ export const identity = {
     note: "This review describes the management practices evidenced in your report. A full organisational assessment requires further evidence.",
   },
   report: {
-    logo: "impact-design-review-artwork.webp",
+    logo: "impact-design-review-transparent.png",
     colour: "#071126",
     headline: "Your impact deserves to be seen.",
     invitation: "Let’s bring your report to life.",
@@ -123,21 +128,22 @@ export function publication(result: ReviewResult, framework: Framework) {
       const finding = p.tests
         .filter((t) => t.score !== null)
         .sort((a, b) => a.score! - b.score!)[0];
-      const relatedCriteria = criteria(framework, result.version).filter(
-        (c) => c.principle === p.name,
+      const supplied = suppliedPillarSummary(
+        p.name,
+        p.tests,
+        result.actions.pillarSummaries,
       );
-      const relatedAction = priorities.find((action) =>
-        relatedCriteria.some((c) => action.criterionIds.includes(c.id)),
-      );
+      const summary =
+        supplied ??
+        (validPillarSummary(p.summary) ? p.summary! : pillarSummary(p.tests));
       return {
         name: p.name,
         maximum,
         points: p.score === null ? null : Number(p.score.toFixed(2)),
         rating: displayScore(p.score, maximum),
-        insight: finding
-          ? brief(finding.explanation)
-          : (relatedAction?.summary ??
-            `${p.coverage} criteria assessed in this review.`),
+        insight: summary.text,
+        insightPages: summary.pages,
+        insightLimitation: summary.limitation,
         excerpt: finding?.evidence[0],
       };
     }),

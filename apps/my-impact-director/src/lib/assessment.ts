@@ -1,3 +1,4 @@
+import { pillarSummary, type PillarSummary } from "./pillar-summary";
 import {
   REPORT_VERSION,
   isReportV2,
@@ -86,6 +87,18 @@ export const findingsSchema = z
   .strict();
 export const actionSchema = z
   .object({
+    pillarSummaries: z
+      .array(
+        z
+          .object({
+            pillar: z.string(),
+            text: z.string().min(30).max(500),
+            criterionIds: z.array(z.string()).min(1).max(5),
+          })
+          .strict(),
+      )
+      .max(5)
+      .optional(),
     summary: text,
     strengths: z.array(text).min(1).max(5),
     opportunities: z.array(text).min(1).max(5),
@@ -228,6 +241,7 @@ export function scoreFramework(
         ? reportWeightsFor(version)[i]
         : 20;
     return {
+      ...({ summary: pillarSummary(tests) } as { summary?: PillarSummary }),
       maximum,
       name: expected[i * testsPerPillar(framework)].principle,
       score: assessable.length

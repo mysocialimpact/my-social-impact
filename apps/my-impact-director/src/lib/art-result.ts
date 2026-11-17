@@ -1,3 +1,4 @@
+import { suppliedPillarSummary } from "./pillar-summary";
 import type { ReviewResult } from "./pipeline";
 import {
   validateFindings,
@@ -28,6 +29,10 @@ export function buildArtResult(
     undefined,
     version,
   );
+  for (const p of score.principles)
+    p.summary =
+      suppliedPillarSummary(p.name, p.tests, audit.actions.pillarSummaries) ??
+      p.summary;
   const calculatedOverall = score.unroundedOverall ?? score.overall;
   const inspectionComplete = visualCoverage(
     pages,

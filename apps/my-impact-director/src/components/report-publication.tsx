@@ -1,3 +1,4 @@
+"use client";
 import type { ReviewResult } from "@/lib/pipeline";
 import { frameworkNames, type Framework } from "@/lib/rubric";
 import { publication, identity, brief } from "@/lib/publication";
@@ -21,16 +22,16 @@ export function ReportPublication({
       className="publication"
       style={{ "--edition": brand.colour } as React.CSSProperties}
     >
+      <div
+        className={
+          "pub-mast " + (framework === "report" ? "pub-mast-edit" : "")
+        }
+      >
+        <img src={"/brand/" + brand.logo} alt="" />
+        <span>{frameworkNames[framework]}</span>
+        <small>Methodology {result.version}</small>
+      </div>
       <header className="pub-cover">
-        <div
-          className={
-            "pub-mast " + (framework === "report" ? "pub-mast-edit" : "")
-          }
-        >
-          <img src={"/brand/" + brand.logo} alt="" />
-          <span>{frameworkNames[framework]}</span>
-          <small>Methodology {result.version}</small>
-        </div>
         <div className="pub-cover-grid">
           <div>
             <p>{result.context.organisation}</p>
@@ -100,7 +101,25 @@ export function ReportPublication({
                   ? "No score"
                   : p.points + " / " + p.maximum + " points"}
               </small>
-              <p>{p.insight}</p>
+              <p className="pillar-explanation">{p.insight}</p>
+              {p.insightPages.length > 0 && (
+                <small>
+                  Source pages{" "}
+                  {p.insightPages.slice(0, 3).join(", ") +
+                    (p.insightPages.length > 3 ? " · more in findings" : "")}
+                </small>
+              )}
+              {hasDetails && (
+                <a
+                  href="#supporting-evidence"
+                  onClick={() => {
+                    const el = document.getElementById("supporting-evidence");
+                    if (el instanceof HTMLDetailsElement) el.open = true;
+                  }}
+                >
+                  Explore the findings →
+                </a>
+              )}
             </section>
           ))}
         </div>

@@ -1,3 +1,4 @@
+import { PILLAR_SUMMARY_INSTRUCTIONS } from "./pillar-summary";
 import { z } from "zod";
 import {
   actionSchema,
@@ -234,6 +235,7 @@ export function actionInstructions(
         ? REVISED_EDITORIAL_PROMPT
         : EDITORIAL_PROMPT
       : "") +
+    PILLAR_SUMMARY_INSTRUCTIONS +
     "Write a concise executive summary and specific prioritised action plan using ONLY validated findings. Each action must cite existing criterion IDs and say what to change, why, and how. Distinguish quick wording changes, important evidence/reporting improvements, and longer-term measurement/management improvements. Do not invent achievements, comparisons, benchmarks or new source facts. If evidence is weak, a strength may be a clearly qualified useful starting point. Do not describe provisional assessments as definitive scores."
   );
 }

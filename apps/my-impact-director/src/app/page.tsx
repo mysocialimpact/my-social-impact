@@ -32,7 +32,7 @@ const perspectives = [
   },
   {
     id: "report",
-    logo: "impact-design-review-artwork.webp",
+    logo: "impact-design-review-transparent.png",
     name: "The Impact Design Review",
     question: "Does your impact report make an impact?",
     pillars:
