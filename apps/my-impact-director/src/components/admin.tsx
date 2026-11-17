@@ -1,5 +1,6 @@
 "use client";
 import { pillarMaximum } from "@/lib/report-methodology";
+import { AdminContributions } from "./admin-contributions";
 import { useEffect, useState } from "react";
 import { useSession, api } from "./session";
 import { Account } from "./account";
@@ -164,6 +165,7 @@ export function Admin() {
               </div>
             ))}
           </div>
+          <AdminContributions />
           <p className="fine-print">
             Completion:{" "}
             {Number(data.metrics.reviews)

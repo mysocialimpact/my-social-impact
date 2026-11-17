@@ -132,6 +132,24 @@ export default function Privacy() {
           according to their retention policies; deletion from the active
           application is not a promise of instant removal from every backup.
         </p>
+        <h2>Optional financial support</h2>
+        <p>
+          If you choose to contribute, Stripe handles your payment details. We
+          do not collect or store card numbers. We keep a minimal contribution
+          record: amount, currency, payment status, refunds, Stripe references
+          and, where available, your account and the assessment you supported. A
+          verified account email may be used for your payment receipt; otherwise
+          Stripe asks for the receipt details it needs. Contributing does not
+          subscribe you to marketing or share your report findings. Financial
+          records may need to remain for accounting and payment reconciliation
+          after a report is deleted; the report link is removed. Stripe’s
+          privacy notice also applies to its handling of payments.
+        </p>
+        <p>
+          <a href="https://stripe.com/privacy">
+            Read Stripe’s privacy notice →
+          </a>
+        </p>
         <h2>Feedback</h2>
         <p>
           Optional feedback is stored in the founder inbox with your rating,
