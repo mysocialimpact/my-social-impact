@@ -2,7 +2,7 @@ import { privateNetworkKey } from "@/lib/access";
 import { protectUpload } from "@/lib/upload-protection";
 import { z } from "zod";
 import { after } from "next/server";
-import { visitor } from "@/lib/auth";
+import { visitor, reviewAccount } from "@/lib/auth";
 import {
   AppError,
   failure,
@@ -36,7 +36,7 @@ const schema = z.discriminatedUnion("action", [
 export async function POST(req: Request) {
   try {
     sameOrigin(req);
-    const user = await visitor(req);
+    const user = await reviewAccount(req);
     if (!ready())
       throw new AppError(
         503,

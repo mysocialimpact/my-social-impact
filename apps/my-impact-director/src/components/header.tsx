@@ -33,7 +33,9 @@ export function Header() {
     if (path === "/" && location.hash === "#upload")
       requestAnimationFrame(() =>
         document
-          .getElementById("hero-report-file")
+          .querySelector<HTMLElement>(
+            '#hero-report-file, #upload input[name="email"]',
+          )
           ?.focus({ preventScroll: true }),
       );
   }, [path]);
@@ -107,7 +109,9 @@ export function Header() {
                 block: "start",
               });
               document
-                .getElementById("hero-report-file")
+                .querySelector<HTMLElement>(
+                  '#hero-report-file, #upload input[name="email"]',
+                )
                 ?.focus({ preventScroll: true });
             }
           }}

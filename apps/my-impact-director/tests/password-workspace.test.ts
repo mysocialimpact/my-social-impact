@@ -13,6 +13,11 @@ import {
   visitor,
   passwordResetAvailable,
 } from "../src/lib/auth";
+import { POST as uploadStart } from "../src/app/api/uploads/route";
+import { POST as discoveryStart } from "../src/app/api/discovery/route";
+import { POST as legacyUpload } from "../src/app/api/reviews/route";
+import { POST as assessmentStart } from "../src/app/api/reviews/[id]/route";
+import { POST as uploadFinish } from "../src/app/api/uploads/[id]/route";
 import { requestEmailSave, redeemEmailLink } from "../src/lib/email-save";
 import { createReview, getReview, startFramework } from "../src/lib/reviews";
 const hash = (s: string) => createHash("sha256").update(s).digest("hex");
@@ -268,6 +273,62 @@ test(
       assert.equal(newAccount.status, 200);
       const newCookie = cookie(newAccount),
         unverified = await visitor(req(newCookie));
+      // Every public path into new processing must reject a guest before counters or model work.
+      const gateRequest = (
+        path: string,
+        cookieValue: string,
+        data: unknown = {},
+      ) =>
+        new Request("https://test.example" + path, {
+          method: "POST",
+          headers: {
+            origin: "https://test.example",
+            cookie: cookieValue,
+            "content-type": "application/json",
+          },
+          body: JSON.stringify(data),
+        });
+      for (const [handler, path, data] of [
+        [
+          uploadStart,
+          "/api/uploads",
+          { name: "new.pdf", size: 100, consent: true },
+        ],
+        [
+          discoveryStart,
+          "/api/discovery",
+          { action: "search", organisation: "Example" },
+        ],
+        [legacyUpload, "/api/reviews", {}],
+      ] as const) {
+        const response = await handler(gateRequest(path, c.cookie, data));
+        assert.equal(response.status, 401);
+        assert.equal((await response.json()).code, "ACCOUNT_REQUIRED");
+      }
+      for (const data of [{ framework: "claims" }, {}]) {
+        const response = await assessmentStart(
+          gateRequest("/api/reviews/" + c.doc.id, c.cookie, data),
+          { params: Promise.resolve({ id: c.doc.id }) },
+        );
+        assert.equal(response.status, 401);
+        assert.equal((await response.json()).code, "ACCOUNT_REQUIRED");
+      }
+      const finishBlocked = await uploadFinish(
+        gateRequest("/api/uploads/" + randomUUID(), c.cookie, {
+          consent: true,
+          qualityConsent: false,
+        }),
+        { params: Promise.resolve({ id: randomUUID() }) },
+      );
+      assert.equal(finishBlocked.status, 401);
+      const startAllowed = await uploadStart(
+        gateRequest("/api/uploads", newCookie, {
+          name: "new.pdf",
+          size: 100,
+          consent: true,
+        }),
+      );
+      assert.equal(startAllowed.status, 201, await startAllowed.clone().text());
       assert.equal(unverified.emailVerified, false);
       await assert.rejects(() => getReview(unverified, c.doc.id), {
         status: 404,

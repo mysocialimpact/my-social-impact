@@ -1,0 +1,170 @@
+/* Account first; processing status remains distinct from learning progress. */
+.review-account-gate {
+  background: white;
+  color: var(--navy);
+}
+.review-account-gate .account-card {
+  background: white;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+}
+.review-account-gate .simple-account h2 {
+  font-family: inherit;
+  letter-spacing: -0.035em;
+  margin-top: 0;
+  font-size: clamp(26px, 2.6vw, 38px);
+  line-height: 1.05;
+  margin-bottom: 12px;
+}
+.review-account-gate .simple-account > p {
+  font-size: 14px;
+  line-height: 1.5;
+  margin-block: 12px;
+}
+.review-account-gate .simple-account .eyebrow {
+  font-size: 11px;
+}
+.review-account-gate .simple-account form {
+  margin-block: 18px;
+  gap: 12px;
+}
+.review-account-gate .simple-account label {
+  font-size: 13px;
+}
+.review-account-gate .simple-account input {
+  padding: 10px 12px;
+  margin-top: 5px;
+}
+.review-account-gate .simple-account .fine-print {
+  font-size: 11px;
+}
+.workspace-assessment strong {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.workspace-state-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #7e879b;
+  flex: 0 0 8px;
+}
+.workspace-assessment.state-not-started {
+  color: #c3c9d5;
+}
+.workspace-assessment.state-not-started strong {
+  color: #aeb6c6;
+}
+.workspace-assessment.state-not-started .workspace-state-dot {
+  background: transparent;
+  border: 1px solid #8e98ac;
+}
+.workspace-assessment.state-preparing {
+  background: #14372b;
+  border-left: 3px solid #75e9a3;
+  padding-block: 6px;
+  padding-right: 8px;
+}
+.workspace-assessment.state-preparing strong {
+  color: #91f2b6;
+}
+.workspace-assessment.state-preparing .workspace-state-dot {
+  background: #91f2b6;
+  animation: preparing-pulse 1800ms ease-in-out infinite;
+}
+.workspace-assessment.state-completed .workspace-state-dot {
+  background: #8ce2c0;
+}
+.workspace-assessment.state-needs-attention .workspace-state-dot {
+  background: #ffbca7;
+}
+@keyframes preparing-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 #91f2b640;
+    opacity: 1;
+  }
+  55% {
+    box-shadow: 0 0 0 5px #91f2b600;
+    opacity: 0.55;
+  }
+}
+.preparation-card {
+  color: var(--navy);
+  background: white;
+  border-top: 6px solid var(--orange);
+  padding: clamp(20px, 2.2vw, 34px);
+  align-self: center;
+}
+.preparation-card .eyebrow {
+  font-size: 11px;
+  margin: 0 0 12px;
+  color: #505665;
+}
+.preparation-card h3 {
+  font-size: clamp(25px, 2.2vw, 36px);
+  line-height: 1.05;
+  letter-spacing: -0.035em;
+  margin: 0 0 16px;
+}
+.preparation-card > p,
+.preparation-card li {
+  font-size: 14px;
+  line-height: 1.5;
+}
+.preparation-card ol {
+  padding-left: 20px;
+  margin-block: 18px;
+}
+.preparation-card li + li {
+  margin-top: 6px;
+}
+.preparation-card .preparation-account {
+  padding-top: 14px;
+  border-top: 1px solid #c6c9d1;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.preparation-card .preparation-account strong {
+  display: block;
+}
+.preparation-card .button {
+  margin-top: 8px;
+  gap: 16px;
+  font-size: 14px;
+}
+.remembered-email {
+  overflow-wrap: anywhere;
+}
+@media (max-width: 700px) {
+  .workspace-assessment.state-preparing {
+    padding-left: 8px;
+    padding-right: 4px;
+  }
+  .workspace-assessment strong {
+    gap: 5px;
+  }
+  .workspace-state-dot {
+    width: 6px;
+    height: 6px;
+    flex-basis: 6px;
+  }
+  .preparation-card {
+    padding: 20px;
+  }
+  .preparation-card h3 {
+    font-size: 26px;
+  }
+  .preparation-card > p,
+  .preparation-card li {
+    font-size: 13px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .workspace-assessment.state-preparing .workspace-state-dot {
+    animation: none;
+  }
+}

@@ -9,6 +9,7 @@ import { createReview, deleteReview } from "../src/lib/reviews";
 import { recordCompletedReport } from "../src/lib/review-allowance";
 import { rateLimit, failure, AppError } from "../src/lib/security";
 import { POST as begin } from "../src/app/api/uploads/route";
+import { beginUpload } from "../src/lib/uploads";
 const hash = (s: string) => createHash("sha256").update(s).digest("hex");
 test(
   "shared-network visitors, abandoned/failed uploads, successful allowance and abuse protection",
@@ -59,25 +60,29 @@ test(
         "upload-attempt-v2:" + a.user.id,
         "upload-attempt-v2:" + b.user.id,
       );
-      for (let i = 0; i < 5; i++) {
-        const response = await begin(
-          new Request("https://test.example/api/uploads", {
-            method: "POST",
-            headers: {
-              origin: "https://test.example",
-              "x-forwarded-for": ip,
-              cookie: a.cookie!.split(";")[0],
-              "content-type": "application/json",
-            },
-            body: JSON.stringify({
-              name: "abandoned.pdf",
-              size: 100,
-              consent: true,
-            }),
+      const anonymousAttempt = await begin(
+        new Request("https://test.example/api/uploads", {
+          method: "POST",
+          headers: {
+            origin: "https://test.example",
+            cookie: a.cookie!.split(";")[0],
+            "content-type": "application/json",
+          },
+          body: JSON.stringify({
+            name: "abandoned.pdf",
+            size: 100,
+            consent: true,
           }),
-        );
-        assert.equal(response.status, 201, await response.text());
-      }
+        }),
+      );
+      assert.equal(anonymousAttempt.status, 401);
+      assert.equal((await anonymousAttempt.json()).code, "ACCOUNT_REQUIRED");
+      for (let i = 0; i < 5; i++)
+        await beginUpload(a.user, {
+          name: "abandoned.pdf",
+          size: 100,
+          consent: true,
+        });
       await protectUpload(req, b.user); // Fresh session on the same IP still works.
       assert.equal(
         (

@@ -131,7 +131,7 @@ export function ActionShell({ children }: { children: React.ReactNode }) {
                 <span>
                   {support
                     ? "Human experience. Support that fits."
-                    : "No registration required."}
+                    : "Create your free account to start."}
                 </span>
               </>
             )}

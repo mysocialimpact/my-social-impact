@@ -10,18 +10,23 @@ export function Account({
   setup = false,
   email = "",
   name = "",
+  embedded = false,
+  onAuthenticated,
 }: {
   next?: string;
   initialMode?: "login" | "signup";
   setup?: boolean;
   email?: string;
   name?: string;
+  embedded?: boolean;
+  onAuthenticated?: () => void;
 }) {
   const passwordHelp = useId();
+  const [address, setAddress] = useState(email);
   const [mode, setMode] = useState(initialMode),
     [busy, setBusy] = useState(false),
     [error, setError] = useState("");
-  const Heading = setup ? "h2" : "h1";
+  const Heading = setup || embedded ? "h2" : "h1";
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setBusy(true);
@@ -38,7 +43,10 @@ export function Account({
           ...(mode === "signup" ? { name: f.get("name") } : {}),
         }),
       });
-      window.location.assign(safeReturnPath(next));
+      if (onAuthenticated) {
+        window.dispatchEvent(new Event("mid-session-refresh"));
+        onAuthenticated();
+      } else window.location.assign(safeReturnPath(next));
     } catch (e) {
       setError(
         e instanceof Error
@@ -61,7 +69,9 @@ export function Account({
       <p>
         {setup
           ? "Keep your existing reports and use email and password next time."
-          : "Your reports, progress and results. Ready when you are."}
+          : embedded
+            ? "Create an account or log in before uploading. Your reports and progress stay together, and we’ll use this email for report delivery."
+            : "Your reports, progress and results. Ready when you are."}
       </p>
       <form onSubmit={submit} key={mode} method="post">
         {mode === "signup" && (
@@ -85,7 +95,8 @@ export function Account({
             autoComplete="email"
             maxLength={254}
             required
-            defaultValue={email}
+            value={address}
+            onChange={(e) => setAddress(e.target.value)}
             readOnly={setup}
           />
         </label>
@@ -152,7 +163,7 @@ export function Account({
           <Link href="/forgot-password">reset it</Link>.
         </p>
       )}
-      {!setup && (
+      {!setup && !embedded && (
         <details className="legacy-account-help">
           <summary>Previously used an email link?</summary>
           <p>

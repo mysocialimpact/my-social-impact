@@ -4,7 +4,7 @@ import { z } from "zod";
 import { query } from "@/lib/db";
 import { readJson } from "@/lib/security";
 import { after } from "next/server";
-import { visitor } from "@/lib/auth";
+import { visitor, assertReviewAccount } from "@/lib/auth";
 import {
   getReview,
   retryReview,
@@ -115,6 +115,7 @@ export async function POST(req: Request, ctx: Context) {
       return Response.json({ ok: true });
     }
     if (data.framework) {
+      assertReviewAccount(user);
       const framework = z
         .enum(["claims", "excellence", "report"])
         .parse(data.framework);
@@ -125,6 +126,7 @@ export async function POST(req: Request, ctx: Context) {
       });
       return Response.json(review, { status: 201 });
     }
+    assertReviewAccount(user);
     await retryReview(user, id);
     after(() => drain(id));
     return Response.json({ ok: true });

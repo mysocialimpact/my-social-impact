@@ -11,6 +11,7 @@ import "@fontsource/instrument-serif/400-italic.css";
 import "./globals.css";
 import "./campaign.css";
 import "./creative-home.css";
+import "./account-journey.css";
 import { ActionShell } from "@/components/action-bar";
 import { Header, Footer } from "@/components/shell";
 export const metadata: Metadata = {

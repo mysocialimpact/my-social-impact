@@ -248,3 +248,27 @@ export async function passwordResetAvailable() {
   const data = await r.json();
   return r.ok && data.available === true;
 }
+
+/** New processing requires an account; legacy private reads remain available. */
+export function assertReviewAccount(user: Identity): Identity {
+  if (user.anonymous || !user.email)
+    throw new AppError(
+      401,
+      "Create your free account or log in before starting a review.",
+      "ACCOUNT_REQUIRED",
+    );
+  return user;
+}
+export async function reviewAccount(req: Request): Promise<Identity> {
+  try {
+    return assertReviewAccount(await visitor(req));
+  } catch (error) {
+    if (error instanceof AppError && error.status === 401)
+      throw new AppError(
+        401,
+        "Create your free account or log in before starting a review.",
+        "ACCOUNT_REQUIRED",
+      );
+    throw error;
+  }
+}

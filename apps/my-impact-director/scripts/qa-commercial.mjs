@@ -73,8 +73,9 @@ try {
                 }
               : guestUpload
                 ? {
-                    id: "synthetic-guest",
-                    anonymous: true,
+                    id: "synthetic-account",
+                    email: "qa@example.invalid",
+                    anonymous: false,
                     emailVerified: false,
                   }
                 : reviewFixture
@@ -83,7 +84,12 @@ try {
                       emailVerified: true,
                       anonymous: false,
                     }
-                  : null,
+                  : {
+                      id: "synthetic-account",
+                      email: "qa@example.invalid",
+                      anonymous: false,
+                      emailVerified: false,
+                    },
           },
         });
       if (path === "/api/service-intents") {

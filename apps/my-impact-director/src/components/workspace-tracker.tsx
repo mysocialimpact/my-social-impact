@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { api } from "./session";
+import { api, useSession } from "./session";
 import { FRAMEWORKS, frameworkNames, type Framework } from "@/lib/rubric";
 import {
   stateLabel,
@@ -11,6 +11,7 @@ import {
   type AssessmentState,
 } from "./workspace-types";
 export function WorkspaceTracker({ id }: { id: string }) {
+  const { user } = useSession();
   const [workspace, setWorkspace] = useState<Workspace | null>(null),
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false);
@@ -66,6 +67,12 @@ export function WorkspaceTracker({ id }: { id: string }) {
   }, [!!workspace]);
   async function start(f: Framework) {
     if (!workspace) return;
+    if (!user || user.anonymous) {
+      window.location.assign(
+        `/login?mode=signup&next=${encodeURIComponent("/reviews/" + id)}`,
+      );
+      return;
+    }
     setBusy(true);
     try {
       const d = await api("/api/reviews/" + id, {
@@ -107,7 +114,10 @@ export function WorkspaceTracker({ id }: { id: string }) {
                 : "The Impact Edit"}
           </span>
         </span>
-        <strong>{label}</strong>
+        <strong>
+          <span className="workspace-state-dot" aria-hidden="true" />
+          {label}
+        </strong>
         {a ? (
           <Link
             href={
@@ -145,7 +155,11 @@ export function WorkspaceTracker({ id }: { id: string }) {
           <span className="workspace-document">· {workspace.title}</span>
         </p>
       </div>
-      <div className="workspace-assessments">
+      <div
+        className="workspace-assessments"
+        aria-live="polite"
+        aria-atomic="true"
+      >
         {FRAMEWORKS.map((f) =>
           entry(
             f,

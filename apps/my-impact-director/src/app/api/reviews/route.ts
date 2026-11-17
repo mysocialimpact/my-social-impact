@@ -2,7 +2,7 @@ import { workspaces } from "@/lib/workspace";
 import { MAX_FILE } from "@/lib/file-limits";
 import { protectUpload } from "@/lib/upload-protection";
 import { after } from "next/server";
-import { visitor } from "@/lib/auth";
+import { visitor, reviewAccount } from "@/lib/auth";
 import { sameOrigin, failure, AppError } from "@/lib/security";
 import { createReview, listReviews, ready } from "@/lib/reviews";
 import { drain } from "@/lib/pipeline";
@@ -26,7 +26,7 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     sameOrigin(req);
-    const user = await visitor(req);
+    const user = await reviewAccount(req);
     await protectUpload(req, user);
     if (Number(req.headers.get("content-length") || 0) > 4_100_000)
       throw new AppError(
