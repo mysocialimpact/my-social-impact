@@ -36,11 +36,11 @@ const perspectives = [
     name: "The Impact Edit",
     question: "Does your impact report make an impact?",
     pillars:
-      "Readability · Storytelling · Visual design · Data · Accessibility",
+      "Readability & Copy · Information Hierarchy · Visual Design · Storytelling · Data Presentation",
     explanation:
       "An indicative creative assessment of your report’s writing and actual page design. Twenty-five anchored criteria examine readability and hierarchy, storytelling, visual design, data communication and accessibility. Creative judgements are partly subjective; different readers may respond differently.",
     href: "/methodology/impact-report-excellence",
-    link: "Read The Impact Edit Methodology v2.0.0",
+    link: "Read The Impact Edit Methodology v2.0 — beta",
   },
 ] as const;
 

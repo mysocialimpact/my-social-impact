@@ -1,5 +1,6 @@
+import fontkit from "@pdf-lib/fontkit";
 /** Controlled fictional comparisons; not independent human calibration or real charities. */
-import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
+import { PDFDocument, rgb } from "pdf-lib";
 import fs from "node:fs/promises";
 const dir = "artifacts/assessment-quality/sources";
 await fs.mkdir(dir, { recursive: true });
@@ -9,9 +10,16 @@ for (const kind of [
   "strong-data",
   "weak-data",
 ]) {
-  const pdf = await PDFDocument.create(),
-    regular = await pdf.embedFont(StandardFonts.Helvetica),
-    bold = await pdf.embedFont(StandardFonts.HelveticaBold);
+  const pdf = await PDFDocument.create();
+  pdf.registerFontkit(fontkit);
+  const regular = await pdf.embedFont(
+      await fs.readFile("assets/fonts/DejaVuSans.ttf"),
+      { subset: true },
+    ),
+    bold = await pdf.embedFont(
+      await fs.readFile("assets/fonts/DejaVuSans-Bold.ttf"),
+      { subset: true },
+    );
   const navy = rgb(0.04, 0.08, 0.17),
     orange = rgb(0.95, 0.28, 0.08);
   for (let i = 0; i < 2; i++) {

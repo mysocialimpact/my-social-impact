@@ -7,6 +7,7 @@ import {
 import { inspectPdfChecks, type PdfChecks } from "./report-accessibility";
 import {
   reportActionsSchema,
+  reportActionsFor,
   validateEditorial,
   reportRating,
   visualCoverage,
@@ -82,6 +83,7 @@ export const STAGES = [
   "The Impact Edit · Data communication",
   "The Impact Edit · Accessibility",
   "The Impact Edit · Whole-document reading exercise",
+  "The Impact Edit · Checking criterion judgements",
 ];
 type Job = {
   version: string;
@@ -108,6 +110,15 @@ type Document = {
   extraction_notes: unknown[];
 };
 export type ReviewResult = {
+  qualityControl?: {
+    method: "criterion-execution-audit";
+    changes: {
+      id: string;
+      before: number | null;
+      after: number | null;
+      reason: string;
+    }[];
+  };
   readerInspection?: ReaderInspection;
   beta?: boolean;
   editorial?: EditorialVerdict;
@@ -292,7 +303,52 @@ export async function processOne(id?: string) {
         ...findings.filter((f) => !validated.some((v) => v.id === f.id)),
         ...validated,
       ];
-      if (job.stage === 21) next = 14;
+      if (job.stage === 21) next = isRevisedReport(job.version) ? 23 : 14;
+    } else if (job.framework === "report" && job.stage === 23) {
+      const before = findings;
+      const response = await assessReportPillar(
+        pages!,
+        (notes as VisualObservation[]).filter((n) => n.kind === visualKind),
+        -1,
+        context,
+        job.error_code,
+        job.version,
+        doc.file_bytes,
+        pdfChecks,
+        {
+          readingInspection: notes.find(
+            (n) => (n as ReaderInspection).kind === "report-reader-2.0.1",
+          ),
+          initialFindings: findings,
+        },
+      );
+      usage = response.usage;
+      findings = validateFindings(
+        response.data,
+        "report",
+        pages!,
+        claims!,
+        undefined,
+        job.version,
+      );
+      notes = [
+        ...notes.filter(
+          (n) => (n as { kind: string }).kind !== "report-quality-2.0.1",
+        ),
+        {
+          kind: "report-quality-2.0.1",
+          method: "criterion-execution-audit",
+          changes: findings
+            .filter((f) => before.find((b) => b.id === f.id)?.score !== f.score)
+            .map((f) => ({
+              id: f.id,
+              before: before.find((b) => b.id === f.id)!.score,
+              after: f.score,
+              reason: f.anchorReason || f.explanation,
+            })),
+        },
+      ];
+      next = 14;
     } else if (job.stage >= 4 && job.stage <= 13) {
       const framework: Framework = job.stage < 9 ? "claims" : "excellence",
         principle = (job.stage - 4) % 5;
@@ -359,6 +415,7 @@ export async function processOne(id?: string) {
               notes.filter(
                 (n) => (n as VisualObservation).kind === visualKind,
               ) as VisualObservation[],
+              job.version,
             ))
         ) {
           scores[framework]!.overall = null;
@@ -366,7 +423,15 @@ export async function processOne(id?: string) {
         }
       }
       const r = await structured(
-        v2 ? reportActionsSchema : actionSchema,
+        v2
+          ? isRevisedReport(job.version)
+            ? reportActionsFor(
+                notes.filter(
+                  (n) => (n as VisualObservation).kind === visualKind,
+                ) as VisualObservation[],
+              )
+            : reportActionsSchema
+          : actionSchema,
         actionInstructions(job.framework === "report", v2),
         {
           context,
@@ -413,6 +478,9 @@ export async function processOne(id?: string) {
         ...(isRevisedReport(job.version) && job.framework === "report"
           ? {
               beta: true,
+              qualityControl: notes.find(
+                (n) => (n as { kind: string }).kind === "report-quality-2.0.1",
+              ) as ReviewResult["qualityControl"],
               readerInspection: notes.find(
                 (n) => (n as ReaderInspection).kind === "report-reader-2.0.1",
               ) as ReaderInspection | undefined,
@@ -430,6 +498,7 @@ export async function processOne(id?: string) {
                   notes.filter(
                     (n) => (n as VisualObservation).kind === visualKind,
                   ) as VisualObservation[],
+                  job.version,
                 ),
                 job.version,
               ),
@@ -453,6 +522,7 @@ export async function processOne(id?: string) {
                   notes.filter(
                     (n) => (n as VisualObservation).kind === visualKind,
                   ) as VisualObservation[],
+                  job.version,
                 )
                   ? {
                       normalComparisonPages: normalComparisonPages(
@@ -500,6 +570,7 @@ export async function processOne(id?: string) {
             notes.filter(
               (n) => (n as VisualObservation).kind === visualKind,
             ) as VisualObservation[],
+            job.version,
           )
             ? [
                 "Required rendered-page evidence was unavailable or incomplete. No overall score is published. This is an assessment limitation, not evidence of poor report design.",

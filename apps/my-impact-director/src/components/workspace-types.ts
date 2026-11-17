@@ -34,5 +34,7 @@ export const stateAction = (a?: AssessmentState) =>
     : stateLabel(a) === "Completed"
       ? "View results"
       : stateLabel(a) === "Needs attention"
-        ? "Resolve issue"
+        ? a.status === "failed"
+          ? "Retry review"
+          : "Resolve issue"
         : "View progress";

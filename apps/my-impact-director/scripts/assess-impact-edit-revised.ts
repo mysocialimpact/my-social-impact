@@ -22,6 +22,7 @@ import { structured } from "../src/lib/ai";
 import { REPORT_VERSION } from "../src/lib/report-methodology";
 import {
   reportActionsSchema,
+  reportActionsFor,
   validateEditorial,
   reportRating,
   visualCoverage,
@@ -58,6 +59,7 @@ for (const file of files) {
   });
 }
 const model = "openai/gpt-5.4-nano",
+  auditModel = "openai/gpt-5.4-mini",
   inputRate = 0.0000002,
   outputRate = 0.00000125,
   perCallReserve = 400000 * inputRate + 14000 * outputRate;
@@ -65,7 +67,7 @@ const plan = inputs.map((x) => ({
   file: path.basename(x.file),
   pages: x.pages.length,
   newVersion: REPORT_VERSION,
-  newCalls: Math.ceil(visualSample(x.pages).length / 2) + 7,
+  newCalls: Math.ceil(visualSample(x.pages).length / 2) + 8,
   legacyCalls:
     compare && !x.baseline
       ? Math.ceil(visualSample(x.pages, "1.0.0").length / 2) + 6
@@ -82,6 +84,8 @@ console.log(
     {
       mode: paid ? "approved paid run" : "plan only; no model or email calls",
       model,
+      auditModel,
+      auditMaximumCostPerCallUsd: 0.363,
       pricesUsdPerMillion: {
         input: Math.round(inputRate * 1e8) / 100,
         output: outputRate * 1e6,
@@ -141,6 +145,16 @@ try {
     "https://ai-gateway.vercel.sh/v1/models",
   ).then((r) => r.json());
   const listed = catalogue.data?.find((m: { id: string }) => m.id === model);
+  const auditListed = catalogue.data?.find(
+    (m: { id: string }) => m.id === auditModel,
+  );
+  if (
+    !auditListed ||
+    Number(auditListed.pricing.input) !== 0.00000075 ||
+    Number(auditListed.pricing.output) !== 0.0000045 ||
+    auditListed.context_window !== 400000
+  )
+    throw Error("Audit model catalogue changed; halt for cost review.");
   if (
     !listed ||
     Number(listed.pricing.input) !== inputRate ||
@@ -167,17 +181,20 @@ try {
     if (cached) return Response.json(JSON.parse(cached));
     const body = JSON.parse(payload);
     if (
-      body.model !== model ||
+      ![model, auditModel].includes(body.model) ||
       body.max_completion_tokens !== 14000 ||
       body.tools
     )
       throw Error("Request exceeds approved test configuration.");
-    if (accounted + perCallReserve > budget + 1e-9)
+    const callInputRate = body.model === auditModel ? 0.00000075 : inputRate,
+      callOutputRate = body.model === auditModel ? 0.0000045 : outputRate,
+      reserve = 400000 * callInputRate + 14000 * callOutputRate;
+    if (accounted + reserve > budget + 1e-9)
       throw Error("Approved test budget exhausted; no request sent.");
-    accounted += perCallReserve;
+    accounted += reserve;
     const entry = {
       call: ledger.length + 1,
-      chargedUpperBound: perCallReserve,
+      chargedUpperBound: reserve,
     } as (typeof ledger)[number];
     ledger.push(entry);
     await fs.writeFile(
@@ -197,13 +214,13 @@ try {
         Number.isFinite(data.usage.completion_tokens)
       ) {
         const calculated =
-          data.usage.prompt_tokens * inputRate +
-          data.usage.completion_tokens * outputRate;
-        if (calculated > perCallReserve + 1e-9)
+          data.usage.prompt_tokens * callInputRate +
+          data.usage.completion_tokens * callOutputRate;
+        if (calculated > reserve + 1e-9)
           throw Error(
             "Provider usage exceeds catalogue bound; halt for review.",
           );
-        accounted += calculated - perCallReserve;
+        accounted += calculated - reserve;
         entry.actualCalculatedUsd = calculated;
         entry.chargedUpperBound = calculated;
       }
@@ -283,6 +300,42 @@ try {
           ),
         );
       }
+      const initialFindings = findings;
+      if (version === REPORT_VERSION) {
+        const audited = await assessReportPillar(
+          input.pages,
+          observations,
+          -1,
+          context,
+          null,
+          version,
+          input.bytes,
+          checks,
+          { readingInspection: reader, initialFindings },
+        );
+        findings = validateFindings(
+          audited.data,
+          "report",
+          input.pages,
+          [],
+          undefined,
+          version,
+        );
+      }
+      const qualityControl = {
+        method: "criterion-execution-audit" as const,
+        changes: findings
+          .filter(
+            (f) =>
+              initialFindings.find((b) => b.id === f.id)?.score !== f.score,
+          )
+          .map((f) => ({
+            id: f.id,
+            before: initialFindings.find((b) => b.id === f.id)!.score,
+            after: f.score,
+            reason: f.anchorReason || f.explanation,
+          })),
+      };
       const score = scoreFramework(findings, "report", undefined, version);
       if (
         !visualCoverage(input.pages, observations) &&
@@ -292,7 +345,9 @@ try {
         score.provisional = true;
       }
       const actionResult = await structured(
-        version === REPORT_VERSION ? reportActionsSchema : actionSchema,
+        version === REPORT_VERSION
+          ? reportActionsFor(observations)
+          : actionSchema,
         actionInstructions(true, version === REPORT_VERSION),
         {
           context,
@@ -328,6 +383,7 @@ try {
       }
       const result: ReviewResult = {
         beta: true,
+        qualityControl,
         readerInspection: reader,
         framework: "report",
         version,

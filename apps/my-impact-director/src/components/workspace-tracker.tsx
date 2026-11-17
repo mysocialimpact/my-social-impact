@@ -11,14 +11,20 @@ import {
   type AssessmentState,
 } from "./workspace-types";
 export function WorkspaceTracker() {
-  const { user } = useSession();
+  const { user, loading } = useSession();
   const [workspace, setWorkspace] = useState<Workspace | null>(null),
+    [workspaceOwner, setWorkspaceOwner] = useState(""),
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false);
   const strip = useRef<HTMLElement>(null);
   const path = usePathname();
   const id = path.match(/^\/reviews\/([0-9a-f-]{36})(?:\/|$)/i)?.[1];
   useEffect(() => {
+    if (loading) return;
+    if (!user) {
+      setWorkspace(null);
+      return;
+    }
     let stopped = false,
       timer: ReturnType<typeof setTimeout>;
     let selected = false;
@@ -36,6 +42,7 @@ export function WorkspaceTracker() {
         );
         if (!stopped) {
           setWorkspace(d.workspace || null);
+          setWorkspaceOwner(user!.id);
           selected = true;
           setError("");
         }
@@ -53,7 +60,6 @@ export function WorkspaceTracker() {
     };
     window.addEventListener("mid-workspace-refresh", requested);
     window.addEventListener("mid-review-refresh", requested);
-    setWorkspace(null);
     void refresh();
     return () => {
       stopped = true;
@@ -61,7 +67,7 @@ export function WorkspaceTracker() {
       window.removeEventListener("mid-workspace-refresh", requested);
       window.removeEventListener("mid-review-refresh", requested);
     };
-  }, [id, path, user?.id]);
+  }, [id, path, user?.id, loading]);
   useEffect(() => {
     const el = strip.current;
     if (!el) return;
@@ -77,7 +83,7 @@ export function WorkspaceTracker() {
       o.disconnect();
       document.documentElement.style.removeProperty("--workspace-height");
     };
-  }, [!!workspace]);
+  }, [!!workspace, workspaceOwner, user?.id]);
   async function start(f: Framework) {
     if (!workspace) return;
     if (!user || user.anonymous) {
@@ -99,7 +105,7 @@ export function WorkspaceTracker() {
       setBusy(false);
     }
   }
-  if (!workspace) return null;
+  if (!workspace || workspaceOwner !== user?.id) return null;
   function entry(f: Framework, a?: AssessmentState) {
     const label = stateLabel(a);
     return (
@@ -159,9 +165,9 @@ export function WorkspaceTracker() {
         <Link href={"/reviews/" + workspace.root_id}>MY REPORTS</Link>
         <p title={workspace.title}>
           <span className="workspace-organisation">
-            {workspace.organisation || "Your report"}
+            {workspace.organisation || "Your report"} ·
           </span>{" "}
-          <span className="workspace-document">· {workspace.title}</span>
+          <span className="workspace-document">{workspace.title}</span>
         </p>
       </div>
       <div

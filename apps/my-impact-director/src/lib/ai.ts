@@ -52,9 +52,10 @@ export async function structured<T extends z.ZodType>(
   input: unknown,
   pdf?: Buffer,
   images: { page: number; dataUrl: string; view?: string }[] = [],
+  modelOverride?: string,
 ): Promise<AIResult<z.infer<T>>> {
   const start = Date.now(),
-    model = process.env.AI_MODEL || "openai/gpt-5.4-mini";
+    model = modelOverride || process.env.AI_MODEL || "openai/gpt-5.4-mini";
   const jsonSchema = z.toJSONSchema(schema, { target: "draft-7" });
   delete jsonSchema.$schema;
   const content: unknown[] = [{ type: "text", text: JSON.stringify(input) }];

@@ -466,7 +466,7 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
                 {f === "claims"
                   ? "Evidence. Proportion. Transparency. Balance. Learning."
                   : f === "report"
-                    ? "Readability and hierarchy. Storytelling. Visual design. Data communication. Accessibility."
+                    ? "Readability & Copy. Information Hierarchy. Visual Design. Storytelling. Data Presentation."
                     : "Purpose. Leadership. Data. Delivery. Communications."}
               </p>
               <button

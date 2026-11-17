@@ -71,7 +71,7 @@ export async function POST(req: Request) {
     return new Response(null, { status: 400 });
   }
   if (
-    body.model !== "openai/gpt-5.4-nano" ||
+    !["openai/gpt-5.4-nano", "openai/gpt-5.4-mini"].includes(body.model) ||
     body.max_completion_tokens !== 14000 ||
     body.store !== false ||
     body.tools ||
@@ -80,10 +80,11 @@ export async function POST(req: Request) {
     body.providerOptions?.gateway?.zeroDataRetention !== true
   )
     return new Response(null, { status: 400 });
+  const reserve = body.model === "openai/gpt-5.4-mini" ? 363000 : 97500;
   const key = "impact-edit-calibration:" + hash;
   const rows = await query(
-    "INSERT INTO director.rate_limits(key,count,reset_at) VALUES($1,97500,$2) ON CONFLICT(key) DO UPDATE SET count=director.rate_limits.count+97500 WHERE director.rate_limits.count+97500<=2000000 AND director.rate_limits.reset_at>now() RETURNING count",
-    [key, new Date(until).toISOString()],
+    "INSERT INTO director.rate_limits(key,count,reset_at) VALUES($1,$3,$2) ON CONFLICT(key) DO UPDATE SET count=director.rate_limits.count+$3 WHERE director.rate_limits.count+$3<=2000000 AND director.rate_limits.reset_at>now() RETURNING count",
+    [key, new Date(until).toISOString(), reserve],
   );
   if (!rows.length)
     return Response.json(
@@ -106,12 +107,15 @@ export async function POST(req: Request) {
       Number.isFinite(data.usage?.completion_tokens)
     ) {
       const actual = Math.ceil(
-        data.usage.prompt_tokens * 0.2 + data.usage.completion_tokens * 1.25,
+        data.usage.prompt_tokens *
+          (body.model === "openai/gpt-5.4-mini" ? 0.75 : 0.2) +
+          data.usage.completion_tokens *
+            (body.model === "openai/gpt-5.4-mini" ? 4.5 : 1.25),
       );
-      if (actual <= 97500)
+      if (actual <= reserve)
         await query(
           "UPDATE director.rate_limits SET count=count-$2 WHERE key=$1",
-          [key, 97500 - actual],
+          [key, reserve - actual],
         );
     }
     return Response.json(data, {

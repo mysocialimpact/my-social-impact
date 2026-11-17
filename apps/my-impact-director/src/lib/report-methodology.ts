@@ -124,7 +124,38 @@ const definitions = [
   ],
 ] as const;
 const reused = (prefix: string) =>
-  legacy.reportV2Criteria.filter((c) => c.code.startsWith(prefix));
+  legacy.reportV2Criteria
+    .filter((c) => c.code.startsWith(prefix))
+    .map((c) => ({
+      ...c,
+      title:
+        c.code === "V2"
+          ? "Typography and legibility"
+          : c.code === "V3"
+            ? "Colour, contrast and visual rhythm"
+            : c.title,
+      question:
+        c.code === "V2"
+          ? "V2 · Typography and legibility"
+          : c.code === "V3"
+            ? "V3 · Colour, contrast and visual rhythm"
+            : c.question,
+      anchors: c.anchors.map((a) =>
+        a
+          .replace(
+            "physical text size is scored only under R1",
+            "body-text size, line length and spacing must also be comfortably legible at ordinary page size",
+          )
+          .replace(
+            "count data-label size here, not again under R1",
+            "count data-label size here, not again under general typography",
+          )
+          .replace(
+            "matching colours alone never establishes strength",
+            "contrast and non-colour cues must support legibility; matching colours alone never establishes strength",
+          ),
+      ),
+    }));
 const first = definitions.map(([code, title, evidence, ...anchors]) => ({
   code,
   title,

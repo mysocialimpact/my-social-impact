@@ -241,6 +241,29 @@ export function ReviewResults({
             />
           ))}
       </div>
+      {result.qualityControl && (
+        <details className="finding">
+          <summary>Editorial quality control: the criterion audit</summary>
+          <div className="finding-content">
+            <p>
+              A final AI-assisted audit challenges execution judgements against
+              the rubric before aggregation. This is not independent human
+              validation. {result.qualityControl.changes.length} criterion
+              scores were revised from their evidence; the overall score was
+              never chosen independently.
+            </p>
+            {result.qualityControl.changes.map((c) => (
+              <p key={c.id}>
+                <strong>
+                  {c.id}: {c.before ?? "Unassessable"} →{" "}
+                  {c.after ?? "Unassessable"}.
+                </strong>{" "}
+                {c.reason}
+              </p>
+            ))}
+          </div>
+        </details>
+      )}
       {result.readerInspection && (
         <details className="finding">
           <summary>Before scoring: the AI-simulated reading exercise</summary>

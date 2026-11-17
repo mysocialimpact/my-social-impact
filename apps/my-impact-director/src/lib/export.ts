@@ -156,6 +156,23 @@ export async function exportPdf(result: ReviewResult) {
     write(EDIT_ATTRIBUTION, 10, "bold");
     write(editCaveat(result.version), 10);
   }
+  if (result.qualityControl) {
+    heading("Criterion execution audit");
+    write(
+      "A final AI-assisted audit challenges criterion judgements before aggregation; it is not independent human validation.",
+      9,
+    );
+    write(
+      `${result.qualityControl.changes.length} criterion scores revised from their evidence; no overall score was chosen independently.`,
+      9,
+    );
+    result.qualityControl.changes.forEach((c) =>
+      write(
+        `${c.id}: ${c.before ?? "unassessable"} to ${c.after ?? "unassessable"}. ${c.reason}`,
+        9,
+      ),
+    );
+  }
   if (result.readerInspection) {
     heading("Before scoring: the AI-simulated reading exercise");
     write(result.readerInspection.firstImpression);

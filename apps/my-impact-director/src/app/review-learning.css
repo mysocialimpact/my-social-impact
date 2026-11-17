@@ -476,3 +476,60 @@ body:has(.learning-deck) .permanent-actions {
 .global-workspace .workspace-tracker {
   position: static;
 }
+@media (max-width: 700px) {
+  body:has(.learning-deck) .workspace-heading {
+    display: flex;
+    gap: 10px;
+  }
+  body:has(.learning-deck) .workspace-heading p {
+    display: block;
+    min-width: 0;
+    font-size: 10px;
+  }
+  body:has(.learning-deck) .workspace-heading p span.workspace-document {
+    display: inline;
+  }
+}
+.review-result-page:has(.impact-verdict) {
+  padding-top: 24px;
+}
+.review-result-page:has(.impact-verdict) .snapshot-heading {
+  display: none;
+}
+.review-result-page:has(.impact-verdict) .immersive-meta {
+  margin-bottom: 16px;
+}
+.review-result-page:has(.impact-verdict) .honest-status button {
+  display: none;
+}
+.review-result-page .impact-verdict {
+  padding: 24px;
+}
+.review-result-page .impact-priorities {
+  margin-top: 14px;
+}
+body:has(.impact-verdict) .permanent-actions {
+  display: none;
+}
+.review-result-page:has(.impact-verdict) h2 {
+  overflow-wrap: anywhere;
+}
+@media (max-width: 700px) {
+  .global-workspace .workspace-heading {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+  .global-workspace .workspace-heading p {
+    margin: 0;
+    max-width: none;
+    flex: 1;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .global-workspace .workspace-heading .workspace-organisation {
+    display: none;
+  }
+}

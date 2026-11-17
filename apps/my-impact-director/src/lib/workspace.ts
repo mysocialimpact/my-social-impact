@@ -47,8 +47,8 @@ export async function selectedWorkspace(user: Identity) {
   const rows = await workspaces(user);
   if (!rows.length) return null;
   const [selected] = await query<{ report_id: string }>(
-    "SELECT report_id FROM director.workspace_selections WHERE owner_id=$1",
-    [user.id],
+    "SELECT report_id FROM director.workspace_selections WHERE owner_id=ANY($1::text[]) ORDER BY selected_at DESC LIMIT 1",
+    [user.accessIds || [user.id]],
   );
   return rows.find((r) => r.id === selected?.report_id) || rows[0];
 }

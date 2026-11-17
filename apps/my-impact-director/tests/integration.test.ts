@@ -1,3 +1,4 @@
+import { REPORT_VERSION } from "../src/lib/report-methodology";
 import { workspaces } from "../src/lib/workspace";
 import { sendPendingReports } from "../src/lib/report-delivery";
 import { GET as reviewGet } from "../src/app/api/reviews/[id]/route";
@@ -155,20 +156,65 @@ test(
             })),
             observations: [],
           };
+        else if (p.observations && p.pages)
+          data = {
+            firstImpression:
+              "Synthetic first impression of the physical document; this tests transport only.",
+            readingExperience:
+              "Synthetic whole-document reading judgement; not professional calibration.",
+            accessibilityConcerns: [],
+            scan: Object.fromEntries(
+              [
+                "purpose",
+                "difference",
+                "achievements",
+                "challenges",
+                "nextSteps",
+              ].map((k) => [
+                k,
+                {
+                  finding:
+                    "Synthetic scan answer grounded in the inspected source page.",
+                  page: p.observations[0].page,
+                  access: "easy",
+                },
+              ]),
+            ),
+          };
         else if (p.criteria)
           data = {
             findings: p.criteria.map((c: { id: string }) => ({
               id: c.id,
               status:
-                p.anchors && c.id === "report.5.5"
+                p.anchors &&
+                c.id === "report.5.5" &&
+                /Assistive/.test(
+                  p.criteria.find((x: { id: string }) => x.id === c.id)
+                    .question,
+                )
                   ? "unassessable"
-                  : p.anchors && c.id === "report.5.3"
+                  : p.anchors &&
+                      c.id === "report.5.3" &&
+                      /Structure and reading/.test(
+                        p.criteria.find((x: { id: string }) => x.id === c.id)
+                          .question,
+                      )
                     ? "not_demonstrated"
                     : "assessed",
               score:
-                p.anchors && c.id === "report.5.5"
+                p.anchors &&
+                c.id === "report.5.5" &&
+                /Assistive/.test(
+                  p.criteria.find((x: { id: string }) => x.id === c.id)
+                    .question,
+                )
                   ? null
-                  : p.anchors && c.id === "report.5.3"
+                  : p.anchors &&
+                      c.id === "report.5.3" &&
+                      /Structure and reading/.test(
+                        p.criteria.find((x: { id: string }) => x.id === c.id)
+                          .question,
+                      )
                     ? 0
                     : 3,
               explanation:
@@ -1122,9 +1168,11 @@ test(
             result = done.result as ReviewResult;
           assert.equal(done.status, "complete");
           assert.equal(result.framework, "report");
-          assert.equal(result.scores.report!.coverage, 24);
-          assert.equal(result.scores.report!.overall, 72.19);
-          assert.equal(result.version, "2.0.0");
+          assert.equal(result.scores.report!.coverage, 25);
+          assert.equal(result.scores.report!.overall, 75);
+          assert.equal(result.version, REPORT_VERSION);
+          assert.ok(result.readerInspection);
+          assert.equal(result.beta, true);
           assert.ok(result.editorial);
           assert.notEqual(result.rating?.label, "Excellent");
           assert.ok(result.visualInspection!.pages.length);

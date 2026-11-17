@@ -38,6 +38,7 @@ try {
     for (const framework of ["claims", "excellence", "report"]) {
       const fixture = structuredClone(fixtures[framework]),
         result = fixture.result;
+      if (framework === "report") fixture.version = "2.0.1-report";
       Object.assign(fixture, {
         status: "processing",
         stage: framework === "report" ? 18 : 5,

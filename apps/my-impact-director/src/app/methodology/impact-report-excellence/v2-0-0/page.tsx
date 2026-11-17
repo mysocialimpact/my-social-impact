@@ -17,7 +17,7 @@ export default function Methodology() {
       <p className="methodology-question">
         Does your impact report make an impact?
       </p>
-      <CreativeCaveat />
+      <CreativeCaveat version="2.0.0" />
       <p>
         An editorial and visual review of how a report communicates. We judge
         execution, not the presence of headings, charts, photographs or
