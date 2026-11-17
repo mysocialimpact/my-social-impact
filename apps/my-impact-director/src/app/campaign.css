@@ -3548,7 +3548,7 @@ body:not(:has(.permanent-actions)) {
   width: 500px;
   height: auto;
 }
-.review-choices img[src*="the-impact-edit"] {
+.review-choices img[src*="impact-design-review"] {
   width: 185px;
   max-width: 100%;
   height: 140px;

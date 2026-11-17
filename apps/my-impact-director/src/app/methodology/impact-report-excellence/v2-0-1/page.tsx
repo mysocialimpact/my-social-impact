@@ -10,13 +10,13 @@ const REPORT_VERSION = "2.0.1";
 const REPORT_SCORING =
   "Each applicable criterion scores 0–4 against execution anchors. Pillar contribution = weight × sum(scores) ÷ (4 × assessable criteria). Weights: Readability & Copy 25; Information Hierarchy 30; Visual Design 25; Storytelling 10; Data Presentation 10. At least four criteria in every pillar and 22 overall must be assessable. Unassessable and genuinely inapplicable criteria are disclosed, never given invented scores. Missing required visual coverage or unresolved editorial inconsistency withholds the overall score. The total uses unrounded contributions. 0–39 Poor; 40–59 Significant improvement needed; 60–74 Adequate, with important weaknesses; 75–89 Strong professional communication; 90–100 Exceptional. This revised assessment is beta. Overall numeric publication is withheld while contrasting data-design judgements remain insufficiently reliable; criterion and pillar values are experimental diagnostic estimates, not independently validated professional scores.";
 export const metadata = {
-  title: "The Impact Edit Methodology v2.0 — revised beta",
+  title: "The Impact Design Review Methodology v2.0 — revised beta",
 };
 export default function Methodology() {
   return (
     <section className="section content-prose">
       <p className="eyebrow">MY SOCIAL IMPACT · METHODOLOGY {REPORT_VERSION}</p>
-      <h1>The Impact Edit Methodology v2.0 — revised beta</h1>
+      <h1>The Impact Design Review Methodology v2.0 — revised beta</h1>
       <p className="methodology-question">
         Does your impact report make an impact?
       </p>

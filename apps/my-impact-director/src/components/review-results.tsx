@@ -443,7 +443,7 @@ export function ReviewResults({
       <nav className="tabs-nav" aria-label="Review sections">
         {result.scores.claims && <a href="#claims">Claims Code</a>}
         {result.scores.excellence && <a href="#excellence">Excellence</a>}
-        {result.scores.report && <a href="#report">The Impact Edit</a>}
+        {result.scores.report && <a href="#report">The Impact Design Review</a>}
         {!result.scores.report && (
           <a href="#claims-register">Material claims</a>
         )}

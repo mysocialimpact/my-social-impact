@@ -29,9 +29,9 @@ export async function sendPendingReports() {
           to: [row.email],
           subject:
             row.framework === "report"
-              ? "The Impact Edit — your review is ready"
+              ? "The Impact Design Review — your review is ready"
               : `Your ${row.framework === "claims" ? "Social Impact Claims Code" : row.framework === "excellence" ? "Social Impact Excellence" : "impact report"} review is ready`,
-          text: `${row.framework === "report" ? `THE IMPACT EDIT\nIndicative Creative Assessment\n${EDIT_ATTRIBUTION}\n${EDIT_CAVEAT}\n\n` : ""}Your digital report is ready. Open it in your My Impact Director account: ${link}\n\nYou control who can read this assessment. To invite someone else, open the report and select Create sharing link.`,
+          text: `${row.framework === "report" ? `THE IMPACT DESIGN REVIEW\nIndicative Creative Assessment\n${EDIT_ATTRIBUTION}\n${EDIT_CAVEAT}\n\n` : ""}Your digital report is ready. Open it in your My Impact Director account: ${link}\n\nYou control who can read this assessment. To invite someone else, open the report and select Create sharing link.`,
         }),
         signal: AbortSignal.timeout(20000),
       });

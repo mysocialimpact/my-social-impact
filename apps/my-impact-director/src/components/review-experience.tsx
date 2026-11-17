@@ -558,7 +558,7 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
             <Image
               src={
                 framework === "report"
-                  ? "/brand/the-impact-edit-symbol.svg"
+                  ? "/brand/impact-design-review-compact.svg"
                   : frameworkLogos[framework]
               }
               alt={names[framework]}
@@ -667,8 +667,8 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
                         <Link
                           href={`/reviews/${s.id}${s.status === "complete" ? "?results=1" : ""}`}
                         >
-                          The Impact Edit · {s.version || "original version"} ·{" "}
-                          {s.status}
+                          The Impact Design Review ·{" "}
+                          {s.version || "original version"} · {s.status}
                         </Link>
                       </p>
                     ))}

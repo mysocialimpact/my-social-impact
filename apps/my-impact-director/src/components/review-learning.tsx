@@ -135,7 +135,7 @@ export function ReviewLearning({
             <Image
               src={
                 framework === "report"
-                  ? "/brand/the-impact-edit-symbol.svg"
+                  ? "/brand/impact-design-review-compact.svg"
                   : frameworkLogos[framework]
               }
               alt=""

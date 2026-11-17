@@ -132,7 +132,7 @@ export function WorkspaceTracker() {
               ? "Claims Code"
               : f === "excellence"
                 ? "Impact management"
-                : "The Impact Edit"}
+                : "The Impact Design Review"}
           </span>
         </span>
         <strong>

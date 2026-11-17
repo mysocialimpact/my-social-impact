@@ -42,8 +42,8 @@ export const identity = {
     note: "This review describes the management practices evidenced in your report. A full organisational assessment requires further evidence.",
   },
   report: {
-    logo: "the-impact-edit-horizontal.png",
-    colour: "#ad340d",
+    logo: "impact-design-review.svg",
+    colour: "#071126",
     headline: "Your impact deserves to be seen.",
     invitation: "Let’s bring your report to life.",
     note: "Beta · AI-assisted creative judgement. Pillar estimates are experimental and involve editorial subjectivity.",

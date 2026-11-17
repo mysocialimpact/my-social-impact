@@ -146,7 +146,7 @@ try {
         );
         await p
           .getByRole("button", {
-            name: "Run The Impact Edit v2 on this report",
+            name: "Run The Impact Design Review v2 on this report",
             exact: true,
           })
           .waitFor();
@@ -213,7 +213,7 @@ try {
   for (const [url, heading] of [
     [
       "/methodology/impact-report-excellence",
-      "The Impact Edit Methodology v2.0.0",
+      "The Impact Design Review Methodology v2.0.0",
     ],
     [
       "/methodology/impact-report-excellence/v1",

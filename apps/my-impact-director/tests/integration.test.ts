@@ -1247,7 +1247,7 @@ test(
             /Visual inspection coverage/,
           );
           const exportedText = pdfPages.map((p) => p.text).join(" ");
-          assert.match(exportedText, /The Impact Edit/);
+          assert.match(exportedText, /The Impact Design Review/);
           assert.match(exportedText, /Indicative Creative Assessment/);
           assert.match(
             exportedText,
@@ -1263,7 +1263,7 @@ test(
           assert.equal(emails.length, sentBefore + 1);
           assert.equal(
             emails.at(-1)!.subject,
-            "The Impact Edit — your review is ready",
+            "The Impact Design Review — your review is ready",
           );
           assert.match(
             emails.at(-1)!.text,

@@ -372,10 +372,11 @@
 }
 
 .pub-mast-edit img {
-  width: clamp(180px, 24vw, 330px);
+  width: clamp(250px, 40vw, 540px);
   height: auto;
-  max-height: 145px;
-  padding: 0.6rem;
+  max-height: 340px;
+  padding: 0;
+  background: transparent;
 }
 .pub-mast-edit span {
   position: absolute;

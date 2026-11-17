@@ -10,8 +10,8 @@ export default function Methodology() {
   return (
     <section className="section content-prose">
       <Image
-        src="/brand/the-impact-edit-horizontal.svg"
-        alt="The Impact Edit"
+        src="/brand/impact-design-review-compact.svg"
+        alt="The Impact Design Review"
         style={{ maxWidth: "100%", height: "auto" }}
         width={480}
         height={120}
@@ -19,7 +19,7 @@ export default function Methodology() {
       <p className="eyebrow">MY SOCIAL IMPACT · METHODOLOGY VERSION 1.0</p>
       <h1 id="overview">Impact Report Excellence Methodology v1.0</h1>
       <p className="methodology-question">
-        The Impact Edit · Does your impact report make an impact?
+        The Impact Design Review · Does your impact report make an impact?
       </p>
       <CreativeCaveat version="1.0.0" />
       <p>
@@ -32,7 +32,7 @@ export default function Methodology() {
       <p>
         This is the archived methodology for original reviews.{" "}
         <Link href="/methodology/impact-report-excellence">
-          Read The Impact Edit v2 methodology.
+          Read The Impact Design Review v2 methodology.
         </Link>
       </p>
       <h2 id="visual-inspection">How we inspect your report</h2>

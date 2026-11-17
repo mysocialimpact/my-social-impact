@@ -9,13 +9,13 @@ import {
   reportV2Anchors,
 } from "@/lib/report-methodology";
 export const metadata = {
-  title: "The Impact Edit Methodology v2.0 — revised beta",
+  title: "The Impact Design Review Methodology v2.0 — revised beta",
 };
 export default function Methodology() {
   return (
     <section className="section content-prose">
       <p className="eyebrow">MY SOCIAL IMPACT · METHODOLOGY {REPORT_VERSION}</p>
-      <h1>The Impact Edit Methodology v2.0 — revised beta</h1>
+      <h1>The Impact Design Review Methodology v2.0 — revised beta</h1>
       <p className="methodology-question">
         Does your impact report make an impact?
       </p>
