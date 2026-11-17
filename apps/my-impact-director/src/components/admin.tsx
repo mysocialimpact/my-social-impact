@@ -47,6 +47,7 @@ type AdminData = {
     error_code: string | null;
     quality_consent: boolean;
     cost_usd: string;
+    assessment_process?: ReviewResult["assessmentProcess"];
     scores: ReviewResult["scores"] | null;
   }[];
   enquiries: {
@@ -347,7 +348,24 @@ export function Admin() {
                           </p>
                         ))}
                       </td>
-                      <td>${Number(r.cost_usd).toFixed(3)}</td>
+                      <td>
+                        ${Number(r.cost_usd).toFixed(3)}
+                        {r.assessment_process && (
+                          <>
+                            <p>
+                              {(
+                                r.assessment_process.modelDurationMs / 1000
+                              ).toFixed(0)}
+                              s model processing
+                            </p>
+                            <small>
+                              {r.assessment_process.models.join(" · ")}
+                              <br />
+                              {r.assessment_process.promptVersion}
+                            </small>
+                          </>
+                        )}
+                      </td>
                       <td>
                         <button
                           className="button secondary small"

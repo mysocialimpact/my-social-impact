@@ -6,6 +6,7 @@ export class AIError extends Error {
     public retryable: boolean,
     public diagnostic?: string,
     public retryAfterSeconds?: number,
+    public usage?: Usage,
   ) {
     super("The analysis provider could not complete this stage.");
   }
@@ -146,32 +147,31 @@ export async function structured<T extends z.ZodType>(
     );
   }
   const r = await response.json();
+  const it = Number(r.usage?.prompt_tokens || 0),
+    ot = Number(r.usage?.completion_tokens || 0);
+  const usage: Usage = {
+    model: r.model || model,
+    responseId: r.id || "",
+    inputTokens: it,
+    outputTokens: ot,
+    cost:
+      it * rates.input * (it > 272000 ? 2 : 1) +
+      ot * rates.output * (it > 272000 ? 1.5 : 1),
+    duration: Date.now() - start,
+  };
   const choice = r.choices?.[0];
   if (
     choice?.finish_reason !== "stop" ||
     typeof choice.message?.content !== "string"
   )
-    throw new AIError("AI_INCOMPLETE", true);
+    throw new AIError("AI_INCOMPLETE", true, undefined, undefined, usage);
   let data: z.infer<T>;
   try {
     data = schema.parse(JSON.parse(choice.message.content));
   } catch {
-    throw new AIError("AI_SCHEMA_INVALID", true);
+    throw new AIError("AI_SCHEMA_INVALID", true, undefined, undefined, usage);
   }
-  const it = Number(r.usage?.prompt_tokens || 0),
-    ot = Number(r.usage?.completion_tokens || 0);
-  // Catalogue rates exclude prompt-cache discounts. Keep model changes explicit.
-  return {
-    data,
-    usage: {
-      model: r.model || model,
-      responseId: r.id || "",
-      inputTokens: it,
-      outputTokens: ot,
-      cost: it * rates.input + ot * rates.output,
-      duration: Date.now() - start,
-    },
-  };
+  return { data, usage };
 }
 export async function searchWeb(organisation: string) {
   const r = await fetch("https://ai-gateway.vercel.sh/v1/responses", {

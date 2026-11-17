@@ -62,6 +62,12 @@
   font-size: 28px;
   line-height: 1;
 }
+.impact-verdict .impact-pillar-grid h3 {
+  font: 800 clamp(17px, 1.5vw, 21px)/1.15 var(--sans);
+  letter-spacing: -0.025em;
+  min-height: 46px;
+  margin: 0;
+}
 .impact-pillar-grid small {
   font-size: 13px;
   font-weight: 400;

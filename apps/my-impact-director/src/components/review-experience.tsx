@@ -647,7 +647,7 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
                 )}
               </p>
             </section>
-            {framework === "report" && !isRevisedReport(r.result.version) && (
+            {framework === "report" && r.result.version !== REPORT_VERSION && (
               <div className="notice">
                 <p>
                   This is your preserved v{r.result.version} assessment. The new
@@ -660,7 +660,7 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
                   disabled={busy || accountLoading}
                   onClick={() => choose("report")}
                 >
-                  Run the revised Impact Edit beta
+                  Run the new art-director review
                 </button>
               </div>
             )}

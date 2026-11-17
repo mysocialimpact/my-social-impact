@@ -1,6 +1,6 @@
 /** Methodology v2.0 revision 2.0.1. Released 2.0.0 remains immutable. */
 import * as legacy from "./report-methodology-2-0-0";
-export const REPORT_VERSION = "2.0.1";
+export const REPORT_VERSION = "2.1.0";
 // Comparative calibration currently fails the data-design discrimination case.
 // Do not publish a precise overall number until independent editorial validation.
 export const REPORT_PUBLICATION_NOTICE =
