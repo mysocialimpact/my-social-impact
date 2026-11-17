@@ -49,7 +49,7 @@ test(
       );
       const body = JSON.parse(String(init?.body)),
         p = JSON.parse(body.messages[1].content[0].text);
-      let data;
+      let data: Record<string, unknown>;
       if (p.physicalPages)
         data = {
           pages: p.physicalPages.map((page: number) => ({
@@ -132,7 +132,7 @@ test(
         };
       else throw Error("Unexpected model stage");
       if (p.findings && p.scores?.claims) {
-        delete (data as { editorial?: unknown }).editorial;
+        delete data.editorial;
         if (pauseClaims) {
           claimsEntered.resolve();
           await continueClaims.promise;
