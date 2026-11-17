@@ -1,4 +1,15 @@
+import { buildArtResult } from "./art-result";
 import { inspectReader, type ReaderInspection } from "./report-reader";
+import {
+  ART_NOTE,
+  isArtDirector,
+  inspectArtDirector,
+  scoreArtDirector,
+  auditArtDirector,
+  artObservations,
+  type ArtRecord,
+  type ArtAudit,
+} from "./art-director";
 import {
   REPORT_VERSION,
   REPORT_PUBLICATION_NOTICE,
@@ -85,8 +96,17 @@ export const STAGES = [
   "The Impact Edit · Accessibility",
   "The Impact Edit · Whole-document reading exercise",
   "The Impact Edit · Checking criterion judgements",
+  "The Impact Edit · Applying the five-pillar methodology",
+  "The Impact Edit · Art director consistency review",
+  "The Impact Edit · Saving your editorial review",
 ];
 type Job = {
+  created_at: string;
+  engine_state: {
+    first?: ArtRecord;
+    audit?: ArtAudit;
+    scoringUsage?: import("./ai").Usage;
+  } | null;
   version: string;
   framework: "document" | Framework | null;
   error_code: string | null;
@@ -111,11 +131,25 @@ type Document = {
   extraction_notes: unknown[];
 };
 export type ReviewResult = {
+  artDirector?: ArtRecord;
+  assessmentProcess?: {
+    promptVersion: string;
+    configuration: ArtRecord["configuration"];
+    models: string[];
+    inputTokens: number;
+    outputTokens: number;
+    estimatedCostUsd: number;
+    modelDurationMs: number;
+    elapsedMs: number;
+    reexaminedPages: number[];
+  };
   publicationNotice?: string;
   materialAccessibilityConcerns?: string[];
   qualityControl?: {
-    method: "criterion-execution-audit";
+    method: "criterion-execution-audit" | "art-director-consistency-review";
     calculatedOverall?: number | null;
+    contradictions?: string[];
+    resolutions?: ArtAudit["resolutions"];
     changes: {
       id: string;
       before: number | null;
@@ -145,7 +179,7 @@ export type ReviewResult = {
   actions: Actions;
   limitations: string[];
 };
-export async function processOne(id?: string) {
+export async function processOne(id?: string, latestArtStart?: number) {
   if (process.env.REVIEWS_ENABLED !== "true") return false;
   const [backoff] = await query(
     "SELECT 1 FROM director.rate_limits WHERE key='ai-provider-backoff' AND reset_at>now()",
@@ -162,8 +196,14 @@ export async function processOne(id?: string) {
     const {
       rows: [j],
     } = await c.query<Job>(
-      `WITH candidate AS (SELECT id FROM director.reviews WHERE (framework IS NULL OR framework='document' OR EXISTS(SELECT 1 FROM director.reports r WHERE r.id=reviews.report_id AND r.understanding_ready)) AND ($1::uuid IS NULL OR id=$1) AND next_attempt_at<=now() AND stage_attempts<3 AND attempts<80 AND (status='queued' OR status='running' AND lease_until<now()) ORDER BY created_at FOR UPDATE SKIP LOCKED LIMIT 1) UPDATE director.reviews v SET status='running',lease_token=$2,lease_until=now()+interval '4 minutes',stage_attempts=stage_attempts+1,attempts=attempts+1,updated_at=now() FROM candidate c WHERE v.id=c.id RETURNING v.*`,
-      [id || null, token],
+      `WITH candidate AS (SELECT id FROM director.reviews WHERE (framework IS NULL OR framework='document' OR EXISTS(SELECT 1 FROM director.reports r WHERE r.id=reviews.report_id AND r.understanding_ready)) AND ($1::uuid IS NULL OR id=$1) AND ($3::timestamptz IS NULL OR NOT(version LIKE '2.1.%' AND stage IN(16,24,25)) OR now()<$3::timestamptz) AND next_attempt_at<=now() AND stage_attempts<3 AND attempts<80 AND (status='queued' OR status='running' AND lease_until<now()) ORDER BY created_at FOR UPDATE SKIP LOCKED LIMIT 1) UPDATE director.reviews v SET status='running',lease_token=$2,lease_until=now()+interval '4 minutes',stage_attempts=stage_attempts+1,attempts=attempts+1,updated_at=now() FROM candidate c WHERE v.id=c.id RETURNING v.*`,
+      [
+        id || null,
+        token,
+        latestArtStart === undefined
+          ? null
+          : new Date(latestArtStart).toISOString(),
+      ],
     );
     return j;
   });
@@ -188,12 +228,61 @@ export async function processOne(id?: string) {
       result: ReviewResult | null = null,
       next = job.stage + 1,
       cursor = job.visual_cursor;
+    let engine = job.engine_state || {};
+    const art = job.framework === "report" && isArtDirector(job.version);
     const v2 = job.framework === "report" && isReportV2(job.version);
     const visualKind = v2 ? "report-visual-v2" : "report-visual-v1";
     let pdfChecks = notes.find(
       (n) => (n as PdfChecks).kind === "report-pdf-checks-v2",
     ) as PdfChecks | undefined;
-    if (job.stage === 0) {
+    if (art && job.stage === 16) {
+      const response = await inspectArtDirector(doc.file_bytes, pages!);
+      usage = response.usage;
+      engine = { first: response.data };
+      next = 24;
+    } else if (art && job.stage === 24) {
+      if (!engine.first)
+        throw Error("Independent art director review is missing");
+      const response = await scoreArtDirector(
+        doc.file_bytes,
+        pages!,
+        engine.first,
+      );
+      usage = response.usage;
+      findings = response.data;
+      engine = { ...engine, scoringUsage: usage };
+      next = 25;
+    } else if (art && job.stage === 25) {
+      if (!engine.first)
+        throw Error("Independent art director review is missing");
+      const response = await auditArtDirector(
+        doc.file_bytes,
+        pages!,
+        engine.first,
+        findings,
+      );
+      usage = response.usage;
+      findings = response.findings;
+      engine = { ...engine, audit: response.data };
+      next = 26;
+    } else if (art && job.stage === 26) {
+      const first = engine.first,
+        audit = engine.audit;
+      if (!first || !audit || !engine.scoringUsage)
+        throw Error("Art director assessment record is incomplete");
+      result = buildArtResult(
+        pages!,
+        context!,
+        claims!,
+        findings,
+        first,
+        audit,
+        engine.scoringUsage,
+        job.created_at,
+        job.version,
+      );
+      next = 15;
+    } else if (job.stage === 0) {
       pages = await extractPages(doc.file_bytes);
     } else if (job.stage === 1) {
       const r = await readVisualPages(doc.file_bytes, pages!, cursor);
@@ -634,7 +723,7 @@ export async function processOne(id?: string) {
             context?.title,
           ],
         );
-      } else if (job.framework === "report") {
+      } else if (job.framework === "report" && !art) {
         const additions = notes.filter(
           (n) => !doc.extraction_notes.includes(n),
         );
@@ -656,7 +745,7 @@ export async function processOne(id?: string) {
           [job.report_id, JSON.stringify(context), JSON.stringify(claims)],
         );
       await c.query(
-        `UPDATE director.reviews SET stage=$3,visual_cursor=$4,status=$5,stage_attempts=0,lease_until=NULL,lease_token=NULL,next_attempt_at=now(),context=$6,claims=$7,findings=$8,result=$9,cost_usd=cost_usd+$10,error_code=NULL,error_message=NULL,updated_at=now() WHERE id=$1 AND lease_token=$2`,
+        `UPDATE director.reviews SET stage=$3,visual_cursor=$4,status=$5,stage_attempts=0,lease_until=NULL,lease_token=NULL,next_attempt_at=now(),context=$6,claims=$7,findings=$8,result=$9,cost_usd=cost_usd+$10,engine_state=$11,error_code=NULL,error_message=NULL,updated_at=now() WHERE id=$1 AND lease_token=$2`,
         [
           job.id,
           token,
@@ -668,6 +757,7 @@ export async function processOne(id?: string) {
           JSON.stringify(findings),
           JSON.stringify(result),
           usage?.cost || 0,
+          !result && Object.keys(engine).length ? JSON.stringify(engine) : null,
         ],
       );
       if (result) await recordCompletedReport(c, job.report_id);
@@ -697,6 +787,7 @@ export async function processOne(id?: string) {
     });
     return true;
   } catch (e) {
+    if (e instanceof AIError && e.usage) usage = e.usage;
     const code =
       e instanceof AIError
         ? e.code
@@ -753,7 +844,9 @@ export async function processOne(id?: string) {
         code,
         retry
           ? "A processing stage needs another attempt. We’ll retry automatically."
-          : "We couldn’t safely complete this review. No scores have been published. Retry or contact us for help.",
+          : code === "ART_VISUAL_EVIDENCE_REQUIRED"
+            ? "We couldn’t inspect the PDF pages reliably. No editorial scores have been published. Please retry with a readable PDF or contact us for help."
+            : "We couldn’t safely complete this review. No scores have been published. Retry or contact us for help.",
         usage?.cost || 0,
         providerWait ? 1 : 0,
       ],
@@ -776,7 +869,10 @@ export async function processOne(id?: string) {
 }
 export async function drain(id?: string) {
   const start = Date.now();
+  // Art-director requests may use 160 seconds plus rendering/DB work. Never
+  // begin another expensive request late in a 300-second function. The next
+  // worker resumes the saved stage; other frameworks retain their drain window.
   while (Date.now() - start < 220000) {
-    if (!(await processOne(id))) break;
+    if (!(await processOne(id, start + 100000))) break;
   }
 }

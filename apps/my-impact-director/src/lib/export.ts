@@ -173,6 +173,28 @@ export async function exportPdf(result: ReviewResult) {
       ),
     );
   }
+  if (result.artDirector) {
+    heading("AI art director review · before scoring");
+    write(result.artDirector.review.firstImpression);
+    write(result.artDirector.review.verdict);
+    Object.entries(result.artDirector.review.dimensions).forEach(
+      ([name, item]) =>
+        write(
+          `${name}: ${item.judgement.replaceAll("_", " ")}. ${item.explanation} Physical pages ${item.pages.join(", ")}.`,
+        ),
+    );
+    write(`Original document SHA-256: ${result.artDirector.documentHash}`, 9);
+  }
+  if (result.assessmentProcess) {
+    heading("Saved assessment process");
+    write(
+      `Methodology ${result.version}; prompt ${result.assessmentProcess.promptVersion}; models ${result.assessmentProcess.models.join(", ")}.`,
+    );
+    write(
+      `Generated ${result.assessedAt}. This stored assessment is not regenerated when reopened.`,
+      9,
+    );
+  }
   if (result.readerInspection) {
     heading("Before scoring: the AI-simulated reading exercise");
     write(result.readerInspection.firstImpression);

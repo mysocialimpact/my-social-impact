@@ -178,6 +178,11 @@ test(
         [reportId, JSON.stringify(context), "[]", JSON.stringify(pages)],
       );
       const selected = await startFramework(guest.user, root.id, "report");
+      // Preserve the deployed 2.0.1 durable path; 2.1.0 has a separate engine test.
+      await query(
+        "UPDATE director.reviews SET version='2.0.1-report' WHERE id=$1",
+        [selected.id],
+      );
       for (
         let i = 0;
         i < 12 &&
@@ -191,7 +196,7 @@ test(
         );
       let done = (await getReview(guest.user, selected.id))
         .result as ReviewResult;
-      assert.equal(done.version, REPORT_VERSION);
+      assert.equal(done.version, "2.0.1");
       assert.equal(done.scores.report?.overall, null);
       assert.equal(done.qualityControl?.calculatedOverall, 50);
       assert.ok(done.publicationNotice);

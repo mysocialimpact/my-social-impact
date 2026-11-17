@@ -19,13 +19,9 @@ export function ImpactVerdict({ result }: { result: ReviewResult }) {
         </div>
         <div>
           <p className="eyebrow">
-            The verdict · Methodology {result.version} · Beta
+            THE IMPACT EDIT · Methodology {result.version} · Beta
           </p>
-          <h2>
-            {result.publicationNotice
-              ? "Your editorial review."
-              : result.rating?.label || "Your editorial review"}
-          </h2>
+          <h2>Your editorial verdict.</h2>
           <p>{result.editorial?.verdict || result.actions.summary}</p>
         </div>
       </div>
@@ -65,7 +61,7 @@ export function ImpactVerdict({ result }: { result: ReviewResult }) {
       <div className="impact-pillar-grid">
         {score.principles.map((p) => (
           <div key={p.name}>
-            <span>{p.name}</span>
+            <h3>{p.name}</h3>
             <strong>
               {p.score === null ? "—" : p.score}
               <small> / {pillarMaximum(p)}</small>

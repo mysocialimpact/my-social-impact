@@ -21,8 +21,9 @@ export async function GET(req: Request, ctx: Context) {
     const user = await visitor(req);
     const r = await getReview(user, (await ctx.params).id);
     const full = await reviewAccess(user, r);
-    const { lease_token, ...safe } = r;
+    const { lease_token, engine_state, ...safe } = r;
     void lease_token;
+    void engine_state;
     const siblings = r.framework
       ? await query(
           "SELECT id,framework,version,status,COALESCE(jsonb_typeof(result->'scores'->framework)='object',false) AS has_result FROM director.reviews WHERE report_id=$1 AND framework IN ('claims','excellence','report') ORDER BY created_at DESC",
@@ -45,6 +46,7 @@ export async function GET(req: Request, ctx: Context) {
         delete result.pdfChecks;
         delete result.qualityControl;
         delete result.readerInspection;
+        delete result.artDirector;
         if (result.visualInspection) result.visualInspection.observations = [];
         result.actions.actions = result.actions.actions.slice(0, 3);
         result.actions.strengths = result.actions.strengths.slice(0, 3);

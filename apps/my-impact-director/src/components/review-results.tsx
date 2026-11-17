@@ -222,7 +222,9 @@ export function ReviewResults({
               href={
                 isReportV2(result.version)
                   ? isRevisedReport(result.version)
-                    ? "/methodology/impact-report-excellence"
+                    ? result.version.startsWith("2.0.1")
+                      ? "/methodology/impact-report-excellence/v2-0-1"
+                      : "/methodology/impact-report-excellence"
                     : "/methodology/impact-report-excellence/v2-0-0"
                   : "/methodology/impact-report-excellence/v1"
               }
@@ -265,6 +267,52 @@ export function ReviewResults({
                 {c.reason}
               </p>
             ))}
+          </div>
+        </details>
+      )}
+      {result.artDirector && (
+        <details className="finding">
+          <summary>The AI art director’s first reading</summary>
+          <div className="finding-content">
+            <p>
+              This visual editorial opinion was recorded before criterion scores
+              were generated. No previous assessment score was supplied.
+            </p>
+            <h3>First impression</h3>
+            <p>{result.artDirector.review.firstImpression}</p>
+            <p>{result.artDirector.review.verdict}</p>
+            {Object.entries(result.artDirector.review.dimensions).map(
+              ([key, item]) => (
+                <p key={key}>
+                  <strong>
+                    {key}: {item.judgement.replaceAll("_", " ")}.
+                  </strong>{" "}
+                  {item.explanation} · Physical pages {item.pages.join(", ")}
+                </p>
+              ),
+            )}
+            <p>
+              {result.artDirector.requiredPages.length} of{" "}
+              {result.visualInspection?.totalPages} physical pages supplied for
+              visual inspection.
+            </p>
+          </div>
+        </details>
+      )}
+      {result.assessmentProcess && (
+        <details className="finding">
+          <summary>Saved assessment record</summary>
+          <div className="finding-content">
+            <p>
+              Methodology {result.version}.{" "}
+              {result.assessmentProcess.models.join(" · ")}. Prompt{" "}
+              {result.assessmentProcess.promptVersion}.
+            </p>
+            <p>
+              Generated {new Date(result.assessedAt).toLocaleString("en-GB")}.
+              Reopening this result shows its saved judgement; it does not run
+              the models again.
+            </p>
           </div>
         </details>
       )}

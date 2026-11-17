@@ -23,10 +23,12 @@ export default function Methodology() {
       <aside className="notice">
         <strong>Overall numeric scoring is under calibration.</strong>
         <p>
-          Contrasting chart designs did not yet produce sufficiently reliable
-          relative scores. We publish the beta evidence and recommendations,
-          with experimental criterion and pillar estimates, while withholding an
-          overall number. Independent editorial calibration is still needed.
+          The new visual art-director engine has been compared on real reports
+          and controlled examples, but has not been independently calibrated by
+          human publication designers. We publish the beta evidence and
+          recommendations, with experimental criterion and pillar estimates,
+          while withholding an overall number. Independent editorial calibration
+          is still needed.
         </p>
       </aside>
       <p>
@@ -44,12 +46,12 @@ export default function Methodology() {
         results disclose the inspected pages. Unseen pages are not verified.
       </p>
       <p>
-        Physical text size and sampled PDF structure supplement visual
-        judgement. We distinguish visible contrast, magnified inspection, tags
-        and text alternatives from untested screen-reader behaviour, reflow and
-        measured contrast ratios. Untested assistive usability is unassessable.
-        Missing visual evidence is an assessment limitation: it does not become
-        a low design score or a confident overall score.
+        Rendered pages support judgement of typography, composition, colour and
+        visible contrast. They cannot establish screen-reader behaviour, PDF
+        tagging, reflow or measured contrast ratios. Untested technical
+        accessibility is not treated as verified. Missing visual evidence is an
+        assessment limitation: it does not become a low design score or a
+        confident overall score.
       </p>
       <h2 id="scoring">
         Five weighted pillars. Twenty-five anchored criteria.
@@ -88,13 +90,14 @@ export default function Methodology() {
       ))}
       <h2>Read first. Score second. Check the judgement.</h2>
       <p>
-        Before criterion scoring we record an AI-simulated first impression and
-        a five-question scan: purpose, difference made, achievements, challenges
-        and next steps. We examine copy load, repeated layouts, visual relief
-        and the integration of images, stories and data. Scoring receives that
-        reading evidence without a target total. After scoring, editorial
-        quality control checks for inconsistency; unresolved conflicts withhold
-        the overall score rather than change the number arbitrarily.
+        A capable multimodal AI first examines the actual pages and forms a
+        candid art-director opinion about readability, hierarchy, design,
+        storytelling and data communication. It receives no previous scores or
+        numerical rubric in this first pass. A second pass applies the anchored
+        criteria to that reading and the source pages. Application code
+        calculates the weighted totals. A final consistency review re-examines
+        relevant pages and corrects unsupported criterion judgements. It cannot
+        impose an arbitrary total. Unresolved conflicts are disclosed.
       </p>
       <p>
         Legibility, contrast, navigation and visual accessibility inform the
@@ -120,10 +123,13 @@ export default function Methodology() {
         calibration is not claimed.
       </p>
       <p>
-        Revised v2.0 is stored as version 2.0.1 to distinguish it from the
-        earlier, differently weighted 2.0.0 rubric. This is a beta assessment
-        without independent human calibration. Previous results retain their
-        original scores and methodology.{" "}
+        The art-director engine is stored as version 2.1.0, retaining the
+        revised v2.0 weighting of 25/30/25/10/10. It records the document hash,
+        model configuration, prompt version, evidence, recommendations and
+        completion date. Refreshing or returning displays the saved assessment
+        without regenerating it. A new version requires an explicit
+        reassessment; previous results keep their original scores and
+        methodology.{" "}
         <Link href="/methodology/impact-report-excellence/v1">
           Read the archived v1 methodology.
         </Link>
@@ -131,6 +137,10 @@ export default function Methodology() {
       <p>
         <Link href="/methodology/impact-report-excellence/v2-0-0">
           Read the archived v2.0.0 methodology.
+        </Link>
+        {" · "}
+        <Link href="/methodology/impact-report-excellence/v2-0-1">
+          Read the archived 2.0.1 engine.
         </Link>
       </p>
       <Link href="/review" className="button primary">

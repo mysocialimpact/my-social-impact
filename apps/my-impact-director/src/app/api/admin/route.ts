@@ -18,7 +18,7 @@ export async function GET(req: Request) {
       ["%" + q + "%"],
     );
     const reviews = await query(
-      `SELECT v.id,v.framework,v.status,v.stage,v.created_at,v.error_code,v.cost_usd,v.result->'scores' AS scores,r.title,r.organisation,r.source_url,r.quality_consent,u.email FROM director.reviews v JOIN director.reports r ON r.id=v.report_id JOIN director.users u ON u.id=r.owner_id WHERE ($1='' OR v.status=$1) AND (r.title ILIKE $2 OR r.organisation ILIKE $2 OR u.email ILIKE $2) ORDER BY v.created_at DESC LIMIT 100`,
+      `SELECT v.id,v.framework,v.status,v.stage,v.created_at,v.error_code,v.cost_usd,v.result->'scores' AS scores,v.result->'assessmentProcess' AS assessment_process,r.title,r.organisation,r.source_url,r.quality_consent,u.email FROM director.reviews v JOIN director.reports r ON r.id=v.report_id JOIN director.users u ON u.id=r.owner_id WHERE ($1='' OR v.status=$1) AND (r.title ILIKE $2 OR r.organisation ILIKE $2 OR u.email ILIKE $2) ORDER BY v.created_at DESC LIMIT 100`,
       [status, "%" + q + "%"],
     );
     const enquiries = await query(

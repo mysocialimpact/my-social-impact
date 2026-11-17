@@ -19,10 +19,7 @@ import {
   scoreFramework,
 } from "../src/lib/assessment";
 import { structured } from "../src/lib/ai";
-import {
-  REPORT_VERSION,
-  REPORT_PUBLICATION_NOTICE,
-} from "../src/lib/report-methodology";
+import { REPORT_PUBLICATION_NOTICE } from "../src/lib/report-methodology";
 import {
   reportActionsSchema,
   reportActionsFor,
@@ -33,6 +30,8 @@ import {
 } from "../src/lib/report-verdict";
 import { exportPdf } from "../src/lib/export";
 import type { ReviewResult } from "../src/lib/pipeline";
+// Historical calibration runner remains pinned to its original process.
+const REPORT_VERSION = "2.0.1";
 const args = process.argv.slice(2),
   paid = args.includes("--allow-paid"),
   compare = args.includes("--compare-legacy"),
