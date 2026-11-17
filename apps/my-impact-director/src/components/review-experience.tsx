@@ -1,4 +1,5 @@
 "use client";
+import { ReviewLearning } from "./review-learning";
 import { ContextualOffers } from "./contextual-offers";
 import {
   isReportV2,
@@ -22,163 +23,6 @@ import {
   frameworkNames as names,
   frameworkLogos,
 } from "@/lib/rubric";
-const lessons = {
-  report: [
-    [
-      "The introduction",
-      "A GREAT IMPACT REPORT SHOULD MAKE AN IMPACT.",
-      "Having a powerful story isn’t enough. You have to communicate it well. We inspect the writing and actual page design across five pillars. This is an indicative creative review by My Social Impact, not accreditation. Creative judgements are partly subjective; different readers may respond differently.",
-    ],
-    [
-      "01 · Clarity",
-      "MAKE IT EASY TO UNDERSTAND.",
-      "The best reports make complicated information accessible. Plain English, useful navigation and a clear hierarchy help readers find what matters.",
-      "Try a takeaway above a detailed table: what should your reader understand before exploring the numbers?",
-    ],
-    [
-      "02 · Storytelling",
-      "EVERY NUMBER HAS A STORY.",
-      "Connect evidence to real people and meaningful change. A coherent story explains purpose, action, change and what happens next.",
-      "An example should illuminate a wider finding. Protect dignity; a moving story is not a substitute for evidence.",
-    ],
-    [
-      "03 · Design",
-      "MAKE EVERY PAGE COUNT.",
-      "Typography, composition and art direction help the message land. We inspect rendered pages, not just extracted words.",
-      "A simple black-and-white publication can excel. Use size, spacing and alignment to make important information stand out.",
-    ],
-    [
-      "04 · Engagement",
-      "GIVE PEOPLE A REASON TO KEEP READING.",
-      "Capture attention and reward curiosity. A purposeful opening, varied pacing and relevant visuals help readers explore.",
-      "Judge the medium fairly: a useful static PDF does not need animations or interactive features.",
-    ],
-    [
-      "05 · Communication",
-      "MAKE THE MESSAGE MATTER.",
-      "Help people understand, remember and act. Make the main message, data explanations and next steps clear.",
-      "Give a chart an informative title, legible labels and a short explanation of the conclusion readers can draw.",
-    ],
-    [
-      "The bigger picture",
-      "YOUR IMPACT DESERVES MORE THAN A PDF.",
-      "Use your findings to shape a clearer narrative, stronger design or an accessible digital experience. My Social Impact and The Ideas Shed can help you improve the next edition. Completed results are available whenever they are ready.",
-    ],
-  ],
-  claims: [
-    [
-      "The introduction",
-      "GOOD IMPACT CLAIMS NEED GOOD EVIDENCE.",
-      "Five principles from My Social Impact help us ask whether your impact claims stand up to scrutiny.",
-    ],
-    [
-      "01 · Evidence",
-      "What’s the proof?",
-      "Activities are what you do. Outputs are what you deliver. Outcomes are the changes people experience. Impact is the broader difference you contribute to.",
-      "‘2,000 people attended our programme’ is an output. ‘2,000 people moved out of poverty’ needs evidence of a very different kind.",
-    ],
-    [
-      "02 · Proportion",
-      "Does the claim match the evidence?",
-      "Strong claims need appropriately strong evidence. A small organisation does not need an elaborate evaluation system to report honestly. It needs to say what its evidence can reasonably support.",
-      "Ten encouraging interviews can offer useful insight. They cannot establish that everyone benefited.",
-    ],
-    [
-      "03 · Transparency",
-      "Show your workings.",
-      "Explain where information came from, how it was collected and what its limitations are. Readers can judge evidence more fairly when they understand how it was produced.",
-      "Say how many people responded, how they were selected and whose voices might be missing.",
-    ],
-    [
-      "04 · Balance",
-      "Tell the whole story.",
-      "Challenges, unintended consequences and experiences that differ from the headline belong in an honest account. Acknowledging difficulty strengthens credibility.",
-      "If a programme worked for some groups but not others, that difference matters.",
-    ],
-    [
-      "05 · Learning",
-      "What will you do differently?",
-      "Useful reporting helps people decide what to keep, change or stop. Evidence becomes valuable when it changes the next decision.",
-      "Connect what you learned to a named action, a responsible person and a way to check progress.",
-    ],
-    [
-      "The bigger picture",
-      "Credibility is a practice.",
-      "A report is a starting point for stronger evidence, better decisions and a more useful conversation about impact. Explore your findings or keep learning at your own pace.",
-    ],
-  ],
-  excellence: [
-    [
-      "The introduction",
-      "SOCIAL IMPACT IS A MANAGEMENT DISCIPLINE.",
-      "Financial performance is managed. Measured. Discussed. Improved. Social Impact Excellence brings that same seriousness to social impact.",
-    ],
-    [
-      "01 · Purpose",
-      "Know why you exist.",
-      "Be clear about the difference you intend to make, who it is for and how your work could contribute. Purpose connects daily activity to desired outcomes.",
-      "Ask: what should change for the people we exist to serve?",
-    ],
-    [
-      "02 · Leadership",
-      "Impact starts at the top.",
-      "Impact is a leadership responsibility. Governance, accountability, stakeholder involvement and decisions should reflect the organisation’s social purpose.",
-      "A board should discuss what the evidence means, not just sign off a report.",
-    ],
-    [
-      "03 · Data",
-      "Measure what matters.",
-      "Meaningful information helps distinguish busy activity from useful change. Combine appropriate numbers with people’s experiences and explain the limitations.",
-      "Counting appointments tells you about delivery. Understanding what changed afterwards tells you about outcomes.",
-    ],
-    [
-      "04 · Delivery",
-      "Turn purpose into action.",
-      "Good intentions need to become consistent delivery, meaningful outcomes and continual improvement. Use evidence to adapt how the work happens.",
-      "When the evidence challenges your assumptions, change the delivery rather than just the wording.",
-    ],
-    [
-      "05 · Communications",
-      "Tell a story worth believing.",
-      "Good communication makes evidence understandable, engaging and credible. Attractive design helps when it clarifies the meaning of the evidence.",
-      "Let readers see what changed, how you know and what you cannot yet conclude.",
-    ],
-    [
-      "Beyond the report",
-      "Impact shouldn’t be an annual reporting exercise.",
-      "It should shape how you run your organisation. This document review examines what your report demonstrates. It cannot establish your full organisational maturity. Explore the full Social Impact Excellence Maturity Assessment for that deeper conversation.",
-    ],
-  ],
-};
-const reportLessonsV2 = [
-  lessons.report[0],
-  [
-    "01 · Readability and hierarchy",
-    "MAKE THE FINDINGS EASY TO FIND.",
-    "Comfortable body text, purposeful editing and a clear opening help readers find outcomes quickly. Headings alone do not earn a high score.",
-    "Separate actual outcomes from mission and ambition. Check ordinary-size legibility before enlarging the page.",
-  ],
-  lessons.report[2],
-  [
-    "03 · Visual design",
-    "MAKE EVERY PAGE COUNT.",
-    "We judge composition, typographic craft, rhythm, imagery and art direction. Consistent colours or the presence of graphics do not establish good execution.",
-    "Purposeful, modest black-and-white design can be exceptional.",
-  ],
-  [
-    "04 · Data communication",
-    "HELP READERS UNDERSTAND THE EVIDENCE.",
-    "Use appropriate representations, readable labels and clear denominators, periods and sources. Show the honest takeaway.",
-    "A well-edited paragraph or simple table can work better than a decorative pie chart.",
-  ],
-  [
-    "05 · Accessibility",
-    "MAKE THE REPORT USABLE BY MORE PEOPLE.",
-    "We inspect visible contrast, magnification, PDF structure and text alternatives. We distinguish verified checks from untested assistive behaviour.",
-    "Appearance and a PDF tag flag cannot prove screen-reader usability. Untested criteria stay unassessable.",
-  ],
-  lessons.report[6],
-];
 export type ExperienceReview = {
   id: string;
   version?: string;
@@ -377,12 +221,9 @@ function EmailInvitation({
 export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
   const { user: accountUser } = useSession();
   const searchParams = useSearchParams();
-  const [step, setStep] = useState(0),
-    [direction, setDirection] = useState("forward"),
-    [results, setResults] = useState(searchParams.get("results") === "1"),
+  const [results, setResults] = useState(searchParams.get("results") === "1"),
     [busy, setBusy] = useState(false),
     [error, setError] = useState("");
-  const lessonHeading = useRef<HTMLHeadingElement>(null);
   useEffect(() => {
     if (searchParams.get("results") === "1") setResults(true);
   }, [searchParams]);
@@ -408,6 +249,7 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
     const nextAfterResults = complete && results;
     setAction({
       id: r.id,
+      learning: !!framework && !results,
       status: r.status,
       stage: r.stage,
       contextTitle:
@@ -476,7 +318,7 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
             : viewResults
           : r.status === "failed"
             ? () => document.querySelector(".honest-status")?.scrollIntoView()
-            : () => goStep(0),
+            : undefined,
       processingLabel: "Processing continues when you leave",
     });
   }, [
@@ -490,17 +332,8 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
     results,
     completedCount,
     nextFramework,
-    step,
     setAction,
   ]);
-  function goStep(value: number) {
-    setDirection(value < step ? "backward" : "forward");
-    setStep(value);
-    requestAnimationFrame(() => {
-      lessonHeading.current?.focus({ preventScroll: true });
-      document.querySelector(".lesson-scroll")?.scrollTo({ top: 0 });
-    });
-  }
   const recordedView = useRef("");
   useEffect(() => {
     if (!complete || !results || recordedView.current === r.id) return;
@@ -651,13 +484,6 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
         {error && <p role="alert">{error}</p>}
       </div>
     );
-  const currentLessons =
-    framework === "report" &&
-    isReportV2(r.version || r.result?.version || REPORT_VERSION)
-      ? reportLessonsV2
-      : lessons[framework];
-  const lesson = currentLessons[step],
-    other = framework === "claims" ? "excellence" : "claims";
   return (
     <div
       className={
@@ -666,79 +492,81 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
         (results ? " review-result-page" : " immersive-review")
       }
     >
-      <div className="immersive-meta">
-        <Link className="review-back" href="/">
-          ← Back to My Impact Director
-        </Link>
-        <div className="review-product-heading">
-          <Image
-            src={
-              framework === "report"
-                ? "/brand/the-impact-edit-symbol.svg"
-                : frameworkLogos[framework]
-            }
-            alt={names[framework]}
-            width={110}
-            height={110}
-          />
-          <div>
-            <p>
-              Developed by{" "}
-              <a href="https://mysocialimpact.org">My Social Impact</a>
-            </p>
-            <h1>{names[framework]}</h1>
-            <p className="report-name" title={r.organisation || r.title}>
-              {r.organisation || r.title}
-            </p>
+      {results && (
+        <div className="immersive-meta">
+          <Link className="review-back" href="/">
+            ← Back to My Impact Director
+          </Link>
+          <div className="review-product-heading">
+            <Image
+              src={
+                framework === "report"
+                  ? "/brand/the-impact-edit-symbol.svg"
+                  : frameworkLogos[framework]
+              }
+              alt={names[framework]}
+              width={110}
+              height={110}
+            />
+            <div>
+              <p>
+                Developed by{" "}
+                <a href="https://mysocialimpact.org">My Social Impact</a>
+              </p>
+              <h1>{names[framework]}</h1>
+              <p className="report-name" title={r.organisation || r.title}>
+                {r.organisation || r.title}
+              </p>
+            </div>
+          </div>
+          <div className="honest-status" role="status">
+            {complete ? (
+              <>
+                <strong>Your results are ready.</strong>{" "}
+                <button onClick={viewResults}>
+                  See my results <Arrow diagonal />
+                </button>
+              </>
+            ) : r.status === "failed" || r.ingestion?.status === "failed" ? (
+              <>
+                <strong>
+                  We’re really sorry — we couldn’t complete this review.
+                </strong>{" "}
+                {r.error_message || r.ingestion?.error_message}{" "}
+                <button
+                  disabled={busy}
+                  onClick={() =>
+                    retrySaved(
+                      r.ingestion?.status === "failed" ? r.ingestion.id : r.id,
+                    )
+                  }
+                >
+                  Retry the saved review
+                </button>
+                <Link href={"/feedback?from=/reviews/" + r.id}>
+                  Help us make this better
+                </Link>
+              </>
+            ) : (
+              <>
+                <strong>
+                  {r.understanding_ready
+                    ? r.framework === "report"
+                      ? r.stage === 16
+                        ? "Inspecting rendered pages."
+                        : r.stage >= 17
+                          ? `Reviewing ${(isReportV2(r.version) ? reportPillars : ["Clarity", "Storytelling", "Design", "Engagement", "Communication"])[r.stage - 17] || "your findings"}.`
+                          : "Preparing your creative recommendations."
+                      : "Your Impact Director is preparing your report."
+                    : "Your Impact Director is reading your report."}
+                </strong>{" "}
+                {r.error_message ||
+                  "You can leave this page; processing continues in the background."}
+              </>
+            )}
           </div>
         </div>
-        <div className="honest-status" role="status">
-          {complete ? (
-            <>
-              <strong>Your results are ready.</strong>{" "}
-              <button onClick={viewResults}>
-                See my results <Arrow diagonal />
-              </button>
-            </>
-          ) : r.status === "failed" || r.ingestion?.status === "failed" ? (
-            <>
-              <strong>
-                We’re really sorry — we couldn’t complete this review.
-              </strong>{" "}
-              {r.error_message || r.ingestion?.error_message}{" "}
-              <button
-                disabled={busy}
-                onClick={() =>
-                  retrySaved(
-                    r.ingestion?.status === "failed" ? r.ingestion.id : r.id,
-                  )
-                }
-              >
-                Retry the saved review
-              </button>
-              <Link href={"/feedback?from=/reviews/" + r.id}>
-                Help us make this better
-              </Link>
-            </>
-          ) : (
-            <>
-              <strong>
-                {r.understanding_ready
-                  ? r.framework === "report"
-                    ? r.stage === 16
-                      ? "Inspecting rendered pages."
-                      : r.stage >= 17
-                        ? `Reviewing ${(isReportV2(r.version) ? reportPillars : ["Clarity", "Storytelling", "Design", "Engagement", "Communication"])[r.stage - 17] || "your findings"}.`
-                        : "Preparing your creative recommendations."
-                    : "Your Impact Director is preparing your report."
-                  : "Your Impact Director is reading your report."}
-              </strong>{" "}
-              {r.error_message ||
-                "You can leave this page; processing continues in the background."}
-            </>
-          )}
-        </div>
-      </div>
+      )}
       <div id="review-results" className="review-stage">
         {complete && results && r.result ? (
           <>
@@ -858,132 +686,26 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
             </button>
           </>
         ) : (
-          <section
-            className={
-              "methodology-lesson lesson-" + step + " slide-" + direction
+          <ReviewLearning
+            key={r.id}
+            framework={framework}
+            version={r.version || r.result?.version || REPORT_VERSION}
+            state={
+              complete
+                ? "ready"
+                : r.status === "failed" || r.ingestion?.status === "failed"
+                  ? "failed"
+                  : "preparing"
             }
-            id="learning"
-          >
-            <div className="lesson-scroll" key={step}>
-              <div
-                className={
-                  step === 0
-                    ? "lesson-composition opening-slide"
-                    : "lesson-composition"
-                }
-              >
-                <div className="lesson-copy">
-                  <p className="lesson-position">
-                    {lesson[0]}{" "}
-                    <span>
-                      {step + 1} / {currentLessons.length} · Learning
-                    </span>
-                  </p>
-                  <h2 ref={lessonHeading} tabIndex={-1}>
-                    {step === 0
-                      ? complete
-                        ? `HOW YOUR ${framework === "claims" ? "CLAIMS CODE" : framework === "excellence" ? "IMPACT EXCELLENCE" : "IMPACT EDIT"} SCORE IS MADE.`
-                        : r.status === "failed"
-                          ? "YOUR REVIEW NEEDS ATTENTION."
-                          : "YOUR REVIEW IS UNDER WAY."
-                      : lesson[1]}
-                  </h2>
-                  <p className="lesson-explanation">
-                    {step === 0
-                      ? complete
-                        ? "Your results are ready. Explore the methodology behind your score, or open your results whenever you’re ready."
-                        : r.status === "failed"
-                          ? "Your saved report is safe. Use the retry option above, or contact us for help. You can still explore the methodology below."
-                          : "While your Impact Director prepares your report, discover how we assess it and arrive at your score. Explore the five pillars at your own pace — your review continues in the background."
-                      : lesson[2]}
-                  </p>
-                  {lesson[3] && <blockquote>{lesson[3]}</blockquote>}
-                  {step === 0 && (
-                    <p className="stay-invitation">
-                      Your progress is shown above. We’ll remember where your
-                      report belongs.
-                    </p>
-                  )}
-                  {step === 6 && framework === "excellence" && (
-                    <a href="https://socialimpactexcellence.org">
-                      Explore the full framework & maturity assessment{" "}
-                      <Arrow diagonal />
-                    </a>
-                  )}
-                </div>
-                {step === 0 && (
-                  <aside className="preparation-card">
-                    <p className="eyebrow">{names[framework]}</p>
-                    <h3>Understand the thinking behind your score.</h3>
-                    <p>{lesson[2]}</p>
-                    <ol>
-                      <li>We read your report and its evidence.</li>
-                      <li>We apply this methodology’s criteria.</li>
-                      <li>
-                        You receive your score and practical recommendations.
-                      </li>
-                    </ol>
-                    <p className="preparation-account">
-                      {accountUser && !accountUser.anonymous ? (
-                        <>
-                          Saved to your account:{" "}
-                          <strong>{accountUser.email}</strong>
-                        </>
-                      ) : (
-                        <>
-                          Your existing review remains private.{" "}
-                          <Link
-                            href={`/login?mode=signup&next=${encodeURIComponent("/reviews/" + r.id)}`}
-                          >
-                            Create an account to start another review.
-                          </Link>
-                        </>
-                      )}
-                    </p>
-                    <button
-                      className="button primary"
-                      onClick={() => goStep(1)}
-                    >
-                      Explore the five pillars <Arrow />
-                    </button>
-                  </aside>
-                )}
-              </div>
-            </div>
-            <div className="lesson-controls">
-              <nav aria-label="Learning sequence">
-                <button disabled={step === 0} onClick={() => goStep(step - 1)}>
-                  ← Previous
-                </button>
-                <span>
-                  Explore at your own pace. This is learning, not processing
-                  progress.
-                </span>
-                <button
-                  disabled={step === currentLessons.length - 1}
-                  onClick={() => goStep(step + 1)}
-                >
-                  Next →
-                </button>
-              </nav>
-              <div className="lesson-jump">
-                {currentLessons.map((l, i) => (
-                  <button
-                    key={l[0]}
-                    aria-current={step === i ? "step" : undefined}
-                    onClick={() => goStep(i)}
-                    aria-label={l[0]}
-                  >
-                    {i === 0
-                      ? "Introduction"
-                      : i === 6
-                        ? "The bigger picture"
-                        : l[0]}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </section>
+            onViewResults={viewResults}
+            onRetry={() =>
+              retrySaved(
+                r.ingestion?.status === "failed" ? r.ingestion.id : r.id,
+              )
+            }
+            busy={busy}
+            failure={r.error_message || r.ingestion?.error_message || error}
+          />
         )}
       </div>
       {results && (
