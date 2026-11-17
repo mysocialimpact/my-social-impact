@@ -2,8 +2,14 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { api, useSession } from "./session";
-import { SaveReview } from "./save-review";
-import { FRAMEWORKS, frameworkNames, type Framework } from "@/lib/rubric";
+import { ContextualOffers } from "./contextual-offers";
+import { displayScore } from "@/lib/publication";
+import {
+  FRAMEWORKS,
+  frameworkNames,
+  frameworkLogos,
+  type Framework,
+} from "@/lib/rubric";
 import { stateLabel, stateAction, type Workspace } from "./workspace-types";
 export function SavedReviews() {
   const { user, loading, error: sessionError } = useSession();
@@ -153,8 +159,8 @@ export function SavedReviews() {
               Welcome back{user.name ? `, ${user.name}` : ""}.
             </p>
             <p>
-              Your reports, the reviews you’ve started, and what to do next. All
-              in one place.
+              Your impact, from three perspectives. Open your results, follow a
+              review in progress, or start the next one.
             </p>
             <Link href="/review" className="button primary">
               Start a new free review →
@@ -181,23 +187,6 @@ export function SavedReviews() {
         {(error || sessionError) && (
           <p className="alert error" role="alert">
             {error || sessionError}
-          </p>
-        )}
-        {user && !user.anonymous && !user.emailVerified && (
-          <SaveReview returning />
-        )}
-        {(!user || user.anonymous) && !loading && (
-          <div className="workspace-return">
-            <p>Log in to save and return on another device.</p>
-            <Link href="/login">Log in</Link>
-            <span> · </span>
-            <Link href="/login?mode=signup">Create your free account</Link>
-          </div>
-        )}
-        {user?.emailVerified && !user.passwordAccount && (
-          <p className="workspace-return">
-            Previously used an email link?{" "}
-            <Link href="/account">Set a password for next time →</Link>
           </p>
         )}
         {loading || !rows ? (
@@ -236,16 +225,47 @@ export function SavedReviews() {
                 <div className="personal-assessments">
                   {FRAMEWORKS.map((f) => {
                     const a = w.assessments.find((a) => a.framework === f),
-                      label = stateLabel(a);
+                      label = stateLabel(a),
+                      completed = label === "Completed",
+                      rating =
+                        completed && a?.score != null
+                          ? displayScore(a.score)
+                          : null;
                     return (
-                      <section key={f}>
+                      <section
+                        key={f}
+                        className={
+                          "workspace-review-panel " +
+                          (completed ? "is-complete" : "is-incomplete")
+                        }
+                        style={
+                          {
+                            "--score-colour": rating?.colour ?? "#8b909b",
+                          } as React.CSSProperties
+                        }
+                      >
+                        <img
+                          src={frameworkLogos[f]}
+                          alt={frameworkNames[f]}
+                          className={
+                            "workspace-review-logo workspace-review-logo-" + f
+                          }
+                        />
                         <h3>{frameworkNames[f]}</h3>
-                        <p className="workspace-state">
-                          {label}
-                          {label === "Completed" && a?.score !== null
-                            ? ` · ${a?.score}/100`
-                            : ""}
-                        </p>
+                        <div className="workspace-review-score">
+                          <strong>
+                            {rating ? rating.percent : "—"}
+                            {rating && <small>/100</small>}
+                          </strong>
+                          <span>
+                            {rating
+                              ? rating.label
+                              : completed
+                                ? "Score unavailable"
+                                : label}
+                          </span>
+                        </div>
+                        {rating && <p className="workspace-state">Completed</p>}
                         {a ? (
                           <Link
                             className="text-link"
@@ -282,8 +302,7 @@ export function SavedReviews() {
                 </div>
                 <div className="workspace-retention">
                   <p>
-                    {w.full ? "Saved report" : "Temporary browser access"} ·
-                    Available until{" "}
+                    {"Saved in your account"} · Available until{" "}
                     {new Date(w.expires_at).toLocaleDateString("en-GB")}.{" "}
                     {user?.anonymous
                       ? "Verify your email to keep this report for 180 days and return on another device."
@@ -303,14 +322,9 @@ export function SavedReviews() {
             ))}
           </div>
         )}
-        {user?.emailVerified && (
-          <p className="workspace-service">
-            <Link href="/#human-support">
-              Want someone in your corner all year round? Meet your Impact
-              Director →
-            </Link>
-          </p>
-        )}
+      </div>
+      <div className="workspace-professional campaign-width">
+        <ContextualOffers framework="report" />
       </div>
     </>
   );

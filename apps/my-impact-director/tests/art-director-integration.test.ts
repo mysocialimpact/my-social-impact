@@ -1,3 +1,4 @@
+import { workspaces } from "../src/lib/workspace";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
@@ -246,6 +247,33 @@ test(
       assert.equal(result.qualityControl?.calculatedOverall, 62.5);
       assert.equal(result.scores.report!.overall, 62.5);
       assert.equal(result.scores.report!.provisional, false);
+      const historicalResult = structuredClone(result);
+      historicalResult.scores.report!.overall = null;
+      historicalResult.scores.report!.provisional = true;
+      delete historicalResult.scores.report!.unroundedOverall;
+      await query("UPDATE director.reviews SET result=$2 WHERE id=$1", [
+        selected.id,
+        JSON.stringify(historicalResult),
+      ]);
+      const dashboard = await workspaces(guest.user, selected.id);
+      const design = (
+        dashboard[0].assessments as {
+          framework: string;
+          score: number;
+          publication?: unknown;
+        }[]
+      ).find((a) => a.framework === "report");
+      assert.equal(design?.score, 62.5);
+      assert.equal(
+        design?.publication,
+        undefined,
+        "Audit details stay out of the dashboard response",
+      );
+      await query("UPDATE director.reviews SET result=$2 WHERE id=$1", [
+        selected.id,
+        JSON.stringify(result),
+      ]);
+
       assert.equal(result.scores.report!.principles[2].score, 6.25);
       assert.equal(result.qualityControl?.changes.length, 5);
       assert.deepEqual(result.visualInspection?.pages, [1, 2]);

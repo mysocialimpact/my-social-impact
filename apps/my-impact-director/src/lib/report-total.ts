@@ -18,8 +18,8 @@ export function reportTotal(result: ReviewResult): number | null {
     score.principles.length !== 5 ||
     score.principles.some((p) => p.coverage < 4 || p.score === null) ||
     result.editorial?.scoreConsistency !== "consistent" ||
-    !result.visualInspection?.pages.length ||
-    !result.artDirector?.requiredPages.every((p) =>
+    !result.visualInspection?.pages?.length ||
+    !result.artDirector?.requiredPages?.every((p) =>
       result.visualInspection!.pages.includes(p),
     )
   )
