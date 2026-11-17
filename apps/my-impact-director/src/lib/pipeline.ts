@@ -511,6 +511,7 @@ export async function processOne(id?: string, latestArtStart?: number) {
               job.version,
             ))
         ) {
+          delete scores[framework]!.unroundedOverall;
           scores[framework]!.overall = null;
           scores[framework]!.provisional = true;
         }
@@ -567,15 +568,18 @@ export async function processOne(id?: string, latestArtStart?: number) {
             ) as VisualObservation[],
           )
         : undefined;
-      const calculatedOverall = scores.report?.overall ?? null;
+      const calculatedOverall =
+        scores.report?.unroundedOverall ?? scores.report?.overall ?? null;
       if (
         isRevisedReport(job.version) &&
         editorial?.scoreConsistency === "review_needed"
       ) {
+        delete scores.report!.unroundedOverall;
         scores.report!.overall = null;
         scores.report!.provisional = true;
       }
       if (job.framework === "report" && isRevisedReport(job.version)) {
+        delete scores.report!.unroundedOverall;
         scores.report!.overall = null;
         scores.report!.provisional = true;
       }

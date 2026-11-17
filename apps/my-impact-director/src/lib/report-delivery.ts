@@ -1,10 +1,7 @@
 import { EDIT_ATTRIBUTION, EDIT_CAVEAT } from "./branding";
-import { createHmac } from "node:crypto";
 import { query } from "./db";
 import { emailEnabled } from "./email-save";
-import { tokenHash } from "./access";
-import { exportPdf } from "./export";
-import type { ReviewResult } from "./pipeline";
+import type { Framework } from "./rubric";
 export async function sendPendingReports() {
   if (!emailEnabled()) return;
   const rows = await query<{
@@ -12,22 +9,14 @@ export async function sendPendingReports() {
     review_id: string;
     owner_id: string;
     email: string;
-    token: string | null;
-    result: ReviewResult;
+    framework: Framework | null;
   }>(
-    `WITH picked AS (SELECT id FROM director.report_deliveries WHERE delivered_at IS NULL AND attempts<8 AND next_attempt_at<=now() AND (lease_until IS NULL OR lease_until<now()) ORDER BY next_attempt_at FOR UPDATE SKIP LOCKED LIMIT 3), claimed AS (UPDATE director.report_deliveries d SET lease_until=now()+interval '5 minutes',attempts=attempts+1 FROM picked WHERE d.id=picked.id RETURNING d.*) SELECT c.*,v.result FROM claimed c JOIN director.reviews v ON v.id=c.review_id JOIN director.reports r ON r.id=v.report_id WHERE v.status='complete' AND v.framework IS DISTINCT FROM 'document' AND jsonb_typeof(v.result)='object' AND r.expires_at>now()`,
+    `WITH picked AS (SELECT id FROM director.report_deliveries WHERE delivered_at IS NULL AND attempts<8 AND next_attempt_at<=now() AND (lease_until IS NULL OR lease_until<now()) ORDER BY next_attempt_at FOR UPDATE SKIP LOCKED LIMIT 3), claimed AS (UPDATE director.report_deliveries d SET lease_until=now()+interval '5 minutes',attempts=attempts+1 FROM picked WHERE d.id=picked.id RETURNING d.*) SELECT c.id,c.email,c.review_id,v.framework FROM claimed c JOIN director.reviews v ON v.id=c.review_id JOIN director.reports r ON r.id=v.report_id WHERE v.status='complete' AND v.framework IS DISTINCT FROM 'document' AND jsonb_typeof(v.result)='object' AND r.expires_at>now()`,
   );
   for (const row of rows) {
     try {
-      if (!process.env.CRON_SECRET) throw Error("Delivery signing unavailable");
-      const token = createHmac("sha256", process.env.CRON_SECRET)
-        .update("report-delivery:" + row.id)
-        .digest("base64url");
-      await query(
-        "INSERT INTO director.email_links(token_hash,owner_id,review_id,email,expires_at) VALUES($1,$2,$3,$4,now()+interval '30 minutes') ON CONFLICT(token_hash) DO UPDATE SET expires_at=GREATEST(email_links.expires_at,excluded.expires_at)",
-        [tokenHash(token), row.owner_id, row.review_id, row.email],
-      );
-      const pdf = await exportPdf(row.result);
+      const link = new URL("/open/" + row.review_id, process.env.APP_ORIGIN)
+        .href;
       const response = await fetch("https://api.resend.com/emails", {
         method: "POST",
         headers: {
@@ -39,16 +28,10 @@ export async function sendPendingReports() {
           from: process.env.EMAIL_FROM,
           to: [row.email],
           subject:
-            row.result.framework === "report"
+            row.framework === "report"
               ? "The Impact Edit — your review is ready"
-              : `Your ${row.result.framework === "claims" ? "Social Impact Claims Code" : row.result.framework === "excellence" ? "Social Impact Excellence" : "impact report"} review is ready`,
-          text: `${row.result.framework === "report" ? `THE IMPACT EDIT\nIndicative Creative Assessment\n${EDIT_ATTRIBUTION}\n${EDIT_CAVEAT}\n\n` : ""}Your free detailed review is attached. Open your private return link within 30 minutes: ${process.env.APP_ORIGIN}/access#${token}\n\nNo marketing subscription. You requested and verified this delivery address.`,
-          attachments: [
-            {
-              filename: "my-impact-director-review.pdf",
-              content: pdf.toString("base64"),
-            },
-          ],
+              : `Your ${row.framework === "claims" ? "Social Impact Claims Code" : row.framework === "excellence" ? "Social Impact Excellence" : "impact report"} review is ready`,
+          text: `${row.framework === "report" ? `THE IMPACT EDIT\nIndicative Creative Assessment\n${EDIT_ATTRIBUTION}\n${EDIT_CAVEAT}\n\n` : ""}Your digital report is ready. Open it in your My Impact Director account: ${link}\n\nYou control who can read this assessment. To invite someone else, open the report and select Create sharing link.`,
         }),
         signal: AbortSignal.timeout(20000),
       });

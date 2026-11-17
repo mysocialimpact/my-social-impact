@@ -8,7 +8,7 @@ import { processOne, type ReviewResult } from "../src/lib/pipeline";
 import { extractPages } from "../src/lib/documents";
 import { sourcePassages } from "../src/lib/passages";
 import { query, database } from "../src/lib/db";
-import { exportPdf } from "../src/lib/export";
+import { exportPdf } from "../src/lib/archive/export";
 import { GET as snapshot } from "../src/app/api/reviews/[id]/route";
 import { firstOpinion, testFindings } from "./fixtures/art-director";
 test(

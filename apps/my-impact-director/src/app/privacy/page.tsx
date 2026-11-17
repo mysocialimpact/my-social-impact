@@ -74,10 +74,11 @@ export default function Privacy() {
           public-network addresses and website access rules.
         </p>
         <p>
-          Where email saving is configured, Resend delivers the requested PDF
-          and secure return link to your chosen email address. The PDF then
-          follows your email provider’s retention rules. No email is sent unless
-          you request it.
+          Resend sends a private account link to your verified email address. A
+          report stays private until you create a sharing link. Anyone with that
+          link can read that assessment and its quoted evidence until you revoke
+          it or the report expires. It does not grant access to your account or
+          original upload.
         </p>
         <h2>Usage and security</h2>
         <p>

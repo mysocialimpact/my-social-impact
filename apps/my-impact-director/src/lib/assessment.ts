@@ -245,23 +245,24 @@ export function scoreFramework(
   const provisional =
     coverage < thresholds.minimumTotal ||
     principles.some((p) => p.coverage < thresholds.minimumPerPrinciple);
+  // Preserve the methodology total before its existing two-decimal storage rounding.
+  const unroundedOverall = provisional
+    ? null
+    : framework === "report" && isReportV2(version)
+      ? principles.reduce(
+          (total, p) =>
+            total +
+            (p.maximum * p.tests.reduce((sum, t) => sum + (t.score ?? 0), 0)) /
+              (4 * p.coverage),
+          0,
+        )
+      : principles.reduce((total, p) => total + p.score!, 0);
   return {
-    overall: provisional
-      ? null
-      : Math.round(
-          (framework === "report" && isReportV2(version)
-            ? principles.reduce(
-                (n, p) =>
-                  n +
-                  (p.maximum *
-                    p.tests
-                      .filter((f) => f.score !== null)
-                      .reduce((a, f) => a + f.score!, 0)) /
-                    (4 * p.coverage),
-                0,
-              )
-            : principles.reduce((n, p) => n + p.score!, 0)) * 100,
-        ) / 100,
+    ...(unroundedOverall === null ? {} : { unroundedOverall }),
+    overall:
+      unroundedOverall === null
+        ? null
+        : Math.round(unroundedOverall * 100) / 100,
     provisional,
     coverage,
     principles,

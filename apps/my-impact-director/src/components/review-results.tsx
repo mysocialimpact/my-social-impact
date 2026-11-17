@@ -1,3 +1,4 @@
+import { displayScore } from "@/lib/publication";
 import type { ReportRating } from "@/lib/report-verdict";
 import {
   REPORT_VERSION,
@@ -51,8 +52,16 @@ export function ScoreCard({
               "score-value " + (score.provisional ? "provisional" : "")
             }
           >
-            {score.provisional ? "—" : score.overall}
-            <span>{score.provisional ? "provisional" : "out of 100"}</span>
+            {score.provisional
+              ? "—"
+              : (displayScore(score.unroundedOverall ?? score.overall)
+                  ?.percent ?? "—")}
+            <span>
+              {score.provisional || score.overall === null
+                ? "under review"
+                : "/100 · " +
+                  displayScore(score.unroundedOverall ?? score.overall)?.label}
+            </span>
           </div>
         </div>
         <p>
@@ -91,7 +100,7 @@ export function ScoreCard({
               <strong>
                 {p.score === null
                   ? "Not assessable"
-                  : `${p.score} / ${pillarMaximum(p)}`}
+                  : `${p.score} / ${pillarMaximum(p)} · ${displayScore(p.score, pillarMaximum(p))?.percent}% · ${displayScore(p.score, pillarMaximum(p))?.label}`}
               </strong>
             </div>
             <div className="bar-track" aria-hidden="true">
@@ -120,6 +129,7 @@ function SourceLink({
   page: number;
   admin?: boolean;
 }) {
+  if (!id) return <span>Source · PDF page {page}</span>;
   return admin ? (
     <a href={`#inspection-page-${page}`}>
       PDF page {page} · inspection below ↓
@@ -150,7 +160,9 @@ function Finding({
           {criteria(framework, version).find((c) => c.id === f.id)?.question}
         </span>
         <small>
-          {f.score === null ? f.status.replaceAll("_", " ") : `${f.score}/4`}
+          {f.score === null
+            ? f.status.replaceAll("_", " ")
+            : `${f.score}/4 · ${displayScore(f.score, 4)?.label}`}
         </small>
       </summary>
       <div className="finding-content">
@@ -203,10 +215,12 @@ export function ReviewResults({
   result,
   id,
   admin = false,
+  appendix = false,
 }: {
   result: ReviewResult;
   id: string;
   admin?: boolean;
+  appendix?: boolean;
 }) {
   return (
     <>
@@ -234,19 +248,21 @@ export function ReviewResults({
           </>
         )}
       </div>
-      <div className="results-grid">
-        {(["claims", "excellence", "report"] as Framework[])
-          .filter((f) => !!result.scores[f])
-          .map((f) => (
-            <ScoreCard
-              key={f}
-              framework={f}
-              score={result.scores[f]!}
-              version={result.version}
-              rating={f === "report" ? result.rating : undefined}
-            />
-          ))}
-      </div>
+      {!appendix && (
+        <div className="results-grid">
+          {(["claims", "excellence", "report"] as Framework[])
+            .filter((f) => !!result.scores[f])
+            .map((f) => (
+              <ScoreCard
+                key={f}
+                framework={f}
+                score={result.scores[f]!}
+                version={result.version}
+                rating={f === "report" ? result.rating : undefined}
+              />
+            ))}
+        </div>
+      )}
       {result.qualityControl && (
         <details className="finding">
           <summary>Editorial quality control: the criterion audit</summary>
@@ -348,7 +364,7 @@ export function ReviewResults({
           <p>{result.editorial.attention}</p>
           {result.rating && (
             <>
-              <h3>Rating: {result.rating.label}</h3>
+              <h3>Historical methodology rating: {result.rating.label}</h3>
               <p>{result.rating.rule}</p>
               {result.rating.reasons.map((reason, i) => (
                 <p key={i}>{reason}</p>
@@ -501,7 +517,7 @@ export function ReviewResults({
                   <span className="badge">
                     {p.score === null
                       ? "Unassessable"
-                      : `${p.score}/${pillarMaximum(p)}`}{" "}
+                      : `${p.score}/${pillarMaximum(p)} · ${displayScore(p.score, pillarMaximum(p))?.percent}% · ${displayScore(p.score, pillarMaximum(p))?.label}`}{" "}
                     · {p.coverage}/{framework === "report" ? 5 : 4} tests
                   </span>
                 </h3>
@@ -659,7 +675,7 @@ export function ReviewResults({
           <Link href="/methodology">Read the full scoring methodology →</Link>
         </div>
       </details>
-      {!admin && (
+      {id && !admin && !appendix && (
         <div className="support-cta">
           <div>
             <h3>Want to go deeper?</h3>

@@ -266,13 +266,6 @@ export function SavedReviews() {
                             Start review →
                           </button>
                         )}
-                        {a && label === "Completed" && w.full && (
-                          <p>
-                            <a href={"/api/reviews/" + a.id + "/export"}>
-                              Download PDF
-                            </a>
-                          </p>
-                        )}
                         {a?.delivery && (
                           <p className="fine-print">
                             Email:{" "}

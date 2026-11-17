@@ -28,7 +28,8 @@ export function buildArtResult(
     undefined,
     version,
   );
-  const calculatedOverall = score.overall;
+  const calculatedOverall = score.unroundedOverall ?? score.overall;
+  delete score.unroundedOverall;
   score.overall = null;
   score.provisional = true;
   const observations = artObservations(first),

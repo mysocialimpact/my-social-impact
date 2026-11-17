@@ -140,7 +140,7 @@ export function SaveReview({
                   ? recovery
                     ? "Send recovery link"
                     : "Send verification email"
-                  : "Email my full report"}
+                  : "Email my report link"}
               <Arrow />
             </button>
             <p className="fine-print">
@@ -156,7 +156,7 @@ export function SaveReview({
               ? "Checking email availability…"
               : "Email saving isn’t available yet."}{" "}
             {id &&
-              "You can download your full PDF now. Your browser access continues until the deletion date below."}
+              "Open your digital report in My Reports. Your browser access continues until the deletion date below."}
           </p>
         )}
         {error && (

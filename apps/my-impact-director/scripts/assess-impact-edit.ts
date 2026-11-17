@@ -26,7 +26,7 @@ import {
   visualCoverage,
   actionInstructions,
 } from "../src/lib/report-verdict";
-import { exportPdf } from "../src/lib/export";
+import { exportPdf } from "../src/lib/archive/export";
 import type { ReviewResult } from "../src/lib/pipeline";
 const args = process.argv.slice(2),
   paid = args.includes("--allow-paid"),

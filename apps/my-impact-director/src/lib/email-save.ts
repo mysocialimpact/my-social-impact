@@ -13,8 +13,6 @@ import {
   tokenHash,
 } from "./access";
 import { getReview } from "./reviews";
-import { exportPdf } from "./export";
-import type { ReviewResult } from "./pipeline";
 
 export const emailEnabled = () =>
   process.env.EMAIL_ENABLED === "true" &&
@@ -40,8 +38,7 @@ export async function requestEmailSave(req: Request, input: unknown) {
     email = rawEmail.trim().toLowerCase();
   await rateLimit(`email-ip:${privateNetworkKey(req)}`, 8, 3600);
   await rateLimit(`email-recipient:${email}`, 3, 3600);
-  let ownerId = emailId(email),
-    attachment: Buffer | undefined;
+  let ownerId = emailId(email);
   if (reviewId) {
     const user = await visitor(req),
       review = await getReview(user, reviewId);
@@ -115,17 +112,7 @@ export async function requestEmailSave(req: Request, input: unknown) {
         subject: reviewId
           ? "Confirm your email for your free detailed review"
           : "Your My Impact Director sign-in link",
-        text: `${reviewId ? (attachment ? "Your full impact report review is attached. Open this private link to keep it in your saved reviews for 180 days:" : "Confirm your email to receive your free detailed report when it is ready:") : "Open this private link to return to your saved reviews:"}\n\n${destination.href}\n\nThis single-use link expires in 30 minutes. You have not been subscribed to marketing. If you did not request this email, you can ignore it.`,
-        ...(attachment
-          ? {
-              attachments: [
-                {
-                  filename: "my-impact-director-review.pdf",
-                  content: attachment.toString("base64"),
-                },
-              ],
-            }
-          : {}),
+        text: `${reviewId ? "Confirm your email to receive a private link to your digital report:" : "Open this private link to return to your saved reviews:"}\n\n${destination.href}\n\nThis single-use link expires in 30 minutes. You have not been subscribed to marketing.`,
       }),
       signal: AbortSignal.timeout(15000),
     });

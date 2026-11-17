@@ -1,82 +1,71 @@
 "use client";
 import { useSession } from "./session";
 import { ServiceContact } from "./service-contact";
-import { reportOffers, type Service } from "@/lib/services";
+import { reportOffers, serviceMailto, MARCUS_EMAIL } from "@/lib/services";
+import { DigitalOffer } from "./report-services";
+import { identity } from "@/lib/publication";
 import type { Framework } from "@/lib/rubric";
-
 export function ContextualOffers({
   framework,
   reviewId,
 }: {
   framework: Framework;
-  reviewId: string;
+  reviewId?: string;
 }) {
   const { user } = useSession();
-  const canLinkReview = !!user && !user.anonymous && !!user.emailVerified;
-  const offers =
-    framework === "excellence"
-      ? [
-          {
-            service: "discussion" as Service,
-            cta: "Free introductory conversation",
-            price: "Free",
-          },
-          {
-            service: "supported" as Service,
-            cta: "Explore Supported",
-            price: "From £149 / month",
-          },
-          {
-            service: "director" as Service,
-            cta: "Talk about a human Impact Director",
-            price: "From £495 / month",
-          },
-          {
-            service: "consultancy" as Service,
-            cta: "Discuss a full Social Impact Excellence assessment",
-            price: "Scope and quote agreed together",
-          },
-        ]
-      : reportOffers.filter((o) =>
-          (framework === "report"
-            ? ["improvement", "digitisation", "preparation"]
-            : ["discussion", "improvement", "preparation"]
-          ).includes(o.service),
-        );
+  const link = {
+    reviewId,
+    canLinkReview: !!reviewId && !!user?.emailVerified && !user.anonymous,
+    source: "review" as const,
+  };
   return (
-    <section className="bigger-conversation contextual-offers">
-      <p className="eyebrow">AI-POWERED. HUMAN-LED. HELP AVAILABLE NOW.</p>
-      <h2>
-        {framework === "claims"
-          ? "Want to strengthen your impact claims?"
-          : framework === "excellence"
-            ? "What if someone helped you manage your impact throughout the year?"
-            : "Your impact deserves to be brilliantly communicated."}
-      </h2>
-      <p>
-        Start a conversation with Marcus. Starting prices are indicative; scope
-        is agreed together. Following a contact link records interest, not a
-        received enquiry.
-      </p>
-      <ul>
-        {offers.map((o) => (
-          <li key={o.service}>
-            <strong>{o.price}</strong>
-            <ServiceContact
-              service={o.service}
-              source="review"
-              reviewId={reviewId}
-              canLinkReview={canLinkReview}
-            >
-              {o.cta}
+    <section className="pub-human contextual-offers" id="professional-support">
+      <div className="pub-person">
+        <img src="/brand/marcus-warry.jpg" alt="Marcus Warry ACA" />
+        <div>
+          <h2>{identity[framework].headline}</h2>
+          <p className="pub-invite">{identity[framework].invitation}</p>
+          <strong>Marcus Warry ACA</strong>
+          <p>
+            Co-founder, My Social Impact
+            <br />
+            Chartered Accountant · Social Impact Consultant
+          </p>
+          <a href={serviceMailto("discussion")}>{MARCUS_EMAIL}</a>
+        </div>
+      </div>
+      <div className="pub-offers">
+        {reportOffers.map((o) => (
+          <article key={o.service}>
+            <b>{o.price}</b>
+            <h3>{o.title}</h3>
+            <p>{o.copy}</p>
+            {o.service === "improvement" && (
+              <>
+                <p>Creative and digital support from The Ideas Shed.</p>
+                <DigitalOffer />
+              </>
+            )}
+            <ServiceContact {...link} service={o.service}>
+              {o.service === "discussion"
+                ? "Let’s discuss my report"
+                : o.service === "preparation"
+                  ? "Let’s make my next report"
+                  : o.cta}
             </ServiceContact>
-          </li>
+          </article>
         ))}
-      </ul>
-      <p className="fine-print">
-        Review linking is optional and does not share findings. No obligation,
-        no login needed to make contact.
-      </p>
+      </div>
+      <div className="pub-ongoing">
+        <h3>Someone in your corner. All year round.</h3>
+        <p>
+          Regular conversations, evidence review and strategic advice. Monthly
+          support from £149.
+        </p>
+        <ServiceContact {...link} service="supported">
+          Talk about ongoing support
+        </ServiceContact>
+      </div>
     </section>
   );
 }

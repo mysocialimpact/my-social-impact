@@ -427,10 +427,10 @@ try {
         await offers.waitFor();
         const heading =
           framework === "claims"
-            ? "Want to strengthen your impact claims?"
+            ? "Good claims build trust."
             : framework === "excellence"
-              ? "What if someone helped you manage your impact throughout the year?"
-              : "Your impact deserves to be brilliantly communicated.";
+              ? "Impact deserves to be managed."
+              : "Your impact deserves to be seen.";
         await offers
           .getByRole("heading", { name: heading, exact: true })
           .waitFor();

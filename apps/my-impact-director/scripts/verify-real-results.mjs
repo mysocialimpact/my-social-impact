@@ -60,10 +60,8 @@ try {
       const exportResponse = await ctx.request.get(
         config.url + "/api/reviews/" + id + "/export",
       );
-      assert.equal(exportResponse.status(), 200);
-      const pdf = await exportResponse.body();
-      assert.equal(pdf.subarray(0, 5).toString(), "%PDF-");
-      await writeFile("artifacts/live/genuine-review-export.pdf", pdf);
+      assert.equal(exportResponse.status(), 404);
+      assert.equal(await page.locator('a[href$="/export"]').count(), 0);
     }
     if (width === 390 && config.url === "https://www.myimpactdirector.com") {
       await page

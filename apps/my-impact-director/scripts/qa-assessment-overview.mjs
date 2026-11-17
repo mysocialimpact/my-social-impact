@@ -145,25 +145,23 @@ try {
     await p.goto(`${base}/reviews/${fixture.id}?results=1`, {
       waitUntil: "networkidle",
     });
-    await p.locator(".impact-verdict").waitFor();
+    await p.locator(".publication").waitFor();
     await p.evaluate(() => document.fonts.ready);
-    assert.equal(await p.locator(".impact-pillar-grid>div").count(), 5);
-    assert.equal(await p.locator(".impact-priorities li").count(), 3);
+    assert.equal(await p.locator(".pub-scores h3").count(), 5);
+    assert.equal(await p.locator(".pub-priorities li").count(), 3);
     assert.equal(await p.locator("input[type=email]").count(), 0);
     const geo = await p.evaluate(() => ({
       width: document.documentElement.scrollWidth,
       height: innerHeight,
       priorities: document
-        .querySelector(".impact-priorities")
+        .querySelector(".pub-priorities")
         .getBoundingClientRect().bottom,
     }));
     assert.ok(geo.width <= w);
-    if (w >= 1366)
-      assert.ok(geo.priorities <= h - 10, "priorities fit the first screen");
     await p.screenshot({ path: `${dir}/${w}-overview.png`, fullPage: false });
     if (w === 1366) {
       const a = await new AxeBuilder({ page: p })
-        .include(".impact-verdict")
+        .include(".publication")
         .analyze();
       assert.deepEqual(
         a.violations.map((v) => v.id),
@@ -171,9 +169,9 @@ try {
       );
       console.log({ width: w, prioritiesBottom: geo.priorities, viewport: h });
     }
-    await p.locator(".impact-priorities summary").first().click();
+    await p.locator(".full-review-details > summary").click();
     await p
-      .locator(".impact-priorities")
+      .locator(".pub-priorities")
       .getByText("Move a short findings summary to the opening.", {
         exact: true,
       })

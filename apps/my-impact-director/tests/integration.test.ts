@@ -1,7 +1,10 @@
 import { workspaces } from "../src/lib/workspace";
 import { sendPendingReports } from "../src/lib/report-delivery";
 import { GET as reviewGet } from "../src/app/api/reviews/[id]/route";
-import { GET as exportGet } from "../src/app/api/reviews/[id]/export/route";
+import {
+  managePublication,
+  readPublication,
+} from "../src/lib/publication-sharing";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
@@ -25,7 +28,7 @@ import {
   reviewAccess,
 } from "../src/lib/reviews";
 import { processOne } from "../src/lib/pipeline";
-import { exportPdf } from "../src/lib/export";
+import { exportPdf } from "../src/lib/archive/export";
 import { extractPages } from "../src/lib/documents";
 import { identity, accountAction } from "../src/lib/auth";
 import { POST as enquiryPost } from "../src/app/api/enquiries/route";
@@ -480,15 +483,6 @@ test(
               ).length,
               0,
             );
-            assert.equal(
-              (
-                await exportGet(
-                  req("/api/reviews/" + selected.id + "/export"),
-                  { params: Promise.resolve({ id: selected.id }) },
-                )
-              ).status,
-              403,
-            );
             await assert.rejects(() => getReview(otherUser, selected.id), {
               status: 404,
             });
@@ -549,7 +543,52 @@ test(
           );
           await sendPendingReports();
           assert.equal(emails.length, 3);
-          assert.ok(emails[2].attachments[0].content);
+          assert.equal(emails[2].attachments, undefined);
+          assert.ok(emails[2].text.includes("/open/" + selected.id));
+          const sharingUser = { ...verified, emailVerified: true };
+          assert.equal(
+            (await managePublication(sharingUser, selected.id, "GET")).path,
+            null,
+          );
+          await assert.rejects(
+            () =>
+              managePublication(
+                { ...otherUser, emailVerified: true },
+                selected.id,
+                "POST",
+              ),
+            { status: 404 },
+          );
+          const shared = await managePublication(
+            sharingUser,
+            selected.id,
+            "POST",
+          );
+          const key = shared.path!.split("#")[1];
+          assert.equal(
+            (await managePublication(sharingUser, selected.id, "POST")).path,
+            shared.path,
+          );
+          assert.equal(
+            (await readPublication(key, false)).report?.framework,
+            "claims",
+          );
+          await assert.rejects(() => readPublication(key + "x", false), {
+            status: 404,
+          });
+          await managePublication(sharingUser, selected.id, "DELETE");
+          await assert.rejects(() => readPublication(key, true), {
+            status: 404,
+          });
+          const replacement = await managePublication(
+            sharingUser,
+            selected.id,
+            "POST",
+          );
+          assert.notEqual(replacement.path, shared.path);
+          await assert.rejects(() => readPublication(key, false), {
+            status: 404,
+          });
           const second = await startFramework(
             verified,
             selected.id,
@@ -771,12 +810,8 @@ test(
           const token = emails[0].text.match(/access#([A-Za-z0-9_-]{43})/)![1];
           const redeemed = await redeemEmailLink(token);
           await sendPendingReports();
-          assert.equal(
-            Buffer.from(emails[1].attachments[0].content, "base64")
-              .subarray(0, 5)
-              .toString(),
-            "%PDF-",
-          );
+          assert.equal(emails[1].attachments, undefined);
+          assert.ok(emails[1].text.includes("/open/" + guestReview.id));
           await sendPendingReports();
           assert.equal(emails.length, 2, "Delivery is idempotent");
           assert.equal(redeemed.destination, "/reviews/" + guestReview.id);
@@ -1238,7 +1273,8 @@ test(
             emails.at(-1)!.text,
             /Creative judgements are partly subjective/,
           );
-          assert.ok(emails.at(-1)!.attachments[0].content);
+          assert.equal(emails.at(-1)!.attachments, undefined);
+          assert.ok(emails.at(-1)!.text.includes("/open/"));
           await writeFile(
             "artifacts/report-review.json",
             JSON.stringify({ ...done, full: false, siblings: [] }, null, 2),
