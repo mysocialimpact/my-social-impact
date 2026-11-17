@@ -73,6 +73,8 @@ export async function readPublication(token: string, statusOnly: boolean) {
   if (!f || !r.scores[f]) throw unavailable();
   // The reader receives the published assessment, without workspace identifiers, model traces, or source files.
   const report: ReviewResult = {
+    visualFirstImpression:
+      r.artDirector?.review.firstImpression ?? r.visualFirstImpression,
     framework: f,
     version: r.version,
     assessedAt: r.assessedAt,

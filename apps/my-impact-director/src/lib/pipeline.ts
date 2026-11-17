@@ -131,6 +131,7 @@ type Document = {
   extraction_notes: unknown[];
 };
 export type ReviewResult = {
+  visualFirstImpression?: string;
   artDirector?: ArtRecord;
   assessmentProcess?: {
     promptVersion: string;

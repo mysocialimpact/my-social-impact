@@ -46,6 +46,8 @@ export async function GET(req: Request, ctx: Context) {
         delete result.pdfChecks;
         delete result.qualityControl;
         delete result.readerInspection;
+        result.visualFirstImpression =
+          result.artDirector?.review.firstImpression;
         delete result.artDirector;
         if (result.visualInspection) result.visualInspection.observations = [];
         result.actions.actions = result.actions.actions.slice(0, 3);

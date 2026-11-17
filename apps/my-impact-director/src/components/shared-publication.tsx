@@ -92,11 +92,11 @@ export function SharedPublication() {
         id=""
         hasDetails
       />
+      <ContextualOffers framework={report.framework} />
       <details className="full-review-details" id="supporting-evidence">
         <summary>Explore the complete criterion-level assessment</summary>
         <ReviewResults id="" result={report} appendix />
       </details>
-      <ContextualOffers framework={report.framework} />
     </div>
   );
 }

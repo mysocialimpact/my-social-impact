@@ -370,3 +370,24 @@
     gap: 0.7rem 1.2rem;
   }
 }
+
+.pub-mast-edit img {
+  width: clamp(180px, 24vw, 330px);
+  height: auto;
+  max-height: 145px;
+  padding: 0.6rem;
+}
+.pub-mast-edit span {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+.pub-offers .service-contact-action a {
+  display: inline-flex;
+  background: var(--ink);
+  color: white;
+  padding: 0.9rem 1rem;
+  margin-top: 0.5rem;
+}

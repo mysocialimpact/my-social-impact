@@ -95,7 +95,12 @@ export function publication(result: ReviewResult, framework: Framework) {
       framework === "report" && result.publicationNotice
         ? "Overall score under review"
         : "Insufficient evidence to score",
-    verdict: brief(result.editorial?.verdict || result.actions.summary),
+    verdict:
+      framework === "report"
+        ? result.artDirector?.review.firstImpression ||
+          result.visualFirstImpression ||
+          brief(result.editorial?.verdict || result.actions.summary)
+        : brief(result.editorial?.verdict || result.actions.summary),
     priorities,
     pillars: score.principles.map((p) => {
       const maximum = pillarMaximum(p);

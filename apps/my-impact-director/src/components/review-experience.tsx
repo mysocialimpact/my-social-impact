@@ -76,22 +76,67 @@ function EmailInvitation({
       live = false;
     };
   }, []);
+  useEffect(() => {
+    if (
+      !enabled ||
+      sessionLoading ||
+      !user?.emailVerified ||
+      user.anonymous ||
+      !user.email ||
+      full
+    )
+      return;
+    let active = true;
+    api("/api/save", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ reviewId: id, email: user.email }),
+    })
+      .then((saved) => {
+        if (active && saved.verified) {
+          setReusedVerification(true);
+          window.dispatchEvent(new Event("mid-review-refresh"));
+        }
+      })
+      .catch(() => {
+        if (active)
+          setError(
+            "We couldn’t connect your verified address. Please try again.",
+          );
+      });
+    return () => {
+      active = false;
+    };
+  }, [
+    enabled,
+    sessionLoading,
+    user?.emailVerified,
+    user?.anonymous,
+    user?.email,
+    full,
+    id,
+  ]);
+  if (
+    user?.emailVerified &&
+    ((user?.emailVerified && !user.anonymous) || reusedVerification)
+  )
+    return null;
   return (
     <section className="review-email" id="email-delivery">
       <div>
         <h2>
-          {full || reusedVerification
+          {(user?.emailVerified && !user.anonymous) || reusedVerification
             ? "Email confirmed."
             : "Your digital report link."}
         </h2>
         <p>
-          {full || reusedVerification
+          {(user?.emailVerified && !user.anonymous) || reusedVerification
             ? "We’ll email a private link to your digital report. You can continue exploring or leave this page."
             : "Confirm your email. We’ll send a private link when your digital report is ready. You can close this page and get on with your day."}
         </p>
       </div>
       <div>
-        {full || reusedVerification ? (
+        {(user?.emailVerified && !user.anonymous) || reusedVerification ? (
           <div role="status">
             <p>
               {user?.email
@@ -155,6 +200,13 @@ function EmailInvitation({
           </div>
         ) : sessionLoading ? (
           <p role="status">Checking your account…</p>
+        ) : user?.emailVerified && !user.anonymous ? (
+          <p role="status">
+            {error ||
+              (enabled === false
+                ? "Email delivery is currently unavailable. Your report remains available in My Reports."
+                : "Connecting your verified email to this report…")}
+          </p>
         ) : enabled ? (
           <form
             onSubmit={async (e) => {
@@ -582,6 +634,7 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
               canShare={r.full && !!accountUser?.emailVerified}
               id={r.id}
             />
+            <ContextualOffers framework={framework} reviewId={r.id} />
             {framework === "report" && r.result.version !== REPORT_VERSION && (
               <div className="notice">
                 <p>
@@ -662,34 +715,8 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
           />
         )}
       </div>
-      {results && (
+      {results && !accountLoading && (
         <EmailInvitation id={r.id} full={r.full} delivery={r.delivery} />
-      )}
-      {complete &&
-        results &&
-        FRAMEWORKS.filter((f) => f !== framework).map((other) => (
-          <section className="next-review" key={other}>
-            <p className="eyebrow">SAME DOCUMENT. ANOTHER PERSPECTIVE.</p>
-            <h3>{names[other]}</h3>
-            <p>
-              {other === "report"
-                ? "How effectively does your report communicate its impact?"
-                : other === "claims"
-                  ? "Can we trust what the report claims?"
-                  : "What does the report demonstrate about managing impact?"}
-            </p>
-            <button
-              className="button primary"
-              disabled={busy || accountLoading}
-              onClick={() => choose(other)}
-            >
-              {choiceLabel(other)}
-            </button>
-            {error && <p role="alert">{error}</p>}
-          </section>
-        ))}
-      {complete && results && (
-        <ContextualOffers framework={framework} reviewId={r.id} />
       )}
       {complete && results && !accountLoading && accountUser && (
         <ContributionPanel key={`${r.id}:${accountUser.id}`} reviewId={r.id} />

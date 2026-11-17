@@ -22,7 +22,11 @@ export function ReportPublication({
       style={{ "--edition": brand.colour } as React.CSSProperties}
     >
       <header className="pub-cover">
-        <div className="pub-mast">
+        <div
+          className={
+            "pub-mast " + (framework === "report" ? "pub-mast-edit" : "")
+          }
+        >
           <img src={"/brand/" + brand.logo} alt="" />
           <span>{frameworkNames[framework]}</span>
           <small>Methodology {result.version}</small>
@@ -53,6 +57,10 @@ export function ReportPublication({
       </header>
       <p className="pub-note">
         {brand.note}{" "}
+        {framework === "report" &&
+          !view.overall &&
+          result.publicationNotice &&
+          "The overall score is withheld while the methodology awaits independent human calibration. The individual pillar scores are provisional diagnostic estimates, not validated scores."}{" "}
         {framework !== "report" &&
           "Automated assessment. Independent assurance requires professional review."}
       </p>
@@ -72,6 +80,9 @@ export function ReportPublication({
           {view.pillars.map((p) => (
             <section key={p.name}>
               <h3>{p.name}</h3>
+              {framework === "report" && !view.overall && (
+                <small>Provisional estimate</small>
+              )}
               <strong>{p.rating ? p.rating.percent + "%" : "—"}</strong>
               <b>{p.rating?.label || "Unassessable"}</b>
               <div className="pub-meter">
