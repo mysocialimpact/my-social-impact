@@ -181,7 +181,7 @@ try {
         if (geometry.scroll > 2) {
           await p.locator(".learning-canvas").focus();
           await p.keyboard.press("End");
-          await p.waitForTimeout(60);
+          await p.waitForTimeout(300);
           const visible = await p.evaluate(() => {
             const canvas = document.querySelector(".learning-canvas"),
               last = document.querySelector(
