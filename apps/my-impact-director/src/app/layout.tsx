@@ -12,6 +12,7 @@ import "./globals.css";
 import "./campaign.css";
 import "./creative-home.css";
 import "./account-journey.css";
+import "./review-learning.css";
 import { ActionShell } from "@/components/action-bar";
 import { Header, Footer } from "@/components/shell";
 export const metadata: Metadata = {
