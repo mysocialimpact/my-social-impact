@@ -6,7 +6,7 @@ import {
   type Page,
 } from "./assessment";
 import { visualSample, type VisualObservation } from "./report-visual";
-import { reportPillars } from "./report-methodology";
+import { isRevisedReport, REPORT_VERSION } from "./report-methodology";
 const readerAnswer = z
   .object({
     finding: z.string().min(20).max(1500),
@@ -40,7 +40,12 @@ export type ReportRating = {
     | "Strong"
     | "Adequate"
     | "Needs substantial improvement"
-    | "Provisional";
+    | "Provisional"
+    | "Poor"
+    | "Significant improvement needed"
+    | "Adequate, with important weaknesses"
+    | "Strong professional communication"
+    | "Exceptional";
   reasons: string[];
   readerTestPassed: boolean;
   rule: string;
@@ -72,6 +77,7 @@ export function reportRating(
   findings: Criterion[],
   editorial: EditorialVerdict,
   visualAvailable = true,
+  version = "2.0.0",
 ): ReportRating {
   const readerTestPassed = Object.values(editorial.readerTest).every(
       (a) => a.access === "easy",
@@ -122,6 +128,24 @@ export function reportRating(
         (4 * p.coverage),
     0,
   );
+  if (isRevisedReport(version))
+    return {
+      label:
+        score.provisional || score.overall === null
+          ? "Provisional"
+          : raw < 40
+            ? "Poor"
+            : raw < 60
+              ? "Significant improvement needed"
+              : raw < 75
+                ? "Adequate, with important weaknesses"
+                : raw < 90
+                  ? "Strong professional communication"
+                  : "Exceptional",
+      reasons,
+      readerTestPassed,
+      rule: "0–39 Poor; 40–59 Significant improvement needed; 60–74 Adequate, with important weaknesses; 75–89 Strong professional communication; 90–100 Exceptional. Derived from validated weighted criteria, never a model-selected total. Beta AI-assisted editorial judgement; no independent human validation. Editorial inconsistency or insufficient coverage withholds the overall score.",
+    };
   return {
     label: score.provisional
       ? "Provisional"

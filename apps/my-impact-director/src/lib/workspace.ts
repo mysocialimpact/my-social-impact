@@ -42,3 +42,22 @@ export async function workspaces(user: Identity, reviewId?: string) {
   }
   return rows;
 }
+
+export async function selectedWorkspace(user: Identity) {
+  const rows = await workspaces(user);
+  if (!rows.length) return null;
+  const [selected] = await query<{ report_id: string }>(
+    "SELECT report_id FROM director.workspace_selections WHERE owner_id=$1",
+    [user.id],
+  );
+  return rows.find((r) => r.id === selected?.report_id) || rows[0];
+}
+export async function selectWorkspace(user: Identity, reviewId: string) {
+  // Authorisation happens before persistence; browser-supplied UUIDs grant no access.
+  const [workspace] = await workspaces(user, reviewId);
+  await query(
+    "INSERT INTO director.workspace_selections(owner_id,report_id) VALUES($1,$2) ON CONFLICT(owner_id) DO UPDATE SET report_id=EXCLUDED.report_id,selected_at=now()",
+    [user.id, workspace.id],
+  );
+  return workspace;
+}

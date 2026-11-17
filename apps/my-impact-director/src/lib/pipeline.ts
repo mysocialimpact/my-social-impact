@@ -1,4 +1,9 @@
-import { REPORT_VERSION, isReportV2 } from "./report-methodology";
+import { inspectReader, type ReaderInspection } from "./report-reader";
+import {
+  REPORT_VERSION,
+  isReportV2,
+  isRevisedReport,
+} from "./report-methodology";
 import { inspectPdfChecks, type PdfChecks } from "./report-accessibility";
 import {
   reportActionsSchema,
@@ -76,6 +81,7 @@ export const STAGES = [
   "The Impact Edit · Visual design",
   "The Impact Edit · Data communication",
   "The Impact Edit · Accessibility",
+  "The Impact Edit · Whole-document reading exercise",
 ];
 type Job = {
   version: string;
@@ -102,6 +108,8 @@ type Document = {
   extraction_notes: unknown[];
 };
 export type ReviewResult = {
+  readerInspection?: ReaderInspection;
+  beta?: boolean;
   editorial?: EditorialVerdict;
   rating?: ReportRating;
   pdfChecks?: PdfChecks;
@@ -237,7 +245,21 @@ export async function processOne(id?: string) {
         usage = response.usage;
         notes = [...notes, ...response.data];
         if (missing.length > 2) next = 16;
-      }
+        else if (isRevisedReport(job.version)) next = 22;
+      } else if (isRevisedReport(job.version)) next = 22;
+    } else if (job.framework === "report" && job.stage === 22) {
+      const r = await inspectReader(
+        pages!,
+        (notes as VisualObservation[]).filter((n) => n.kind === visualKind),
+      );
+      usage = r.usage;
+      notes = [
+        ...notes.filter(
+          (n) => (n as ReaderInspection).kind !== "report-reader-2.0.1",
+        ),
+        r.data,
+      ];
+      next = 17;
     } else if (
       job.framework === "report" &&
       job.stage >= 17 &&
@@ -253,6 +275,9 @@ export async function processOne(id?: string) {
         job.version,
         doc.file_bytes,
         pdfChecks,
+        notes.find(
+          (n) => (n as ReaderInspection).kind === "report-reader-2.0.1",
+        ),
       );
       usage = response.usage;
       const validated = validateFindings(
@@ -354,6 +379,9 @@ export async function processOne(id?: string) {
                   (n) => (n as VisualObservation).kind === visualKind,
                 ),
                 pdfChecks,
+                readerInspection: notes.find(
+                  (n) => (n as ReaderInspection).kind === "report-reader-2.0.1",
+                ),
               }
             : {}),
         },
@@ -374,7 +402,22 @@ export async function processOne(id?: string) {
             ) as VisualObservation[],
           )
         : undefined;
+      if (
+        isRevisedReport(job.version) &&
+        editorial?.scoreConsistency === "review_needed"
+      ) {
+        scores.report!.overall = null;
+        scores.report!.provisional = true;
+      }
       result = {
+        ...(isRevisedReport(job.version) && job.framework === "report"
+          ? {
+              beta: true,
+              readerInspection: notes.find(
+                (n) => (n as ReaderInspection).kind === "report-reader-2.0.1",
+              ) as ReaderInspection | undefined,
+            }
+          : {}),
         ...(editorial
           ? {
               editorial,
@@ -388,6 +431,7 @@ export async function processOne(id?: string) {
                     (n) => (n as VisualObservation).kind === visualKind,
                   ) as VisualObservation[],
                 ),
+                job.version,
               ),
               pdfChecks,
             }
@@ -440,6 +484,16 @@ export async function processOne(id?: string) {
         actions: r.data,
         limitations: [
           LIMITATION,
+          ...(isRevisedReport(job.version) && job.framework === "report"
+            ? [
+                "Beta AI-assisted creative assessment; independent human editorial calibration has not been performed. Technical PDF accessibility compliance is not established.",
+                ...(editorial?.scoreConsistency === "review_needed"
+                  ? [
+                      "Editorial quality control identified an unresolved inconsistency in criterion judgements. The overall score is withheld pending reassessment; it has not been arbitrarily adjusted.",
+                    ]
+                  : []),
+              ]
+            : []),
           ...(v2 &&
           !visualCoverage(
             pages!,

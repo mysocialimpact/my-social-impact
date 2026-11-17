@@ -10,21 +10,33 @@ import {
   type Workspace,
   type AssessmentState,
 } from "./workspace-types";
-export function WorkspaceTracker({ id }: { id: string }) {
+export function WorkspaceTracker() {
   const { user } = useSession();
   const [workspace, setWorkspace] = useState<Workspace | null>(null),
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false);
   const strip = useRef<HTMLElement>(null);
   const path = usePathname();
+  const id = path.match(/^\/reviews\/([0-9a-f-]{36})(?:\/|$)/i)?.[1];
   useEffect(() => {
     let stopped = false,
       timer: ReturnType<typeof setTimeout>;
+    let selected = false;
     async function refresh() {
       try {
-        const d = await api("/api/workspace?review=" + id);
+        const d = await api(
+          "/api/workspace",
+          id && !selected
+            ? {
+                method: "PUT",
+                headers: { "content-type": "application/json" },
+                body: JSON.stringify({ review: id }),
+              }
+            : undefined,
+        );
         if (!stopped) {
-          setWorkspace(d.workspace);
+          setWorkspace(d.workspace || null);
+          selected = true;
           setError("");
         }
       } catch (e) {
@@ -41,6 +53,7 @@ export function WorkspaceTracker({ id }: { id: string }) {
     };
     window.addEventListener("mid-workspace-refresh", requested);
     window.addEventListener("mid-review-refresh", requested);
+    setWorkspace(null);
     void refresh();
     return () => {
       stopped = true;
@@ -48,7 +61,7 @@ export function WorkspaceTracker({ id }: { id: string }) {
       window.removeEventListener("mid-workspace-refresh", requested);
       window.removeEventListener("mid-review-refresh", requested);
     };
-  }, [id]);
+  }, [id, path, user?.id]);
   useEffect(() => {
     const el = strip.current;
     if (!el) return;
@@ -69,13 +82,13 @@ export function WorkspaceTracker({ id }: { id: string }) {
     if (!workspace) return;
     if (!user || user.anonymous) {
       window.location.assign(
-        `/login?mode=signup&next=${encodeURIComponent("/reviews/" + id)}`,
+        `/login?mode=signup&next=${encodeURIComponent("/reviews/" + workspace.root_id)}`,
       );
       return;
     }
     setBusy(true);
     try {
-      const d = await api("/api/reviews/" + id, {
+      const d = await api("/api/reviews/" + workspace.root_id, {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ framework: f }),
@@ -86,12 +99,7 @@ export function WorkspaceTracker({ id }: { id: string }) {
       setBusy(false);
     }
   }
-  if (!workspace)
-    return (
-      <div className="workspace-loading" role="status">
-        {error || "Opening your workspace…"}
-      </div>
-    );
+  if (!workspace) return null;
   function entry(f: Framework, a?: AssessmentState) {
     const label = stateLabel(a);
     return (
@@ -145,9 +153,10 @@ export function WorkspaceTracker({ id }: { id: string }) {
       ref={strip}
       className="workspace-tracker"
       aria-label="Your Impact Director workspace"
+      data-report={workspace.id}
     >
       <div className="workspace-heading">
-        <Link href="/reviews">MY REPORTS</Link>
+        <Link href={"/reviews/" + workspace.root_id}>MY REPORTS</Link>
         <p title={workspace.title}>
           <span className="workspace-organisation">
             {workspace.organisation || "Your report"}

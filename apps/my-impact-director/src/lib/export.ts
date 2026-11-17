@@ -1,5 +1,10 @@
 import {
+  REPORT_SCORING as LEGACY_REPORT_SCORING,
+  reportV2Anchors as legacyAnchors,
+} from "./report-methodology-2-0-0";
+import {
   isReportV2,
+  isRevisedReport,
   pillarMaximum,
   REPORT_SCORING,
   reportV2Anchors,
@@ -151,6 +156,20 @@ export async function exportPdf(result: ReviewResult) {
     write(EDIT_ATTRIBUTION, 10, "bold");
     write(editCaveat(result.version), 10);
   }
+  if (result.readerInspection) {
+    heading("Before scoring: the AI-simulated reading exercise");
+    write(result.readerInspection.firstImpression);
+    write(result.readerInspection.readingExperience);
+    write("AI-simulated scan, not a human usability study.", 9);
+    Object.entries(result.readerInspection.scan).forEach(([key, a]) =>
+      write(
+        `${key}: ${a.finding} - ${a.access}${a.page !== null ? " - PDF page " + a.page : ""}`,
+      ),
+    );
+    result.readerInspection.accessibilityConcerns.forEach((x) =>
+      write("Material accessibility concern: " + x),
+    );
+  }
   if (result.editorial) {
     heading("Whole-report editorial verdict");
     write(result.editorial.verdict);
@@ -291,13 +310,18 @@ export async function exportPdf(result: ReviewResult) {
   heading("Methodology and limitations");
   write(
     result.framework === "report" && isReportV2(result.version)
-      ? "The Impact Edit v2.0.0: " + REPORT_SCORING
+      ? `The Impact Edit ${result.version}: ` +
+          (isRevisedReport(result.version)
+            ? REPORT_SCORING
+            : LEGACY_REPORT_SCORING)
       : result.framework === "report"
         ? "Impact Report Excellence Methodology v1.0: five equally weighted pillars, each with five criteria scoring 0–4. Each pillar normalises assessable criteria to 20. A definitive overall score requires four assessable criteria per pillar and 22 overall, with actual visual inspection. Creative judgement is indicative, not accreditation."
         : "Each framework contains five principles with four tests each. Assessable tests score 0 to 4. A principle is the average of its assessable scores multiplied by 5, contributing up to 20 points. A definitive overall score needs at least 3 assessable tests in every principle and at least 16 of 20 overall. Excluded tests have explanations.",
   );
   (result.framework === "report" && isReportV2(result.version)
-    ? reportV2Anchors
+    ? isRevisedReport(result.version)
+      ? reportV2Anchors
+      : legacyAnchors
     : ANCHORS
   ).forEach((a, i) => write(`${i}: ${a}`, 9));
   if (result.pdfChecks) {

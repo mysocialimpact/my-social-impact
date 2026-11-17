@@ -8,10 +8,10 @@ import {
 import { criteria } from "../src/lib/rubric";
 import { scoreFramework, type Criterion } from "../src/lib/assessment";
 import {
-  REPORT_VERSION,
+  LEGACY_REPORT_VERSION as REPORT_VERSION,
   reportV2Criteria,
   REPORT_SCORING,
-} from "../src/lib/report-methodology";
+} from "../src/lib/report-methodology-2-0-0";
 await fs.mkdir("artifacts/impact-edit-v2", { recursive: true });
 let report = `# Offline rubric comparison\n\nThese are assistant-authored reference judgements after page inspection, not revised model results or independent human sign-off. Only Profit Impact's original v1 result is an actual stored production assessment. No model or email calls were made.\n\n${REPORT_SCORING}\n`;
 const output = [];

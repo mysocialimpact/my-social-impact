@@ -2,6 +2,7 @@ import type { ReportRating } from "@/lib/report-verdict";
 import {
   REPORT_VERSION,
   isReportV2,
+  isRevisedReport,
   pillarMaximum,
 } from "@/lib/report-methodology";
 import Link from "next/link";
@@ -216,7 +217,9 @@ export function ReviewResults({
             <Link
               href={
                 isReportV2(result.version)
-                  ? "/methodology/impact-report-excellence"
+                  ? isRevisedReport(result.version)
+                    ? "/methodology/impact-report-excellence"
+                    : "/methodology/impact-report-excellence/v2-0-0"
                   : "/methodology/impact-report-excellence/v1"
               }
             >
@@ -238,6 +241,31 @@ export function ReviewResults({
             />
           ))}
       </div>
+      {result.readerInspection && (
+        <details className="finding">
+          <summary>Before scoring: the AI-simulated reading exercise</summary>
+          <div className="finding-content">
+            <p>{result.readerInspection.firstImpression}</p>
+            <p>{result.readerInspection.readingExperience}</p>
+            <p>This is an AI-simulated scan, not a human usability study.</p>
+            {Object.entries(result.readerInspection.scan).map(([key, a]) => (
+              <p key={key}>
+                <strong>{key}:</strong> {a.finding} ·{" "}
+                {a.access.replaceAll("_", " ")}
+                {a.page !== null && (
+                  <>
+                    {" "}
+                    · <SourceLink id={id} page={a.page} admin={admin} />
+                  </>
+                )}
+              </p>
+            ))}
+            {result.readerInspection.accessibilityConcerns.map((x) => (
+              <p key={x}>{x}</p>
+            ))}
+          </div>
+        </details>
+      )}
       {result.editorial && (
         <section className="result-section">
           <h2>Whole-report editorial verdict</h2>
@@ -385,7 +413,9 @@ export function ReviewResults({
                 ? "How responsibly the report makes and supports its material impact claims."
                 : framework === "report"
                   ? isReportV2(result.version)
-                    ? "Readability and hierarchy, storytelling, visual design, data communication and accessibility, grounded in inspected physical pages."
+                    ? isRevisedReport(result.version)
+                      ? "Readability & Copy, Information Hierarchy, Visual Design, Storytelling and Data Presentation, grounded in inspected physical pages."
+                      : "Readability and hierarchy, storytelling, visual design, data communication and accessibility, grounded in inspected physical pages."
                     : "Clarity, storytelling, design, engagement and communication, grounded in inspected physical pages."
                   : "What the report demonstrates about impact management. This is not the full organisational maturity assessment."}
             </p>

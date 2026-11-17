@@ -8,12 +8,14 @@ import {
   reportV2Criteria,
   reportV2Anchors,
 } from "@/lib/report-methodology";
-export const metadata = { title: "The Impact Edit Methodology v2.0.0" };
+export const metadata = {
+  title: "The Impact Edit Methodology v2.0 — revised beta",
+};
 export default function Methodology() {
   return (
     <section className="section content-prose">
       <p className="eyebrow">MY SOCIAL IMPACT · METHODOLOGY {REPORT_VERSION}</p>
-      <h1>The Impact Edit Methodology v2.0.0</h1>
+      <h1>The Impact Edit Methodology v2.0 — revised beta</h1>
       <p className="methodology-question">
         Does your impact report make an impact?
       </p>
@@ -26,7 +28,7 @@ export default function Methodology() {
       </p>
       <h2 id="visual-inspection">Actual pages. Specific evidence.</h2>
       <p>
-        We render every page of reports up to 24 pages at 1,600 pixels wide.
+        We render every page of reports up to 30 pages at 1,600 pixels wide.
         Longer reports use beginning, middle and ending pages plus targeted
         data, risk, table and human-example pages. Scoring calls receive actual
         page images as well as page-specific observations and source text. The
@@ -54,8 +56,8 @@ export default function Methodology() {
         Each criterion explains the execution, relevant physical pages,
         strengths, weaknesses, chosen anchor and practical improvement. We avoid
         double-counting: physical body-text legibility belongs to Readability,
-        typographic craft to Visual design, and data-label readability to Data
-        communication.
+        typographic craft and contrast to Visual Design, and data-label
+        readability to Data Presentation.
       </p>
       <h2 id="criteria">The locked rubric</h2>
       {reportPillars.map((pillar, i) => (
@@ -75,6 +77,21 @@ export default function Methodology() {
           ))}
         </section>
       ))}
+      <h2>Read first. Score second. Check the judgement.</h2>
+      <p>
+        Before criterion scoring we record an AI-simulated first impression and
+        a five-question scan: purpose, difference made, achievements, challenges
+        and next steps. We examine copy load, repeated layouts, visual relief
+        and the integration of images, stories and data. Scoring receives that
+        reading evidence without a target total. After scoring, editorial
+        quality control checks for inconsistency; unresolved conflicts withhold
+        the overall score rather than change the number arbitrarily.
+      </p>
+      <p>
+        Legibility, contrast, navigation and visual accessibility inform the
+        relevant pillars. Material concerns are disclosed separately. No claim
+        of technical PDF accessibility compliance is made.
+      </p>
       <h2 id="reader-test">The whole-report reader test</h2>
       <p>
         Could a new reader identify the main outcomes, their scale, limitations
@@ -94,10 +111,17 @@ export default function Methodology() {
         calibration is not claimed.
       </p>
       <p>
-        Version 2 applies to new assessments. Previous results retain their
+        Revised v2.0 is stored as version 2.0.1 to distinguish it from the
+        earlier, differently weighted 2.0.0 rubric. This is a beta assessment
+        without independent human calibration. Previous results retain their
         original scores and methodology.{" "}
         <Link href="/methodology/impact-report-excellence/v1">
           Read the archived v1 methodology.
+        </Link>
+      </p>
+      <p>
+        <Link href="/methodology/impact-report-excellence/v2-0-0">
+          Read the archived v2.0.0 methodology.
         </Link>
       </p>
       <Link href="/review" className="button primary">

@@ -1,3 +1,4 @@
+import { REPORT_VERSION } from "../src/lib/report-methodology";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createGuest } from "../src/lib/access";
@@ -57,7 +58,7 @@ test(
       assert.notEqual(current.id, old.id);
       assert.equal(
         (await getReview(guest.user, current.id)).version,
-        "2.0.0-report",
+        REPORT_VERSION + "-report",
       );
       assert.deepEqual((await getReview(guest.user, old.id)).result, original);
       assert.equal(

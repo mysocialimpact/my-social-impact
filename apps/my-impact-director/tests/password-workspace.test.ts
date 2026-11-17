@@ -80,6 +80,8 @@ test(
           return Response.json({ available: true });
         if (init?.method === "POST") {
           const data = JSON.parse(String(init.body));
+          if (data.action === "request-reset")
+            assert.equal(data.product, "my-impact-director");
           actions.push(data.action);
           return Response.json(
             { ok: true },

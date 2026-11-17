@@ -15,6 +15,7 @@ import "./account-journey.css";
 import "./review-learning.css";
 import { ActionShell } from "@/components/action-bar";
 import { Header, Footer } from "@/components/shell";
+import { WorkspaceTracker } from "@/components/workspace-tracker";
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.myimpactdirector.com"),
   title: {
@@ -30,6 +31,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <body>
         <ActionShell>
           <Header />
+          <div className="global-workspace report-workspace">
+            <WorkspaceTracker />
+          </div>
           <main id="main">{children}</main>
           <Footer />
         </ActionShell>
