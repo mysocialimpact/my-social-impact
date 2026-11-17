@@ -10,7 +10,7 @@ export default function Methodology() {
   return (
     <section className="section content-prose">
       <Image
-        src="/brand/impact-design-review-compact.svg"
+        src="/brand/impact-design-review-artwork.webp"
         alt="The Impact Design Review"
         style={{ maxWidth: "100%", height: "auto" }}
         width={480}

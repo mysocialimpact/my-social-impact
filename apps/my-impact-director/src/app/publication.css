@@ -392,3 +392,14 @@
   padding: 0.9rem 1rem;
   margin-top: 0.5rem;
 }
+
+.pub-scores section {
+  border-top-color: var(--score-colour);
+}
+.pub-scores section > strong,
+.pub-scores section > b {
+  color: var(--score-colour);
+}
+.pub-scores .pub-meter i {
+  background: var(--score-colour);
+}

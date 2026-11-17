@@ -60,7 +60,7 @@ export function ReportPublication({
         {framework === "report" &&
           !view.overall &&
           result.publicationNotice &&
-          "The overall score is withheld while the methodology awaits independent human calibration. The individual pillar scores are provisional diagnostic estimates, not validated scores."}{" "}
+          "An overall score is unavailable because inspection, criterion coverage or editorial consistency checks are incomplete."}{" "}
         {framework !== "report" &&
           "Automated assessment. Independent assurance requires professional review."}
       </p>
@@ -78,7 +78,14 @@ export function ReportPublication({
         </h2>
         <div>
           {view.pillars.map((p) => (
-            <section key={p.name}>
+            <section
+              key={p.name}
+              style={
+                {
+                  "--score-colour": p.rating?.colour ?? "#667085",
+                } as React.CSSProperties
+              }
+            >
               <h3>{p.name}</h3>
               {framework === "report" && !view.overall && (
                 <small>Provisional estimate</small>

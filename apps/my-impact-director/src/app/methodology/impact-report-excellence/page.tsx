@@ -21,14 +21,14 @@ export default function Methodology() {
       </p>
       <CreativeCaveat />
       <aside className="notice">
-        <strong>Overall numeric scoring is under calibration.</strong>
+        <strong>Indicative creative scoring.</strong>
         <p>
           The new visual art-director engine has been compared on real reports
           and controlled examples, but has not been independently calibrated by
           human publication designers. We publish the beta evidence and
           recommendations, with experimental criterion and pillar estimates,
-          while withholding an overall number. Independent editorial calibration
-          is still needed.
+          with an overall number when coverage, inspection and consistency
+          checks pass. Independent editorial calibration is still needed.
         </p>
       </aside>
       <p>

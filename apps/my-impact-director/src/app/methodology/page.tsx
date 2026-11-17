@@ -71,7 +71,7 @@ export default function Methodology() {
         className="methodology-family impact-edit-feature content-prose"
       >
         <Image
-          src="/brand/impact-design-review-compact.svg"
+          src="/brand/impact-design-review-artwork.webp"
           width={500}
           height={120}
           alt="The Impact Design Review"

@@ -131,6 +131,7 @@ type Document = {
   extraction_notes: unknown[];
 };
 export type ReviewResult = {
+  displayOverall?: number | null;
   visualFirstImpression?: string;
   artDirector?: ArtRecord;
   assessmentProcess?: {

@@ -29,9 +29,19 @@ export function buildArtResult(
     version,
   );
   const calculatedOverall = score.unroundedOverall ?? score.overall;
-  delete score.unroundedOverall;
-  score.overall = null;
-  score.provisional = true;
+  const inspectionComplete = visualCoverage(
+    pages,
+    artObservations(first),
+    version,
+  );
+  if (
+    !inspectionComplete ||
+    audit.editorial.scoreConsistency !== "consistent"
+  ) {
+    delete score.unroundedOverall;
+    score.overall = null;
+    score.provisional = true;
+  }
   const observations = artObservations(first),
     usages = [first.usage, scoringUsage, audit.usage];
   return {

@@ -244,7 +244,8 @@ test(
       assert.equal(done.version, "2.1.0-report");
       assert.equal(done.engine_state, null);
       assert.equal(result.qualityControl?.calculatedOverall, 62.5);
-      assert.equal(result.scores.report!.overall, null);
+      assert.equal(result.scores.report!.overall, 62.5);
+      assert.equal(result.scores.report!.provisional, false);
       assert.equal(result.scores.report!.principles[2].score, 6.25);
       assert.equal(result.qualityControl?.changes.length, 5);
       assert.deepEqual(result.visualInspection?.pages, [1, 2]);

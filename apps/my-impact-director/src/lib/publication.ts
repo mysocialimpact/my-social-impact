@@ -1,3 +1,4 @@
+import { reportTotal } from "./report-total";
 import type { ReviewResult } from "./pipeline";
 import { criteria, type Framework } from "./rubric";
 import { pillarMaximum } from "./report-methodology";
@@ -14,6 +15,18 @@ export const bands = [
   "Strong",
   "Excellent",
 ] as const;
+export const scoreColours = [
+  "#a51c30",
+  "#bc2834",
+  "#c44227",
+  "#bb521b",
+  "#a36509",
+  "#8b750c",
+  "#6a7e16",
+  "#477f24",
+  "#247c3c",
+  "#087443",
+] as const;
 export function displayScore(value: number | null, maximum = 100) {
   if (
     value === null ||
@@ -24,7 +37,8 @@ export function displayScore(value: number | null, maximum = 100) {
   )
     return null;
   const percent = Math.round((value / maximum) * 100);
-  return { percent, label: bands[Math.min(9, Math.floor(percent / 10))] };
+  const index = Math.min(9, Math.floor(percent / 10));
+  return { percent, label: bands[index], colour: scoreColours[index] };
 }
 export const identity = {
   claims: {
@@ -42,7 +56,7 @@ export const identity = {
     note: "This review describes the management practices evidenced in your report. A full organisational assessment requires further evidence.",
   },
   report: {
-    logo: "impact-design-review.svg",
+    logo: "impact-design-review-artwork.webp",
     colour: "#071126",
     headline: "Your impact deserves to be seen.",
     invitation: "Let’s bring your report to life.",
@@ -88,12 +102,14 @@ export function publication(result: ReviewResult, framework: Framework) {
   });
   return {
     overall:
-      score.provisional || score.overall === null
-        ? null
-        : displayScore(score.unroundedOverall ?? score.overall),
+      framework === "report"
+        ? displayScore(reportTotal(result))
+        : score.provisional
+          ? null
+          : displayScore(score.unroundedOverall ?? score.overall),
     withheld:
       framework === "report" && result.publicationNotice
-        ? "Overall score under review"
+        ? "Overall score unavailable"
         : "Insufficient evidence to score",
     verdict:
       framework === "report"

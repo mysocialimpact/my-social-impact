@@ -135,7 +135,7 @@ export function ReviewLearning({
             <Image
               src={
                 framework === "report"
-                  ? "/brand/impact-design-review-compact.svg"
+                  ? "/brand/impact-design-review-artwork.webp"
                   : frameworkLogos[framework]
               }
               alt=""

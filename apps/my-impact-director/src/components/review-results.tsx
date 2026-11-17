@@ -58,7 +58,7 @@ export function ScoreCard({
                   ?.percent ?? "—")}
             <span>
               {score.provisional || score.overall === null
-                ? "under review"
+                ? "unavailable"
                 : "/100 · " +
                   displayScore(score.unroundedOverall ?? score.overall)?.label}
             </span>
@@ -67,7 +67,7 @@ export function ScoreCard({
         <p>
           {score.provisional
             ? framework === "report" && isRevisedReport(version)
-              ? "Overall numeric scoring is under calibration. Pillar values are experimental beta estimates."
+              ? "This indicative assessment needs sufficient coverage, visual inspection and consistent findings before an overall score can be shown."
               : "More reliable evidence is needed for an overall result."
             : "An indicative assessment of the evidence in your report."}
         </p>
@@ -76,7 +76,7 @@ export function ScoreCard({
         {score.coverage}/{criteria(framework, version).length} tests assessed.{" "}
         {score.provisional
           ? framework === "report" && isRevisedReport(version)
-            ? "No definitive overall score is published during beta calibration."
+            ? "The overall score requires complete coverage and consistency checks."
             : "Coverage is too limited for a definitive overall score."
           : "An assessment of the evidence in this report."}
       </p>
@@ -108,6 +108,8 @@ export function ScoreCard({
                 className="bar-fill"
                 style={{
                   width: `${((p.score || 0) / pillarMaximum(p)) * 100}%`,
+                  backgroundColor: displayScore(p.score, pillarMaximum(p))
+                    ?.colour,
                 }}
               />
             </div>

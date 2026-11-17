@@ -1,3 +1,4 @@
+import { reportTotal } from "./report-total";
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { z } from "zod";
 import { query } from "./db";
@@ -75,6 +76,7 @@ export async function readPublication(token: string, statusOnly: boolean) {
   const report: ReviewResult = {
     visualFirstImpression:
       r.artDirector?.review.firstImpression ?? r.visualFirstImpression,
+    displayOverall: f === "report" ? reportTotal(r) : undefined,
     framework: f,
     version: r.version,
     assessedAt: r.assessedAt,
