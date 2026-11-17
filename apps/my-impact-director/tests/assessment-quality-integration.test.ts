@@ -6,6 +6,7 @@ import { createGuest } from "../src/lib/access";
 import { createReview, startFramework, getReview } from "../src/lib/reviews";
 import { query, database } from "../src/lib/db";
 import { extractPages } from "../src/lib/documents";
+import { criteria } from "../src/lib/rubric";
 import { processOne } from "../src/lib/pipeline";
 import { REPORT_VERSION } from "../src/lib/report-methodology";
 import type { ReviewResult } from "../src/lib/pipeline";
@@ -22,6 +23,9 @@ test(
     const original = globalThis.fetch;
     let inconsistent = false,
       auditCalls = 0;
+    const claimsEntered = Promise.withResolvers<void>(),
+      continueClaims = Promise.withResolvers<void>();
+    let pauseClaims = false;
     const answer = {
       finding:
         "The relevant answer is visible on the inspected physical source page.",
@@ -127,6 +131,13 @@ test(
           },
         };
       else throw Error("Unexpected model stage");
+      if (p.findings && p.scores?.claims) {
+        delete (data as { editorial?: unknown }).editorial;
+        if (pauseClaims) {
+          claimsEntered.resolve();
+          await continueClaims.promise;
+        }
+      }
       return Response.json({
         choices: [
           { finish_reason: "stop", message: { content: JSON.stringify(data) } },
@@ -194,6 +205,53 @@ test(
       );
       assert.ok(events.some((e) => e.stage === 22));
       assert.ok(events.some((e) => e.stage === 23));
+      // An independent assessment must not overwrite observations committed
+      // while its model call was in flight.
+      const claims = await startFramework(guest.user, root.id, "claims");
+      const sourceFindings = done.scores.report!.principles.flatMap(
+        (p) => p.tests,
+      );
+      const claimFindings = criteria("claims").map((c, i) => ({
+        ...sourceFindings[i],
+        id: c.id,
+        score: 3,
+      }));
+      await query(
+        "UPDATE director.reviews SET stage=14,context=$2,claims='[]',findings=$3 WHERE id=$1",
+        [claims.id, JSON.stringify(context), JSON.stringify(claimFindings)],
+      );
+      pauseClaims = true;
+      const runningClaims = processOne(claims.id);
+      await claimsEntered.promise;
+      await query(
+        "UPDATE director.reports SET extraction_notes=extraction_notes || $2::jsonb WHERE id=$1",
+        [
+          reportId,
+          JSON.stringify([
+            {
+              kind: "qa-concurrent-observation",
+              page: 1,
+              description:
+                "An observation added while another review was in flight.",
+            },
+          ]),
+        ],
+      );
+      continueClaims.resolve();
+      assert.equal(await runningClaims, true);
+      const [shared] = await query<{ extraction_notes: { kind: string }[] }>(
+        "SELECT extraction_notes FROM director.reports WHERE id=$1",
+        [reportId],
+      );
+      assert.ok(
+        shared.extraction_notes.some(
+          (n) => n.kind === "qa-concurrent-observation",
+        ),
+      );
+      const claimResult = (await getReview(guest.user, claims.id))
+        .result as ReviewResult;
+      assert.equal(claimResult.version, "1.0.0");
+      assert.equal(claimResult.scores.claims?.overall, 75);
       inconsistent = true;
       await query(
         "UPDATE director.reviews SET stage=14,status='queued',result=NULL WHERE id=$1",

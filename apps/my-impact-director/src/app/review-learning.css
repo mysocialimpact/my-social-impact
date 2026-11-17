@@ -556,3 +556,15 @@ body:has(.impact-verdict) .permanent-actions {
   background: #fff1ed;
   border-left: 3px solid var(--orange);
 }
+.impact-verdict-head > div:last-child > p:not(.eyebrow) {
+  max-width: none;
+}
+.impact-pillar-grid {
+  padding-block: 12px;
+}
+.impact-priorities h3 {
+  margin-bottom: 8px;
+}
+.impact-priorities ol {
+  margin-block: 8px 0;
+}

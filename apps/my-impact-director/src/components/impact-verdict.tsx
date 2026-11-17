@@ -30,10 +30,9 @@ export function ImpactVerdict({ result }: { result: ReviewResult }) {
         </div>
       </div>
       <p className="impact-verdict-limits">
-        AI-assisted creative judgement is partly subjective. This beta has not
-        been independently validated by human editors. {score.coverage}/25
-        criteria assessed. Technical accessibility compliance is not
-        established. Pillar values are experimental beta estimates.
+        Partly subjective AI-assisted judgement; not independently calibrated.{" "}
+        {score.coverage}/25 criteria assessed. Pillar values are experimental.
+        Technical accessibility compliance is unverified.
       </p>
       {score.provisional && (
         <p className="impact-score-notice" role="note">

@@ -620,17 +620,36 @@ export async function processOne(id?: string) {
         [job.id, token],
       );
       if (!rowCount) return;
-      await c.query(
-        `UPDATE director.reports SET pages=$2,extraction_notes=$3,organisation=COALESCE($4,organisation),reporting_period=COALESCE($5,reporting_period),title=COALESCE($6,title) WHERE id=$1`,
-        [
-          job.report_id,
-          JSON.stringify(pages),
-          JSON.stringify(notes),
-          context?.organisation,
-          context?.reportingPeriod,
-          context?.title,
-        ],
-      );
+      // Assessment stages read a shared immutable source. Do not write a stale
+      // copy of its notes over observations added by another assessment.
+      if (job.stage <= 3) {
+        await c.query(
+          `UPDATE director.reports SET pages=$2,extraction_notes=$3,organisation=COALESCE($4,organisation),reporting_period=COALESCE($5,reporting_period),title=COALESCE($6,title) WHERE id=$1`,
+          [
+            job.report_id,
+            JSON.stringify(pages),
+            JSON.stringify(notes),
+            context?.organisation,
+            context?.reportingPeriod,
+            context?.title,
+          ],
+        );
+      } else if (job.framework === "report") {
+        const additions = notes.filter(
+          (n) => !doc.extraction_notes.includes(n),
+        );
+        if (additions.length)
+          await c.query(
+            `UPDATE director.reports SET extraction_notes=(
+          SELECT COALESCE(jsonb_agg(existing.value),'[]'::jsonb)
+          FROM jsonb_array_elements(extraction_notes) AS existing(value)
+          WHERE NOT EXISTS(SELECT 1 FROM jsonb_array_elements($2::jsonb) AS added(value)
+            WHERE added.value->>'kind'=existing.value->>'kind'
+              AND COALESCE(added.value->>'page','')=COALESCE(existing.value->>'page',''))
+        ) || $2::jsonb WHERE id=$1`,
+            [job.report_id, JSON.stringify(additions)],
+          );
+      }
       if (ingested)
         await c.query(
           "UPDATE director.reports SET understanding_ready=true,understanding_context=$2,understanding_claims=$3 WHERE id=$1",
