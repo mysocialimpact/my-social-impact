@@ -222,7 +222,7 @@ function EmailInvitation({
   );
 }
 export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
-  const { user: accountUser } = useSession();
+  const { user: accountUser, loading: accountLoading } = useSession();
   const searchParams = useSearchParams();
   const [results, setResults] = useState(searchParams.get("results") === "1"),
     [busy, setBusy] = useState(false),
@@ -368,6 +368,7 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
     }
   }
   async function choose(f: Framework) {
+    if (accountLoading) return;
     if (!accountUser || accountUser.anonymous) {
       window.location.assign(
         `/login?mode=signup&next=${encodeURIComponent("/reviews/" + r.id)}`,
@@ -396,6 +397,7 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
     }
   }
   function choiceLabel(f: Framework) {
+    if (accountLoading) return "Checking your account…";
     const sibling = r.siblings?.find((s) => s.framework === f);
     return !sibling
       ? `Start ${names[f]} — free`
@@ -431,7 +433,7 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
             <p>{r.error_message}</p>
             <button
               className="button primary"
-              disabled={busy}
+              disabled={busy || accountLoading}
               onClick={() => retrySaved(r.id)}
             >
               Retry reading the saved report
@@ -471,7 +473,7 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
               </p>
               <button
                 className="button primary"
-                disabled={busy}
+                disabled={busy || accountLoading}
                 onClick={() => choose(f)}
               >
                 {choiceLabel(f)}
@@ -537,7 +539,7 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
                 </strong>{" "}
                 {r.error_message || r.ingestion?.error_message}{" "}
                 <button
-                  disabled={busy}
+                  disabled={busy || accountLoading}
                   onClick={() =>
                     retrySaved(
                       r.ingestion?.status === "failed" ? r.ingestion.id : r.id,
@@ -654,7 +656,7 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
                 </p>
                 <button
                   className="button secondary"
-                  disabled={busy}
+                  disabled={busy || accountLoading}
                   onClick={() => choose("report")}
                 >
                   Run the revised Impact Edit beta
@@ -744,7 +746,7 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
             </p>
             <button
               className="button primary"
-              disabled={busy}
+              disabled={busy || accountLoading}
               onClick={() => choose(other)}
             >
               {choiceLabel(other)}
