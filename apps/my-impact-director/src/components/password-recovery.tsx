@@ -60,7 +60,7 @@ export function PasswordRecovery({ reset = false }: { reset?: boolean }) {
           <p>
             {reset
               ? "You can now log in with your new password."
-              : "If there’s an account for that address, the shared My Social Impact account service will email secure reset instructions. Follow the link, then return here to log in."}
+              : "If there’s an account for that address, we’ll email a secure link to reset your password here on My Impact Director. Your saved reports and progress will stay with your account."}
           </p>
           <Link className="button primary" href="/login">
             Back to log in

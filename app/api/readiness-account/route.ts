@@ -215,7 +215,8 @@ export async function POST(request: Request) {
     if (JSON.stringify(input).length > 4096) return Response.json({ error: "The recovery request is too large." }, { status: 413 });
     // Never trust a body-supplied IP, token destination or email template.
     const clientIp = (request.headers.get("x-forwarded-for") || "unknown").split(",")[0].trim().slice(0, 128);
-    const body = action === "request-reset" ? { action, email: input.email, clientIp } : { action, token: input.token, password: input.password, clientIp };
+    if (action === "request-reset" && input.product !== undefined && input.product !== "my-impact-director") return Response.json({ error: "Unknown recovery product." }, { status: 400 });
+    const body = action === "request-reset" ? { action, email: input.email, clientIp, ...(input.product === "my-impact-director" ? { product: "my-impact-director" } : {}) } : { action, token: input.token, password: input.password, clientIp };
     const { response, payload } = await callCow(body);
     if (!response) return Response.json({ error: "Password reset could not be reached. Please try again shortly." }, { status: 503, headers: { "Cache-Control": "no-store" } });
     const headers: Record<string, string> = { "Cache-Control": "no-store" };
