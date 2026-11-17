@@ -73,8 +73,9 @@ try {
                 }
               : guestUpload
                 ? {
-                    id: "synthetic-guest",
-                    anonymous: true,
+                    id: "synthetic-account",
+                    email: "qa@example.invalid",
+                    anonymous: false,
                     emailVerified: false,
                   }
                 : reviewFixture
@@ -83,7 +84,12 @@ try {
                       emailVerified: true,
                       anonymous: false,
                     }
-                  : null,
+                  : {
+                      id: "synthetic-account",
+                      email: "qa@example.invalid",
+                      anonymous: false,
+                      emailVerified: false,
+                    },
           },
         });
       if (path === "/api/service-intents") {
@@ -362,7 +368,7 @@ try {
       await p.getByRole("button", { name: /Menu/ }).click();
       await p
         .getByRole("navigation", { name: "Main navigation" })
-        .getByRole("link", { name: "Log in", exact: true })
+        .getByRole("link", { name: "Account", exact: true })
         .waitFor();
       await p.keyboard.press("Escape");
     }

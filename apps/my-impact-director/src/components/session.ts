@@ -6,20 +6,35 @@ export function useSession() {
     [loading, setLoading] = useState(true),
     [error, setError] = useState("");
   useEffect(() => {
-    const c = new AbortController();
-    fetch("/api/account", { signal: c.signal })
-      .then(async (r) => {
-        const d = await r.json();
-        if (!r.ok) throw new Error(d.error);
-        setUser(d.user);
-      })
-      .catch((e) => {
-        if (!c.signal.aborted) setError(e.message);
-      })
-      .finally(() => {
-        if (!c.signal.aborted) setLoading(false);
-      });
-    return () => c.abort();
+    let c: AbortController;
+    const refresh = () => {
+      c?.abort();
+      c = new AbortController();
+      const request = c;
+      fetch("/api/account", { signal: request.signal })
+        .then(async (r) => {
+          const d = await r.json();
+          if (!r.ok) throw new Error(d.error);
+          if (!request.signal.aborted) {
+            setUser(d.user);
+            setError("");
+          }
+        })
+        .catch((e) => {
+          if (!request.signal.aborted) setError(e.message);
+        })
+        .finally(() => {
+          if (!request.signal.aborted) setLoading(false);
+        });
+    };
+    refresh();
+    window.addEventListener("mid-session-refresh", refresh);
+    window.addEventListener("focus", refresh);
+    return () => {
+      c.abort();
+      window.removeEventListener("mid-session-refresh", refresh);
+      window.removeEventListener("focus", refresh);
+    };
   }, []);
   return { user, loading, error };
 }

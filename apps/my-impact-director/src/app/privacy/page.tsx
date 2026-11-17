@@ -17,30 +17,32 @@ export default function Privacy() {
         </p>
         <h2>What we process and why</h2>
         <p>
-          You can upload a report and see headline review results without giving
-          us a name or email address. We process the report, extracted content,
-          assessment findings and minimal processing records to deliver the
-          review. An unguessable browser session protects your access. A report
-          may contain information about other people. Only submit documents you
-          are entitled to share for this purpose. Remove unnecessary personal or
-          sensitive information first.
+          Create a free account or log in before uploading a new report or
+          starting a new review. We use your account email for saving and report
+          delivery. We process the report, extracted content, assessment
+          findings and minimal processing records to deliver the review. An
+          unguessable browser session protects your access. A report may contain
+          information about other people. Only submit documents you are entitled
+          to share for this purpose. Remove unnecessary personal or sensitive
+          information first.
         </p>
         <p>
           Essential, secure cookies keep guest reviews available in the same
           browser for seven days. Optional email delivery sends a verification
           link valid for 30 minutes. Once you confirm your address, we associate
           it with your report and send the selected detailed assessment when it
-          is ready. Delivery uses a background queue with retries. Headline
-          snapshots require no email; new full reports require email
-          verification. Previously completed combined reviews retain their
-          existing access. Opening it gives you a 30-day saved-review session.
-          Normal sign-in uses email and password through your shared My Social
-          Impact account. We do not store those passwords in this application.
-          Existing saved email links remain valid. After you verify ownership of
-          an email-link workspace, you can connect it to password login without
-          losing reports. Password recovery resets your shared My Social Impact
-          password. We do not add advertising trackers or subscribe you to
-          marketing.
+          is ready. Delivery uses a background queue with retries. New reviews
+          require an account; detailed report delivery requires email
+          verification. Existing private guest reviews remain accessible until
+          their displayed expiry. Previously completed combined reviews retain
+          their existing access. Opening it gives you a 30-day saved-review
+          session. Normal sign-in uses email and password through your shared My
+          Social Impact account. We do not store those passwords in this
+          application. Existing saved email links remain valid. After you verify
+          ownership of an email-link workspace, you can connect it to password
+          login without losing reports. Password recovery resets your shared My
+          Social Impact password. We do not add advertising trackers or
+          subscribe you to marketing.
         </p>
         <p>
           Larger uploads are transferred in private parts to the same protected

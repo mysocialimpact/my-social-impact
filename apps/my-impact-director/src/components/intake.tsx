@@ -8,7 +8,8 @@ import {
   transferFile,
   type Transfer,
 } from "./upload-transfer";
-import { api } from "./session";
+import { Account } from "./account";
+import { api, useSession } from "./session";
 import { Arrow } from "./icons";
 import type { Candidate } from "@/lib/discovery";
 
@@ -33,6 +34,7 @@ export function Intake({
   enabled: boolean;
   hero?: boolean;
 }) {
+  const { user, loading: sessionLoading, error: sessionError } = useSession();
   const [file, setFile] = useState<File | null>(null),
     [consent, setConsent] = useState(false),
     [quality, setQuality] = useState(false),
@@ -155,6 +157,27 @@ export function Intake({
       setBusy(false);
     }
   }
+  if (sessionLoading)
+    return (
+      <div
+        id={hero ? "upload" : undefined}
+        className="review-account-gate"
+        role="status"
+      >
+        Opening your account…
+      </div>
+    );
+  if (!user || user.anonymous)
+    return (
+      <div id={hero ? "upload" : undefined} className="review-account-gate">
+        {sessionError && (
+          <p className="alert error" role="alert">
+            {sessionError}
+          </p>
+        )}
+        <Account embedded initialMode="signup" onAuthenticated={() => {}} />
+      </div>
+    );
   return (
     <div
       className={"intake upload-studio" + (hero ? " upload-hero" : "")}
@@ -169,7 +192,7 @@ export function Intake({
       )}
       <div className="upload-topline">
         <span>Give your Impact Director its first job.</span>
-        <span>No registration required.</span>
+        <span>Signed in as {user.email}</span>
       </div>
       {!find ? (
         <label
@@ -336,7 +359,7 @@ export function Intake({
         </section>
       )}
       <div className="upload-foot">
-        <p>No sign-up. No email. Your results first.</p>
+        <p>Your account is ready. Your review is free.</p>
         <button
           className="subtle-button"
           disabled={busy}
@@ -350,11 +373,11 @@ export function Intake({
         </button>
       </div>
       <p className="review-disclosure">
-        A free headline review. Create an account to save, download and share
-        your detailed report. Choose your assessment after upload.
+        Choose your assessment after upload. We remember your account email;
+        confirm it once for detailed report delivery.
       </p>
       <p className="upload-privacy">
-        Private to this browser for 7 days. Download or save after your review.
+        Private to your account. Each report displays its retention date.
       </p>
     </div>
   );

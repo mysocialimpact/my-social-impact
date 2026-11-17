@@ -206,14 +206,12 @@ function EmailInvitation({
   id,
   full,
   delivery,
-  modal = false,
 }: {
   id: string;
   full: boolean;
   delivery?: ExperienceReview["delivery"];
-  modal?: boolean;
 }) {
-  const { user } = useSession();
+  const { user, loading: sessionLoading } = useSession();
   const [enabled, setEnabled] = useState<boolean | null>(null),
     [sent, setSent] = useState(false),
     [reusedVerification, setReusedVerification] = useState(false),
@@ -233,7 +231,7 @@ function EmailInvitation({
     };
   }, []);
   return (
-    <section className="review-email" id={modal ? undefined : "email-delivery"}>
+    <section className="review-email" id="email-delivery">
       <div>
         <h2>
           {full || reusedVerification
@@ -249,7 +247,11 @@ function EmailInvitation({
       <div>
         {full || reusedVerification ? (
           <div role="status">
-            <p>Your address is verified for this report.</p>
+            <p>
+              {user?.email
+                ? `Delivery address: ${user.email}`
+                : "Your address is verified for this report."}
+            </p>
             {delivery?.state === "accepted" ? (
               <p>
                 The email service has accepted your full report for delivery.
@@ -302,9 +304,11 @@ function EmailInvitation({
               leave — we’ll send your report when it’s ready.
             </p>
             <button className="subtle-button" onClick={() => setSent(false)}>
-              Use another address or resend
+              Resend verification email
             </button>
           </div>
+        ) : sessionLoading ? (
+          <p role="status">Checking your account…</p>
         ) : enabled ? (
           <form
             onSubmit={async (e) => {
@@ -317,7 +321,10 @@ function EmailInvitation({
                   headers: { "content-type": "application/json" },
                   body: JSON.stringify({
                     reviewId: id,
-                    email: new FormData(e.currentTarget).get("email"),
+                    email:
+                      user && !user.anonymous
+                        ? user.email
+                        : new FormData(e.currentTarget).get("email"),
                   }),
                 });
                 setReusedVerification(saved.verified === true);
@@ -329,23 +336,30 @@ function EmailInvitation({
               }
             }}
           >
-            <label>
-              Email address
-              <input
-                name="email"
-                defaultValue={user?.anonymous ? "" : user?.email || ""}
-                type="email"
-                autoComplete="email"
-                required
-                maxLength={254}
-              />
-            </label>
+            {user && !user.anonymous ? (
+              <p className="remembered-email">
+                Your account email: <strong>{user.email}</strong>. Confirm it
+                once for detailed report delivery.
+              </p>
+            ) : (
+              <label>
+                Email address
+                <input
+                  name="email"
+                  defaultValue={user?.anonymous ? "" : user?.email || ""}
+                  type="email"
+                  autoComplete="email"
+                  required
+                  maxLength={254}
+                />
+              </label>
+            )}
             <button className="button primary" disabled={busy}>
-              {busy ? "Sending verification…" : "Email me my full report"}
+              {busy ? "Sending verification…" : "Confirm my email for delivery"}
             </button>
             <p className="fine-print">
-              Free. No password or marketing. Confirmed reports: 180 days. Email
-              links: 30 minutes.
+              No marketing. Confirmed reports: 180 days. Verification links: 30
+              minutes.
             </p>
           </form>
         ) : (
@@ -360,47 +374,11 @@ function EmailInvitation({
     </section>
   );
 }
-function EmailDialog({
-  id,
-  full,
-  close,
-}: {
-  id: string;
-  full: boolean;
-  close: () => void;
-}) {
-  const dialog = useRef<HTMLDialogElement>(null);
-  useEffect(() => {
-    const el = dialog.current;
-    el?.showModal();
-    return () => el?.close();
-  }, []);
-  return (
-    <dialog
-      className="email-dialog"
-      ref={dialog}
-      aria-label="Email your full report"
-      onCancel={close}
-      onClick={(e) => {
-        if (e.target === e.currentTarget) close();
-      }}
-    >
-      <button
-        className="dialog-close"
-        onClick={close}
-        aria-label="Close email options"
-      >
-        Close ×
-      </button>
-      <EmailInvitation id={id} full={full} modal />
-    </dialog>
-  );
-}
 export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
+  const { user: accountUser } = useSession();
   const searchParams = useSearchParams();
   const [step, setStep] = useState(0),
     [direction, setDirection] = useState("forward"),
-    [emailOpen, setEmailOpen] = useState(false),
     [results, setResults] = useState(searchParams.get("results") === "1"),
     [busy, setBusy] = useState(false),
     [error, setError] = useState("");
@@ -442,7 +420,7 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
                 : `You’ve completed ${completedCount || 1} of 3 reviews.`
               : r.full
                 ? "Your report is being prepared."
-                : "Make this your Impact Director."
+                : "Your report is being prepared."
             : allDone
               ? "All three reviews complete."
               : completedCount
@@ -458,7 +436,7 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
                 : "Headline results now. Full report after email verification."
               : r.full
                 ? "We’ll email you when it’s ready."
-                : "Save your work and return on any device."
+                : "Explore how we arrive at your score."
             : "Choose any review. We reuse this document.",
       primaryLabel: !framework
         ? allDone
@@ -474,9 +452,7 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
             : "View your results"
           : r.status === "failed"
             ? "Resolve review issue"
-            : r.full
-              ? "Explore the methodology"
-              : "Save your work & get the full report",
+            : "Explore the methodology",
       primaryHref: !framework
         ? allDone
           ? "/reviews"
@@ -485,9 +461,7 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
           ? "/reviews"
           : complete
             ? "#review-results"
-            : r.full
-              ? "#learning"
-              : "#email-delivery",
+            : "#learning",
       onPrimary: !framework
         ? undefined
         : complete
@@ -502,16 +476,7 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
             : viewResults
           : r.status === "failed"
             ? () => document.querySelector(".honest-status")?.scrollIntoView()
-            : () =>
-                r.full
-                  ? goStep(0)
-                  : step === 0
-                    ? document
-                        .querySelector<HTMLInputElement>(
-                          '#email-delivery input[name="email"]',
-                        )
-                        ?.focus()
-                    : setEmailOpen(true),
+            : () => goStep(0),
       processingLabel: "Processing continues when you leave",
     });
   }, [
@@ -567,6 +532,12 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
     }
   }
   async function choose(f: Framework) {
+    if (!accountUser || accountUser.anonymous) {
+      window.location.assign(
+        `/login?mode=signup&next=${encodeURIComponent("/reviews/" + r.id)}`,
+      );
+      return;
+    }
     setBusy(true);
     setError("");
     try {
@@ -613,8 +584,8 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
             : "Choose your first free review. We’ll read and understand your document once, then apply the methodology you select."}
         </p>
         <p className="review-disclosure">
-          <strong>A useful headline snapshot: no email needed.</strong> The full
-          detailed report is also free, delivered after email verification.
+          <strong>Your reports stay in your account.</strong> Confirm your
+          account email once for detailed results and report delivery.
           {!r.emailEnabled &&
             "Email delivery is currently unavailable; you can still use all three headline reviews."}
         </p>
@@ -909,14 +880,28 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
                     </span>
                   </p>
                   <h2 ref={lessonHeading} tabIndex={-1}>
-                    {lesson[1]}
+                    {step === 0
+                      ? complete
+                        ? `HOW YOUR ${framework === "claims" ? "CLAIMS CODE" : framework === "excellence" ? "IMPACT EXCELLENCE" : "IMPACT EDIT"} SCORE IS MADE.`
+                        : r.status === "failed"
+                          ? "YOUR REVIEW NEEDS ATTENTION."
+                          : "YOUR REVIEW IS UNDER WAY."
+                      : lesson[1]}
                   </h2>
-                  <p className="lesson-explanation">{lesson[2]}</p>
+                  <p className="lesson-explanation">
+                    {step === 0
+                      ? complete
+                        ? "Your results are ready. Explore the methodology behind your score, or open your results whenever you’re ready."
+                        : r.status === "failed"
+                          ? "Your saved report is safe. Use the retry option above, or contact us for help. You can still explore the methodology below."
+                          : "While your Impact Director prepares your report, discover how we assess it and arrive at your score. Explore the five pillars at your own pace — your review continues in the background."
+                      : lesson[2]}
+                  </p>
                   {lesson[3] && <blockquote>{lesson[3]}</blockquote>}
                   {step === 0 && (
                     <p className="stay-invitation">
-                      Confirm your email, then you can close this page. Or stay
-                      and explore.
+                      Your progress is shown above. We’ll remember where your
+                      report belongs.
                     </p>
                   )}
                   {step === 6 && framework === "excellence" && (
@@ -927,11 +912,41 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
                   )}
                 </div>
                 {step === 0 && (
-                  <EmailInvitation
-                    id={r.id}
-                    full={r.full}
-                    delivery={r.delivery}
-                  />
+                  <aside className="preparation-card">
+                    <p className="eyebrow">{names[framework]}</p>
+                    <h3>Understand the thinking behind your score.</h3>
+                    <p>{lesson[2]}</p>
+                    <ol>
+                      <li>We read your report and its evidence.</li>
+                      <li>We apply this methodology’s criteria.</li>
+                      <li>
+                        You receive your score and practical recommendations.
+                      </li>
+                    </ol>
+                    <p className="preparation-account">
+                      {accountUser && !accountUser.anonymous ? (
+                        <>
+                          Saved to your account:{" "}
+                          <strong>{accountUser.email}</strong>
+                        </>
+                      ) : (
+                        <>
+                          Your existing review remains private.{" "}
+                          <Link
+                            href={`/login?mode=signup&next=${encodeURIComponent("/reviews/" + r.id)}`}
+                          >
+                            Create an account to start another review.
+                          </Link>
+                        </>
+                      )}
+                    </p>
+                    <button
+                      className="button primary"
+                      onClick={() => goStep(1)}
+                    >
+                      Explore the five pillars <Arrow />
+                    </button>
+                  </aside>
                 )}
               </div>
             </div>
@@ -973,13 +988,6 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
       </div>
       {results && (
         <EmailInvitation id={r.id} full={r.full} delivery={r.delivery} />
-      )}
-      {emailOpen && (
-        <EmailDialog
-          id={r.id}
-          full={r.full}
-          close={() => setEmailOpen(false)}
-        />
       )}
       {complete &&
         results &&

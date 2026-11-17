@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { after } from "next/server";
-import { visitor } from "@/lib/auth";
+import { visitor, reviewAccount } from "@/lib/auth";
 import {
   sameOrigin,
   readJson,
@@ -79,6 +79,7 @@ export async function PUT(req: Request, ctx: Context) {
 export async function POST(req: Request, ctx: Context) {
   try {
     const { user, id } = await parameters(req, ctx);
+    await reviewAccount(req);
     const data = finishSchema.parse(await readJson(req));
     await rateLimit(`upload-finish:${user.id}`, 30, 3600);
     const review = await finishUpload(user, id, data);

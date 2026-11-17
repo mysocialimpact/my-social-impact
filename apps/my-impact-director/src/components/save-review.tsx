@@ -35,7 +35,10 @@ export function SaveReview({
   }, []);
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const email = new FormData(e.currentTarget).get("email");
+    const email =
+      user && !user.anonymous && !recovery
+        ? user.email
+        : new FormData(e.currentTarget).get("email");
     setBusy(true);
     setError("");
     try {
@@ -80,7 +83,7 @@ export function SaveReview({
         <p className="eyebrow">
           {returning
             ? "PICK UP WHERE YOU LEFT OFF"
-            : "YOURS TO KEEP. ENTIRELY OPTIONAL."}
+            : "YOUR ACCOUNT. YOUR REPORTS."}
         </p>
         <h2>
           {returning
@@ -109,20 +112,27 @@ export function SaveReview({
           </div>
         ) : enabled ? (
           <form onSubmit={submit}>
-            <label>
-              Email address
-              <input
-                name="email"
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-                readOnly={!!user && !user.anonymous && !recovery}
-                type="email"
-                autoComplete="email"
-                required
-                maxLength={254}
-                placeholder="you@yourorganisation.org"
-              />
-            </label>
+            {user && !user.anonymous && !recovery ? (
+              <p>
+                We’ll use <strong>{user.email}</strong>. Confirm this address
+                once to connect your saved reports and receive detailed results.
+              </p>
+            ) : (
+              <label>
+                Email address
+                <input
+                  name="email"
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  readOnly={!!user && !user.anonymous && !recovery}
+                  type="email"
+                  autoComplete="email"
+                  required
+                  maxLength={254}
+                  placeholder="you@yourorganisation.org"
+                />
+              </label>
+            )}
             <button className="button primary" disabled={busy}>
               {busy
                 ? "Sending…"
