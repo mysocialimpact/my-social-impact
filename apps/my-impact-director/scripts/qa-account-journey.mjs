@@ -152,12 +152,10 @@ try {
     await p
       .locator("#upload input[name=password]")
       .fill("synthetic-test-password");
-    await p
-      .locator("#upload")
-      .screenshot({
-        path: `artifacts/account-journey/account-${width}.png`,
-        style: ".site-header { visibility:hidden !important; }",
-      });
+    await p.locator("#upload").screenshot({
+      path: `artifacts/account-journey/account-${width}.png`,
+      style: ".site-header { visibility:hidden !important; }",
+    });
     await p
       .getByRole("button", { name: "Create my free account", exact: true })
       .click();
