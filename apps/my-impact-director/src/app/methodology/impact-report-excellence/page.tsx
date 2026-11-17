@@ -100,7 +100,7 @@ export default function Methodology() {
           Read the archived v1 methodology.
         </Link>
       </p>
-      <Link href="/#upload" className="button primary">
+      <Link href="/review" className="button primary">
         Upload a report →
       </Link>
     </section>

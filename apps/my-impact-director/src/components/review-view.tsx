@@ -101,7 +101,7 @@ export function ReviewView({
           link.
         </p>
         <SaveReview returning />
-        <Link href="/#upload">Start a new review →</Link>
+        <Link href="/review">Start a new review →</Link>
       </>
     );
   if (error)

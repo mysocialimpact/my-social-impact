@@ -95,25 +95,10 @@ export function Header() {
           </Link>
         </nav>
         <Link
-          href={inReview ? "/reviews" : "/#upload"}
+          href={inReview ? "/reviews" : "/review"}
           className="header-review"
           onClick={(e) => {
             setOpen(false);
-            if (path === "/") {
-              e.preventDefault();
-              history.pushState(null, "", "/#upload");
-              document.getElementById("upload")?.scrollIntoView({
-                behavior: matchMedia("(prefers-reduced-motion: reduce)").matches
-                  ? "instant"
-                  : "smooth",
-                block: "start",
-              });
-              document
-                .querySelector<HTMLElement>(
-                  '#hero-report-file, #upload input[name="email"]',
-                )
-                ?.focus({ preventScroll: true });
-            }
           }}
         >
           {inReview ? "My review workspace" : "Try your first free review"}

@@ -70,7 +70,7 @@ export function PasswordRecovery({ reset = false }: { reset?: boolean }) {
         <>
           <p>
             {reset
-              ? "Use at least 10 characters."
+              ? "Use at least 8 characters."
               : "This resets the password you use across My Social Impact services."}
           </p>
           <form onSubmit={submit} method="post">
@@ -82,7 +82,7 @@ export function PasswordRecovery({ reset = false }: { reset?: boolean }) {
                     type="password"
                     name="password"
                     autoComplete="new-password"
-                    minLength={10}
+                    minLength={8}
                     maxLength={200}
                     required
                   />
@@ -93,7 +93,7 @@ export function PasswordRecovery({ reset = false }: { reset?: boolean }) {
                     type="password"
                     name="confirm"
                     autoComplete="new-password"
-                    minLength={10}
+                    minLength={8}
                     maxLength={200}
                     required
                   />

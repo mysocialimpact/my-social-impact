@@ -268,7 +268,7 @@ test(
         action: "signup",
         email: profiles.c.email,
         name: "Synthetic QA",
-        password: "synthetic-long-password",
+        password: "Eight8!x",
       });
       assert.equal(newAccount.status, 200);
       const newCookie = cookie(newAccount),

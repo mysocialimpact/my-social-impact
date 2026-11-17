@@ -152,11 +152,11 @@ export async function accountAction(req: Request, input: unknown) {
     throw new AppError(400, "Enter your email and password.");
   if (
     data.action === "signup" &&
-    ((data.name?.length || 0) < 2 || (data.password?.length || 0) < 10)
+    ((data.name?.length || 0) < 2 || (data.password?.length || 0) < 8)
   )
     throw new AppError(
       400,
-      "Use a name of at least two characters and a password of at least ten characters.",
+      "Use a name of at least two characters and a password of at least eight characters.",
     );
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0] || "unknown";
   await rateLimit(`auth-ip:${ip}`, 30, 900);
@@ -165,11 +165,11 @@ export async function accountAction(req: Request, input: unknown) {
     throw new AppError(400, "Enter your email address.");
   if (
     data.action === "reset-password" &&
-    (!data.token || (data.password?.length || 0) < 10)
+    (!data.token || (data.password?.length || 0) < 8)
   )
     throw new AppError(
       400,
-      "Use the complete recovery link and a password of at least ten characters.",
+      "Use the complete recovery link and a password of at least eight characters.",
     );
   const body =
     data.action === "signup"

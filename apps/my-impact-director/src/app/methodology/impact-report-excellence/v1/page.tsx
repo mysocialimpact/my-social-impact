@@ -104,7 +104,7 @@ export default function Methodology() {
         priorities and a suggested creative direction grounded in the assessed
         document.
       </p>
-      <Link href="/#upload" className="button primary">
+      <Link href="/review" className="button primary">
         Start your free review →
       </Link>
     </section>

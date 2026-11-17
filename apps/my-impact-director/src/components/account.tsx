@@ -110,14 +110,14 @@ export function Account({
               autoComplete={
                 mode === "signup" ? "new-password" : "current-password"
               }
-              minLength={mode === "signup" ? 10 : 8}
+              minLength={8}
               maxLength={200}
               required
             />
           </label>
           <small id={passwordHelp}>
             {mode === "signup"
-              ? "At least 10 characters."
+              ? "At least 8 characters."
               : "Your My Social Impact account password."}
           </small>
         </div>

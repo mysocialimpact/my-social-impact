@@ -168,3 +168,206 @@
     animation: none;
   }
 }
+/* A welcoming start and a distinct home for saved work. */
+.workspace-welcome {
+  background: var(--navy);
+  color: white;
+  padding: clamp(40px, 5vw, 76px) 0;
+}
+.welcome-columns {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: 8%;
+  align-items: center;
+}
+.workspace-welcome .eyebrow {
+  color: #ff9a79;
+  margin-bottom: 24px;
+  font-size: 12px;
+}
+.workspace-welcome h1 {
+  font-size: clamp(56px, 7vw, 104px);
+  line-height: 0.95;
+  letter-spacing: -0.06em;
+  margin: 0;
+}
+.workspace-welcome h1 em {
+  color: var(--orange);
+  font-size: 1.1em;
+}
+.workspace-welcome p {
+  line-height: 1.6;
+  max-width: 580px;
+}
+.workspace-welcome .welcome-lead {
+  font-size: clamp(24px, 2.4vw, 34px);
+  line-height: 1.2;
+  font-weight: 700;
+  letter-spacing: -0.035em;
+}
+.welcome-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 22px;
+  margin: 28px 0 20px;
+}
+.welcome-login {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  font-weight: 700;
+  text-underline-offset: 5px;
+}
+.workspace-welcome .fine-print {
+  color: #d9deec;
+  font-size: 13px;
+}
+.start-review-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8%;
+  padding-block: 48px;
+  align-items: start;
+}
+.start-review-notes h2 {
+  font-family: inherit;
+  font-size: clamp(34px, 3.7vw, 56px);
+  line-height: 1.05;
+  margin-bottom: 22px;
+}
+.start-review-notes h2 em {
+  color: var(--orange-dark);
+}
+.start-review-notes p,
+.start-review-notes li {
+  font-size: 16px;
+  line-height: 1.6;
+}
+.start-review-notes ol {
+  padding-left: 22px;
+  margin: 24px 0;
+}
+.start-review-notes li + li {
+  margin-top: 14px;
+}
+.start-review-intake {
+  border-top: 5px solid var(--orange);
+  padding: 28px;
+  background: #f3f4f6;
+}
+.start-review-intake .intake {
+  border: 0;
+  padding: 0;
+  background: transparent;
+}
+.start-review-intake .dropzone {
+  min-height: 240px;
+  background: white;
+  border: 1px solid #aeb3bf;
+}
+.start-review-intake .upload-topline {
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.start-review-intake .upload-topline span + span {
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.start-review-intake .review-account-gate {
+  background: transparent;
+}
+.start-review-intake .account-card {
+  background: transparent;
+}
+.start-review-intake .upload-foot {
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.start-review-intake .upload-foot p,
+.start-review-intake .subtle-button {
+  font-size: 12px;
+}
+.start-review-intake .review-disclosure,
+.start-review-intake .upload-privacy {
+  font-size: 12px;
+  line-height: 1.5;
+}
+.homepage-review-invitation {
+  padding: 10px 0;
+}
+.homepage-review-invitation h3 {
+  font-family: inherit;
+  font-size: clamp(38px, 4vw, 64px);
+  line-height: 1;
+  letter-spacing: -0.05em;
+  margin: 20px 0;
+}
+.homepage-review-invitation h3 em {
+  color: var(--orange-dark);
+  font-weight: 400;
+}
+.homepage-review-invitation .button {
+  margin: 16px 0;
+  gap: 20px;
+}
+.homepage-review-invitation .fine-print {
+  font-size: 12px;
+  line-height: 1.5;
+  max-width: 380px;
+}
+.reports-content {
+  max-width: 1440px;
+  padding-top: 32px;
+}
+.reports-empty {
+  border-top: 4px solid var(--orange);
+  padding: 36px;
+  background: #f3f4f6;
+  margin: 28px 0;
+}
+.reports-empty h2 {
+  font-family: inherit;
+  font-size: 36px;
+  margin-bottom: 16px;
+}
+@media (max-width: 700px) {
+  .welcome-columns,
+  .start-review-content {
+    grid-template-columns: 1fr;
+    gap: 30px;
+  }
+  .workspace-welcome .campaign-width,
+  .start-review-content {
+    padding-inline: 24px;
+  }
+  .workspace-welcome h1 {
+    font-size: 62px;
+  }
+  .workspace-welcome .welcome-lead {
+    font-size: 26px;
+  }
+  .workspace-welcome .eyebrow {
+    font-size: 10px;
+    margin-bottom: 20px;
+  }
+  .workspace-welcome p {
+    font-size: 15px;
+  }
+  .start-review-content {
+    padding-block: 32px;
+  }
+  .start-review-intake {
+    padding: 20px 16px;
+    grid-row: 1;
+  }
+  .start-review-notes {
+    grid-row: 2;
+  }
+  .reports-content {
+    padding-inline: 24px;
+  }
+  .reports-empty {
+    padding: 24px;
+  }
+}

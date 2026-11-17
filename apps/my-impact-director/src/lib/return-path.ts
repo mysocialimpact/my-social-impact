@@ -11,6 +11,7 @@ export function safeReturnPath(value?: string, fallback = "/reviews") {
   return url.origin === "https://www.myimpactdirector.com" &&
     (/^\/reviews(?:\/|$)/.test(url.pathname) ||
       url.pathname === "/account" ||
+      url.pathname === "/review" ||
       url.pathname === "/")
     ? value
     : fallback;
