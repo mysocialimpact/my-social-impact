@@ -105,7 +105,12 @@ export function ReviewLearning({
   }, [go, step]);
   const slide = slides[step];
   const intro = step === 0;
-  const headline = slide.headline;
+  const headline =
+    intro &&
+    state !== "preparing" &&
+    slide.headline === "WE’RE PREPARING YOUR REVIEW."
+      ? "DISCOVER HOW WE ASSESS IT."
+      : slide.headline;
   const explanation =
     intro && state !== "preparing"
       ? slide.explanation.replace(

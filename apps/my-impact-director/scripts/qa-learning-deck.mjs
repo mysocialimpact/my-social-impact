@@ -245,7 +245,10 @@ try {
       );
       await p.getByRole("button", { name: "← Previous", exact: true }).click();
       await p.getByRole("button", { name: "View results ↗" }).click();
-      await p.locator(".snapshot-heading").waitFor();
+      await p
+        .locator(".snapshot-heading:visible, .impact-verdict:visible")
+        .first()
+        .waitFor();
       assert.equal(await p.locator(".learning-deck").count(), 0);
       await p
         .getByRole("button", { name: "Return to the learning experience" })
@@ -257,7 +260,10 @@ try {
         /01 \/ 07/,
       );
       await p.getByRole("button", { name: "View results ↗" }).click();
-      await p.locator(".snapshot-heading").waitFor();
+      await p
+        .locator(".snapshot-heading:visible, .impact-verdict:visible")
+        .first()
+        .waitFor();
       assert.deepEqual(
         posts.filter(
           (x) => x.path.startsWith("/api/reviews/") && x.action !== "snapshot",

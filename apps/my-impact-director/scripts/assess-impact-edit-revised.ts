@@ -19,7 +19,10 @@ import {
   scoreFramework,
 } from "../src/lib/assessment";
 import { structured } from "../src/lib/ai";
-import { REPORT_VERSION } from "../src/lib/report-methodology";
+import {
+  REPORT_VERSION,
+  REPORT_PUBLICATION_NOTICE,
+} from "../src/lib/report-methodology";
 import {
   reportActionsSchema,
   reportActionsFor,
@@ -59,7 +62,6 @@ for (const file of files) {
   });
 }
 const model = "openai/gpt-5.4-nano",
-  auditModel = "openai/gpt-5.4-mini",
   inputRate = 0.0000002,
   outputRate = 0.00000125,
   perCallReserve = 400000 * inputRate + 14000 * outputRate;
@@ -84,8 +86,6 @@ console.log(
     {
       mode: paid ? "approved paid run" : "plan only; no model or email calls",
       model,
-      auditModel,
-      auditMaximumCostPerCallUsd: 0.363,
       pricesUsdPerMillion: {
         input: Math.round(inputRate * 1e8) / 100,
         output: outputRate * 1e6,
@@ -145,16 +145,6 @@ try {
     "https://ai-gateway.vercel.sh/v1/models",
   ).then((r) => r.json());
   const listed = catalogue.data?.find((m: { id: string }) => m.id === model);
-  const auditListed = catalogue.data?.find(
-    (m: { id: string }) => m.id === auditModel,
-  );
-  if (
-    !auditListed ||
-    Number(auditListed.pricing.input) !== 0.00000075 ||
-    Number(auditListed.pricing.output) !== 0.0000045 ||
-    auditListed.context_window !== 400000
-  )
-    throw Error("Audit model catalogue changed; halt for cost review.");
   if (
     !listed ||
     Number(listed.pricing.input) !== inputRate ||
@@ -181,14 +171,14 @@ try {
     if (cached) return Response.json(JSON.parse(cached));
     const body = JSON.parse(payload);
     if (
-      ![model, auditModel].includes(body.model) ||
+      body.model !== model ||
       body.max_completion_tokens !== 14000 ||
       body.tools
     )
       throw Error("Request exceeds approved test configuration.");
-    const callInputRate = body.model === auditModel ? 0.00000075 : inputRate,
-      callOutputRate = body.model === auditModel ? 0.0000045 : outputRate,
-      reserve = 400000 * callInputRate + 14000 * callOutputRate;
+    const callInputRate = inputRate,
+      callOutputRate = outputRate,
+      reserve = perCallReserve;
     if (accounted + reserve > budget + 1e-9)
       throw Error("Approved test budget exhausted; no request sent.");
     accounted += reserve;
@@ -348,7 +338,7 @@ try {
         version === REPORT_VERSION
           ? reportActionsFor(observations)
           : actionSchema,
-        actionInstructions(true, version === REPORT_VERSION),
+        actionInstructions(true, version === REPORT_VERSION, version),
         {
           context,
           claims: [],
@@ -357,6 +347,7 @@ try {
           visualObservations: observations,
           pdfChecks: checks,
           readerInspection: reader,
+          materialAccessibilityConcerns: reader?.accessibilityConcerns || [],
         },
       );
       if (
@@ -377,14 +368,19 @@ try {
               observations,
             )
           : undefined;
+      const calculatedOverall = score.overall;
       if (editorial?.scoreConsistency === "review_needed") {
         score.overall = null;
         score.provisional = true;
       }
+      score.overall = null;
+      score.provisional = true;
       const result: ReviewResult = {
+        publicationNotice: REPORT_PUBLICATION_NOTICE,
         beta: true,
-        qualityControl,
+        qualityControl: { ...qualityControl, calculatedOverall },
         readerInspection: reader,
+        materialAccessibilityConcerns: reader?.accessibilityConcerns || [],
         framework: "report",
         version,
         assessedAt: new Date().toISOString(),

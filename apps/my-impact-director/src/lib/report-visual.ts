@@ -419,7 +419,6 @@ export async function assessReportPillar(
     },
     undefined,
     images,
-    principle === -1 ? "openai/gpt-5.4-mini" : undefined,
   );
   const referenced = {
     findings: response.data.findings.map((f) => ({

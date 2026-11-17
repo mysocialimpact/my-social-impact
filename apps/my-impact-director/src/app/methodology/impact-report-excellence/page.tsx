@@ -20,6 +20,15 @@ export default function Methodology() {
         Does your impact report make an impact?
       </p>
       <CreativeCaveat />
+      <aside className="notice">
+        <strong>Overall numeric scoring is under calibration.</strong>
+        <p>
+          Contrasting chart designs did not yet produce sufficiently reliable
+          relative scores. We publish the beta evidence and recommendations,
+          with experimental criterion and pillar estimates, while withholding an
+          overall number. Independent editorial calibration is still needed.
+        </p>
+      </aside>
       <p>
         An editorial and visual review of how a report communicates. We judge
         execution, not the presence of headings, charts, photographs or

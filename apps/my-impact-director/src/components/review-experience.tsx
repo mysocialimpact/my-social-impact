@@ -649,14 +649,15 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
                 <p>
                   This is your preserved v{r.result.version} assessment. The new
                   methodology uses revised pillars, weights and direct visual
-                  scoring.
+                  inspection. Overall numeric publication is paused during beta
+                  calibration.
                 </p>
                 <button
                   className="button secondary"
                   disabled={busy}
                   onClick={() => choose("report")}
                 >
-                  Run The Impact Edit v2 on this report
+                  Run the revised Impact Edit beta
                 </button>
               </div>
             )}

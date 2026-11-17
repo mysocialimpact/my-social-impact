@@ -1169,7 +1169,9 @@ test(
           assert.equal(done.status, "complete");
           assert.equal(result.framework, "report");
           assert.equal(result.scores.report!.coverage, 25);
-          assert.equal(result.scores.report!.overall, 75);
+          assert.equal(result.scores.report!.overall, null);
+          assert.equal(result.qualityControl?.calculatedOverall, 75);
+          assert.ok(result.publicationNotice);
           assert.equal(result.version, REPORT_VERSION);
           assert.ok(result.readerInspection);
           assert.equal(result.beta, true);

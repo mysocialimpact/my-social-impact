@@ -57,14 +57,18 @@ export function ScoreCard({
         </div>
         <p>
           {score.provisional
-            ? "More reliable evidence is needed for an overall result."
+            ? framework === "report" && isRevisedReport(version)
+              ? "Overall numeric scoring is under calibration. Pillar values are experimental beta estimates."
+              : "More reliable evidence is needed for an overall result."
             : "An indicative assessment of the evidence in your report."}
         </p>
       </div>
       <p>
         {score.coverage}/{criteria(framework, version).length} tests assessed.{" "}
         {score.provisional
-          ? "Coverage is too limited for a definitive overall score."
+          ? framework === "report" && isRevisedReport(version)
+            ? "No definitive overall score is published during beta calibration."
+            : "Coverage is too limited for a definitive overall score."
           : "An assessment of the evidence in this report."}
       </p>
       {rating && (

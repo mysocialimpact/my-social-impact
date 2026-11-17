@@ -10,7 +10,7 @@ export const EDIT_CAVEAT =
 
 export function editCaveat(version = REPORT_VERSION) {
   return isRevisedReport(version)
-    ? "This beta AI-assisted editorial review examines Readability & Copy, Information Hierarchy, Visual Design, Storytelling and Data Presentation. Creative judgements are partly subjective. Independent human calibration and technical PDF accessibility compliance are not claimed."
+    ? "This beta AI-assisted editorial review examines Readability & Copy, Information Hierarchy, Visual Design, Storytelling and Data Presentation. Creative judgements are partly subjective. Overall numeric publication is withheld during calibration; criterion and pillar values are experimental estimates. Independent human calibration and technical PDF accessibility compliance are not claimed."
     : isReportV2(version)
       ? "This AI-assisted editorial review examines readability and hierarchy, storytelling, visual design, data communication and accessibility. Creative judgements are partly subjective. Structural PDF checks are not a screen-reader or user accessibility audit."
       : EDIT_CAVEAT;

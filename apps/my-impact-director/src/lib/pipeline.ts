@@ -1,6 +1,7 @@
 import { inspectReader, type ReaderInspection } from "./report-reader";
 import {
   REPORT_VERSION,
+  REPORT_PUBLICATION_NOTICE,
   isReportV2,
   isRevisedReport,
 } from "./report-methodology";
@@ -110,8 +111,11 @@ type Document = {
   extraction_notes: unknown[];
 };
 export type ReviewResult = {
+  publicationNotice?: string;
+  materialAccessibilityConcerns?: string[];
   qualityControl?: {
     method: "criterion-execution-audit";
+    calculatedOverall?: number | null;
     changes: {
       id: string;
       before: number | null;
@@ -432,7 +436,7 @@ export async function processOne(id?: string) {
               )
             : reportActionsSchema
           : actionSchema,
-        actionInstructions(job.framework === "report", v2),
+        actionInstructions(job.framework === "report", v2, job.version),
         {
           context,
           claims,
@@ -444,6 +448,13 @@ export async function processOne(id?: string) {
                   (n) => (n as VisualObservation).kind === visualKind,
                 ),
                 pdfChecks,
+                materialAccessibilityConcerns:
+                  (
+                    notes.find(
+                      (n) =>
+                        (n as ReaderInspection).kind === "report-reader-2.0.1",
+                    ) as ReaderInspection | undefined
+                  )?.accessibilityConcerns || [],
                 readerInspection: notes.find(
                   (n) => (n as ReaderInspection).kind === "report-reader-2.0.1",
                 ),
@@ -467,6 +478,7 @@ export async function processOne(id?: string) {
             ) as VisualObservation[],
           )
         : undefined;
+      const calculatedOverall = scores.report?.overall ?? null;
       if (
         isRevisedReport(job.version) &&
         editorial?.scoreConsistency === "review_needed"
@@ -474,13 +486,29 @@ export async function processOne(id?: string) {
         scores.report!.overall = null;
         scores.report!.provisional = true;
       }
+      if (job.framework === "report" && isRevisedReport(job.version)) {
+        scores.report!.overall = null;
+        scores.report!.provisional = true;
+      }
       result = {
         ...(isRevisedReport(job.version) && job.framework === "report"
           ? {
               beta: true,
-              qualityControl: notes.find(
-                (n) => (n as { kind: string }).kind === "report-quality-2.0.1",
-              ) as ReviewResult["qualityControl"],
+              publicationNotice: REPORT_PUBLICATION_NOTICE,
+              qualityControl: {
+                ...(notes.find(
+                  (n) =>
+                    (n as { kind: string }).kind === "report-quality-2.0.1",
+                ) as NonNullable<ReviewResult["qualityControl"]>),
+                calculatedOverall,
+              },
+              materialAccessibilityConcerns:
+                (
+                  notes.find(
+                    (n) =>
+                      (n as ReaderInspection).kind === "report-reader-2.0.1",
+                  ) as ReaderInspection | undefined
+                )?.accessibilityConcerns || [],
               readerInspection: notes.find(
                 (n) => (n as ReaderInspection).kind === "report-reader-2.0.1",
               ) as ReaderInspection | undefined,
@@ -557,6 +585,7 @@ export async function processOne(id?: string) {
           ...(isRevisedReport(job.version) && job.framework === "report"
             ? [
                 "Beta AI-assisted creative assessment; independent human editorial calibration has not been performed. Technical PDF accessibility compliance is not established.",
+                REPORT_PUBLICATION_NOTICE,
                 ...(editorial?.scoreConsistency === "review_needed"
                   ? [
                       "Editorial quality control identified an unresolved inconsistency in criterion judgements. The overall score is withheld pending reassessment; it has not been arbitrarily adjusted.",

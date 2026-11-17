@@ -27,8 +27,11 @@ export function WorkspaceTracker() {
     }
     let stopped = false,
       timer: ReturnType<typeof setTimeout>;
-    let selected = false;
+    let selected = false,
+      refreshing = false;
     async function refresh() {
+      if (refreshing) return;
+      refreshing = true;
       try {
         const d = await api(
           "/api/workspace",
@@ -52,7 +55,11 @@ export function WorkspaceTracker() {
             e instanceof Error ? e.message : "Unable to refresh status.",
           );
       }
-      if (!stopped) timer = setTimeout(refresh, 10000);
+      refreshing = false;
+      if (!stopped) {
+        clearTimeout(timer);
+        timer = setTimeout(refresh, 10000);
+      }
     }
     const requested = () => {
       clearTimeout(timer);

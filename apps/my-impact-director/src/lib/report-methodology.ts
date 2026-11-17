@@ -1,6 +1,10 @@
 /** Methodology v2.0 revision 2.0.1. Released 2.0.0 remains immutable. */
 import * as legacy from "./report-methodology-2-0-0";
 export const REPORT_VERSION = "2.0.1";
+// Comparative calibration currently fails the data-design discrimination case.
+// Do not publish a precise overall number until independent editorial validation.
+export const REPORT_PUBLICATION_NOTICE =
+  "Overall numeric scoring is under calibration. These beta findings and recommendations need professional editorial judgement.";
 export const isReportV2 = legacy.isReportV2;
 export const isRevisedReport = (version = REPORT_VERSION) =>
   /^2\./.test(version) && !/^2\.0\.0(?:-|$)/.test(version);
@@ -188,5 +192,5 @@ export const reportRubricFor = (version = REPORT_VERSION) =>
 export const reportWeightsFor = (version = REPORT_VERSION) =>
   isRevisedReport(version) ? reportWeights : legacy.reportWeights;
 export const REPORT_SCORING =
-  "Each applicable criterion scores 0–4 against execution anchors. Pillar contribution = weight × sum(scores) ÷ (4 × assessable criteria). Weights: Readability & Copy 25; Information Hierarchy 30; Visual Design 25; Storytelling 10; Data Presentation 10. At least four criteria in every pillar and 22 overall must be assessable. Unassessable and genuinely inapplicable criteria are disclosed, never given invented scores. Missing required visual coverage or unresolved editorial inconsistency withholds the overall score. The total uses unrounded contributions. 0–39 Poor; 40–59 Significant improvement needed; 60–74 Adequate, with important weaknesses; 75–89 Strong professional communication; 90–100 Exceptional. This revised assessment is beta, not independently validated professional judgement.";
+  "Each applicable criterion scores 0–4 against execution anchors. Pillar contribution = weight × sum(scores) ÷ (4 × assessable criteria). Weights: Readability & Copy 25; Information Hierarchy 30; Visual Design 25; Storytelling 10; Data Presentation 10. At least four criteria in every pillar and 22 overall must be assessable. Unassessable and genuinely inapplicable criteria are disclosed, never given invented scores. Missing required visual coverage or unresolved editorial inconsistency withholds the overall score. The total uses unrounded contributions. 0–39 Poor; 40–59 Significant improvement needed; 60–74 Adequate, with important weaknesses; 75–89 Strong professional communication; 90–100 Exceptional. This revised assessment is beta. Overall numeric publication is withheld while contrasting data-design judgements remain insufficiently reliable; criterion and pillar values are experimental diagnostic estimates, not independently validated professional scores.";
 export const pillarMaximum = legacy.pillarMaximum;

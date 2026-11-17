@@ -76,3 +76,31 @@ test("all three learning journeys explain what and why with concise copy", () =>
   );
   assert.equal(learningSlides("report", "1.0.0")[1].label, "Clarity");
 });
+
+test("actual PDF transparency groups render with a transformed clipping path in Node", async () => {
+  const { PDFDocument, StandardFonts } = await import("pdf-lib");
+  const { renderVisualPages } = await import("../src/lib/report-visual");
+  const source = await PDFDocument.create(),
+    font = await source.embedFont(StandardFonts.Helvetica),
+    page = source.addPage([300, 400]);
+  page.drawText("A transformed transparency-group regression fixture.", {
+    x: 20,
+    y: 300,
+    size: 12,
+    font,
+  });
+  const target = await PDFDocument.create(),
+    embedded = await target.embedPage(page),
+    out = target.addPage([595, 842]);
+  out.drawPage(embedded, { x: 40, y: 100, width: 450, height: 600 });
+  const images = await renderVisualPages(
+    Buffer.from(await target.save()),
+    [1],
+    900,
+  );
+  assert.equal(images[0].page, 1);
+  assert.ok(images[0].dataUrl.startsWith("data:image/png;base64,"));
+  assert.ok(
+    Buffer.from(images[0].dataUrl.split(",")[1], "base64").length > 1000,
+  );
+});

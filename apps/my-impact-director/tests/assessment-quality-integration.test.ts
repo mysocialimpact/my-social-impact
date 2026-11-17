@@ -181,7 +181,9 @@ test(
       let done = (await getReview(guest.user, selected.id))
         .result as ReviewResult;
       assert.equal(done.version, REPORT_VERSION);
-      assert.equal(done.scores.report?.overall, 50);
+      assert.equal(done.scores.report?.overall, null);
+      assert.equal(done.qualityControl?.calculatedOverall, 50);
+      assert.ok(done.publicationNotice);
       assert.equal(done.qualityControl?.changes.length, 25);
       assert.equal(auditCalls, 1);
       assert.ok(done.readerInspection);

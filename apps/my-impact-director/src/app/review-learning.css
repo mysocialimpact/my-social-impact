@@ -533,3 +533,26 @@ body:has(.impact-verdict) .permanent-actions {
     display: none;
   }
 }
+.section:has(.impact-verdict) {
+  padding-top: 20px;
+}
+.review-result-page:has(.impact-verdict) {
+  padding-top: 0;
+}
+.impact-material-limits {
+  margin: 14px 0;
+}
+.impact-material-limits summary {
+  cursor: pointer;
+}
+.impact-material-limits li {
+  margin-bottom: 10px;
+}
+.impact-score-notice {
+  font-size: 13px;
+  line-height: 1.35;
+  padding: 8px 12px;
+  margin: 10px 0;
+  background: #fff1ed;
+  border-left: 3px solid var(--orange);
+}

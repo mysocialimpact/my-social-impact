@@ -2,6 +2,10 @@ import type { ReviewResult } from "@/lib/pipeline";
 import { pillarMaximum } from "@/lib/report-methodology";
 export function ImpactVerdict({ result }: { result: ReviewResult }) {
   const score = result.scores.report!;
+  const concerns =
+    result.materialAccessibilityConcerns ||
+    result.readerInspection?.accessibilityConcerns ||
+    [];
   return (
     <section className="impact-verdict" aria-label="Your Impact Edit verdict">
       <div className="impact-verdict-head">
@@ -17,7 +21,11 @@ export function ImpactVerdict({ result }: { result: ReviewResult }) {
           <p className="eyebrow">
             The verdict · Methodology {result.version} · Beta
           </p>
-          <h2>{result.rating?.label || "Your editorial review"}</h2>
+          <h2>
+            {result.publicationNotice
+              ? "Your editorial review."
+              : result.rating?.label || "Your editorial review"}
+          </h2>
           <p>{result.editorial?.verdict || result.actions.summary}</p>
         </div>
       </div>
@@ -25,23 +33,34 @@ export function ImpactVerdict({ result }: { result: ReviewResult }) {
         AI-assisted creative judgement is partly subjective. This beta has not
         been independently validated by human editors. {score.coverage}/25
         criteria assessed. Technical accessibility compliance is not
-        established.
+        established. Pillar values are experimental beta estimates.
       </p>
       {score.provisional && (
-        <p className="alert error">
-          {result.editorial?.scoreConsistency === "review_needed"
-            ? "Editorial quality control found an unresolved inconsistency. We’ve withheld the overall score; inspect the evidence before relying on these findings."
-            : "Coverage or visual evidence is insufficient for a dependable overall score. This is an assessment limitation, not a judgement of poor design."}
+        <p className="impact-score-notice" role="note">
+          {result.publicationNotice ||
+            (result.editorial?.scoreConsistency === "review_needed"
+              ? "Overall score withheld: the criterion judgements need further editorial review."
+              : "Overall score withheld: assessment coverage or visual evidence is incomplete.")}
         </p>
       )}
-      {!!result.readerInspection?.accessibilityConcerns.length && (
+      {!!concerns.length && (
         <aside className="impact-material-limits">
-          <strong>Material accessibility concerns</strong>
-          <ul>
-            {result.readerInspection.accessibilityConcerns.map((x) => (
-              <li key={x}>{x}</li>
-            ))}
-          </ul>
+          <details>
+            <summary>
+              <strong>
+                {concerns.length} potential reading or accessibility concerns
+              </strong>
+            </summary>
+            <p>
+              AI-observed concerns to check against the source. Technical PDF
+              accessibility compliance has not been established.
+            </p>
+            <ul>
+              {concerns.map((x) => (
+                <li key={x}>{x}</li>
+              ))}
+            </ul>
+          </details>
         </aside>
       )}
       <div className="impact-pillar-grid">
