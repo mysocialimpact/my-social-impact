@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useId, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { api } from "./session";
 import { SaveReview } from "./save-review";
 import { safeReturnPath } from "@/lib/return-path";
@@ -22,6 +22,8 @@ export function Account({
   onAuthenticated?: () => void;
 }) {
   const passwordHelp = useId();
+  const [ready, setReady] = useState(false);
+  useEffect(() => setReady(true), []);
   const [address, setAddress] = useState(email);
   const [mode, setMode] = useState(initialMode),
     [busy, setBusy] = useState(false),
@@ -83,6 +85,7 @@ export function Account({
               minLength={2}
               maxLength={120}
               required
+              disabled={!ready}
               defaultValue={name}
             />
           </label>
@@ -95,6 +98,7 @@ export function Account({
             autoComplete="email"
             maxLength={254}
             required
+            disabled={!ready}
             value={address}
             onChange={(e) => setAddress(e.target.value)}
             readOnly={setup}
@@ -113,6 +117,7 @@ export function Account({
               minLength={8}
               maxLength={200}
               required
+              disabled={!ready}
             />
           </label>
           <small id={passwordHelp}>
@@ -126,7 +131,7 @@ export function Account({
             {error}
           </p>
         )}
-        <button className="button primary" disabled={busy}>
+        <button className="button primary" disabled={!ready || busy}>
           {busy
             ? "Please wait…"
             : setup
