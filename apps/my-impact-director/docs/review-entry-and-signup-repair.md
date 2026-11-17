@@ -1,0 +1,9 @@
+# Review entry and signup repair
+
+The homepage now invites visitors into `/review`, a dedicated free-review entry with a navy/orange hero. The existing account form and PDF dropzone live there. New accounts must use at least eight characters; browser validation, app server validation and password recovery agree. The shared account provider’s signup and reset rules require the same update, verified independently because a real eight-character signup exposed its previous ten-character minimum.
+
+My Reports now gives logged-out visitors a clear welcome, a first-review action and a returning-login action. Signed-in visitors get the dashboard and a welcome hero. Account-service failures show a retry state rather than a false empty dashboard. Existing report status, PDFs, deletion and retention controls remain.
+
+The production incident was identified in server logs as Neon SQLSTATE 53000. Project lucky-sky-23094766 was on Free with 6,277,153,092 bytes transferred, exceeding the published 5 GB monthly allowance. A plan upgrade is required to restore connections; data deletion cannot reset historical transfer. Billing tools return 403 and the browser connection is unavailable. The user has been given the existing project link to upgrade it. The app now reports database unavailability explicitly instead of a generic request failure. Full production signup cannot be declared restored until database access is restored and a real signup passes.
+
+Verification: production build/TypeScript; unit checks; desktop/mobile browser checks for no homepage form, dedicated signup, eight-character validation, signed-in PDF selection, guest My Reports hero and signed-in dashboard. Browser tests mock transports. Screenshots inspected and Axe A/AA checks pass. A real shared-provider signup is tested separately with an application QA account, never the user’s address. No paid assessments or customer emails.

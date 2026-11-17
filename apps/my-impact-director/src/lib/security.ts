@@ -105,6 +105,19 @@ export function secretMatches(actual: string, expected: string) {
   return !!expected && a.length === b.length && timingSafeEqual(a, b);
 }
 export function failure(e: unknown) {
+  if (e && typeof e === "object" && "code" in e && e.code === "53000")
+    return Response.json(
+      {
+        error:
+          "We’re sorry — our database service is temporarily unavailable. We’re restoring access. Your form details have been kept; please try again shortly.",
+        code: "DATABASE_UNAVAILABLE",
+      },
+      {
+        status: 503,
+        headers: { "cache-control": "no-store", "retry-after": "60" },
+      },
+    );
+
   if (e instanceof AppError)
     return Response.json(
       { error: e.message, code: e.code },

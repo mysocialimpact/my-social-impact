@@ -1,11 +1,11 @@
 import { Contact } from "@/components/contact";
 import { Arrow } from "@/components/icons";
 import Image from "next/image";
-import { Intake } from "@/components/intake";
+import Link from "next/link";
 import { SupportIntroduction } from "@/components/support-introduction";
 import { ReportServices } from "@/components/report-services";
 import { ChapterMotion } from "@/components/chapter-motion";
-import { ready } from "@/lib/reviews";
+
 export const dynamic = "force-dynamic";
 const perspectives = [
   {
@@ -115,7 +115,25 @@ export default function Home() {
           </div>
           <div className="studio-columns">
             <div className="studio-upload">
-              <Intake enabled={ready()} hero />
+              <div className="homepage-review-invitation" id="upload">
+                <p className="eyebrow">ONE PDF. A CLEARER WAY FORWARD.</p>
+                <h3>
+                  Your first
+                  <br />
+                  <em>free review.</em>
+                </h3>
+                <p>
+                  Discover what’s convincing, what’s missing and what to do
+                  next.
+                </p>
+                <Link className="button primary" href="/review">
+                  Try your first free review <Arrow />
+                </Link>
+                <p className="fine-print">
+                  Create your free account on the next page. Your reports and
+                  progress stay together.
+                </p>
+              </div>
             </div>
             <div className="studio-perspectives" id="how-it-works">
               <h3>One report. Three perspectives.</h3>
