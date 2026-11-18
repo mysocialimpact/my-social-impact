@@ -29,7 +29,7 @@ export async function createReview(
       400,
       "Please confirm you have permission to submit this report for AI processing.",
     );
-  validatePdf(bytes, title);
+  await validatePdf(bytes, title);
   const version = separate ? VERSION + "-document" : VERSION;
   const sha = createHash("sha256").update(bytes).digest("hex");
   await query(

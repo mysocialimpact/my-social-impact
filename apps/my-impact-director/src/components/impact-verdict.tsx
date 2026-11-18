@@ -7,7 +7,10 @@ export function ImpactVerdict({ result }: { result: ReviewResult }) {
     result.readerInspection?.accessibilityConcerns ||
     [];
   return (
-    <section className="impact-verdict" aria-label="Your Impact Edit verdict">
+    <section
+      className="impact-verdict"
+      aria-label="Your Impact Design Review verdict"
+    >
       <div className="impact-verdict-head">
         <div className="impact-verdict-number">
           <strong>{score.overall ?? "—"}</strong>
@@ -19,7 +22,7 @@ export function ImpactVerdict({ result }: { result: ReviewResult }) {
         </div>
         <div>
           <p className="eyebrow">
-            THE IMPACT EDIT · Methodology {result.version} · Beta
+            THE IMPACT DESIGN REVIEW · Methodology {result.version} · Beta
           </p>
           <h2>Your editorial verdict.</h2>
           <p>{result.editorial?.verdict || result.actions.summary}</p>

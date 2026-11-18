@@ -1,3 +1,4 @@
+import { workspaces } from "../src/lib/workspace";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
@@ -8,7 +9,7 @@ import { processOne, type ReviewResult } from "../src/lib/pipeline";
 import { extractPages } from "../src/lib/documents";
 import { sourcePassages } from "../src/lib/passages";
 import { query, database } from "../src/lib/db";
-import { exportPdf } from "../src/lib/export";
+import { exportPdf } from "../src/lib/archive/export";
 import { GET as snapshot } from "../src/app/api/reviews/[id]/route";
 import { firstOpinion, testFindings } from "./fixtures/art-director";
 test(
@@ -244,7 +245,35 @@ test(
       assert.equal(done.version, "2.1.0-report");
       assert.equal(done.engine_state, null);
       assert.equal(result.qualityControl?.calculatedOverall, 62.5);
-      assert.equal(result.scores.report!.overall, null);
+      assert.equal(result.scores.report!.overall, 62.5);
+      assert.equal(result.scores.report!.provisional, false);
+      const historicalResult = structuredClone(result);
+      historicalResult.scores.report!.overall = null;
+      historicalResult.scores.report!.provisional = true;
+      delete historicalResult.scores.report!.unroundedOverall;
+      await query("UPDATE director.reviews SET result=$2 WHERE id=$1", [
+        selected.id,
+        JSON.stringify(historicalResult),
+      ]);
+      const dashboard = await workspaces(guest.user, selected.id);
+      const design = (
+        dashboard[0].assessments as {
+          framework: string;
+          score: number;
+          publication?: unknown;
+        }[]
+      ).find((a) => a.framework === "report");
+      assert.equal(design?.score, 62.5);
+      assert.equal(
+        design?.publication,
+        undefined,
+        "Audit details stay out of the dashboard response",
+      );
+      await query("UPDATE director.reviews SET result=$2 WHERE id=$1", [
+        selected.id,
+        JSON.stringify(result),
+      ]);
+
       assert.equal(result.scores.report!.principles[2].score, 6.25);
       assert.equal(result.qualityControl?.changes.length, 5);
       assert.deepEqual(result.visualInspection?.pages, [1, 2]);

@@ -28,7 +28,7 @@ import {
   visualCoverage,
   actionInstructions,
 } from "../src/lib/report-verdict";
-import { exportPdf } from "../src/lib/export";
+import { exportPdf } from "../src/lib/archive/export";
 import type { ReviewResult } from "../src/lib/pipeline";
 // Historical calibration runner remains pinned to its original process.
 const REPORT_VERSION = "2.0.1";

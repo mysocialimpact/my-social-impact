@@ -32,15 +32,15 @@ const perspectives = [
   },
   {
     id: "report",
-    logo: "the-impact-edit.svg",
-    name: "The Impact Edit",
+    logo: "impact-design-review-transparent.png",
+    name: "The Impact Design Review",
     question: "Does your impact report make an impact?",
     pillars:
       "Readability & Copy · Information Hierarchy · Visual Design · Storytelling · Data Presentation",
     explanation:
-      "An indicative creative assessment of your report’s writing and actual page design. Twenty-five anchored criteria examine readability and hierarchy, storytelling, visual design, data communication and accessibility. Creative judgements are partly subjective; different readers may respond differently.",
+      "A creative director’s assessment of readability and copy, information hierarchy, visual design and art direction, storytelling and data presentation. Twenty-five anchored criteria examine the actual publication. AI-assisted creative judgements are partly subjective.",
     href: "/methodology/impact-report-excellence",
-    link: "Read The Impact Edit Methodology v2.0 — beta",
+    link: "Read The Impact Design Review Methodology v2.0 — beta",
   },
 ] as const;
 

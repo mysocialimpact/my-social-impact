@@ -1,3 +1,4 @@
+import { suppliedPillarSummary } from "./pillar-summary";
 import type { ReviewResult } from "./pipeline";
 import {
   validateFindings,
@@ -28,9 +29,24 @@ export function buildArtResult(
     undefined,
     version,
   );
-  const calculatedOverall = score.overall;
-  score.overall = null;
-  score.provisional = true;
+  for (const p of score.principles)
+    p.summary =
+      suppliedPillarSummary(p.name, p.tests, audit.actions.pillarSummaries) ??
+      p.summary;
+  const calculatedOverall = score.unroundedOverall ?? score.overall;
+  const inspectionComplete = visualCoverage(
+    pages,
+    artObservations(first),
+    version,
+  );
+  if (
+    !inspectionComplete ||
+    audit.editorial.scoreConsistency !== "consistent"
+  ) {
+    delete score.unroundedOverall;
+    score.overall = null;
+    score.provisional = true;
+  }
   const observations = artObservations(first),
     usages = [first.usage, scoringUsage, audit.usage];
   return {

@@ -2,18 +2,6 @@ import type { NextConfig } from "next";
 const config: NextConfig = {
   poweredByHeader: false,
   serverExternalPackages: ["pg", "unpdf", "@napi-rs/canvas"],
-  outputFileTracingIncludes: {
-    "/api/reviews/*/export": [
-      "./assets/fonts/*.ttf",
-      "./public/brand/my-impact-director.png",
-      "./public/brand/the-impact-edit-horizontal.png",
-    ],
-    "/api/save": [
-      "./assets/fonts/*.ttf",
-      "./public/brand/my-impact-director.png",
-      "./public/brand/the-impact-edit-horizontal.png",
-    ],
-  },
   async headers() {
     return [
       {

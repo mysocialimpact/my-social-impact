@@ -1,16 +1,14 @@
 "use client";
-import { ImpactVerdict } from "./impact-verdict";
+import { SharePublication } from "./share-publication";
+import { ReportPublication } from "./report-publication";
 import { ContributionPanel } from "./contribution-panel";
 import { ReviewLearning } from "./review-learning";
 import { ContextualOffers } from "./contextual-offers";
 import {
   isReportV2,
-  isRevisedReport,
   reportRubricFor,
-  reportPillars,
   REPORT_VERSION,
 } from "@/lib/report-methodology";
-import { CreativeCaveat } from "./creative-caveat";
 import { SaveReview } from "./save-review";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -19,7 +17,7 @@ import { Arrow } from "./icons";
 import Image from "next/image";
 import { api, useSession } from "./session";
 import { useReportAction } from "./action-bar";
-import { ScoreCard, ReviewResults } from "./review-results";
+import { ReviewResults } from "./review-results";
 import type { ReviewResult } from "@/lib/pipeline";
 import {
   type Framework,
@@ -78,22 +76,67 @@ function EmailInvitation({
       live = false;
     };
   }, []);
+  useEffect(() => {
+    if (
+      !enabled ||
+      sessionLoading ||
+      !user?.emailVerified ||
+      user.anonymous ||
+      !user.email ||
+      full
+    )
+      return;
+    let active = true;
+    api("/api/save", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ reviewId: id, email: user.email }),
+    })
+      .then((saved) => {
+        if (active && saved.verified) {
+          setReusedVerification(true);
+          window.dispatchEvent(new Event("mid-review-refresh"));
+        }
+      })
+      .catch(() => {
+        if (active)
+          setError(
+            "We couldn’t connect your verified address. Please try again.",
+          );
+      });
+    return () => {
+      active = false;
+    };
+  }, [
+    enabled,
+    sessionLoading,
+    user?.emailVerified,
+    user?.anonymous,
+    user?.email,
+    full,
+    id,
+  ]);
+  if (
+    user?.emailVerified &&
+    ((user?.emailVerified && !user.anonymous) || reusedVerification)
+  )
+    return null;
   return (
     <section className="review-email" id="email-delivery">
       <div>
         <h2>
-          {full || reusedVerification
+          {(user?.emailVerified && !user.anonymous) || reusedVerification
             ? "Email confirmed."
-            : "Your full report, emailed."}
+            : "Your digital report link."}
         </h2>
         <p>
-          {full || reusedVerification
-            ? "We’ll send your complete report as soon as it’s ready. You can continue exploring or leave this page."
-            : "Confirm your email. We’ll send your full report when it’s ready. You can close this page and get on with your day."}
+          {(user?.emailVerified && !user.anonymous) || reusedVerification
+            ? "We’ll email a private link to your digital report. You can continue exploring or leave this page."
+            : "Confirm your email. We’ll send a private link when your digital report is ready. You can close this page and get on with your day."}
         </p>
       </div>
       <div>
-        {full || reusedVerification ? (
+        {(user?.emailVerified && !user.anonymous) || reusedVerification ? (
           <div role="status">
             <p>
               {user?.email
@@ -102,15 +145,15 @@ function EmailInvitation({
             </p>
             {delivery?.state === "accepted" ? (
               <p>
-                The email service has accepted your full report for delivery.
+                The email service has accepted your report link for delivery.
                 Check your inbox or spam folder.
               </p>
             ) : delivery?.state === "failed" ? (
               <>
                 <p>
                   We’re sorry — your report is ready, but email delivery could
-                  not be completed. You can download it from your results or
-                  retry delivery.
+                  not be completed. You can open it in My Reports or retry
+                  delivery.
                 </p>
                 <button
                   className="button primary"
@@ -140,8 +183,8 @@ function EmailInvitation({
               </>
             ) : (
               <p>
-                We’ll email your complete report as soon as it’s ready. You can
-                leave this page.
+                We’ll email a link to your digital report as soon as it’s ready.
+                You can leave this page.
               </p>
             )}
           </div>
@@ -149,7 +192,7 @@ function EmailInvitation({
           <div role="status">
             <p>
               Check your inbox and confirm your address. Once confirmed, you can
-              leave — we’ll send your report when it’s ready.
+              leave — we’ll send your report link when it’s ready.
             </p>
             <button className="subtle-button" onClick={() => setSent(false)}>
               Resend verification email
@@ -157,6 +200,13 @@ function EmailInvitation({
           </div>
         ) : sessionLoading ? (
           <p role="status">Checking your account…</p>
+        ) : user?.emailVerified && !user.anonymous ? (
+          <p role="status">
+            {error ||
+              (enabled === false
+                ? "Email delivery is currently unavailable. Your report remains available in My Reports."
+                : "Connecting your verified email to this report…")}
+          </p>
         ) : enabled ? (
           <form
             onSubmit={async (e) => {
@@ -254,6 +304,7 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
     setAction({
       id: r.id,
       learning: !!framework && !results,
+      publication: !!framework && nextAfterResults,
       status: r.status,
       stage: r.stage,
       contextTitle:
@@ -498,7 +549,7 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
         (results ? " review-result-page" : " immersive-review")
       }
     >
-      {results && (
+      {results && !complete && (
         <div className="immersive-meta">
           <Link className="review-back" href="/">
             ← Back to My Impact Director
@@ -507,7 +558,7 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
             <Image
               src={
                 framework === "report"
-                  ? "/brand/the-impact-edit-symbol.svg"
+                  ? "/brand/impact-design-review-transparent.png"
                   : frameworkLogos[framework]
               }
               alt={names[framework]}
@@ -576,77 +627,14 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
       <div id="review-results" className="review-stage">
         {complete && results && r.result ? (
           <>
-            <h2 className="snapshot-heading">
-              {framework === "claims"
-                ? "Your claims. Under the microscope."
-                : framework === "report"
-                  ? "Does your impact report make an impact?"
-                  : "Beyond reporting. Towards better impact management."}
-            </h2>
-            {framework === "report" && !isRevisedReport(r.result.version) && (
-              <CreativeCaveat version={r.result.version} />
-            )}
-            {framework === "report" && isRevisedReport(r.result.version) ? (
-              <ImpactVerdict result={r.result} />
-            ) : (
-              <ScoreCard
-                framework={framework}
-                score={r.result.scores[framework]!}
-                version={r.result.version}
-                rating={framework === "report" ? r.result.rating : undefined}
-              />
-            )}
-            <section className="snapshot-copy">
-              <h2>
-                {framework === "report"
-                  ? "What works. What needs attention."
-                  : "The headline snapshot"}
-              </h2>
-              {framework !== "report" && <p>{r.result.actions.summary}</p>}
-              <div className="strength-grid">
-                <div>
-                  <h3>Main strengths</h3>
-                  <ul>
-                    {r.result.actions.strengths.slice(0, 3).map((s) => (
-                      <li key={s}>{s}</li>
-                    ))}
-                  </ul>
-                </div>
-                <div>
-                  <h3>Important gaps & concerns</h3>
-                  <ul>
-                    {r.result.actions.opportunities.slice(0, 3).map((s) => (
-                      <li key={s}>{s}</li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-              {!(
-                framework === "report" && isRevisedReport(r.result.version)
-              ) && (
-                <>
-                  <h3>Three priorities</h3>
-                  {r.result.actions.actions.slice(0, 3).map((a) => (
-                    <article key={a.title}>
-                      <h4>{a.title}</h4>
-                      <p>{a.detail}</p>
-                    </article>
-                  ))}
-                </>
-              )}
-              <p>
-                Indicative automated document review, not independent assurance.
-                {framework === "excellence" && (
-                  <>
-                    {" "}
-                    This is not a full organisational maturity assessment.{" "}
-                    <a href="https://socialimpactexcellence.org">
-                      Explore the full assessment <Arrow diagonal />
-                    </a>
-                  </>
-                )}
-              </p>
-            </section>
+            <ReportPublication
+              framework={framework}
+              result={r.result}
+              hasDetails={r.full}
+              canShare={r.full && !!accountUser?.emailVerified}
+              id={r.id}
+            />
+            <ContextualOffers framework={framework} reviewId={r.id} />
             {framework === "report" && r.result.version !== REPORT_VERSION && (
               <div className="notice">
                 <p>
@@ -679,8 +667,8 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
                         <Link
                           href={`/reviews/${s.id}${s.status === "complete" ? "?results=1" : ""}`}
                         >
-                          The Impact Edit · {s.version || "original version"} ·{" "}
-                          {s.status}
+                          The Impact Design Review ·{" "}
+                          {s.version || "original version"} · {s.status}
                         </Link>
                       </p>
                     ))}
@@ -688,18 +676,16 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
               )}
             {r.full && (
               <>
-                <a
-                  className="button primary"
-                  href={`/api/reviews/${r.id}/export`}
+                <details
+                  className="full-review-details"
+                  id="supporting-evidence"
                 >
-                  Download my full {names[framework]} report
-                </a>
-                <details className="full-review-details">
                   <summary>
                     Explore the complete criterion-level assessment
                   </summary>
-                  <ReviewResults id={r.id} result={r.result} />
+                  <ReviewResults id={r.id} result={r.result} appendix />
                 </details>
+                {accountUser?.emailVerified && <SharePublication id={r.id} />}
               </>
             )}
             <button className="subtle-button" onClick={() => setResults(false)}>
@@ -729,34 +715,8 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
           />
         )}
       </div>
-      {results && (
+      {results && !accountLoading && (
         <EmailInvitation id={r.id} full={r.full} delivery={r.delivery} />
-      )}
-      {complete &&
-        results &&
-        FRAMEWORKS.filter((f) => f !== framework).map((other) => (
-          <section className="next-review" key={other}>
-            <p className="eyebrow">SAME DOCUMENT. ANOTHER PERSPECTIVE.</p>
-            <h3>{names[other]}</h3>
-            <p>
-              {other === "report"
-                ? "How effectively does your report communicate its impact?"
-                : other === "claims"
-                  ? "Can we trust what the report claims?"
-                  : "What does the report demonstrate about managing impact?"}
-            </p>
-            <button
-              className="button primary"
-              disabled={busy || accountLoading}
-              onClick={() => choose(other)}
-            >
-              {choiceLabel(other)}
-            </button>
-            {error && <p role="alert">{error}</p>}
-          </section>
-        ))}
-      {complete && results && (
-        <ContextualOffers framework={framework} reviewId={r.id} />
       )}
       {complete && results && !accountLoading && accountUser && (
         <ContributionPanel key={`${r.id}:${accountUser.id}`} reviewId={r.id} />

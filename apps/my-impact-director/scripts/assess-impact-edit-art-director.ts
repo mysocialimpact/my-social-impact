@@ -12,7 +12,7 @@ import {
 } from "../src/lib/art-director";
 import { buildArtResult } from "../src/lib/art-result";
 import { modelRates } from "../src/lib/ai";
-import { exportPdf } from "../src/lib/export";
+import { exportPdf } from "../src/lib/archive/export";
 const args = process.argv.slice(2),
   run = args.includes("--allow-paid"),
   budget = Number(

@@ -1,3 +1,4 @@
+import { pillarSummary, type PillarSummary } from "./pillar-summary";
 import {
   REPORT_VERSION,
   isReportV2,
@@ -86,6 +87,18 @@ export const findingsSchema = z
   .strict();
 export const actionSchema = z
   .object({
+    pillarSummaries: z
+      .array(
+        z
+          .object({
+            pillar: z.string(),
+            text: z.string().min(30).max(500),
+            criterionIds: z.array(z.string()).min(1).max(5),
+          })
+          .strict(),
+      )
+      .max(5)
+      .optional(),
     summary: text,
     strengths: z.array(text).min(1).max(5),
     opportunities: z.array(text).min(1).max(5),
@@ -228,6 +241,7 @@ export function scoreFramework(
         ? reportWeightsFor(version)[i]
         : 20;
     return {
+      ...({ summary: pillarSummary(tests) } as { summary?: PillarSummary }),
       maximum,
       name: expected[i * testsPerPillar(framework)].principle,
       score: assessable.length
@@ -245,23 +259,24 @@ export function scoreFramework(
   const provisional =
     coverage < thresholds.minimumTotal ||
     principles.some((p) => p.coverage < thresholds.minimumPerPrinciple);
+  // Preserve the methodology total before its existing two-decimal storage rounding.
+  const unroundedOverall = provisional
+    ? null
+    : framework === "report" && isReportV2(version)
+      ? principles.reduce(
+          (total, p) =>
+            total +
+            (p.maximum * p.tests.reduce((sum, t) => sum + (t.score ?? 0), 0)) /
+              (4 * p.coverage),
+          0,
+        )
+      : principles.reduce((total, p) => total + p.score!, 0);
   return {
-    overall: provisional
-      ? null
-      : Math.round(
-          (framework === "report" && isReportV2(version)
-            ? principles.reduce(
-                (n, p) =>
-                  n +
-                  (p.maximum *
-                    p.tests
-                      .filter((f) => f.score !== null)
-                      .reduce((a, f) => a + f.score!, 0)) /
-                    (4 * p.coverage),
-                0,
-              )
-            : principles.reduce((n, p) => n + p.score!, 0)) * 100,
-        ) / 100,
+    ...(unroundedOverall === null ? {} : { unroundedOverall }),
+    overall:
+      unroundedOverall === null
+        ? null
+        : Math.round(unroundedOverall * 100) / 100,
     provisional,
     coverage,
     principles,

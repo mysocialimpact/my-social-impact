@@ -9,26 +9,26 @@ import {
   reportV2Anchors,
 } from "@/lib/report-methodology";
 export const metadata = {
-  title: "The Impact Edit Methodology v2.0 — revised beta",
+  title: "The Impact Design Review Methodology v2.0 — revised beta",
 };
 export default function Methodology() {
   return (
     <section className="section content-prose">
       <p className="eyebrow">MY SOCIAL IMPACT · METHODOLOGY {REPORT_VERSION}</p>
-      <h1>The Impact Edit Methodology v2.0 — revised beta</h1>
+      <h1>The Impact Design Review Methodology v2.0 — revised beta</h1>
       <p className="methodology-question">
         Does your impact report make an impact?
       </p>
       <CreativeCaveat />
       <aside className="notice">
-        <strong>Overall numeric scoring is under calibration.</strong>
+        <strong>Indicative creative scoring.</strong>
         <p>
           The new visual art-director engine has been compared on real reports
           and controlled examples, but has not been independently calibrated by
           human publication designers. We publish the beta evidence and
           recommendations, with experimental criterion and pillar estimates,
-          while withholding an overall number. Independent editorial calibration
-          is still needed.
+          with an overall number when coverage, inspection and consistency
+          checks pass. Independent editorial calibration is still needed.
         </p>
       </aside>
       <p>

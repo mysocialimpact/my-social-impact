@@ -13,6 +13,7 @@ import {
 import { usePathname } from "next/navigation";
 type ReportAction = {
   learning?: boolean;
+  publication?: boolean;
   primaryLabel?: string;
   processingLabel?: string;
   contextTitle?: string;
@@ -35,6 +36,10 @@ export function ActionShell({ children }: { children: React.ReactNode }) {
   const inReview = !!review;
   const learning =
     !!review && report?.id === review[1] && report.learning === true;
+  const showBar =
+    inReview &&
+    !learning &&
+    !(report?.id === review?.[1] && report?.publication);
   useEffect(() => {
     const el = bar.current;
     if (!el) {
@@ -53,7 +58,7 @@ export function ActionShell({ children }: { children: React.ReactNode }) {
       observer.disconnect();
       document.documentElement.style.removeProperty("--action-height");
     };
-  }, [inReview, learning]);
+  }, [showBar]);
   const active =
     (review && report?.id === review[1]) ||
     (path === "/reviews" && report?.id === "workspace")
@@ -94,7 +99,7 @@ export function ActionShell({ children }: { children: React.ReactNode }) {
   return (
     <ReportContext.Provider value={setReport}>
       {children}
-      {inReview && !learning && (
+      {showBar && (
         <aside
           ref={bar}
           className="permanent-actions"
@@ -117,7 +122,7 @@ export function ActionShell({ children }: { children: React.ReactNode }) {
             ) : complete ? (
               <>
                 <strong>Your review. Your next step.</strong>
-                <span>Download it. Keep it. Put it to work.</span>
+                <span>Open your findings and choose what to do next.</span>
               </>
             ) : active ? (
               <>

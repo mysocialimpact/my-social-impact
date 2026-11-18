@@ -1,3 +1,5 @@
+import { pillarSummary, validPillarSummary } from "@/lib/pillar-summary";
+import { reportTotal } from "@/lib/report-total";
 import { sendPendingReports } from "@/lib/report-delivery";
 import { emailEnabled } from "@/lib/email-save";
 import { z } from "zod";
@@ -39,13 +41,22 @@ export async function GET(req: Request, ctx: Context) {
         const result = structuredClone(
           safe.result,
         ) as import("@/lib/pipeline").ReviewResult;
+        if (result.framework === "report")
+          result.displayOverall = reportTotal(result);
         for (const score of Object.values(result.scores))
-          for (const p of score!.principles) p.tests = [];
+          for (const p of score!.principles) {
+            p.summary = validPillarSummary(p.summary)
+              ? p.summary
+              : pillarSummary(p.tests);
+            p.tests = [];
+          }
         result.claims = [];
         delete result.creativeDirection;
         delete result.pdfChecks;
         delete result.qualityControl;
         delete result.readerInspection;
+        result.visualFirstImpression =
+          result.artDirector?.review.firstImpression;
         delete result.artDirector;
         if (result.visualInspection) result.visualInspection.observations = [];
         result.actions.actions = result.actions.actions.slice(0, 3);

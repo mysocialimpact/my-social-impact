@@ -71,13 +71,13 @@ export default function Methodology() {
         className="methodology-family impact-edit-feature content-prose"
       >
         <Image
-          src="/brand/the-impact-edit-horizontal.svg"
+          src="/brand/impact-design-review-transparent.png"
           width={500}
           height={120}
-          alt="The Impact Edit"
+          alt="The Impact Design Review"
         />
         <p className="eyebrow">Does your impact report make an impact?</p>
-        <h2>The Impact Edit.</h2>
+        <h2>The Impact Design Review.</h2>
         <p>
           Readability & Copy. Information Hierarchy. Visual Design.
           Storytelling. Data Presentation. Twenty-five criteria examine how
@@ -89,7 +89,7 @@ export default function Methodology() {
           className="text-link"
           href="/methodology/impact-report-excellence"
         >
-          Read The Impact Edit Methodology v2.0 — beta →
+          Read The Impact Design Review Methodology v2.0 — beta →
         </Link>
       </section>
       <section id="scoring" className="methodology-family content-prose">
@@ -97,7 +97,7 @@ export default function Methodology() {
         <p>
           Each of the five pillars contributes up to 20 points. The Claims Code
           and Social Impact Excellence each have four tests per pillar. The
-          Impact Edit has five.
+          Impact Design Review has five.
         </p>
         <table className="rubric-table">
           <thead>
@@ -123,12 +123,12 @@ export default function Methodology() {
           three assessable tests per pillar and sixteen overall.
         </p>
         <p>
-          The Impact Edit adds its five fully assessable criterion scores
-          directly to give each pillar’s score out of twenty. With exclusions it
-          normalises the remaining scores to twenty. An overall indicative
-          creative score requires at least four assessable criteria per pillar,
-          twenty-two overall and actual visual inspection. Otherwise the review
-          is provisional.
+          The Impact Design Review adds its five fully assessable criterion
+          scores directly to give each pillar’s score out of twenty. With
+          exclusions it normalises the remaining scores to twenty. An overall
+          indicative creative score requires at least four assessable criteria
+          per pillar, twenty-two overall and actual visual inspection. Otherwise
+          the review is provisional.
         </p>
         <h3>Missing is not the same as inapplicable.</h3>
         <ul>

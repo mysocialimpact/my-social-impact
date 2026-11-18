@@ -1,21 +1,21 @@
 import {
   REPORT_SCORING as LEGACY_REPORT_SCORING,
   reportV2Anchors as legacyAnchors,
-} from "./report-methodology-2-0-0";
+} from "../report-methodology-2-0-0";
 import {
   isReportV2,
   isRevisedReport,
   pillarMaximum,
   REPORT_SCORING,
   reportV2Anchors,
-} from "./report-methodology";
-import { EDIT_ATTRIBUTION, editCaveat } from "./branding";
+} from "../report-methodology";
+import { EDIT_ATTRIBUTION, editCaveat } from "../branding";
 import { PDFDocument, rgb, type PDFFont } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
-import type { ReviewResult } from "./pipeline";
-import { criteria, frameworkNames, ANCHORS, type Framework } from "./rubric";
+import type { ReviewResult } from "../pipeline";
+import { criteria, frameworkNames, ANCHORS, type Framework } from "../rubric";
 export async function exportPdf(result: ReviewResult) {
   const sourceIndex = new Map<string, string>();
   const sources: { id: string; page: number; quote: string }[] = [];

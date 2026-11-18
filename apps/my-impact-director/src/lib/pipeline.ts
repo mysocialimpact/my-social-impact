@@ -1,3 +1,4 @@
+import { suppliedPillarSummary } from "./pillar-summary";
 import { buildArtResult } from "./art-result";
 import { inspectReader, type ReaderInspection } from "./report-reader";
 import {
@@ -89,16 +90,16 @@ export const STAGES = [
   "Validating findings and preparing your action plan",
   "Review complete",
   "Inspecting rendered page images",
-  "The Impact Edit · Readability and hierarchy",
-  "The Impact Edit · Storytelling",
-  "The Impact Edit · Visual design",
-  "The Impact Edit · Data communication",
-  "The Impact Edit · Accessibility",
-  "The Impact Edit · Whole-document reading exercise",
-  "The Impact Edit · Checking criterion judgements",
-  "The Impact Edit · Applying the five-pillar methodology",
-  "The Impact Edit · Art director consistency review",
-  "The Impact Edit · Saving your editorial review",
+  "The Impact Design Review · Readability and hierarchy",
+  "The Impact Design Review · Storytelling",
+  "The Impact Design Review · Visual design",
+  "The Impact Design Review · Data communication",
+  "The Impact Design Review · Accessibility",
+  "The Impact Design Review · Whole-document reading exercise",
+  "The Impact Design Review · Checking criterion judgements",
+  "The Impact Design Review · Applying the five-pillar methodology",
+  "The Impact Design Review · Art director consistency review",
+  "The Impact Design Review · Saving your editorial review",
 ];
 type Job = {
   created_at: string;
@@ -131,6 +132,8 @@ type Document = {
   extraction_notes: unknown[];
 };
 export type ReviewResult = {
+  displayOverall?: number | null;
+  visualFirstImpression?: string;
   artDirector?: ArtRecord;
   assessmentProcess?: {
     promptVersion: string;
@@ -511,6 +514,7 @@ export async function processOne(id?: string, latestArtStart?: number) {
               job.version,
             ))
         ) {
+          delete scores[framework]!.unroundedOverall;
           scores[framework]!.overall = null;
           scores[framework]!.provisional = true;
         }
@@ -567,18 +571,26 @@ export async function processOne(id?: string, latestArtStart?: number) {
             ) as VisualObservation[],
           )
         : undefined;
-      const calculatedOverall = scores.report?.overall ?? null;
+      const calculatedOverall =
+        scores.report?.unroundedOverall ?? scores.report?.overall ?? null;
       if (
         isRevisedReport(job.version) &&
         editorial?.scoreConsistency === "review_needed"
       ) {
+        delete scores.report!.unroundedOverall;
         scores.report!.overall = null;
         scores.report!.provisional = true;
       }
       if (job.framework === "report" && isRevisedReport(job.version)) {
+        delete scores.report!.unroundedOverall;
         scores.report!.overall = null;
         scores.report!.provisional = true;
       }
+      for (const score of Object.values(scores))
+        for (const p of score!.principles)
+          p.summary =
+            suppliedPillarSummary(p.name, p.tests, r.data.pillarSummaries) ??
+            p.summary;
       result = {
         ...(isRevisedReport(job.version) && job.framework === "report"
           ? {

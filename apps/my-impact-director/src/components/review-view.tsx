@@ -162,14 +162,6 @@ export function ReviewView({
         <p className="intro-copy">{review.title}</p>
       </div>
       <div className="toolbar">
-        {review.status === "complete" && (
-          <a
-            href={`/api/reviews/${id}/export`}
-            className="button primary small"
-          >
-            Download your assessment PDF ↓
-          </a>
-        )}
         <a href={`/api/reviews/${id}/source`}>
           Download original report <Arrow diagonal />
         </a>

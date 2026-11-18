@@ -64,8 +64,8 @@ try {
           await p.getByRole("button", { name: "Next →", exact: true }).click();
       }
       await p.locator(".action-primary").click();
-      await p.locator(".snapshot-heading").waitFor();
-      assert.equal(await p.locator(".score-card").count(), 1);
+      await p.locator(".pub-cover").waitFor();
+      assert.equal(await p.locator(".pub-scores h3").count(), 5);
       assert.equal(await p.locator(".finding").count(), 0);
       assert.equal(await p.locator('a[href$="/export"]').count(), 0);
       await p.screenshot({
@@ -89,7 +89,7 @@ try {
       await p.locator(".action-primary").click();
       await p.locator(".full-review-details > summary").click();
       assert.equal(await p.locator(".principle .finding").count(), 20);
-      assert.equal(await p.locator('a[href$="/export"]').count(), 1);
+      assert.equal(await p.locator('a[href$="/export"]').count(), 0);
       await c.close();
     }
 } finally {
