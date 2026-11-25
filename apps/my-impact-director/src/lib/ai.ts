@@ -50,12 +50,24 @@ export function modelRates(model: string) {
 export type AIResult<T> = { data: T; usage: Usage };
 export function aiAvailable() {
   return !!(
+    process.env.OPENAI_API_KEY ||
     process.env.AI_GATEWAY_API_KEY ||
     process.env.VERCEL_OIDC_TOKEN ||
     process.env.VERCEL
   );
 }
+function providerUrl(path: string) {
+  return (
+    (process.env.OPENAI_API_KEY
+      ? "https://api.openai.com/v1/"
+      : "https://ai-gateway.vercel.sh/v1/") + path
+  );
+}
+function providerModel(model: string) {
+  return process.env.OPENAI_API_KEY ? model.replace(/^openai\//, "") : model;
+}
 async function authorization() {
+  if (process.env.OPENAI_API_KEY) return process.env.OPENAI_API_KEY;
   if (process.env.AI_GATEWAY_API_KEY) return process.env.AI_GATEWAY_API_KEY;
   try {
     return await getVercelOidcToken();
@@ -94,38 +106,39 @@ export async function structured<T extends z.ZodType>(
       },
       { type: "image_url", image_url: { url: image.dataUrl, detail: "high" } },
     );
-  const response = await fetch(
-    "https://ai-gateway.vercel.sh/v1/chat/completions",
-    {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        authorization: `Bearer ${await authorization()}`,
-      },
-      signal: AbortSignal.timeout(160000),
-      body: JSON.stringify({
-        model,
-        store: false,
-        messages: [
-          { role: "system", content: `${SAFETY}\n${instructions}` },
-          { role: "user", content },
-        ],
-        max_completion_tokens: configuration?.maxOutputTokens || 14000,
-        reasoning_effort: configuration?.reasoningEffort || "medium",
-        response_format: {
-          type: "json_schema",
-          json_schema: {
-            name: "assessment_stage",
-            strict: true,
-            schema: jsonSchema,
-          },
-        },
-        providerOptions: {
-          gateway: { only: ["openai"], zeroDataRetention: true },
-        },
-      }),
+  const response = await fetch(providerUrl("chat/completions"), {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      authorization: `Bearer ${await authorization()}`,
     },
-  );
+    signal: AbortSignal.timeout(160000),
+    body: JSON.stringify({
+      model: providerModel(model),
+      store: false,
+      messages: [
+        { role: "system", content: `${SAFETY}\n${instructions}` },
+        { role: "user", content },
+      ],
+      max_completion_tokens: configuration?.maxOutputTokens || 14000,
+      reasoning_effort: configuration?.reasoningEffort || "medium",
+      response_format: {
+        type: "json_schema",
+        json_schema: {
+          name: "assessment_stage",
+          strict: true,
+          schema: jsonSchema,
+        },
+      },
+      ...(!process.env.OPENAI_API_KEY
+        ? {
+            providerOptions: {
+              gateway: { only: ["openai"], zeroDataRetention: true },
+            },
+          }
+        : {}),
+    }),
+  });
   if (!response.ok) {
     const error = await response.json().catch(() => ({}));
     const code = String(error.error?.code || `AI_HTTP_${response.status}`)
@@ -178,7 +191,7 @@ export async function structured<T extends z.ZodType>(
   return { data, usage };
 }
 export async function searchWeb(organisation: string) {
-  const r = await fetch("https://ai-gateway.vercel.sh/v1/responses", {
+  const r = await fetch(providerUrl("responses"), {
     method: "POST",
     headers: {
       "content-type": "application/json",
@@ -186,7 +199,7 @@ export async function searchWeb(organisation: string) {
     },
     signal: AbortSignal.timeout(100000),
     body: JSON.stringify({
-      model: process.env.AI_MODEL || "openai/gpt-5.4-mini",
+      model: providerModel(process.env.AI_MODEL || "openai/gpt-5.4-mini"),
       store: false,
       max_output_tokens: 3500,
       tools: [{ type: "web_search" }],
