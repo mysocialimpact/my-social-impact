@@ -1,5 +1,6 @@
 "use client";
 import { pillarMaximum } from "@/lib/report-methodology";
+import { AssessmentCommerceAdmin } from "./assessment-commerce-admin";
 import { AdminContributions } from "./admin-contributions";
 import { useEffect, useState } from "react";
 import { useSession, api } from "./session";
@@ -61,7 +62,11 @@ type AdminData = {
     share_review: boolean;
   }[];
 };
-export function Admin() {
+export function Admin({
+  assessmentSandbox = false,
+}: {
+  assessmentSandbox?: boolean;
+}) {
   const { user, loading, error: sessionError } = useSession(),
     [data, setData] = useState<AdminData | null>(null),
     [error, setError] = useState(""),
@@ -167,6 +172,7 @@ export function Admin() {
             ))}
           </div>
           <AdminContributions />
+          {assessmentSandbox && <AssessmentCommerceAdmin />}
           <p className="fine-print">
             Completion:{" "}
             {Number(data.metrics.reviews)

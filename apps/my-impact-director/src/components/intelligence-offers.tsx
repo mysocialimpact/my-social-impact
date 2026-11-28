@@ -1,7 +1,16 @@
 import Image from "next/image";
 import Link from "next/link";
+import {
+  assessmentPrices,
+  assessmentTierNames,
+} from "@/lib/assessment-pricing";
 import { Arrow } from "./icons";
 
+const offerPrice = new Intl.NumberFormat("en-GB", {
+  style: "currency",
+  currency: "GBP",
+  maximumFractionDigits: 0,
+}).format;
 const aiLevels = [
   {
     name: "Everyday AI",
@@ -11,15 +20,15 @@ const aiLevels = [
       "Upload one report to try all three standard assessment frameworks. Efficient AI examines the evidence and gives you practical recommendations. We cover the operating cost.",
   },
   {
-    name: "Advanced AI",
-    price: "£19",
+    name: assessmentTierNames.advanced,
+    price: offerPrice(assessmentPrices.advanced / 100),
     promise: "Explore further. Challenge more.",
     description:
       "A deeper second opinion from a more capable AI model. It looks more closely at key findings, the evidence behind them and what you could improve. Your score can move in either direction.",
   },
   {
-    name: "Ultimate AI",
-    price: "£29",
+    name: assessmentTierNames.ultimate,
+    price: offerPrice(assessmentPrices.ultimate / 100),
     promise: "Our most thorough AI assessment.",
     description:
       "A further check of consequential findings and conflicting evidence, with a clearer account of where the evidence leaves room for judgement. Only £10 more than Advanced.",
@@ -95,7 +104,7 @@ export function IntelligenceOffers({ home = false }: { home?: boolean }) {
           <div className="intelligence-human-copy">
             <div className="intelligence-tier">
               <span>Level 04</span>
-              <h3>Human Intelligence</h3>
+              <h3>{assessmentTierNames.human}</h3>
               <span className="intelligence-status">Coming soon</span>
             </div>
             <p className="intelligence-human-headline">
@@ -107,7 +116,8 @@ export function IntelligenceOffers({ home = false }: { home?: boolean }) {
               decide what matters and what you can change.
             </p>
             <p className="intelligence-price">
-              <strong>£149</strong> <span>for one framework</span>
+              <strong>{offerPrice(assessmentPrices.human / 100)}</strong>{" "}
+              <span>for one framework</span>
             </p>
             <ul>
               <li>An Ultimate AI assessment of your chosen framework</li>
