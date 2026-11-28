@@ -1,0 +1,301 @@
+.about-page {
+  --about-ink: #102d40;
+  --about-rust: #b94016;
+  --about-line: #c9cfcf;
+  background: #fff;
+  color: var(--about-ink);
+  font:
+    400 1rem/1.6 "DM Sans",
+    sans-serif;
+}
+.about-page *,
+.about-page *::before {
+  box-sizing: border-box;
+}
+.about-wrap {
+  width: min(1190px, 90%);
+  margin-inline: auto;
+}
+.about-opening {
+  display: grid;
+  grid-template-columns: 1.38fr 0.8fr;
+  align-items: end;
+  gap: clamp(2rem, 5vw, 6rem);
+  padding-block: clamp(3.2rem, 6vw, 6.2rem) clamp(2rem, 4.3vw, 4.4rem);
+}
+.about-page :is(h1, h2, h3) {
+  font-family: "Instrument Serif", Georgia, serif;
+  font-weight: 400;
+  letter-spacing: -0.045em;
+  line-height: 1.01;
+  color: inherit;
+  margin: 0;
+}
+.about-page h1 {
+  font-size: clamp(4.3rem, 7.5vw, 7.4rem);
+  max-width: 16ch;
+}
+.about-page h1 em,
+.about-contact h2 em {
+  color: var(--about-rust);
+  font-weight: 400;
+}
+.about-kicker {
+  font:
+    700 0.86rem/1.4 "DM Sans",
+    sans-serif;
+  color: var(--about-rust);
+  margin: 0 0 1.25rem;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+.about-lede p {
+  margin: 0.7rem 0 0;
+  max-width: 44ch;
+  font-size: clamp(1rem, 1.25vw, 1.16rem);
+  line-height: 1.54;
+}
+.about-lede p:first-child {
+  font-weight: 650;
+  font-size: clamp(1.12rem, 1.55vw, 1.45rem);
+  line-height: 1.35;
+}
+.founders {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(1.25rem, 3vw, 3rem);
+  padding-bottom: clamp(3rem, 6vw, 6rem);
+}
+.founder-profile {
+  min-width: 0;
+}
+.founder-photo {
+  background: #d7dcda;
+  aspect-ratio: 5/4;
+  overflow: hidden;
+}
+.founder-photo img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 32%;
+}
+.founder-profile:nth-child(2) img {
+  object-position: 50% 25%;
+}
+.founder-caption {
+  padding: clamp(1.25rem, 2.4vw, 2rem) 0 0;
+}
+.founder-caption .about-kicker {
+  margin: 0 0 0.5rem;
+}
+.founder-caption h2 {
+  font-size: clamp(2.8rem, 4vw, 4rem);
+}
+.founder-role {
+  font-weight: 650;
+  line-height: 1.4;
+  min-height: 2.8em;
+  margin: 0.7rem 0 1rem;
+}
+.founder-caption > p:not(.about-kicker) {
+  max-width: 53ch;
+}
+.about-page a:not(.button) {
+  color: var(--about-ink);
+  font-weight: 650;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.22em;
+}
+.about-page a:hover {
+  color: var(--about-rust);
+}
+.about-page :is(a, button, input, select, textarea):focus-visible {
+  outline: 3px solid #af3e13;
+  outline-offset: 3px;
+}
+.about-purpose {
+  border-top: 1px solid var(--about-line);
+  display: grid;
+  grid-template-columns: 0.82fr 1.18fr;
+  gap: 2rem;
+  padding-block: clamp(2.5rem, 5vw, 5rem);
+}
+.about-purpose h2,
+.about-together h2,
+.about-contact h2 {
+  font-size: clamp(3.1rem, 5.8vw, 5.5rem);
+}
+.about-purpose p {
+  max-width: 58ch;
+  margin: 0 0 1rem;
+  font-size: 1.08rem;
+}
+.about-together {
+  background: #112b3e;
+  color: #fff;
+}
+.about-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(2rem, 7vw, 7rem);
+  align-items: end;
+  padding-block: clamp(3.5rem, 7vw, 7rem);
+}
+.about-pair em {
+  color: #ffa27c;
+  font-weight: 400;
+}
+.about-pair p {
+  max-width: 48ch;
+  margin: 1.3rem 0 0;
+  color: #e7eff0;
+  font-size: 1.06rem;
+}
+.about-human {
+  border-top: 1px solid #80909b;
+  padding-top: 1.4rem;
+}
+.about-human h3 {
+  font-size: clamp(2.3rem, 3.6vw, 3.6rem);
+}
+.about-contact {
+  background: #fcfaf7;
+  padding-block: clamp(3.3rem, 7vw, 7rem);
+  scroll-margin-block-start: var(--workspace-height, 0px);
+}
+.about-contact-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(2rem, 6vw, 6rem);
+}
+.about-contact-grid > div > p:not(.about-kicker) {
+  max-width: 46ch;
+}
+.about-contact address {
+  display: grid;
+  gap: 1rem;
+  padding-block: 0.8rem;
+  font-style: normal;
+}
+.about-contact address strong,
+.about-contact address a {
+  display: block;
+  width: fit-content;
+}
+.about-booking {
+  color: #42596a;
+  font-size: 0.95rem;
+}
+.about-enquiry form {
+  display: grid;
+  gap: 1rem;
+}
+.about-enquiry label {
+  font-weight: 650;
+  font-size: 1rem;
+}
+.about-enquiry .form-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+.about-enquiry :is(input:not([type="checkbox"]), select, textarea) {
+  display: block;
+  width: 100%;
+  background: white;
+  border: 1px solid #81949a;
+  border-radius: 4px;
+  color: #102d40;
+  font:
+    400 1rem/1.4 "DM Sans",
+    sans-serif;
+  padding: 0.68rem 0.8rem;
+  margin-top: 0.32rem;
+}
+.about-enquiry .checkbox {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  font-size: 0.95rem;
+  font-weight: 400;
+}
+.about-enquiry input[type="checkbox"] {
+  flex: none;
+  width: 1.1rem;
+  height: 1.1rem;
+  margin: 0.2rem 0;
+}
+.about-enquiry .button {
+  width: fit-content;
+}
+.about-enquiry .success h3 {
+  font-size: 2.7rem;
+}
+@media (max-width: 800px) {
+  .about-opening {
+    grid-template-columns: 1fr;
+    gap: 1.2rem;
+  }
+  .about-lede {
+    max-width: 58ch;
+  }
+  .about-lede p {
+    max-width: 100%;
+  }
+  .founder-photo {
+    aspect-ratio: 4/5;
+  }
+  .about-purpose {
+    grid-template-columns: 1fr 1.4fr;
+  }
+  .about-enquiry .form-pair {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 650px) {
+  .about-opening {
+    padding-block: 2.6rem 2rem;
+  }
+  .about-page h1 {
+    font-size: clamp(3.45rem, 12vw, 5rem);
+  }
+  .founders,
+  .about-purpose,
+  .about-pair,
+  .about-contact-grid {
+    grid-template-columns: 1fr;
+  }
+  .founders {
+    gap: 2.5rem;
+  }
+  .founder-role {
+    min-height: 0;
+  }
+  .founder-photo {
+    aspect-ratio: 1/1.04;
+  }
+  .about-purpose {
+    gap: 1.1rem;
+  }
+  .about-contact-grid {
+    gap: 1.65rem;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  html:has(.about-page) {
+    scroll-behavior: smooth;
+  }
+}
+.about-lede .about-philosophy {
+  font-size: 0.95rem;
+  margin-top: 1.05rem;
+}
+.about-contact .copy-email button {
+  font-size: 0.92rem;
+}
+.about-contact h2 + p {
+  margin-top: 1.15rem;
+}

@@ -1,14 +1,22 @@
-import type { Metadata } from "next";
-import { contactService } from "@/lib/services";
-import { Contact } from "@/components/contact";
-export const metadata: Metadata = {
-  title: "Contact — Talk to your Impact Director",
-};
+import { permanentRedirect } from "next/navigation";
+import {
+  contactService,
+  serviceContactUrl,
+  validReviewReference,
+} from "@/lib/services";
 export default async function ContactPage({
   searchParams,
 }: {
-  searchParams: Promise<{ service?: string | string[] }>;
+  searchParams: Promise<{
+    service?: string | string[];
+    review?: string | string[];
+  }>;
 }) {
-  const { service } = await searchParams;
-  return <Contact standalone service={contactService(service)} />;
+  const { service, review } = await searchParams;
+  permanentRedirect(
+    serviceContactUrl(
+      service && service !== "general" ? contactService(service) : undefined,
+      validReviewReference(review),
+    ),
+  );
 }

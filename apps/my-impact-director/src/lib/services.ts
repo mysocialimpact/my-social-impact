@@ -182,8 +182,8 @@ const subjects: Partial<Record<Service, string>> = {
   consultancy: "Professional impact consultancy",
   "ai-readiness": "AI readiness advice",
 };
-export function serviceMailto(service: Service) {
-  return `mailto:${MARCUS_EMAIL}?subject=${encodeURIComponent("My Impact Director — " + (subjects[service] || "Ongoing support enquiry"))}`;
+export function serviceMailto(service: Service, recipient = MARCUS_EMAIL) {
+  return `mailto:${recipient}?subject=${encodeURIComponent("My Impact Director — " + (subjects[service] || "Ongoing support enquiry"))}`;
 }
 export const reportOffers = [
   {
@@ -226,8 +226,18 @@ export function contactService(value: unknown): Service {
     ? (value as Service)
     : "discussion";
 }
-export function serviceContactUrl(service: Service) {
-  return `/contact?service=${encodeURIComponent(service)}`;
+export function validReviewReference(value: unknown) {
+  return typeof value === "string" &&
+    /^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(value)
+    ? value
+    : null;
+}
+export function serviceContactUrl(service?: Service, review?: string | null) {
+  const query = new URLSearchParams();
+  if (service) query.set("service", service);
+  const reference = validReviewReference(review);
+  if (reference) query.set("review", reference);
+  return "/about" + (query.size ? "?" + query : "") + "#contact";
 }
 export function contactContext(service: Service) {
   if (service === "discussion" || service === "expert-review")

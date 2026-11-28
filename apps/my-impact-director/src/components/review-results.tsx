@@ -10,6 +10,7 @@ import Link from "next/link";
 import { CreativeCaveat } from "./creative-caveat";
 import type { ReviewResult } from "@/lib/pipeline";
 import type { Criterion, Scores } from "@/lib/assessment";
+import { disputeFinding } from "./feedback";
 import { criteria, frameworkNames, type Framework } from "@/lib/rubric";
 import { Arrow } from "./icons";
 export function ScoreCard({
@@ -206,6 +207,15 @@ function Finding({
         )}
         <h4>A practical improvement</h4>
         <p>{f.improvement}</p>
+        {!admin && (
+          <button
+            type="button"
+            className="dispute-link"
+            onClick={() => disputeFinding("criterion-" + f.id)}
+          >
+            Question this finding
+          </button>
+        )}
         {f.claimIds.length > 0 && (
           <small>Related material claims: {f.claimIds.join(", ")}</small>
         )}

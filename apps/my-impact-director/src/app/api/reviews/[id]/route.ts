@@ -65,6 +65,18 @@ export async function GET(req: Request, ctx: Context) {
         safe.result = result;
       }
     }
+    const assessmentModels =
+      r.status === "complete" &&
+      r.result &&
+      r.framework &&
+      r.framework !== "document"
+        ? (
+            await query<{ model: string }>(
+              "SELECT DISTINCT model FROM director.processing_events WHERE review_id=$1 AND status='complete' AND model IS NOT NULL ORDER BY model",
+              [r.id],
+            )
+          ).map(({ model }) => model)
+        : [];
     const [ingestion] = r.framework
       ? await query(
           "SELECT id,status,error_message FROM director.reviews WHERE report_id=$1 AND framework='document'",
@@ -82,6 +94,7 @@ export async function GET(req: Request, ctx: Context) {
         ...safe,
         full,
         siblings,
+        assessmentModels,
         ingestion,
         delivery,
         emailEnabled: emailEnabled(),

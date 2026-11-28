@@ -54,7 +54,7 @@ test("contact context accepts only known services and never includes private rep
   assert.equal(contactService("improvement"), "improvement");
   assert.equal(
     serviceContactUrl("improvement"),
-    "/contact?service=improvement",
+    "/about?service=improvement#contact",
   );
   assert.equal(contactContext("improvement"), "Improve or digitise my report");
   assert.match(

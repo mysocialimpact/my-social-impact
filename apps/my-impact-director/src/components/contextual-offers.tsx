@@ -8,9 +8,11 @@ import type { Framework } from "@/lib/rubric";
 export function ContextualOffers({
   framework,
   reviewId,
+  showPortrait = true,
 }: {
   framework: Framework;
   reviewId?: string;
+  showPortrait?: boolean;
 }) {
   const { user } = useSession();
   const link = {
@@ -20,20 +22,24 @@ export function ContextualOffers({
   };
   return (
     <section className="pub-human contextual-offers" id="professional-support">
-      <div className="pub-person">
-        <img src="/brand/marcus-warry.jpg" alt="Marcus Warry ACA" />
-        <div>
-          <h2>{identity[framework].headline}</h2>
-          <p className="pub-invite">{identity[framework].invitation}</p>
-          <strong>Marcus Warry ACA</strong>
-          <p>
-            Co-founder, My Social Impact
-            <br />
-            Chartered Accountant · Social Impact Consultant
-          </p>
-          <a href={serviceMailto("discussion")}>{MARCUS_EMAIL}</a>
+      {showPortrait ? (
+        <div className="pub-person">
+          <img src="/brand/marcus-warry.jpg" alt="Marcus Warry ACA" />
+          <div>
+            <h2>{identity[framework].headline}</h2>
+            <p className="pub-invite">{identity[framework].invitation}</p>
+            <strong>Marcus Warry ACA</strong>
+            <p>
+              Co-founder, My Social Impact
+              <br />
+              Chartered Accountant · Social Impact Consultant
+            </p>
+            <a href={serviceMailto("discussion")}>{MARCUS_EMAIL}</a>
+          </div>
         </div>
-      </div>
+      ) : (
+        <h2>Expert help available now.</h2>
+      )}
       <div className="pub-offers">
         {reportOffers.map((o) => (
           <article key={o.service}>

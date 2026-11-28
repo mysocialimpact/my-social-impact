@@ -46,7 +46,7 @@ export function ServiceContact({
           (destination ?? (source === "contact" ? "email" : "contact")) ===
           "email"
             ? serviceMailto(service)
-            : serviceContactUrl(service)
+            : serviceContactUrl(service, linkReview ? reviewId : undefined)
         }
         onClick={() => {
           // Contact navigation is immediate. Tracking never blocks it or claims an enquiry was sent.
@@ -88,7 +88,7 @@ export function CopyMarcusEmail() {
           }
         }}
       >
-        Copy email address
+        Copy Marcus’s email address
       </button>
       <span role="status">{message}</span>
     </div>

@@ -2,6 +2,9 @@
 import { useEffect, useState } from "react";
 import type { ReviewResult } from "@/lib/pipeline";
 import { ReportPublication } from "./report-publication";
+import { ReviewMethodology } from "./report-intelligence";
+import { IntelligenceOffers } from "./intelligence-offers";
+import { REPORT_VERSION } from "@/lib/report-methodology";
 import { ReviewResults } from "./review-results";
 import { ContextualOffers } from "./contextual-offers";
 export function SharedPublication() {
@@ -92,11 +95,16 @@ export function SharedPublication() {
         id=""
         hasDetails
       />
-      <ContextualOffers framework={report.framework} />
       <details className="full-review-details" id="supporting-evidence">
         <summary>Explore the complete criterion-level assessment</summary>
         <ReviewResults id="" result={report} appendix />
       </details>
+      <ReviewMethodology
+        framework={report.framework}
+        legacyDesign={report.version !== REPORT_VERSION}
+      />
+      <IntelligenceOffers />
+      <ContextualOffers showPortrait={false} framework={report.framework} />
     </div>
   );
 }
