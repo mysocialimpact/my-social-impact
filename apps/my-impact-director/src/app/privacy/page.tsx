@@ -150,11 +150,18 @@ export default function Privacy() {
         </p>
         <h2>Feedback</h2>
         <p>
-          Optional feedback is stored in the founder inbox with your rating,
-          comment and the page path. You do not need to provide a name or email.
-          Feedback does not share your assessment findings or grant access to
-          your private report. Please leave out personal or confidential
-          information.
+          Feedback is private. We store your rating or comment, the page, and
+          the time of submission. On an authorised report we may also record the
+          review reference, framework, methodology, model and the finding you
+          question. Feedback gives no additional access to the report. Please
+          leave out personal or confidential details.
+        </p>
+        <p>
+          We may send the comment and limited context to OpenAI to identify
+          themes and draft a reply. A person reviews and approves replies. If
+          you give permission, we use your email through our email delivery
+          service to respond to this feedback. It is kept separate from
+          marketing.
         </p>
         <h2>Enquiries and your choices</h2>
         <p>

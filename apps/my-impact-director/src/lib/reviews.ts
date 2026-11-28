@@ -183,10 +183,30 @@ export async function listReviews(user: Identity) {
     [user.accessIds || [user.id]],
   );
 }
+const reviewAccessPredicate = `WHERE v.id=$1 AND (r.owner_id=ANY($2::text[]) OR EXISTS(SELECT 1 FROM director.review_grants g WHERE (g.review_id=v.id OR (v.framework IS NOT NULL AND EXISTS(SELECT 1 FROM director.reviews gv WHERE gv.id=g.review_id AND gv.report_id=v.report_id))) AND g.owner_id=ANY($2::text[]))) AND r.expires_at>now()`;
+export async function feedbackReviewContext(user: Identity, id: string) {
+  const [row] = await query<{
+    id: string;
+    framework: string | null;
+    version: string;
+    models: string | null;
+  }>(
+    `SELECT v.id,v.framework,coalesce(v.result->>'version',v.version) AS version,
+    (SELECT string_agg(DISTINCT model,', ') FROM director.processing_events WHERE review_id=v.id AND status='complete') AS models
+    FROM director.reviews v JOIN director.reports r ON r.id=v.report_id ${reviewAccessPredicate}`,
+    [id, user.accessIds || [user.id]],
+  );
+  if (!row)
+    throw new AppError(
+      404,
+      "This review has expired or is unavailable in this browser.",
+    );
+  return row;
+}
 export async function getReview(user: Identity, id: string) {
   idSchema.parse(id);
   const [row] = await query(
-    `SELECT v.*,r.title,r.organisation,r.reporting_period,r.source_url,r.expires_at,r.pages,r.extraction_notes,r.quality_consent,r.understanding_ready,true AS can_delete FROM director.reviews v JOIN director.reports r ON r.id=v.report_id WHERE v.id=$1 AND (r.owner_id=ANY($2::text[]) OR EXISTS(SELECT 1 FROM director.review_grants g WHERE (g.review_id=v.id OR (v.framework IS NOT NULL AND EXISTS(SELECT 1 FROM director.reviews gv WHERE gv.id=g.review_id AND gv.report_id=v.report_id))) AND g.owner_id=ANY($2::text[]))) AND r.expires_at>now()`,
+    `SELECT v.*,r.title,r.organisation,r.reporting_period,r.source_url,r.expires_at,r.pages,r.extraction_notes,r.quality_consent,r.understanding_ready,true AS can_delete FROM director.reviews v JOIN director.reports r ON r.id=v.report_id ${reviewAccessPredicate}`,
     [id, user.accessIds || [user.id]],
   );
   if (!row)

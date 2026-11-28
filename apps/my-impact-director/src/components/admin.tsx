@@ -1,5 +1,6 @@
 "use client";
 import { pillarMaximum } from "@/lib/report-methodology";
+import { AdminFeedback } from "./admin-feedback";
 import { AssessmentCommerceAdmin } from "./assessment-commerce-admin";
 import { AdminContributions } from "./admin-contributions";
 import { useEffect, useState } from "react";
@@ -136,7 +137,6 @@ export function Admin({
               {value.name}
             </option>
           ))}
-          <option value="feedback">Product feedback</option>
         </select>
         <button className="button secondary small" onClick={refresh}>
           Search & refresh
@@ -171,6 +171,7 @@ export function Admin({
               </div>
             ))}
           </div>
+          <AdminFeedback />
           <AdminContributions />
           {assessmentSandbox && <AssessmentCommerceAdmin />}
           <p className="fine-print">
@@ -473,7 +474,7 @@ export function Admin({
             ))}
           </section>
           <section className="result-section">
-            <h2>Enquiries & product feedback</h2>
+            <h2>Enquiries</h2>
             <div className="table-scroll">
               <table className="admin-table">
                 <thead>

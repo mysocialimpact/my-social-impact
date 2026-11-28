@@ -22,7 +22,7 @@ export async function GET(req: Request) {
       [status, "%" + q + "%"],
     );
     const enquiries = await query(
-      `SELECT e.*,COALESCE(e.contact_name,u.name) AS name,COALESCE(e.contact_email,u.email) AS email FROM director.enquiries e JOIN director.users u ON u.id=e.owner_id WHERE (e.message ILIKE $1 OR COALESCE(e.contact_email,u.email) ILIKE $1 OR COALESCE(e.contact_name,u.name) ILIKE $1) AND ($2='' OR e.service=$2 OR ($2='ongoing' AND e.service IN ('human-director','essentials','supported','director','bespoke'))) ORDER BY e.created_at DESC LIMIT 100`,
+      `SELECT e.*,COALESCE(e.contact_name,u.name) AS name,COALESCE(e.contact_email,u.email) AS email FROM director.enquiries e JOIN director.users u ON u.id=e.owner_id WHERE e.service<>'feedback' AND (e.message ILIKE $1 OR COALESCE(e.contact_email,u.email) ILIKE $1 OR COALESCE(e.contact_name,u.name) ILIKE $1) AND ($2='' OR e.service=$2 OR ($2='ongoing' AND e.service IN ('human-director','essentials','supported','director','bespoke'))) ORDER BY e.created_at DESC LIMIT 100`,
       ["%" + q + "%", service],
     );
     const intents = await query(
