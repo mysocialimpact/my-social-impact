@@ -28,7 +28,7 @@ export async function GET(req: Request) {
       .min(0)
       .max(10000000)
       .parse(p.get("offset") || 0);
-    const [[metrics], items, trend, pages, frameworks, themes] =
+    const [[metrics], items, trend, pages, frameworks, themes, [capability]] =
       await Promise.all([
         query("SELECT " + summary + source + where, values),
         query(
@@ -61,9 +61,12 @@ export async function GET(req: Request) {
             " GROUP BY 1,2 ORDER BY count(*) DESC,1 LIMIT 15",
           values,
         ),
+        query(
+          "SELECT resource_id AS model,reason AS status,created_at AS checked FROM director.audit WHERE action='feedback-model-directory' ORDER BY created_at DESC LIMIT 1",
+        ),
       ]);
     return Response.json(
-      { metrics, items, trend, pages, frameworks, themes },
+      { metrics, items, trend, pages, frameworks, themes, capability },
       { headers: { "cache-control": "private,no-store" } },
     );
   } catch (e) {

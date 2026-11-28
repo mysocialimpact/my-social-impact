@@ -44,26 +44,85 @@ const reserve = cost(12000, 0, maxOutput);
 export function budgetAllows(used: number, limit: number) {
   return Number.isFinite(limit) && used + reserve <= limit;
 }
+export async function feedbackModelStatus() {
+  if (!aiAvailable()) return "Project key unavailable";
+  try {
+    const headers = openAIHeaders();
+    const directory = await fetch(
+      "https://api.openai.com/v1/models/" + feedbackModel,
+      { headers, cache: "no-store", signal: AbortSignal.timeout(8000) },
+    );
+    if (directory.ok)
+      return (await directory.json()).id === feedbackModel
+        ? "Verified in project directory"
+        : "Unexpected model identifier";
+    // Restricted inference keys may lack directory-read permission. Check the exact model on the Responses token-count endpoint without generating output.
+    if (directory.status === 401 || directory.status === 403) {
+      const count = await fetch(
+        "https://api.openai.com/v1/responses/input_tokens",
+        {
+          method: "POST",
+          headers,
+          signal: AbortSignal.timeout(8000),
+          body: JSON.stringify({
+            model: feedbackModel,
+            input: "Feedback",
+            reasoning: { effort: "high" },
+          }),
+        },
+      );
+      if (count.ok) {
+        const result = await count.json();
+        if (
+          result.object === "response.input_tokens" &&
+          Number.isInteger(result.input_tokens)
+        )
+          return "Exact model accepted for input counting";
+      }
+      return (
+        "Directory HTTP " +
+        directory.status +
+        " / input count HTTP " +
+        count.status
+      );
+    }
+    const code = (await directory.json().catch(() => null))?.error?.code;
+    return (
+      "Directory HTTP " +
+      directory.status +
+      (typeof code === "string" && /^[a-z0-9_]{1,50}$/.test(code)
+        ? " (" + code + ")"
+        : "")
+    );
+  } catch {
+    return "Model check temporarily unreachable";
+  }
+}
+function modelConfirmed(status: string) {
+  return (
+    status === "Verified in project directory" ||
+    status === "Exact model accepted for input counting"
+  );
+}
 export async function verifyFeedbackModel() {
-  if (!aiAvailable()) return false;
-  const r = await fetch("https://api.openai.com/v1/models/" + feedbackModel, {
-    headers: openAIHeaders(),
-    cache: "no-store",
-    signal: AbortSignal.timeout(8000),
-  });
-  return r.ok && (await r.json()).id === feedbackModel;
+  return modelConfirmed(await feedbackModelStatus());
 }
 // The deployment records a free model-directory check even before the first written submission.
 export async function recordFeedbackCapability() {
   const [claimed] =
-    await query(`INSERT INTO director.rate_limits(key,count,reset_at) VALUES('feedback-model-directory',0,now()+interval '6 hours')
+    await query(`INSERT INTO director.rate_limits(key,count,reset_at) VALUES('feedback-model-capability',0,now()+interval '6 hours')
     ON CONFLICT(key) DO UPDATE SET reset_at=excluded.reset_at WHERE director.rate_limits.reset_at<=now() RETURNING key`);
   if (!claimed) return;
-  const available = await verifyFeedbackModel().catch(() => false);
+  const status = await feedbackModelStatus();
   await query(
     "INSERT INTO director.audit(actor_id,action,resource_id,reason) VALUES('feedback-worker','feedback-model-directory',$1,$2)",
-    [feedbackModel, available ? "available" : "unavailable"],
+    [feedbackModel, status],
   );
+  if (modelConfirmed(status)) {
+    await query(
+      "UPDATE director.feedback SET analysis_state='pending',analysis_after=now() WHERE analysis_state='model_unavailable' AND status='new'",
+    );
+  }
 }
 export async function analyseFeedback(feedbackId?: string) {
   const job = await transaction(async (c) => {

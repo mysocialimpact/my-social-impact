@@ -225,3 +225,37 @@ test(
     }
   },
 );
+test("a restricted key verifies the exact model without generating or selecting another model", async () => {
+  const original = globalThis.fetch,
+    key = process.env.OPENAI_API_KEY;
+  process.env.OPENAI_API_KEY = "synthetic";
+  try {
+    const { feedbackModelStatus, verifyFeedbackModel } =
+      await import("../src/lib/feedback-analysis");
+    globalThis.fetch = async (url, init) => {
+      if (String(url).endsWith("/models/" + feedbackModel))
+        return new Response(null, { status: 403 });
+      assert.equal(
+        String(url),
+        "https://api.openai.com/v1/responses/input_tokens",
+      );
+      assert.equal(JSON.parse(String(init?.body)).model, feedbackModel);
+      return Response.json({
+        object: "response.input_tokens",
+        input_tokens: 2,
+      });
+    };
+    assert.equal(await verifyFeedbackModel(), true);
+    globalThis.fetch = async () =>
+      Response.json({ error: { code: "model_not_found" } }, { status: 404 });
+    assert.equal(
+      await feedbackModelStatus(),
+      "Directory HTTP 404 (model_not_found)",
+    );
+    assert.equal(await verifyFeedbackModel(), false);
+  } finally {
+    globalThis.fetch = original;
+    if (key === undefined) delete process.env.OPENAI_API_KEY;
+    else process.env.OPENAI_API_KEY = key;
+  }
+});
