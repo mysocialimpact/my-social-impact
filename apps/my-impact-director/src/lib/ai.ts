@@ -77,6 +77,13 @@ export async function structured<T extends z.ZodType>(
   const rates = modelRates(model);
   const jsonSchema = z.toJSONSchema(schema, { target: "draft-7" });
   delete jsonSchema.$schema;
+  // Historical action records may omit pillar summaries. OpenAI's strict
+  // response format must nevertheless require this generated field.
+  if (jsonSchema.properties?.pillarSummaries)
+    jsonSchema.required = [
+      ...new Set([...(jsonSchema.required || []), "pillarSummaries"]),
+    ];
+
   const content: unknown[] = [{ type: "text", text: JSON.stringify(input) }];
   if (pdf)
     content.push({
