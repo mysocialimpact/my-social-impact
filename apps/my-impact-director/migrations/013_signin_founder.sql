@@ -86,6 +86,9 @@ ALTER TABLE director.enquiries ADD COLUMN IF NOT EXISTS converted_at timestamptz
 REVOKE ALL ON director.auth_users,director.auth_sessions,director.auth_accounts,director.auth_verifications,director.auth_rate_limits,director.auth_principals FROM PUBLIC;
 REVOKE ALL ON director.workspace_link_proofs FROM PUBLIC;
 DO $$ BEGIN
+ IF NOT EXISTS(SELECT 1 FROM pg_constraint WHERE conname='users_canonical_owner_id_fkey' AND conrelid='director.users'::regclass) THEN
+  ALTER TABLE director.users ADD CONSTRAINT users_canonical_owner_id_fkey FOREIGN KEY(canonical_owner_id) REFERENCES director.users(id);
+ END IF;
  IF EXISTS(SELECT 1 FROM pg_roles WHERE rolname='mid_production_runtime') THEN
   GRANT SELECT,INSERT,UPDATE,DELETE ON director.workspace_link_proofs TO mid_production_runtime;
   GRANT SELECT,INSERT,UPDATE,DELETE ON director.auth_users,director.auth_sessions,director.auth_accounts,director.auth_verifications,director.auth_rate_limits,director.auth_principals TO mid_production_runtime;

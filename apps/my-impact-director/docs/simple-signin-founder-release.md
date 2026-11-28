@@ -55,10 +55,16 @@ The verified `marcus@mysocialimpact.org` record is preserved. Neither the Ideas 
 
 ## Verification
 
-- 72 unit checks passed; 12 database suites are skipped when no DB test environment is supplied.
+- 73 unit checks passed; 12 database suites are skipped when no DB test environment is supplied.
 - The dedicated sign-in/Founder integration suite passed against the validation database, exercising real persisted sessions, verified ownership resolution, unverified matching-email isolation, canonical restoration, explicit linking, retired aliases, Founder access/isolation, reversible test archiving, all dashboard queries, revenue predicates and logout. Providers were seeded test identities, not live OAuth exchanges.
 - The existing legacy password/workspace compatibility suite passed after preserving guest-session adoption and revoking only stale email sessions on an explicit legacy sign-in.
 - The contribution ledger integration suite passed with simulated Stripe. No test or live charge was made.
 - The application builds. Browser checks and screenshots are stored locally under ignored `artifacts/signin-founder/`.
 
 Existing broader database suites depending on untracked `artifacts/claims-review.json` were not claimed as passing; their fixture must be generated or restored before rerunning those suites.
+
+## Prepared preview
+
+The protected preview for commit `67301b6` is ready at https://my-impact-director-8zyb3kb1a-marcuswarry.vercel.app/login . Its options endpoint correctly reports Google/Apple/email disabled until Preview credentials are supplied. The permanent branch alias is https://my-impact-director-git-codex-simple-signin-founder-marcuswarry.vercel.app ; `AUTH_PREVIEW_ORIGIN` is now saved for the **next** deployment, which must include the completed provider setup.
+
+Final local browser checks passed on 1440px and 390px screens with actual validation-DB dashboard data, all seven tabs, no page errors, no outer-page horizontal overflow, sign-in accessibility checks and normal-user/fresh-session isolation. Provider buttons used explicit visual fixtures; no real Google or Apple sign-in has been claimed.

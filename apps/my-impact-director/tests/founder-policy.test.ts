@@ -66,3 +66,14 @@ test("conversion rates handle zero denominators and show real drop-off", () => {
     { count: 0, rate: null, dropoff: 0 },
   ]);
 });
+
+import { POST as startSocial } from "../src/app/api/auth/[...all]/route";
+test("social sign-in rejects foreign origins before touching credentials or counters", async () => {
+  const r = await startSocial(
+    new Request("https://www.myimpactdirector.com/api/auth/sign-in/social", {
+      method: "POST",
+      headers: { origin: "https://evil.example" },
+    }),
+  );
+  assert.equal(r.status, 403);
+});
