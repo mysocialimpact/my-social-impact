@@ -39,8 +39,7 @@ export async function requestEmailSave(req: Request, input: unknown) {
     );
   const { email: rawEmail, reviewId, account, next } = inputSchema.parse(input),
     email = rawEmail.trim().toLowerCase();
-  await rateLimit(`email-ip:${privateNetworkKey(req)}`, 8, 3600);
-  await rateLimit(`email-recipient:${email}`, 3, 3600);
+
   let ownerId = emailId(email);
   if (reviewId) {
     const user = await visitor(req),
@@ -86,6 +85,10 @@ export async function requestEmailSave(req: Request, input: unknown) {
       ownerId = String(existing[0].id);
     }
   }
+  // Verification already held by this session must not consume another
+  // delivery allowance. Shared office networks also need room for new users.
+  await rateLimit(`email-ip:${privateNetworkKey(req)}`, 60, 3600);
+  await rateLimit(`email-recipient:${email}`, 6, 3600);
   const token = randomBytes(32).toString("base64url"),
     hash = tokenHash(token);
   await query(
