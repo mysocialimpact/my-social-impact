@@ -383,9 +383,18 @@ test(
         "DELETE FROM director.reports WHERE owner_id=ANY($1::text[])",
         [users.map((x) => x.id)],
       );
+      await query(
+        "DELETE FROM director.verified_addresses WHERE owner_id=ANY($1::text[])",
+        [users.map((u) => u.id)],
+      );
       await query("DELETE FROM director.users WHERE id=ANY($1::text[])", [
         users.map((x) => x.id),
       ]);
+      if (createdFounder)
+        await query(
+          "DELETE FROM director.verified_addresses WHERE owner_id='founder_marcus_warry' AND email=$1",
+          [users[0].email],
+        );
       if (createdFounder)
         await query(
           "DELETE FROM director.users WHERE id='founder_marcus_warry' AND email=$1 AND NOT EXISTS(SELECT 1 FROM director.reports WHERE owner_id='founder_marcus_warry') AND NOT EXISTS(SELECT 1 FROM director.auth_principals WHERE owner_id='founder_marcus_warry')",

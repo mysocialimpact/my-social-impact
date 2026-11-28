@@ -71,12 +71,18 @@ CREATE TABLE IF NOT EXISTS director.auth_principals (
  created_at timestamptz NOT NULL DEFAULT now(), last_seen timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS auth_principals_owner ON director.auth_principals(owner_id);
+CREATE TABLE IF NOT EXISTS director.verified_addresses (
+ email text PRIMARY KEY CHECK(email=lower(email)), owner_id text NOT NULL REFERENCES director.users(id),
+ verified_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS verified_addresses_owner ON director.verified_addresses(owner_id);
 CREATE TABLE IF NOT EXISTS director.workspace_link_proofs (
  token_hash text PRIMARY KEY, owner_id text NOT NULL REFERENCES director.users(id),
  expires_at timestamptz NOT NULL, used_at timestamptz, created_at timestamptz NOT NULL DEFAULT now()
 );
 ALTER TABLE director.workspace_link_proofs ADD COLUMN IF NOT EXISTS founder_authority boolean NOT NULL DEFAULT false;
 CREATE INDEX IF NOT EXISTS workspace_link_expiry ON director.workspace_link_proofs(expires_at);
+ALTER TABLE director.access_sessions ADD COLUMN IF NOT EXISTS verified_email text;
 ALTER TABLE director.email_links ADD COLUMN IF NOT EXISTS return_path text NOT NULL DEFAULT '/reviews';
 ALTER TABLE director.audit ADD COLUMN IF NOT EXISTS event_key text;
 ALTER TABLE director.audit ADD COLUMN IF NOT EXISTS metadata jsonb NOT NULL DEFAULT '{}';
@@ -84,17 +90,17 @@ CREATE UNIQUE INDEX IF NOT EXISTS audit_event_key ON director.audit(event_key);
 CREATE INDEX IF NOT EXISTS audit_actor_created ON director.audit(actor_id,created_at DESC);
 ALTER TABLE director.enquiries ADD COLUMN IF NOT EXISTS converted_at timestamptz;
 REVOKE ALL ON director.auth_users,director.auth_sessions,director.auth_accounts,director.auth_verifications,director.auth_rate_limits,director.auth_principals FROM PUBLIC;
-REVOKE ALL ON director.workspace_link_proofs FROM PUBLIC;
+REVOKE ALL ON director.workspace_link_proofs,director.verified_addresses FROM PUBLIC;
 DO $$ BEGIN
  IF NOT EXISTS(SELECT 1 FROM pg_constraint WHERE conname='users_canonical_owner_id_fkey' AND conrelid='director.users'::regclass) THEN
   ALTER TABLE director.users ADD CONSTRAINT users_canonical_owner_id_fkey FOREIGN KEY(canonical_owner_id) REFERENCES director.users(id);
  END IF;
  IF EXISTS(SELECT 1 FROM pg_roles WHERE rolname='mid_production_runtime') THEN
-  GRANT SELECT,INSERT,UPDATE,DELETE ON director.workspace_link_proofs TO mid_production_runtime;
+  GRANT SELECT,INSERT,UPDATE,DELETE ON director.workspace_link_proofs,director.verified_addresses TO mid_production_runtime;
   GRANT SELECT,INSERT,UPDATE,DELETE ON director.auth_users,director.auth_sessions,director.auth_accounts,director.auth_verifications,director.auth_rate_limits,director.auth_principals TO mid_production_runtime;
  END IF;
  IF EXISTS(SELECT 1 FROM pg_roles WHERE rolname='mid_validation_runtime') THEN
-  GRANT SELECT,INSERT,UPDATE,DELETE ON director.workspace_link_proofs TO mid_validation_runtime;
+  GRANT SELECT,INSERT,UPDATE,DELETE ON director.workspace_link_proofs,director.verified_addresses TO mid_validation_runtime;
   GRANT SELECT,INSERT,UPDATE,DELETE ON director.auth_users,director.auth_sessions,director.auth_accounts,director.auth_verifications,director.auth_rate_limits,director.auth_principals TO mid_validation_runtime;
  END IF;
 END $$;

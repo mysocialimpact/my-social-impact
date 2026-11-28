@@ -12,6 +12,7 @@ export async function resolveVerifiedAccount(
   name = "",
   method = "email",
   principal?: string,
+  provenOwner?: string,
 ) {
   email = email.trim().toLowerCase();
   await c.query("SELECT pg_advisory_xact_lock(hashtextextended($1,0))", [
@@ -29,6 +30,12 @@ export async function resolveVerifiedAccount(
         [email],
       );
   const {
+    rows: [address],
+  } = await c.query<{ owner_id: string }>(
+    "SELECT a.owner_id FROM director.verified_addresses a JOIN director.users u ON u.id=a.owner_id WHERE a.email=$1 AND u.retired_at IS NULL",
+    [email],
+  );
+  const {
     rows: [existing],
   } = await c.query<{ id: string }>(
     "SELECT COALESCE(canonical_owner_id,id) AS id FROM director.users WHERE lower(email)=$1 AND email_verified_at IS NOT NULL AND NOT is_anonymous AND retired_at IS NULL ORDER BY created_at LIMIT 1",
@@ -38,13 +45,21 @@ export async function resolveVerifiedAccount(
   // already linked by Better Auth remains stable, including Apple relay email.
   const id = founderProof(email, true)
     ? FOUNDER_OWNER
-    : linked?.owner_id || existing?.id || "account_" + randomUUID();
+    : linked?.owner_id ||
+      address?.owner_id ||
+      existing?.id ||
+      provenOwner ||
+      "account_" + randomUUID();
   await c.query(
     `INSERT INTO director.users(id,email,name,email_verified_at,canonical_owner_id,account_class,last_auth_method,last_sign_in_at)
     VALUES($1,$2,$3,now(),$1,$4,$5,now()) ON CONFLICT(id) DO UPDATE SET
-    last_seen=now(),retired_at=NULL,last_auth_method=$5,email_verified_at=COALESCE(director.users.email_verified_at,now()),
+    last_seen=now(),retired_at=NULL,last_auth_method=$5,email_verified_at=CASE WHEN lower(director.users.email)=lower($2) THEN COALESCE(director.users.email_verified_at,now()) ELSE director.users.email_verified_at END,
     name=CASE WHEN director.users.name='' THEN $3 ELSE director.users.name END`,
     [id, email, name, id === FOUNDER_OWNER ? "founder" : "customer", method],
+  );
+  await c.query(
+    "INSERT INTO director.verified_addresses(email,owner_id) VALUES($1,$2) ON CONFLICT(email) DO UPDATE SET owner_id=$2",
+    [email, id],
   );
   if (principal)
     await c.query(
@@ -82,6 +97,8 @@ export async function hydrateVerifiedIdentity(
       user.passwordAccount
         ? "legacy password"
         : user.authMethods?.join(", ") || "email",
+      undefined,
+      state?.canonical_owner_id || user.id,
     ),
   );
   const aliases = await query<{ id: string }>(

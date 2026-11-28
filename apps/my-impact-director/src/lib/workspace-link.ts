@@ -76,6 +76,10 @@ export async function connectOwnedWorkspace(req: Request, user: Identity) {
       ]);
     }
     await c.query(
+      "UPDATE director.verified_addresses SET owner_id=$1 WHERE owner_id=$2",
+      [target, from],
+    );
+    await c.query(
       "UPDATE director.auth_principals SET owner_id=$1 WHERE owner_id=$2",
       [target, from],
     );

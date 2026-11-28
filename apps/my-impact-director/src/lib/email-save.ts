@@ -225,8 +225,8 @@ export async function redeemEmailLink(token: string, req?: Request) {
       [tokenHash(token)],
     );
     await c.query(
-      "INSERT INTO director.access_sessions(token_hash,owner_id,kind,expires_at) VALUES($1,$2,'email',now()+interval '30 days')",
-      [tokenHash(session), id],
+      "INSERT INTO director.access_sessions(token_hash,owner_id,kind,expires_at,verified_email) VALUES($1,$2,'email',now()+interval '30 days',$3)",
+      [tokenHash(session), id, link.email],
     );
     await c.query(
       "INSERT INTO director.daily_metrics(event,count) VALUES('email_saved',1) ON CONFLICT(day,event) DO UPDATE SET count=daily_metrics.count+1",

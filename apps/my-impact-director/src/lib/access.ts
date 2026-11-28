@@ -38,8 +38,9 @@ export async function localIdentity(
     organisation: string;
     kind: string;
     email_verified_at: string | null;
+    verified_email: string | null;
   }>(
-    `SELECT u.id,u.email,u.name,u.organisation,s.kind,u.email_verified_at FROM director.access_sessions s JOIN director.users u ON u.id=s.owner_id WHERE s.token_hash=ANY($1::text[]) AND s.expires_at>now() AND u.retired_at IS NULL AND ($2 OR s.kind='email') ORDER BY s.kind`,
+    `SELECT u.id,CASE WHEN s.kind='email' THEN COALESCE(s.verified_email,u.email) ELSE u.email END AS email,u.name,u.organisation,s.kind,u.email_verified_at,s.verified_email FROM director.access_sessions s JOIN director.users u ON u.id=s.owner_id WHERE s.token_hash=ANY($1::text[]) AND s.expires_at>now() AND u.retired_at IS NULL AND ($2 OR s.kind='email') ORDER BY s.kind`,
     [tokens.map(tokenHash), allowGuest],
   );
   const row = rows[0];
@@ -48,7 +49,9 @@ export async function localIdentity(
         ...row,
         founder: false,
         anonymous: row.kind === "guest",
-        emailVerified: row.kind === "email" && !!row.email_verified_at,
+        emailVerified:
+          row.kind === "email" &&
+          !!(row.verified_email || row.email_verified_at),
         accessIds: rows.map((x) => x.id),
       }
     : null;

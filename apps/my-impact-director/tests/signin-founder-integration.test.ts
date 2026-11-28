@@ -45,11 +45,11 @@ test(
         method,
         headers: { cookie, origin: "http://localhost:3000" },
       });
-    const makeEmailSession = async (id: string) => {
+    const makeEmailSession = async (id: string, verifiedEmail?: string) => {
       const token = randomBytes(32).toString("base64url");
       await query(
-        "INSERT INTO director.access_sessions(token_hash,owner_id,kind,expires_at) VALUES($1,$2,'email',now()+interval '1 hour')",
-        [tokenHash(token), id],
+        "INSERT INTO director.access_sessions(token_hash,owner_id,kind,expires_at,verified_email) VALUES($1,$2,'email',now()+interval '1 hour',$3)",
+        [tokenHash(token), id, verifiedEmail || null],
       );
       return accessCookie(token, 3600, EMAIL_COOKIE).split(";")[0];
     };
@@ -205,6 +205,30 @@ test(
       assert.equal(testState.account_class, "test");
       assert.ok(testState.retired_at);
       assert.equal(testState.live_sessions, 0);
+      const joinNormal = await prepareWorkspaceLink(
+        await identity(req(realCookie)),
+      );
+      await connectOwnedWorkspace(
+        req(signed + "; " + joinNormal.split(";")[0]),
+        socialUser,
+      );
+      const restoredOwner = await transaction((c) =>
+        resolveVerifiedAccount(c, email),
+      );
+      assert.equal(
+        restoredOwner,
+        socialUser.id,
+        "a previously verified email must still restore the linked account after its old workspace is retired",
+      );
+      const aliasCookie = await makeEmailSession(restoredOwner, email);
+      const aliasIdentity = await identity(req(aliasCookie));
+      assert.equal(
+        aliasIdentity.email,
+        email,
+        "remember the address proved by this sign-in, independently of the canonical profile email",
+      );
+      assert.equal(aliasIdentity.id, socialUser.id);
+      assert.equal(aliasIdentity.emailVerified, true);
       // Do not mutate the real founder fixture in this shared validation DB: roll back the identity resolution transaction.
       const c = await database().connect();
       try {
@@ -279,9 +303,18 @@ test(
       await query("DELETE FROM director.auth_users WHERE id=ANY($1::text[])", [
         socialUsers,
       ]);
+      await query(
+        "DELETE FROM director.verified_addresses WHERE owner_id=ANY($1::text[]) OR email LIKE $2",
+        [users, prefix + "%"],
+      );
       await query("DELETE FROM director.users WHERE id=ANY($1::text[])", [
         users,
       ]);
+      if (createdFounder)
+        await query(
+          "DELETE FROM director.verified_addresses WHERE owner_id=$1 AND email LIKE $2",
+          [FOUNDER_OWNER, prefix + "%"],
+        );
       if (createdFounder)
         await query(
           "DELETE FROM director.users u WHERE id=$1 AND email=$2 AND NOT EXISTS(SELECT 1 FROM director.users a WHERE a.canonical_owner_id=$1 AND a.id<>$1) AND NOT EXISTS(SELECT 1 FROM director.reports WHERE owner_id=$1) AND NOT EXISTS(SELECT 1 FROM director.auth_principals WHERE owner_id=$1)",

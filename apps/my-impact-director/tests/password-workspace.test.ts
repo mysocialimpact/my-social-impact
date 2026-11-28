@@ -406,6 +406,10 @@ test(
         "DELETE FROM director.reports WHERE owner_id=ANY($1::text[])",
         [users],
       );
+      await query(
+        "DELETE FROM director.verified_addresses WHERE owner_id=ANY($1::text[])",
+        [users],
+      );
       await query("DELETE FROM director.users WHERE id=ANY($1::text[])", [
         users,
       ]);
