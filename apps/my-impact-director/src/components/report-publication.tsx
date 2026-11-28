@@ -1,4 +1,5 @@
 "use client";
+import { disputeFinding } from "./feedback";
 import type { ReviewResult } from "@/lib/pipeline";
 import { type Framework } from "@/lib/rubric";
 import { publication, identity, brief } from "@/lib/publication";
@@ -76,6 +77,13 @@ export function ReportPublication({
         <a href="#intelligence">Intelligence options</a>
         <a href="#professional-support">Expert help</a>
       </nav>
+      <button
+        type="button"
+        className="dispute-link"
+        onClick={() => disputeFinding("score")}
+      >
+        Question this score
+      </button>
       <section className="pub-scores" id="pillar-scores">
         <h2>
           {framework === "claims" ? "The five principles" : "The five pillars"}

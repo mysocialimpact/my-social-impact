@@ -32,6 +32,7 @@ import { exportPdf } from "../src/lib/archive/export";
 import { extractPages } from "../src/lib/documents";
 import { identity, accountAction } from "../src/lib/auth";
 import { POST as enquiryPost } from "../src/app/api/enquiries/route";
+import { GET as feedbackInbox } from "../src/app/api/admin/feedback/route";
 import { POST as feedbackPost } from "../src/app/api/feedback/route";
 import { GET as adminGet } from "../src/app/api/admin/route";
 import { POST as inspectPost } from "../src/app/api/admin/[id]/route";
@@ -1080,14 +1081,13 @@ test(
           assert.equal(response.status, 201);
           const { id: feedbackId } = await response.json();
           const [row] = await query(
-            "SELECT * FROM director.enquiries WHERE id=$1",
+            "SELECT * FROM director.feedback WHERE id=$1",
             [feedbackId],
           );
-          assert.equal(row.service, "feedback");
-          assert.equal(row.share_review, false);
+          assert.equal(row.rating, 4);
+          assert.equal(row.reply_consent, false);
           assert.equal(row.review_id, null);
-          assert.equal(row.contact_email, "");
-          assert.match(String(row.message), /Usefulness: 4\/5/);
+          assert.equal(row.email, null);
           assert.equal(
             (
               await adminGet(
@@ -1098,11 +1098,13 @@ test(
             ).status,
             401,
           );
-          const admin = await (
-            await adminGet(req("/api/admin", undefined, "founder"))
+          const inbox = await (
+            await feedbackInbox(
+              req("/api/admin/feedback", undefined, "founder"),
+            )
           ).json();
           assert.ok(
-            admin.enquiries.some((e: { id: string }) => e.id === feedbackId),
+            inbox.items.some((e: { id: string }) => e.id === feedbackId),
           );
         },
       );
@@ -1465,6 +1467,10 @@ test(
           [id],
         );
       }
+      await query(
+        "DELETE FROM director.feedback WHERE owner_id=ANY($1::text[])",
+        [[uid, other, founder, ...localUsers]],
+      );
       await query(
         "DELETE FROM director.enquiries WHERE owner_id=ANY($1::text[])",
         [[uid, other, founder, ...localUsers]],

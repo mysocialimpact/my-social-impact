@@ -54,7 +54,7 @@ export function aiAvailable() {
 function providerModel(model: string) {
   return model.replace(/^openai\//, "");
 }
-function openAIHeaders() {
+export function openAIHeaders() {
   if (!process.env.OPENAI_API_KEY)
     throw new AIError("AI_NOT_CONFIGURED", false);
   return {

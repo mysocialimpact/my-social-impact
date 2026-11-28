@@ -14,8 +14,8 @@ export default async function FeedbackPage({
       ? value
       : "/";
   return (
-    <section className="section">
-      <Feedback from={from} uploadIssue={params.issue === "upload"} />
-    </section>
+    <>
+      <Feedback dedicated from={from} uploadIssue={params.issue === "upload"} />
+    </>
   );
 }

@@ -1,4 +1,13 @@
 {
   "regions": ["iad1"],
-  "crons": [{ "path": "/api/worker", "schedule": "* * * * *" }]
+  "crons": [
+    {
+      "path": "/api/worker",
+      "schedule": "* * * * *"
+    },
+    {
+      "path": "/api/feedback/worker",
+      "schedule": "* * * * *"
+    }
+  ]
 }
