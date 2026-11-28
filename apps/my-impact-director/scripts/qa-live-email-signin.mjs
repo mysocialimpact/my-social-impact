@@ -48,6 +48,21 @@ try {
       "Real passwordless sign-in email accepted for the approved Founder address. No token or credential logged.",
     );
   } else {
+    if (step === "redeem-fresh") {
+      const bootstrap = new URL("/login", config.url);
+      bootstrap.searchParams.set("_vercel_share", config.bypass);
+      await page.goto(bootstrap.href, { waitUntil: "domcontentloaded" });
+      await page
+        .getByRole("button", { name: "Continue with email", exact: true })
+        .waitFor({ timeout: 30000 });
+      assert.equal(
+        (await context.cookies()).some((c) =>
+          ["mid_saved", "mid_access", "msi_sorp_session"].includes(c.name),
+        ),
+        false,
+        "a second device begins with no application session",
+      );
+    }
     assert.ok(
       config.emailLink,
       "Expected a securely captured actual email link.",
