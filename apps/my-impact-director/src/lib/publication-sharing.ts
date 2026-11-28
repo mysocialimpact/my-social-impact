@@ -1,3 +1,6 @@
+import { accountEvent } from "./account-events";
+import { randomUUID } from "node:crypto";
+import { tokenHash } from "./access";
 import { reportTotal } from "./report-total";
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { z } from "zod";
@@ -34,6 +37,12 @@ export async function managePublication(
     await query("DELETE FROM director.publication_links WHERE review_id=$1", [
       reviewId,
     ]);
+    await accountEvent(
+      user.id,
+      "sharing-revoked",
+      reviewId,
+      `sharing-revoked:${randomUUID()}`,
+    );
     return { path: null };
   }
   const [row] = await query<{ nonce: string }>(
@@ -42,6 +51,13 @@ export async function managePublication(
       : "SELECT nonce FROM director.publication_links WHERE review_id=$1",
     [reviewId],
   );
+  if (method === "POST" && row)
+    await accountEvent(
+      user.id,
+      "sharing-authorised",
+      reviewId,
+      `sharing-authorised:${reviewId}:${tokenHash(row.nonce)}`,
+    );
   return {
     path: row ? "/shared#" + row.nonce + "." + signature(row.nonce) : null,
   };

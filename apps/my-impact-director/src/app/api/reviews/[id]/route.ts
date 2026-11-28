@@ -6,7 +6,7 @@ import { z } from "zod";
 import { query } from "@/lib/db";
 import { readJson } from "@/lib/security";
 import { after } from "next/server";
-import { visitor, assertReviewAccount } from "@/lib/auth";
+import { visitor, assertReviewAccount, reviewAccount } from "@/lib/auth";
 import {
   getReview,
   retryReview,
@@ -109,7 +109,7 @@ export async function POST(req: Request, ctx: Context) {
   try {
     sameOrigin(req);
     const id = (await ctx.params).id;
-    const user = await visitor(req);
+    const user = await reviewAccount(req);
     const data = req.headers.get("content-type")?.includes("application/json")
       ? await readJson(req)
       : {};

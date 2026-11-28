@@ -2,14 +2,11 @@
 import Link from "next/link";
 import { useEffect, useId, useState } from "react";
 import { api } from "./session";
-import { SaveReview } from "./save-review";
+import { authClient } from "@/lib/auth-client";
 import { safeReturnPath } from "@/lib/return-path";
 export function Account({
   next = "/reviews",
-  initialMode = "login",
-  setup = false,
   email = "",
-  name = "",
   embedded = false,
   onAuthenticated,
 }: {
@@ -21,167 +18,194 @@ export function Account({
   embedded?: boolean;
   onAuthenticated?: () => void;
 }) {
-  const passwordHelp = useId();
-  const [ready, setReady] = useState(false);
-  useEffect(() => setReady(true), []);
-  const [address, setAddress] = useState(email);
-  const [mode, setMode] = useState(initialMode),
-    [busy, setBusy] = useState(false),
+  const [options, setOptions] = useState<{
+    google: boolean;
+    apple: boolean;
+    email: boolean;
+  } | null>(null);
+  const [address, setAddress] = useState(email),
+    [showEmail, setShowEmail] = useState(false),
+    [sent, setSent] = useState(false),
+    [busy, setBusy] = useState(""),
     [error, setError] = useState("");
-  const Heading = setup || embedded ? "h2" : "h1";
-  async function submit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setBusy(true);
+  const emailId = useId();
+  useEffect(() => {
+    api("/api/account/options")
+      .then(setOptions)
+      .catch(() =>
+        setError(
+          "We couldn’t load sign-in options. Please refresh and try again.",
+        ),
+      );
+  }, []);
+  const destination = safeReturnPath(next);
+  async function social(provider: "google" | "apple") {
+    setBusy(provider);
     setError("");
-    const f = new FormData(e.currentTarget);
     try {
-      await api("/api/account", {
+      const result = await authClient.signIn.social({
+        provider,
+        callbackURL: `/auth/complete?next=${encodeURIComponent(destination)}`,
+        errorCallbackURL: "/login?auth_error=1",
+      });
+      if (result.error)
+        throw new Error(
+          result.error.message || "Sign-in could not be completed.",
+        );
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Please try again.");
+      setBusy("");
+    }
+  }
+  async function emailSignIn(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setBusy("email");
+    setError("");
+    try {
+      await api("/api/visitor", { method: "POST" });
+      const result = await api("/api/save", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
-          action: mode,
-          email: f.get("email"),
-          password: f.get("password"),
-          ...(mode === "signup" ? { name: f.get("name") } : {}),
+          email: address,
+          account: true,
+          next: destination,
         }),
       });
-      if (onAuthenticated) {
+      if (result.verified) {
         window.dispatchEvent(new Event("mid-session-refresh"));
-        onAuthenticated();
-      } else window.location.assign(safeReturnPath(next));
+        if (onAuthenticated) onAuthenticated();
+        else window.location.assign(destination);
+      } else setSent(true);
     } catch (e) {
       setError(
         e instanceof Error
           ? e.message
-          : "We couldn’t complete sign-in. Please try again.",
+          : "We couldn’t send your link. Please try again.",
       );
-      setBusy(false);
+    } finally {
+      setBusy("");
     }
   }
   return (
-    <div className="account-card simple-account">
-      <p className="eyebrow">My Reports</p>
-      <Heading>
-        {setup
-          ? "Choose your password."
-          : mode === "login"
-            ? "Log in."
-            : "Create your free account."}
-      </Heading>
+    <div
+      className={`account-card unified-account ${embedded ? "is-embedded" : ""}`}
+    >
+      <p className="eyebrow">Your private workspace</p>
+      <h2>{sent ? "Check your inbox." : "Your impact. One simple sign-in."}</h2>
       <p>
-        {setup
-          ? "Keep your existing reports and use email and password next time."
-          : embedded
-            ? "Create an account or log in before uploading. Your reports and progress stay together, and we’ll use this email for report delivery."
-            : "Your reports, progress and results. Ready when you are."}
+        {sent ? (
+          <>
+            We’ve sent a secure sign-in link to <strong>{address}</strong>. Open
+            it to continue. It works once and expires in 30 minutes.
+          </>
+        ) : (
+          "New here or coming back? Sign in below. We’ll create your free account if you need one, or take you straight back to your reports."
+        )}
       </p>
-      <form onSubmit={submit} key={mode} method="post">
-        {mode === "signup" && (
-          <label>
-            Your name
-            <input
-              name="name"
-              autoComplete="name"
-              minLength={2}
-              maxLength={120}
-              required
-              disabled={!ready}
-              defaultValue={name}
-            />
-          </label>
-        )}
-        <label>
-          Email address
-          <input
-            type="email"
-            name="email"
-            autoComplete="email"
-            maxLength={254}
-            required
-            disabled={!ready}
-            value={address}
-            onChange={(e) => setAddress(e.target.value)}
-            readOnly={setup}
-          />
-        </label>
-        <div className="account-password-field">
-          <label>
-            Password
-            <input
-              type="password"
-              name="password"
-              aria-describedby={passwordHelp}
-              autoComplete={
-                mode === "signup" ? "new-password" : "current-password"
-              }
-              minLength={8}
-              maxLength={200}
-              required
-              disabled={!ready}
-            />
-          </label>
-          <small id={passwordHelp}>
-            {mode === "signup"
-              ? "At least 8 characters."
-              : "Your My Social Impact account password."}
-          </small>
-        </div>
-        {error && (
-          <p className="alert error" role="alert">
-            {error}
-          </p>
-        )}
-        <button className="button primary" disabled={!ready || busy}>
-          {busy
-            ? "Please wait…"
-            : setup
-              ? "Set my password"
-              : mode === "login"
-                ? "Log in"
-                : "Create my free account"}
-        </button>
-      </form>
-      {mode === "login" && (
-        <p>
-          <Link href="/forgot-password">Forgot your password?</Link>
-        </p>
+      {!sent && (
+        <>
+          <div className="social-signin-options">
+            <button
+              type="button"
+              className="button social-signin"
+              disabled={!options?.google || !!busy}
+              onClick={() => social("google")}
+            >
+              <span className="provider-mark" aria-hidden="true">
+                G
+              </span>
+              {busy === "google" ? "Opening Google…" : "Continue with Google"}
+            </button>
+            <button
+              type="button"
+              className="button social-signin"
+              disabled={!options?.apple || !!busy}
+              onClick={() => social("apple")}
+            >
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 24 24"
+                width="24"
+                height="24"
+              >
+                <path
+                  fill="currentColor"
+                  d="M17 12c0-2 1.5-3.2 1.6-3.3-1-1.5-2.6-1.7-3.2-1.7-1.4-.1-2.7.8-3.4.8-.7 0-1.8-.8-3-.8C6.6 7 4 9 4 12.8c0 2.3.8 4.7 1.9 6.3.9 1.3 1.8 2.7 3.2 2.6 1.2-.1 1.7-.8 3.2-.8s1.9.8 3.2.8c1.4 0 2.3-1.3 3.1-2.6.9-1.5 1.3-2.9 1.3-3-.1 0-2.9-1.1-2.9-4.1ZM14.7 5.5c.7-.9 1.2-2.1 1.1-3.4-1.1.1-2.5.7-3.3 1.6-.7.8-1.3 2-1.1 3.2 1.2.1 2.5-.6 3.3-1.4Z"
+                />
+              </svg>
+              {busy === "apple" ? "Opening Apple…" : "Continue with Apple"}
+            </button>
+            <button
+              type="button"
+              className="button social-signin"
+              disabled={!options?.email || !!busy}
+              onClick={() => setShowEmail(true)}
+            >
+              <span className="provider-mark" aria-hidden="true">
+                @
+              </span>
+              Continue with email
+            </button>
+          </div>
+          {options && (!options.google || !options.apple) && (
+            <p className="fine-print">
+              {options.email
+                ? "Email sign-in is available. Social sign-in is being connected."
+                : "Sign-in is temporarily unavailable. Please try again shortly."}
+            </p>
+          )}
+          {showEmail && (
+            <form onSubmit={emailSignIn}>
+              <label htmlFor={emailId}>Email address</label>
+              <input
+                id={emailId}
+                type="email"
+                autoComplete="email"
+                maxLength={254}
+                required
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+              />
+              <button className="button primary" disabled={!!busy}>
+                {busy === "email"
+                  ? "Sending your link…"
+                  : "Email my sign-in link →"}
+              </button>
+              <p className="fine-print">
+                No password to remember. No marketing subscription.
+              </p>
+            </form>
+          )}
+        </>
       )}
-      {!setup && (
-        <p>
-          {mode === "login" ? "New here? " : "Already have an account? "}
+      {sent && (
+        <>
+          <p className="fine-print">
+            Can’t see it? Check spam and junk. Keep this page open if you want
+            to change the address.
+          </p>
           <button
             className="text-link"
-            type="button"
             onClick={() => {
-              setError("");
-              setMode(mode === "login" ? "signup" : "login");
+              setSent(false);
+              setShowEmail(true);
             }}
           >
-            {mode === "login" ? "Create your free account." : "Log in."}
+            Use a different address or request another link
           </button>
-        </p>
+        </>
       )}
-      {setup && (
-        <p>
-          Already have a My Social Impact password?{" "}
-          <Link href="/login">Log in</Link> or{" "}
-          <Link href="/forgot-password">reset it</Link>.
+      {error && (
+        <p role="alert" className="alert error">
+          {error}
         </p>
-      )}
-      {!setup && !embedded && (
-        <details className="legacy-account-help">
-          <summary>Previously used an email link?</summary>
-          <p>
-            Open a saved report email, then choose a password in Account. If
-            your link has expired, recover access here first.
-          </p>
-          <SaveReview returning recovery />
-        </details>
       )}
       <p className="fine-print">
-        Your My Social Impact login works here too. By continuing, you agree to
-        our <Link href="/terms">terms</Link> and{" "}
-        <Link href="/privacy">privacy notice</Link>. No marketing subscription.
+        Your account and reviews are free. By continuing, you agree to our{" "}
+        <Link href="/terms">terms</Link> and{" "}
+        <Link href="/privacy">privacy notice</Link>. Marketing is optional and
+        separate.
       </p>
     </div>
   );

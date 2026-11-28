@@ -78,8 +78,9 @@ export async function PUT(req: Request, ctx: Context) {
 }
 export async function POST(req: Request, ctx: Context) {
   try {
-    const { user, id } = await parameters(req, ctx);
-    await reviewAccount(req);
+    sameOrigin(req);
+    const user = await reviewAccount(req),
+      id = z.uuid().parse((await ctx.params).id);
     const data = finishSchema.parse(await readJson(req));
     await rateLimit(`upload-finish:${user.id}`, 30, 3600);
     const review = await finishUpload(user, id, data);

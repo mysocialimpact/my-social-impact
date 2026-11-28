@@ -17,6 +17,7 @@ import "./contributions.css";
 import "./publication.css";
 import "./intelligence.css";
 import "./feedback-learning.css";
+import "./signin-founder.css";
 import { PublicFeedback } from "@/components/feedback";
 import { ActionShell } from "@/components/action-bar";
 import { Header, Footer } from "@/components/shell";

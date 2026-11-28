@@ -39,6 +39,7 @@ test(
     let interrupt = false;
     let providerDown = false;
     let founderAccess = false;
+    let createdFounder = false;
     let counter = 0;
     const createdParams: URLSearchParams[] = [];
     Object.assign(process.env, {
@@ -314,6 +315,21 @@ test(
         });
       assert.equal((await adminContributions(adminRequest())).status, 403);
       founderAccess = true;
+      assert.equal(
+        (await adminContributions(adminRequest())).status,
+        403,
+        "a remote profile founder flag alone grants no administrative access",
+      );
+      const created = await query(
+        "INSERT INTO director.users(id,email,name,email_verified_at,canonical_owner_id) VALUES('founder_marcus_warry',$1,'Validation-only role fixture',now(),'founder_marcus_warry') ON CONFLICT(id) DO NOTHING RETURNING id",
+        [users[0].email],
+      );
+      createdFounder = created.length > 0;
+      // Seed an explicit server-managed role for this synthetic ledger fixture.
+      await query(
+        "UPDATE director.users SET canonical_owner_id='founder_marcus_warry',email_verified_at=now() WHERE id=$1",
+        [users[0].id],
+      );
       const admin = await adminContributions(adminRequest());
       assert.equal(admin.status, 200);
       const adminData = await admin.json();
@@ -367,9 +383,23 @@ test(
         "DELETE FROM director.reports WHERE owner_id=ANY($1::text[])",
         [users.map((x) => x.id)],
       );
+      await query(
+        "DELETE FROM director.verified_addresses WHERE owner_id=ANY($1::text[])",
+        [users.map((u) => u.id)],
+      );
       await query("DELETE FROM director.users WHERE id=ANY($1::text[])", [
         users.map((x) => x.id),
       ]);
+      if (createdFounder)
+        await query(
+          "DELETE FROM director.verified_addresses WHERE owner_id='founder_marcus_warry' AND email=$1",
+          [users[0].email],
+        );
+      if (createdFounder)
+        await query(
+          "DELETE FROM director.users WHERE id='founder_marcus_warry' AND email=$1 AND NOT EXISTS(SELECT 1 FROM director.reports WHERE owner_id='founder_marcus_warry') AND NOT EXISTS(SELECT 1 FROM director.auth_principals WHERE owner_id='founder_marcus_warry')",
+          [users[0].email],
+        );
       await database().end();
     }
   },

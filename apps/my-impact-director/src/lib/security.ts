@@ -15,6 +15,13 @@ export function sameOrigin(req: Request) {
   // Vercel preview domains are bound to this deployment, not accepted from input.
   const allowed = [
     expected,
+    ...([
+      "https://www.myimpactdirector.com",
+      "https://myimpactdirector.com",
+    ].includes(expected)
+      ? ["https://www.myimpactdirector.com", "https://myimpactdirector.com"]
+      : []),
+    process.env.AUTH_PREVIEW_ORIGIN || "",
     process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "",
   ].filter(Boolean);
   if (
