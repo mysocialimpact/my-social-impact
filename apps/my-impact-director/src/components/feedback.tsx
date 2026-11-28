@@ -7,7 +7,7 @@ export function PublicFeedback() {
   const path = usePathname();
   if (
     !path ||
-    /^\/(admin|founder|feedback|access|open)(\/|$)/.test(path) ||
+    /^\/(admin|founder|feedback|access|open|account)(\/|$)/.test(path) ||
     path.endsWith("/source")
   )
     return null;
