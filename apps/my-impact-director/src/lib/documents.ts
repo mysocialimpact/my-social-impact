@@ -1,4 +1,5 @@
-import { getDocumentProxy, extractText } from "unpdf";
+import { extractText } from "unpdf";
+import { getDocumentProxy } from "./pdf-runtime";
 import { PDFDocument, PDFDict, PDFArray, PDFName, PDFStream } from "pdf-lib";
 import { z } from "zod";
 import { structured } from "./ai";

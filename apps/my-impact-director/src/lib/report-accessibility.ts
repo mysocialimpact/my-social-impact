@@ -1,4 +1,4 @@
-import { getDocumentProxy } from "unpdf";
+import { getDocumentProxy } from "./pdf-runtime";
 export type PdfChecks = {
   kind: "report-pdf-checks-v2";
   tagged: boolean | null;

@@ -10,11 +10,8 @@ import {
 } from "./report-methodology";
 import type { PdfChecks } from "./report-accessibility";
 import { reportGuidance } from "./report-guidance";
-import {
-  getDocumentProxy,
-  createIsomorphicCanvasFactory,
-  renderPageAsImage,
-} from "unpdf";
+import { createIsomorphicCanvasFactory, renderPageAsImage } from "unpdf";
+import { getDocumentProxy } from "./pdf-runtime";
 import { z } from "zod";
 import { structured } from "./ai";
 import { criterionSchema, type Page, type Criterion } from "./assessment";
@@ -66,11 +63,6 @@ export async function renderVisualPages(
   numbers: number[],
   width = 1600,
 ) {
-  // unpdf installs a placeholder DOMMatrix in Node. Native transparency groups
-  // need a real matrix (including a–f) when PDF.js transforms a clipping path.
-  const canvas = await import("@napi-rs/canvas");
-  if (!globalThis.DOMMatrix || !("a" in new globalThis.DOMMatrix()))
-    globalThis.DOMMatrix = canvas.DOMMatrix as unknown as typeof DOMMatrix;
   const CanvasFactory = await createIsomorphicCanvasFactory(
     () => import("@napi-rs/canvas"),
   );
