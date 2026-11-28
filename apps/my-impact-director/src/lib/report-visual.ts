@@ -1,3 +1,5 @@
+import { createRequire } from "node:module";
+import { dirname, join, sep } from "node:path";
 import {
   REPORT_VERSION,
   isReportV2,
@@ -74,6 +76,17 @@ export async function renderVisualPages(
   );
   const pdf = await getDocumentProxy(new Uint8Array(bytes), {
     CanvasFactory,
+    // Serverless hosts have no system fonts. PDF.js needs its own standard
+    // fonts to render valid PDFs whose Helvetica/Times fonts are not embedded.
+    standardFontDataUrl:
+      join(
+        dirname(
+          createRequire(import.meta.url).resolve("pdfjs-dist/package.json"),
+        ),
+        "standard_fonts",
+      ) + sep,
+    useSystemFonts: false,
+    disableFontFace: true,
     isEvalSupported: false,
     stopAtErrors: true,
   });
