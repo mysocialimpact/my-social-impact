@@ -837,6 +837,21 @@ export async function processOne(id?: string, latestArtStart?: number) {
                                   "Excluded tests cannot have scores."
                               ? "EXCLUDED_SCORE_INVALID"
                               : "STAGE_VALIDATION_FAILED";
+    const safeEvidenceReasons = [
+      "Art director must inspect each supplied physical page exactly once",
+      "Art director cited an uninspected or unreadable page",
+    ];
+    if (
+      e instanceof AIError &&
+      safeEvidenceReasons.includes(e.diagnostic || "")
+    )
+      console.warn("ASSESSMENT_EVIDENCE_REJECTED", {
+        reviewId: job.id,
+        stage: job.stage,
+        reason: e.diagnostic,
+        model: usage?.model,
+        responseId: usage?.responseId,
+      });
     const providerWait = e instanceof AIError ? e.retryAfterSeconds : undefined;
     if (providerWait)
       await query(
@@ -864,7 +879,7 @@ export async function processOne(id?: string, latestArtStart?: number) {
       ],
     );
     await query(
-      `INSERT INTO director.processing_events(review_id,stage,attempt,status,error_code,duration_ms,cost_usd) VALUES($1,$2,$3,'failed',$4,$5,$6)`,
+      `INSERT INTO director.processing_events(review_id,stage,attempt,status,error_code,duration_ms,cost_usd,model,response_id,input_tokens,output_tokens) VALUES($1,$2,$3,'failed',$4,$5,$6,$7,$8,$9,$10)`,
       [
         job.id,
         job.stage,
@@ -872,6 +887,10 @@ export async function processOne(id?: string, latestArtStart?: number) {
         code,
         Date.now() - started,
         usage?.cost || 0,
+        usage?.model || null,
+        usage?.responseId || null,
+        usage?.inputTokens ?? null,
+        usage?.outputTokens ?? null,
       ],
     );
     return false;
