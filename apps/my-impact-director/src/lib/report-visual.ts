@@ -1,5 +1,5 @@
-import { createRequire } from "node:module";
-import { dirname, join, sep } from "node:path";
+import { existsSync } from "node:fs";
+import { join, sep } from "node:path";
 import {
   REPORT_VERSION,
   isReportV2,
@@ -58,6 +58,25 @@ export function visualSample(pages: Page[], version = REPORT_VERSION) {
   }
   return [...selected].sort((a, b) => a - b);
 }
+function standardFontDirectory() {
+  // Resolve packaged assets from the real function root. Bundler module IDs
+  // returned by require.resolve are not necessarily filesystem paths.
+  const candidates = [
+    join(process.cwd(), "node_modules/pdfjs-dist/standard_fonts"),
+    join(
+      process.cwd(),
+      "apps/my-impact-director/node_modules/pdfjs-dist/standard_fonts",
+    ),
+  ];
+  const directory = candidates.find((p) =>
+    existsSync(join(p, "LiberationSans-Regular.ttf")),
+  );
+  if (!directory) {
+    console.error("PDF_STANDARD_FONT_ASSETS_MISSING", { candidates });
+    throw Error("Packaged PDF standard fonts unavailable");
+  }
+  return directory + sep;
+}
 export async function renderVisualPages(
   bytes: Buffer,
   numbers: number[],
@@ -70,13 +89,7 @@ export async function renderVisualPages(
     CanvasFactory,
     // Serverless hosts have no system fonts. PDF.js needs its own standard
     // fonts to render valid PDFs whose Helvetica/Times fonts are not embedded.
-    standardFontDataUrl:
-      join(
-        dirname(
-          createRequire(import.meta.url).resolve("pdfjs-dist/package.json"),
-        ),
-        "standard_fonts",
-      ) + sep,
+    standardFontDataUrl: standardFontDirectory(),
     useSystemFonts: false,
     disableFontFace: true,
     isEvalSupported: false,
