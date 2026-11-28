@@ -1,3 +1,5 @@
+import { resolveVerifiedAccount } from "./verified-account";
+import { safeReturnPath } from "./return-path";
 import type { PoolClient } from "@neondatabase/serverless";
 import { localIdentity, localGuest } from "./access";
 import { createHash, randomBytes } from "node:crypto";
@@ -25,6 +27,7 @@ const inputSchema = z
     email: z.email().max(254),
     reviewId: z.uuid().optional(),
     account: z.boolean().optional(),
+    next: z.string().max(500).optional(),
   })
   .strict();
 export async function requestEmailSave(req: Request, input: unknown) {
@@ -34,7 +37,7 @@ export async function requestEmailSave(req: Request, input: unknown) {
       "We’re sorry — email delivery is temporarily unavailable. Your headline results remain here. Please try again later or tell us through Help us make this better.",
       "EMAIL_UNAVAILABLE",
     );
-  const { email: rawEmail, reviewId, account } = inputSchema.parse(input),
+  const { email: rawEmail, reviewId, account, next } = inputSchema.parse(input),
     email = rawEmail.trim().toLowerCase();
   await rateLimit(`email-ip:${privateNetworkKey(req)}`, 8, 3600);
   await rateLimit(`email-recipient:${email}`, 3, 3600);
@@ -86,8 +89,8 @@ export async function requestEmailSave(req: Request, input: unknown) {
   const token = randomBytes(32).toString("base64url"),
     hash = tokenHash(token);
   await query(
-    "INSERT INTO director.email_links(token_hash,owner_id,review_id,email,expires_at) VALUES($1,$2,$3,$4,now()+interval '30 minutes')",
-    [hash, ownerId, reviewId || null, email],
+    "INSERT INTO director.email_links(token_hash,owner_id,review_id,email,expires_at,return_path) VALUES($1,$2,$3,$4,now()+interval '30 minutes',$5)",
+    [hash, ownerId, reviewId || null, email, safeReturnPath(next)],
   );
   const origin =
     process.env.APP_ORIGIN ||
@@ -155,8 +158,9 @@ export async function redeemEmailLink(token: string, req?: Request) {
       email: string;
       review_id: string | null;
       owner_id: string;
+      return_path: string;
     }>(
-      "SELECT email,review_id,owner_id FROM director.email_links WHERE token_hash=$1 AND used_at IS NULL AND expires_at>now() FOR UPDATE",
+      "SELECT email,review_id,owner_id,return_path FROM director.email_links WHERE token_hash=$1 AND used_at IS NULL AND expires_at>now() FOR UPDATE",
       [tokenHash(token)],
     );
     if (!link)
@@ -164,24 +168,29 @@ export async function redeemEmailLink(token: string, req?: Request) {
         410,
         "This link has expired or has already been used. Log in, or request a recovery link from the login page.",
       );
-    if (passwordIdentity && passwordIdentity.email.toLowerCase() !== link.email)
-      throw new AppError(
-        409,
-        "This link is for a different account. Log out before opening it; the link has not been used.",
+    if (
+      passwordIdentity?.passwordAccount &&
+      passwordIdentity.email.toLowerCase() === link.email
+    )
+      await c.query(
+        "UPDATE director.users SET email_verified_at=now() WHERE id=$1 AND lower(email)=$2 AND retired_at IS NULL",
+        [passwordIdentity.id, link.email],
       );
-    await c.query("SELECT pg_advisory_xact_lock(hashtext($1))", [link.email]);
-    const {
-      rows: [existing],
-    } = await c.query<{ id: string }>(
-      "SELECT id FROM director.users WHERE lower(email)=$1 AND is_anonymous=false AND email_verified_at IS NOT NULL ORDER BY (id=$2) DESC,created_at LIMIT 1",
-      [link.email, emailId(link.email)],
+    const id = await resolveVerifiedAccount(
+      c,
+      link.email,
+      passwordIdentity?.email.toLowerCase() === link.email
+        ? passwordIdentity.name
+        : "",
+      "email",
     );
-    // An unverified password account may have merely claimed this address.
-    // Bind it only when this browser also proves its password session.
-    const id = passwordIdentity?.id || existing?.id || emailId(link.email);
     await c.query(
-      "INSERT INTO director.users(id,email,name,email_verified_at) VALUES($1,$2,'',now()) ON CONFLICT(id) DO UPDATE SET last_seen=now(),email_verified_at=COALESCE(director.users.email_verified_at,now())",
-      [id, link.email],
+      "UPDATE director.users SET last_sign_in_at=now() WHERE id=$1",
+      [id],
+    );
+    await c.query(
+      "INSERT INTO director.audit(actor_id,action,resource_id,event_key,metadata) VALUES($1,'account-signed-in',$1,$2,'{\"method\":\"email\"}') ON CONFLICT(event_key) DO NOTHING",
+      [id, `email-signin:${tokenHash(token)}`],
     );
     if (link.review_id)
       await grantVerifiedReport(c, link.review_id, id, link.email);
@@ -219,7 +228,9 @@ export async function redeemEmailLink(token: string, req?: Request) {
     await c.query(
       "INSERT INTO director.daily_metrics(event,count) VALUES('email_saved',1) ON CONFLICT(day,event) DO UPDATE SET count=daily_metrics.count+1",
     );
-    return link.review_id ? `/reviews/${link.review_id}` : "/reviews";
+    return link.review_id
+      ? `/reviews/${link.review_id}`
+      : safeReturnPath(link.return_path);
   });
   return {
     destination,

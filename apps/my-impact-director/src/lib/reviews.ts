@@ -78,11 +78,11 @@ export async function createReview(
       rows: [limits],
     } = await c.query(
       `SELECT count(*) AS total,
-       (SELECT count(*) FROM director.completed_reports WHERE owner_id=$1 AND completed_at>now()-interval '24 hours') AS completed,
+       (SELECT count(*) FROM director.completed_reports WHERE owner_id=ANY($1::text[]) AND completed_at>now()-interval '24 hours') AS completed,
        count(*) FILTER(WHERE NOT EXISTS(SELECT 1 FROM director.completed_reports cr WHERE cr.report_id=r.id)
          AND EXISTS(SELECT 1 FROM director.reviews v WHERE v.report_id=r.id AND v.status IN ('queued','running') AND v.updated_at>now()-interval '1 hour')) AS active
-       FROM director.reports r WHERE r.owner_id=$1 AND r.expires_at>now()`,
-      [user.id],
+       FROM director.reports r WHERE r.owner_id=ANY($1::text[]) AND r.expires_at>now()`,
+      [user.accessIds || [user.id]],
     );
     if (Number(limits.total) >= 20)
       throw new AppError(

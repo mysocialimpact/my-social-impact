@@ -26,7 +26,7 @@ const money = (value: number | string) =>
   new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP" }).format(
     Number(value) / 100,
   );
-export function AdminContributions() {
+export function AdminContributions({ owner = "" }: { owner?: string }) {
   const [data, setData] = useState<Data | null>(null),
     [test, setTest] = useState(false),
     [error, setError] = useState("");
@@ -34,7 +34,12 @@ export function AdminContributions() {
     let live = true;
     setData(null);
     setError("");
-    api("/api/admin/contributions?mode=" + (test ? "test" : "live"))
+    api(
+      "/api/admin/contributions?mode=" +
+        (test ? "test" : "live") +
+        "&owner=" +
+        encodeURIComponent(owner),
+    )
       .then((d) => {
         if (live) setData(d);
       })
@@ -44,7 +49,7 @@ export function AdminContributions() {
     return () => {
       live = false;
     };
-  }, [test]);
+  }, [test, owner]);
   return (
     <section className="result-section admin-contributions">
       <h2>

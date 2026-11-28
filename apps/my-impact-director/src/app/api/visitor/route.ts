@@ -1,10 +1,10 @@
 import { createGuest } from "@/lib/access";
-import { identity, sessionCookie } from "@/lib/auth";
+import { identity } from "@/lib/auth";
 import { AppError, failure, sameOrigin } from "@/lib/security";
 export async function POST(req: Request) {
   try {
     sameOrigin(req);
-    if (sessionCookie(req)) {
+    {
       try {
         return Response.json(
           { user: await identity(req) },

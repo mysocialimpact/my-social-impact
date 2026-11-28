@@ -248,7 +248,11 @@ test(
       });
       profiles.b.email = prefix + "-other@example.invalid";
       const mixed = await visitor(req("msi_sorp_session=b; " + emailCookie));
-      assert.equal(mixed.emailVerified, false);
+      assert.equal(
+        mixed.emailVerified,
+        false,
+        "the previous verified session was revoked on the explicit password sign-in",
+      );
       await assert.rejects(() => getReview(mixed, a.doc.id), { status: 404 });
       const b = await guestReport();
       chosen = "a";
@@ -350,12 +354,18 @@ test(
       const nowVerified = await visitor(req(newCookie));
       assert.equal(nowVerified.emailVerified, true);
       assert.equal((await getReview(nowVerified, c.doc.id)).id, c.doc.id);
+      const previousEmail = profiles.c.email;
       profiles.c.email = prefix + "-changed@example.invalid";
       const changed = await visitor(req(newCookie + "; " + proofCookie));
       assert.equal(
         changed.emailVerified,
-        false,
-        "an old email session does not verify a changed email address",
+        true,
+        "a verified email session is independent of an edited legacy profile",
+      );
+      assert.equal(
+        changed.email,
+        previousEmail,
+        "an unverified profile edit cannot replace the verified email identity",
       );
       const before = emails.length;
       await requestEmailSave(req(newCookie + "; " + proofCookie), {

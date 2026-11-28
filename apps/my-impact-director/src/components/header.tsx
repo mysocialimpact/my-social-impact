@@ -93,6 +93,15 @@ export function Header() {
           >
             {signedIn ? "Account" : "Log in"}
           </Link>
+          {user?.founder && (
+            <Link
+              href="/founder"
+              aria-current={path === "/founder" ? "page" : undefined}
+              onClick={() => setOpen(false)}
+            >
+              Founder
+            </Link>
+          )}
         </nav>
         <Link
           href={inReview ? "/reviews" : "/review"}

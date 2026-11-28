@@ -39,7 +39,7 @@ export async function localIdentity(
     kind: string;
     email_verified_at: string | null;
   }>(
-    `SELECT u.id,u.email,u.name,u.organisation,s.kind,u.email_verified_at FROM director.access_sessions s JOIN director.users u ON u.id=s.owner_id WHERE s.token_hash=ANY($1::text[]) AND s.expires_at>now() AND ($2 OR s.kind='email') ORDER BY s.kind`,
+    `SELECT u.id,u.email,u.name,u.organisation,s.kind,u.email_verified_at FROM director.access_sessions s JOIN director.users u ON u.id=s.owner_id WHERE s.token_hash=ANY($1::text[]) AND s.expires_at>now() AND u.retired_at IS NULL AND ($2 OR s.kind='email') ORDER BY s.kind`,
     [tokens.map(tokenHash), allowGuest],
   );
   const row = rows[0];
@@ -131,14 +131,18 @@ export async function metric(
     [event],
   );
 }
-export async function clearLocalSession(req: Request) {
-  const tokens = [accessToken(req), accessToken(req, EMAIL_COOKIE)].filter(
-    (x): x is string => !!x,
-  );
+export async function clearLocalSession(req: Request, includeGuest = true) {
+  const tokens = [
+    ...(includeGuest ? [accessToken(req)] : []),
+    accessToken(req, EMAIL_COOKIE),
+  ].filter((x): x is string => !!x);
   if (tokens.length)
     await query(
       "DELETE FROM director.access_sessions WHERE token_hash=ANY($1::text[])",
       [tokens.map(tokenHash)],
     );
-  return [accessCookie("", 0), accessCookie("", 0, EMAIL_COOKIE)];
+  return [
+    ...(includeGuest ? [accessCookie("", 0)] : []),
+    accessCookie("", 0, EMAIL_COOKIE),
+  ];
 }

@@ -1,4 +1,8 @@
 import { z } from "zod";
+import { socialIdentity } from "./social-identity";
+import { hydrateVerifiedIdentity } from "./verified-account";
+import { connectOwnedWorkspace } from "./workspace-link";
+import { getSocialAuth, hasSocialCookie } from "./social-auth";
 import { connectVerifiedWorkspace } from "./account-workspace";
 import { localIdentity, localGuest, clearLocalSession } from "./access";
 import { query } from "./db";
@@ -23,6 +27,8 @@ export type Identity = {
   emailVerified?: boolean;
   accessIds?: string[];
   passwordAccount?: boolean;
+  socialAccount?: boolean;
+  authMethods?: string[];
 };
 const accountUrl = () =>
   new URL(
@@ -37,7 +43,7 @@ export function sessionCookie(req: Request) {
       .find((c) => c.startsWith("msi_sorp_session=")) || ""
   );
 }
-export async function identity(req: Request): Promise<Identity> {
+async function legacyIdentity(req: Request): Promise<Identity> {
   const cookie = sessionCookie(req);
   if (!cookie) {
     const local = await localIdentity(req);
@@ -62,7 +68,7 @@ export async function identity(req: Request): Promise<Identity> {
   if (!parsed.success) throw new AppError(401, "Please sign in again.");
   const user = {
     ...parsed.data.account,
-    founder: parsed.data.platformAccess?.founder === true,
+    founder: false,
   };
   const [stored] = await query<{ email_verified_at: string | null }>(
     `INSERT INTO director.users(id,email,name,organisation) VALUES($1,$2,$3,$4) ON CONFLICT(id) DO UPDATE SET email=$2,name=$3,organisation=$4,last_seen=now(),email_verified_at=CASE WHEN lower(director.users.email)=lower($2) THEN director.users.email_verified_at ELSE NULL END RETURNING email_verified_at`,
@@ -74,45 +80,44 @@ export async function identity(req: Request): Promise<Identity> {
         [user.email],
       )
     : [];
-  return {
+  return hydrateVerifiedIdentity({
     ...user,
     emailVerified: !!stored.email_verified_at,
     passwordAccount: true,
     accessIds: [...new Set([user.id, ...aliases.map((a) => a.id)])],
-  };
+  });
+}
+export async function identity(req: Request): Promise<Identity> {
+  const social = await socialIdentity(req);
+  const local = social ? null : await localIdentity(req);
+  const user =
+    social ||
+    (local ? await hydrateVerifiedIdentity(local) : await legacyIdentity(req));
+  return connectOwnedWorkspace(req, user);
 }
 export async function visitor(req: Request): Promise<Identity> {
-  if (sessionCookie(req)) {
-    try {
-      const user = await identity(req);
-      const local = await localIdentity(req, true);
-      const matched =
-        !!local?.emailVerified &&
-        local.email.toLowerCase() === user.email.toLowerCase();
-      const guest = local?.anonymous ? local : await localGuest(req);
-      if (matched && !user.emailVerified)
-        await connectVerifiedWorkspace(user, local!.accessIds || [local!.id]);
-      return {
-        ...user,
-        emailVerified: user.emailVerified || matched,
-        accessIds: [
-          ...new Set([
-            ...(user.accessIds || [user.id]),
-            ...(matched
-              ? local!.accessIds || [local!.id]
-              : guest?.accessIds || []),
-          ]),
-        ],
-      };
-    } catch (e) {
-      if (!(e instanceof AppError && e.status === 401)) throw e;
-    }
+  try {
+    const user = await identity(req);
+    const guest = await localGuest(req);
+    if (user.emailVerified && guest)
+      await connectVerifiedWorkspace(user, guest.accessIds || [guest.id]);
+    return {
+      ...user,
+      accessIds: [
+        ...new Set([
+          ...(user.accessIds || [user.id]),
+          ...(guest?.accessIds || []),
+        ]),
+      ],
+    };
+  } catch (e) {
+    if (!(e instanceof AppError && e.status === 401)) throw e;
   }
-  const local = await localIdentity(req, true);
-  if (local) return local;
+  const guest = await localGuest(req);
+  if (guest) return guest;
   throw new AppError(
     401,
-    "This review is private to the browser that created it. Open your saved email link to return.",
+    "Continue with Google, Apple or email to open your private reports.",
     "ACCESS_REQUIRED",
   );
 }
@@ -139,10 +144,25 @@ export async function accountAction(req: Request, input: unknown) {
     })
     .strict()
     .parse(input);
-  if (data.action === "logout" && !sessionCookie(req)) {
+  if (data.action === "logout") {
     const headers = new Headers({ "cache-control": "no-store" });
+    if (hasSocialCookie(req) && process.env.AUTH_SECRET) {
+      const response = await (
+        await getSocialAuth(req)
+      ).api.signOut({ headers: req.headers, asResponse: true });
+      for (const cookie of response.headers.getSetCookie())
+        headers.append("set-cookie", cookie);
+    }
     for (const cookie of await clearLocalSession(req))
       headers.append("set-cookie", cookie);
+    headers.append(
+      "set-cookie",
+      "msi_sorp_session=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0; Secure",
+    );
+    headers.append(
+      "set-cookie",
+      "mid_workspace_link=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0; Secure",
+    );
     return Response.json({ ok: true }, { headers });
   }
   if (
@@ -201,10 +221,6 @@ export async function accountAction(req: Request, input: unknown) {
   for (const cookie of r.headers.getSetCookie())
     if (cookie.startsWith("msi_sorp_session="))
       headers.append("set-cookie", cookie);
-  if (data.action === "logout") {
-    for (const cookie of await clearLocalSession(req))
-      headers.append("set-cookie", cookie);
-  }
   if (r.ok && ["login", "signup"].includes(data.action)) {
     const session = r.headers
       .getSetCookie()
@@ -222,8 +238,31 @@ export async function accountAction(req: Request, input: unknown) {
           .join("; "),
       },
     });
-    const signed = await visitor(signedRequest);
+    let signed = await legacyIdentity(signedRequest);
+    const previousLocal = await localIdentity(req);
     const guest = await localGuest(req);
+    if (
+      previousLocal?.emailVerified &&
+      previousLocal.email.toLowerCase() === signed.email.toLowerCase()
+    ) {
+      await connectVerifiedWorkspace(
+        signed,
+        previousLocal.accessIds || [previousLocal.id],
+      );
+      signed = await hydrateVerifiedIdentity({
+        ...signed,
+        emailVerified: true,
+      });
+    }
+    for (const old of await clearLocalSession(req, false))
+      headers.append("set-cookie", old);
+    if (hasSocialCookie(req) && process.env.AUTH_SECRET) {
+      const out = await (
+        await getSocialAuth(req)
+      ).api.signOut({ headers: req.headers, asResponse: true });
+      for (const old of out.headers.getSetCookie())
+        headers.append("set-cookie", old);
+    }
     if (signed.emailVerified && guest)
       await connectVerifiedWorkspace(signed, guest.accessIds || [guest.id]);
   }
