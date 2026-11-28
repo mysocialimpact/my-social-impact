@@ -30,7 +30,7 @@ export async function founderOverview() {
  (SELECT count(*) FROM director.reviews v JOIN director.reports r ON r.id=v.report_id JOIN scope s ON s.id=r.owner_id WHERE v.framework IS DISTINCT FROM 'document' AND v.status='failed') AS failed,
  (SELECT count(*) FROM director.enquiries e JOIN scope s ON s.id=e.owner_id WHERE e.service<>'feedback') AS enquiries,
  (SELECT count(*) FROM director.enquiries e JOIN scope s ON s.id=e.owner_id WHERE e.converted_at IS NOT NULL AND e.service<>'feedback') AS conversions,
- (SELECT COALESCE(sum(cost_usd),0) FROM director.processing_events) AS ai_cost_usd,
+ ((SELECT COALESCE(sum(cost_usd),0) FROM director.processing_events)+(SELECT COALESCE(sum(cost_usd),0) FROM director.feedback_ai_usage)) AS ai_cost_usd,
  (SELECT COALESCE(sum(amount_pence) FILTER(WHERE ${PAID_STATUS_SQL}),0) FROM director.contributions WHERE livemode) AS gross_pence,
  (SELECT COALESCE(sum(refunded_pence) FILTER(WHERE ${PAID_STATUS_SQL}),0) FROM director.contributions WHERE livemode) AS refunded_pence,
  (SELECT count(*) FROM director.contributions WHERE livemode AND ${PAID_STATUS_SQL}) AS payments,
@@ -134,5 +134,9 @@ export async function founderCosts(days: number) {
     `SELECT v.id,v.framework,v.status,r.title,v.cost_usd,COALESCE(sum(p.input_tokens),0) AS input_tokens,COALESCE(sum(p.output_tokens),0) AS output_tokens FROM director.reviews v JOIN director.reports r ON r.id=v.report_id LEFT JOIN director.processing_events p ON p.review_id=v.id WHERE ($1=0 OR v.created_at>=now()-make_interval(days=>$1)) GROUP BY v.id,r.title ORDER BY v.created_at DESC LIMIT 50`,
     [days],
   );
-  return { summary, daily, frameworks, documents, assessments };
+  const feedback = await query(
+    `SELECT model,count(*) AS requests,COALESCE(sum(input_tokens),0) AS input_tokens,COALESCE(sum(output_tokens),0) AS output_tokens,COALESCE(sum(cost_usd),0) AS cost_usd,count(*) FILTER(WHERE failure IS NOT NULL) AS errors,count(*) FILTER(WHERE cost_usd IS NULL) AS unconfirmed FROM director.feedback_ai_usage WHERE ($1=0 OR created_at>=now()-make_interval(days=>$1)) GROUP BY model ORDER BY sum(cost_usd) DESC`,
+    [days],
+  );
+  return { summary, daily, frameworks, documents, assessments, feedback };
 }

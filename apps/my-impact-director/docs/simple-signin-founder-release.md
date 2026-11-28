@@ -55,7 +55,7 @@ The verified `marcus@mysocialimpact.org` record is preserved. Neither the Ideas 
 
 ## Verification
 
-- 73 unit checks passed; 12 database suites are skipped when no DB test environment is supplied.
+- 76 unit checks passed; 13 database suites are skipped when no DB test environment is supplied.
 - The dedicated sign-in/Founder integration suite passed against the validation database, exercising real persisted sessions, verified ownership resolution, unverified matching-email isolation, canonical restoration, explicit linking, retired aliases, Founder access/isolation, reversible test archiving, all dashboard queries, revenue predicates and logout. Providers were seeded test identities, not live OAuth exchanges.
 - The existing legacy password/workspace compatibility suite passed after preserving guest-session adoption and revoking only stale email sessions on an explicit legacy sign-in.
 - The contribution ledger integration suite passed with simulated Stripe. No test or live charge was made.
@@ -68,3 +68,9 @@ Existing broader database suites depending on untracked `artifacts/claims-review
 The protected preview for commit `67301b6` is ready at https://my-impact-director-8zyb3kb1a-marcuswarry.vercel.app/login . Its options endpoint correctly reports Google/Apple/email disabled until Preview credentials are supplied. The permanent branch alias is https://my-impact-director-git-codex-simple-signin-founder-marcuswarry.vercel.app ; `AUTH_PREVIEW_ORIGIN` is now saved for the **next** deployment, which must include the completed provider setup.
 
 Final local browser checks passed on 1440px and 390px screens with actual validation-DB dashboard data, all seven tabs, no page errors, no outer-page horizontal overflow, sign-in accessibility checks and normal-user/fresh-session isolation. Provider buttons used explicit visual fixtures; no real Google or Apple sign-in has been claimed.
+
+## Concurrent production updates preserved
+
+While this candidate was being verified, production advanced to `1c5cd8413bc3d814101e2b4136b73c5d6fcacc77` on `codex/mid-intelligence-experience` (deployment `dpl_2vwb5irsxGLtiSk7hnnWjQhkggfP`). That complete production branch is merged into this candidate. Its feedback learning, report intelligence, partner footer and model-readiness view are preserved. The Founder Dashboard links to the existing feedback inbox and includes the separate feedback-AI ledger in overall costs. The feedback schema was brought into validation only to match current production.
+
+Before final promotion, check the current production commit again. If it is not an ancestor of the release candidate, merge the newer production changes and reverify rather than replacing work from another thread. The production migration and real OAuth tests remain release gates.

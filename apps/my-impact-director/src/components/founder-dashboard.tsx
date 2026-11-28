@@ -16,6 +16,7 @@ type Costs = {
   frameworks: Row[];
   documents: Row;
   assessments: Row[];
+  feedback: Row[];
 };
 const tabs = [
   ["overview", "Overview"],
@@ -744,6 +745,38 @@ function CostsPanel({ data }: { data: Costs }) {
           cohort. Shared preparation and historical legacy assessments are
           reported separately.
         </p>
+      </section>
+      <section className="founder-panel">
+        <h3>Written feedback analysis.</h3>
+        <p className="fine-print">
+          Separate from assessments. Unconfirmed records represent reserved
+          calls without a confirmed cost; they are not silently counted as
+          zero-cost successes.
+        </p>
+        <Table
+          columns={[
+            "Model",
+            "Requests",
+            "Input / output tokens",
+            "Recorded cost",
+            "Errors / unconfirmed",
+          ]}
+        >
+          {data.feedback.map((r) => (
+            <tr key={String(r.model)}>
+              <td>{String(r.model)}</td>
+              <td>{count(r.requests)}</td>
+              <td>
+                {count(r.input_tokens)} / {count(r.output_tokens)}
+              </td>
+              <td>{usd(r.cost_usd)}</td>
+              <td>
+                {count(r.errors)} / {count(r.unconfirmed)}
+              </td>
+            </tr>
+          ))}
+        </Table>
+        <Link href="/admin">Feedback inbox &amp; model readiness →</Link>
       </section>
       <details className="founder-panel">
         <summary>Daily spend and errors</summary>
