@@ -1,9 +1,7 @@
-import { AccountSettings } from "@/components/account-settings";
-export const metadata = { title: "Account" };
+import { AccountOverview } from "@/components/account-overview";
+import { AccountUpgradeList } from "@/components/intelligence-offers";
+
+export const metadata = { title: "Your account" };
 export default function AccountPage() {
-  return (
-    <section className="section auth-page">
-      <AccountSettings />
-    </section>
-  );
+  return <AccountOverview upgrades={<AccountUpgradeList />} />;
 }
