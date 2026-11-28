@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { SupportIntroduction } from "@/components/support-introduction";
 import { ReportServices } from "@/components/report-services";
+import { IntelligenceOffers } from "@/components/intelligence-offers";
 import { ChapterMotion } from "@/components/chapter-motion";
 
 export const dynamic = "force-dynamic";
@@ -62,7 +63,7 @@ export default function Home() {
               <span>DIRECTOR.</span>
             </h1>
             <p className="meet-signature">
-              Human-led. <em>AI-powered.</em>
+              Human-led. <em>AI-powered.</em> Accessible to everyone.
             </p>
           </div>
           <div className="meet-proposition" data-reveal>
@@ -71,10 +72,13 @@ export default function Home() {
               <em>Impact Director.</em>
             </h2>
             <p>
-              We’re building an intelligent Impact Director that combines AI
-              with experienced human professionals to help organisations
-              understand, manage and improve their impact.
+              Review your impact report for free. See what the evidence
+              supports, what your report demonstrates and how clearly it
+              communicates.
             </p>
+            <Link className="button primary" href="/review">
+              Try your first free review <Arrow />
+            </Link>
             <p className="meet-credit">
               A social enterprise initiative developed by{" "}
               <a href="https://mysocialimpact.org">
@@ -82,15 +86,6 @@ export default function Home() {
               </a>
             </p>
           </div>
-          <a className="first-job-cue" href="#first-job">
-            <span>Your Impact Director’s first job is ready.</span>
-            <span className="cue-discover">
-              Discover it{" "}
-              <span className="cue-arrow" aria-hidden="true">
-                ↓
-              </span>
-            </span>
-          </a>
         </div>
       </section>
       <section
@@ -168,6 +163,23 @@ export default function Home() {
           </div>
         </div>
       </section>
+      <section
+        className="home-intelligence-statement"
+        aria-labelledby="intelligence-statement-title"
+      >
+        <div className="campaign-width" data-reveal>
+          <h2 id="intelligence-statement-title">
+            Good intelligence informs. <em>Human intelligence transforms.</em>
+          </h2>
+          <p>
+            AI can examine evidence, identify patterns, challenge claims and
+            suggest improvements. People bring relationships, experience,
+            perspective and judgement, and help turn those insights into
+            meaningful change.
+          </p>
+        </div>
+      </section>
+      <IntelligenceOffers home />
       <ReportServices />
       <SupportIntroduction />
       <Contact />

@@ -15,41 +15,77 @@ export function Brand({ className = "" }: { className?: string }) {
 }
 export function Footer() {
   return (
-    <footer className="footer campaign-footer">
-      <div className="campaign-width footer-signatures">
-        <a href="https://mysocialimpact.org" className="signature-msi">
-          <span>Developed by My Social Impact</span>
-          <Image
-            src="/brand/my-social-impact.png"
-            width={1088}
-            height={124}
-            alt="My Social Impact"
-            sizes="260px"
-          />
-        </a>
-        <a href="https://www.theideasshed.com/" className="signature-shed">
-          <Image
-            src="/brand/the-ideas-shed.png"
-            width={1254}
-            height={1254}
-            alt="The Ideas Shed"
-            sizes="76px"
-          />
-          <span>Built by The Ideas Shed</span>
-        </a>
-      </div>
-      <div className="campaign-width footer-legal">
-        <span>© {new Date().getFullYear()} My Social Impact</span>
-        <nav aria-label="Footer navigation">
-          <Link href="/contact">Contact Us</Link>
-          <Link href="/methodology">Methodology</Link>
-          <Link href="/#human-support">Ongoing support</Link>
-          <Link href="/services">Expert help</Link>
-          <Link href="/feedback">Feedback</Link>
-          <Link href="/privacy">Privacy</Link>
-          <Link href="/terms">Terms & accessibility</Link>
-        </nav>
-        <span>Automated insight. Human judgement.</span>
+    <footer className="signature-footer">
+      <div className="signature-inner">
+        <p className="signature-statement">
+          Good intelligence informs.
+          <br />
+          <em>Human intelligence transforms.</em>
+        </p>
+        <div className="signature-pair">
+          <a href="https://www.mysocialimpact.org/">
+            <span className="signature-credit">
+              Developed by My Social Impact
+            </span>
+            <span className="signature-art">
+              <Image
+                src="/brand/my-social-impact.png"
+                alt="My Social Impact"
+                width={1088}
+                height={124}
+                sizes="280px"
+              />
+            </span>
+            <p>
+              Our professional assessment frameworks are developed by My Social
+              Impact, bringing strategy, reporting, evidence and human support
+              together.
+            </p>
+            <strong>Explore My Social Impact</strong>
+          </a>
+          <a href="https://www.theideasshed.com/">
+            <span className="signature-credit">Built by The Ideas Shed</span>
+            <span className="signature-art shed-art">
+              <Image
+                src="/brand/the-ideas-shed.png"
+                alt="The Ideas Shed"
+                width={1254}
+                height={1254}
+                sizes="96px"
+              />
+            </span>
+            <p>
+              The Ideas Shed turns ideas into working websites, software, apps
+              and useful AI-powered tools.
+            </p>
+            <strong>See what else we’re building.</strong>
+          </a>
+        </div>
+        <div className="signature-end">
+          <div>
+            © {new Date().getFullYear()} My Social Impact
+            <br />
+            The Ideas Shed Limited · Registered in England and Wales ·{" "}
+            <a href="https://find-and-update.company-information.service.gov.uk/company/17380053">
+              Company number 17380053
+            </a>
+          </div>
+          <nav aria-label="Footer navigation">
+            {[
+              ["Contact", "/contact"],
+              ["Methodology", "/methodology"],
+              ["Ongoing support", "/#human-support"],
+              ["Expert help", "/services"],
+              ["Feedback", "/feedback"],
+              ["Privacy", "/privacy"],
+              ["Terms & accessibility", "/terms"],
+            ].map(([name, url]) => (
+              <Link key={url} href={url}>
+                {name}
+              </Link>
+            ))}
+          </nav>
+        </div>
       </div>
     </footer>
   );

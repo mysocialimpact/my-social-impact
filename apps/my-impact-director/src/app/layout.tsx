@@ -15,7 +15,10 @@ import "./account-journey.css";
 import "./review-learning.css";
 import "./contributions.css";
 import "./publication.css";
+import "./intelligence.css";
+import "./feedback-learning.css";
 import "./signin-founder.css";
+import { PublicFeedback } from "@/components/feedback";
 import { ActionShell } from "@/components/action-bar";
 import { Header, Footer } from "@/components/shell";
 import { WorkspaceTracker } from "@/components/workspace-tracker";
@@ -38,6 +41,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             <WorkspaceTracker />
           </div>
           <main id="main">{children}</main>
+          <PublicFeedback />
           <Footer />
         </ActionShell>
       </body>

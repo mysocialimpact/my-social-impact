@@ -137,6 +137,8 @@ export function FounderDashboard() {
           <small>
             Dates: Kampala · Financial records: GBP · AI estimates: USD
           </small>
+          <br />
+          <Link href="/admin">Feedback inbox &amp; model readiness →</Link>
         </p>
       </header>
       <nav className="founder-tabs" aria-label="Founder Dashboard sections">

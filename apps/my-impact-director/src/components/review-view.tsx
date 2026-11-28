@@ -112,7 +112,12 @@ export function ReviewView({
     );
   if (!review) return <p role="status">Loading your review…</p>;
   if (review.framework && sourcePage === undefined)
-    return <ReviewExperience review={review as unknown as ExperienceReview} />;
+    return (
+      <ReviewExperience
+        key={review.id}
+        review={review as unknown as ExperienceReview}
+      />
+    );
   async function remove() {
     if (!window.confirm("Delete this report and its assessments permanently?"))
       return;

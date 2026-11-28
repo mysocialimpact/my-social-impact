@@ -63,7 +63,7 @@ export async function managePublication(
   };
 }
 
-export async function readPublication(token: string, statusOnly: boolean) {
+function publicationNonce(token: string) {
   const unavailable = () =>
     new AppError(
       404,
@@ -77,6 +77,24 @@ export async function readPublication(token: string, statusOnly: boolean) {
     !timingSafeEqual(Buffer.from(mac), Buffer.from(signature(nonce)))
   )
     throw unavailable();
+  return nonce;
+}
+export async function publicationFeedbackContext(token: string) {
+  const nonce = publicationNonce(token);
+  const [row] = await query<{ framework: string; version: string }>(
+    `SELECT v.framework,coalesce(v.result->>'version',v.version) AS version FROM director.publication_links l JOIN director.reviews v ON v.id=l.review_id
+    JOIN director.reports r ON r.id=v.report_id WHERE l.nonce=$1 AND r.expires_at>now() AND v.status='complete' AND v.framework IN ('claims','excellence','report')`,
+    [nonce],
+  );
+  return row;
+}
+export async function readPublication(token: string, statusOnly: boolean) {
+  const nonce = publicationNonce(token);
+  const unavailable = () =>
+    new AppError(
+      404,
+      "This sharing link is unavailable. Ask the report owner for a current link.",
+    );
   const [row] = await query<{ result?: ReviewResult }>(
     `SELECT ${statusOnly ? "1" : "v.result"} FROM director.publication_links l
     JOIN director.reviews v ON v.id=l.review_id JOIN director.reports r ON r.id=v.report_id
