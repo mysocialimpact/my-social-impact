@@ -86,9 +86,9 @@ export async function stripeRequest<T>(
   path: string,
   params?: URLSearchParams,
   idempotency?: string,
+  secret = process.env.STRIPE_SECRET_KEY || "",
 ): Promise<T> {
-  const secret = process.env.STRIPE_SECRET_KEY || "";
-  if (!/^sk_(test|live)_/.test(secret))
+  if (!/^(?:sk_(?:test|live)|rkcs_test)_/.test(secret))
     throw new AppError(503, "Secure payment is unavailable.");
   let response: Response;
   try {

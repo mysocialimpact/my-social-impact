@@ -1,3 +1,4 @@
+import { assessmentStripeConfig } from "./assessment-stripe";
 import { REPORT_VERSION } from "./report-methodology";
 import { createHash } from "node:crypto";
 import { z } from "zod";
@@ -84,13 +85,40 @@ export async function createReview(
        FROM director.reports r WHERE r.owner_id=$1 AND r.expires_at>now()`,
       [user.id],
     );
+    const sandbox = !!assessmentStripeConfig();
+    if (sandbox && !user.founder) {
+      const allowanceOwner = user.emailVerified
+        ? user.email.toLowerCase()
+        : user.id;
+      await c.query("SELECT pg_advisory_xact_lock(hashtextextended($1,0))", [
+        "assessment-free-allowance:" + allowanceOwner,
+      ]);
+      const {
+        rows: [allowance],
+      } = await c.query<{ used: boolean }>(
+        `SELECT EXISTS (
+           SELECT 1 FROM director.completed_reports WHERE owner_id=ANY($1::text[])
+           UNION ALL
+           SELECT 1 FROM director.reports r JOIN director.reviews v ON v.report_id=r.id
+           WHERE r.owner_id=ANY($1::text[]) AND r.expires_at>now()
+           AND v.status IN ('queued','running')
+         ) AS used`,
+        [user.accessIds || [user.id]],
+      );
+      if (allowance.used)
+        throw new AppError(
+          429,
+          "Your free plan includes one uploaded report and all three standard assessments. Open My Reports to continue.",
+          "REVIEW_ALLOWANCE",
+        );
+    }
     if (Number(limits.total) >= 20)
       throw new AppError(
         429,
         "I’m sorry — your saved report storage is full. You can keep 20 reports; please delete an old report from My Reports to make space.",
         "REPORT_STORAGE_LIMIT",
       );
-    if (Number(limits.completed) >= 3)
+    if (!(sandbox && user.founder) && Number(limits.completed) >= 3)
       throw new AppError(
         429,
         "I’m sorry — you’ve completed three free report reviews in the last 24 hours. Your existing reports are still available. Please return tomorrow, or use “Help make this better” if you need support.",

@@ -1,4 +1,5 @@
 import { Admin } from "@/components/admin";
+import { assessmentStripeConfig } from "@/lib/assessment-stripe";
 import { PageIntro } from "@/components/shell";
 export const metadata = {
   robots: { index: false, follow: false },
@@ -8,7 +9,7 @@ export default function AdminPage() {
   return (
     <section className="section">
       <PageIntro label="Founder control centre" title="The useful overview." />
-      <Admin />
+      <Admin assessmentSandbox={!!assessmentStripeConfig()} />
     </section>
   );
 }
