@@ -1,7 +1,13 @@
 "use client";
 import type { ReviewResult } from "@/lib/pipeline";
-import { frameworkNames, type Framework } from "@/lib/rubric";
+import { type Framework } from "@/lib/rubric";
 import { publication, identity, brief } from "@/lib/publication";
+import { ReportIntroduction } from "./report-intelligence";
+function openEvidence() {
+  const evidence = document.getElementById("supporting-evidence");
+  if (evidence instanceof HTMLDetailsElement) evidence.open = true;
+}
+
 export function ReportPublication({
   result,
   framework,
@@ -22,20 +28,12 @@ export function ReportPublication({
       className="publication"
       style={{ "--edition": brand.colour } as React.CSSProperties}
     >
-      <div
-        className={
-          "pub-mast " + (framework === "report" ? "pub-mast-edit" : "")
-        }
-      >
-        <img src={"/brand/" + brand.logo} alt="" />
-        <span>{frameworkNames[framework]}</span>
-        <small>Methodology {result.version}</small>
-      </div>
-      <header className="pub-cover">
+      <ReportIntroduction framework={framework} version={result.version} />
+      <header className="pub-cover" id="assessment-scores" tabIndex={-1}>
         <div className="pub-cover-grid">
           <div>
             <p>{result.context.organisation}</p>
-            <h1>{result.context.title}</h1>
+            <h2>{result.context.title}</h2>
           </div>
           <div className="pub-grade">
             {view.overall ? (
@@ -69,8 +67,13 @@ export function ReportPublication({
         <a href="#pillar-scores">Scores</a>
         <a href="#priorities">Priorities</a>
         <a href="#main-findings">Findings</a>
-        {hasDetails && <a href="#supporting-evidence">Evidence</a>}
+        {hasDetails && (
+          <a href="#supporting-evidence" onClick={openEvidence}>
+            Evidence
+          </a>
+        )}
         {canShare && <a href="#share-report">Share</a>}
+        <a href="#intelligence">Intelligence options</a>
         <a href="#professional-support">Expert help</a>
       </nav>
       <section className="pub-scores" id="pillar-scores">
@@ -110,13 +113,7 @@ export function ReportPublication({
                 </small>
               )}
               {hasDetails && (
-                <a
-                  href="#supporting-evidence"
-                  onClick={() => {
-                    const el = document.getElementById("supporting-evidence");
-                    if (el instanceof HTMLDetailsElement) el.open = true;
-                  }}
-                >
+                <a href="#supporting-evidence" onClick={openEvidence}>
                   Explore the findings →
                 </a>
               )}

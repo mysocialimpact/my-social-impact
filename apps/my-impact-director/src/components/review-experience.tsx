@@ -1,6 +1,8 @@
 "use client";
 import { SharePublication } from "./share-publication";
 import { ReportPublication } from "./report-publication";
+import { ReviewMethodology } from "./report-intelligence";
+import { IntelligenceOffers } from "./intelligence-offers";
 import { ContributionPanel } from "./contribution-panel";
 import { ReviewLearning } from "./review-learning";
 import { ContextualOffers } from "./contextual-offers";
@@ -26,6 +28,7 @@ import {
   frameworkLogos,
 } from "@/lib/rubric";
 export type ExperienceReview = {
+  assessmentModels?: string[];
   id: string;
   version?: string;
   framework: "document" | Framework;
@@ -275,15 +278,16 @@ function EmailInvitation({
 export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
   const { user: accountUser, loading: accountLoading } = useSession();
   const searchParams = useSearchParams();
-  const [results, setResults] = useState(searchParams.get("results") === "1"),
+  const [view, setView] = useState<"learning" | "results" | null>(null),
     [busy, setBusy] = useState(false),
     [error, setError] = useState("");
   useEffect(() => {
-    if (searchParams.get("results") === "1") setResults(true);
+    if (searchParams.get("results") === "1") setView("results");
   }, [searchParams]);
   const setAction = useReportAction();
   const framework = r.framework === "document" ? null : r.framework,
     complete = r.status === "complete" && !!r.result;
+  const results = view === "results" || (complete && view !== "learning");
   const siblings = (r.siblings || [])
     .filter((s, i, a) => a.findIndex((x) => x.framework === s.framework) === i)
     .map((s) =>
@@ -354,7 +358,7 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
         ? allDone
           ? "/reviews"
           : "#choose-review"
-        : nextAfterResults && allDone
+        : nextAfterResults
           ? "/reviews"
           : complete
             ? "#review-results"
@@ -363,13 +367,7 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
         ? undefined
         : complete
           ? nextAfterResults
-            ? allDone
-              ? () => window.location.assign("/reviews")
-              : () => {
-                  document
-                    .querySelector(".next-review")
-                    ?.scrollIntoView({ behavior: "smooth", block: "start" });
-                }
+            ? undefined
             : viewResults
           : r.status === "failed"
             ? () => document.querySelector(".honest-status")?.scrollIntoView()
@@ -402,7 +400,8 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
       .catch(() => {});
   }, [complete, results, r.id]);
   function viewResults() {
-    setResults(true);
+    setView("results");
+    document.getElementById("review-results")?.scrollIntoView();
   }
   async function retrySaved(id: string) {
     setBusy(true);
@@ -634,7 +633,6 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
               canShare={r.full && !!accountUser?.emailVerified}
               id={r.id}
             />
-            <ContextualOffers framework={framework} reviewId={r.id} />
             {framework === "report" && r.result.version !== REPORT_VERSION && (
               <div className="notice">
                 <p>
@@ -675,21 +673,35 @@ export function ReviewExperience({ review: r }: { review: ExperienceReview }) {
                 </details>
               )}
             {r.full && (
-              <>
-                <details
-                  className="full-review-details"
-                  id="supporting-evidence"
-                >
-                  <summary>
-                    Explore the complete criterion-level assessment
-                  </summary>
-                  <ReviewResults id={r.id} result={r.result} appendix />
-                </details>
-                {accountUser?.emailVerified && <SharePublication id={r.id} />}
-              </>
+              <details className="full-review-details" id="supporting-evidence">
+                <summary>
+                  Explore the complete criterion-level assessment
+                </summary>
+                <ReviewResults id={r.id} result={r.result} appendix />
+              </details>
             )}
-            <button className="subtle-button" onClick={() => setResults(false)}>
-              Return to the learning experience
+            <ReviewMethodology
+              framework={framework}
+              models={r.assessmentModels}
+              legacyDesign={r.result.version !== REPORT_VERSION}
+            />
+            <IntelligenceOffers />
+            {r.full && accountUser?.emailVerified && (
+              <SharePublication id={r.id} />
+            )}
+            <ContextualOffers
+              showPortrait={false}
+              framework={framework}
+              reviewId={r.id}
+            />
+            <button
+              className="subtle-button"
+              onClick={() => {
+                setView("learning");
+                document.getElementById("review-results")?.scrollIntoView();
+              }}
+            >
+              Explore the learning experience
             </button>
           </>
         ) : (
