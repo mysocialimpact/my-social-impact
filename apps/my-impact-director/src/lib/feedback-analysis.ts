@@ -53,6 +53,18 @@ export async function verifyFeedbackModel() {
   });
   return r.ok && (await r.json()).id === feedbackModel;
 }
+// The deployment records a free model-directory check even before the first written submission.
+export async function recordFeedbackCapability() {
+  const [claimed] =
+    await query(`INSERT INTO director.rate_limits(key,count,reset_at) VALUES('feedback-model-directory',0,now()+interval '6 hours')
+    ON CONFLICT(key) DO UPDATE SET reset_at=excluded.reset_at WHERE director.rate_limits.reset_at<=now() RETURNING key`);
+  if (!claimed) return;
+  const available = await verifyFeedbackModel().catch(() => false);
+  await query(
+    "INSERT INTO director.audit(actor_id,action,resource_id,reason) VALUES('feedback-worker','feedback-model-directory',$1,$2)",
+    [feedbackModel, available ? "available" : "unavailable"],
+  );
+}
 export async function analyseFeedback(feedbackId?: string) {
   const job = await transaction(async (c) => {
     await c.query(

@@ -13,9 +13,13 @@ export default async function FeedbackPage({
     value.length <= 200
       ? value
       : "/";
+  const reviewId = /^\/reviews\/([a-f\d-]{36})$/i.exec(from)?.[1];
   return (
-    <>
-      <Feedback dedicated from={from} uploadIssue={params.issue === "upload"} />
-    </>
+    <Feedback
+      dedicated
+      from={from}
+      reviewId={reviewId}
+      uploadIssue={params.issue === "upload"}
+    />
   );
 }

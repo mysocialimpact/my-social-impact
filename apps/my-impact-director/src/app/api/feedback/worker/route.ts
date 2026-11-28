@@ -1,5 +1,9 @@
 import { secretMatches } from "@/lib/security";
-import { analyseFeedback, verifyFeedbackModel } from "@/lib/feedback-analysis";
+import {
+  analyseFeedback,
+  recordFeedbackCapability,
+  verifyFeedbackModel,
+} from "@/lib/feedback-analysis";
 import { sendFeedbackMail, reconcileFeedbackMail } from "@/lib/feedback-mail";
 export const maxDuration = 120;
 export async function GET(req: Request) {
@@ -14,6 +18,7 @@ export async function GET(req: Request) {
   if (new URL(req.url).searchParams.get("check") === "model")
     return Response.json({ available: await verifyFeedbackModel() });
   await Promise.all([
+    recordFeedbackCapability(),
     analyseFeedback(),
     sendFeedbackMail(),
     reconcileFeedbackMail(),

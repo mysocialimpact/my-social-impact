@@ -61,7 +61,9 @@ export async function POST(req: Request) {
           !user.anonymous,
           data.email || null,
           data.consent,
-          data.comment.replace(/\s/g, "").length >= 6 ? "pending" : "skipped",
+          (data.comment.match(/[\p{L}\p{N}]/gu)?.length ?? 0) >= 3
+            ? "pending"
+            : "skipped",
           !!data.section ||
             !!data.comment ||
             data.consent ||
