@@ -4,7 +4,6 @@ import { PDFDocument, StandardFonts } from "pdf-lib";
 import {
   artConfiguration,
   validateArtReview,
-  artReviewFor,
   artContradictions,
   enforceArtCoverage,
   inspectArtDirector,
@@ -117,7 +116,7 @@ test("invalid visual responses retain charged usage for retry cost accounting", 
         ]),
       (e: unknown) =>
         e instanceof AIError &&
-        e.code === "AI_SCHEMA_INVALID" &&
+        e.code === "ART_EVIDENCE_INVALID" &&
         !!e.usage &&
         Math.abs(e.usage.cost - 0.0006) < 1e-10,
     );
@@ -126,23 +125,4 @@ test("invalid visual responses retain charged usage for retry cost accounting", 
     if (oldKey === undefined) delete process.env.OPENAI_API_KEY;
     else process.env.OPENAI_API_KEY = oldKey;
   }
-});
-
-test("native art-director response constrains all citations and observations to supplied physical pages", () => {
-  const response = firstOpinion([1, 2]);
-  assert.equal(artReviewFor([1, 2]).safeParse(response).success, true);
-  assert.equal(artReviewFor([1]).safeParse(response).success, false);
-  assert.equal(
-    artReviewFor([1, 2]).safeParse({
-      ...response,
-      strengths: [
-        {
-          finding:
-            "A synthetic located observation long enough for validation.",
-          pages: [99],
-        },
-      ],
-    }).success,
-    false,
-  );
 });

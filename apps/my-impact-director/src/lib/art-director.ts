@@ -129,35 +129,6 @@ export const artReviewSchema = z
     limitations: z.array(z.string().min(10).max(500)).max(8),
   })
   .strict();
-// Constrain native structured responses to the actual supplied PDF pages.
-// The independent readability and citation checks below still apply.
-export function artReviewFor(requiredPages: number[]) {
-  if (!requiredPages.length) throw Error("No physical pages supplied");
-  const page = z.literal(requiredPages as [number, ...number[]]);
-  const refs = z.array(page).min(1).max(8);
-  const locatedOnPage = located.extend({ pages: refs }).strict();
-  return artReviewSchema
-    .extend({
-      dimensions: z
-        .object({
-          readability: dimension.extend({ pages: refs }).strict(),
-          hierarchy: dimension.extend({ pages: refs }).strict(),
-          design: dimension.extend({ pages: refs }).strict(),
-          storytelling: dimension.extend({ pages: refs }).strict(),
-          data: dimension.extend({ pages: refs }).strict(),
-        })
-        .strict(),
-      strengths: z.array(locatedOnPage).min(1).max(4),
-      weaknesses: z.array(locatedOnPage).max(6),
-      opportunities: z.array(locatedOnPage).min(1).max(5),
-      observations: z
-        .array(
-          artReviewSchema.shape.observations.element.extend({ page }).strict(),
-        )
-        .length(requiredPages.length),
-    })
-    .strict();
-}
 export type ArtReview = z.infer<typeof artReviewSchema>;
 export type ArtRecord = {
   kind: typeof ART_NOTE;
@@ -282,14 +253,8 @@ export function validateArtReview(value: unknown, required: number[]) {
     ...review.weaknesses,
     ...review.opportunities,
   ])
-    if (item.pages.some((p) => !readable.has(p))) {
-      console.warn("ART_PAGE_REFERENCES_REJECTED", {
-        required,
-        readable: [...readable],
-        cited: item.pages,
-      });
+    if (item.pages.some((p) => !readable.has(p)))
       throw Error("Art director cited an uninspected or unreadable page");
-    }
   return {
     ...review,
     observations: required.map((page) =>
@@ -333,7 +298,7 @@ export async function inspectArtDirector(bytes: Buffer, pages: Page[]) {
     throw new AIError("ART_VISUAL_EVIDENCE_REQUIRED", false);
   }
   const response = await structured(
-    artReviewFor(requiredPages),
+    artReviewSchema,
     ART_FIRST_INSTRUCTIONS,
     {
       physicalPages: requiredPages,
