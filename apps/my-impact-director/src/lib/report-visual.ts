@@ -1,3 +1,5 @@
+import { existsSync } from "node:fs";
+import { join, sep } from "node:path";
 import {
   REPORT_VERSION,
   isReportV2,
@@ -8,11 +10,8 @@ import {
 } from "./report-methodology";
 import type { PdfChecks } from "./report-accessibility";
 import { reportGuidance } from "./report-guidance";
-import {
-  getDocumentProxy,
-  createIsomorphicCanvasFactory,
-  renderPageAsImage,
-} from "unpdf";
+import { createIsomorphicCanvasFactory, renderPageAsImage } from "unpdf";
+import { getDocumentProxy } from "./pdf-runtime";
 import { z } from "zod";
 import { structured } from "./ai";
 import { criterionSchema, type Page, type Criterion } from "./assessment";
@@ -59,21 +58,40 @@ export function visualSample(pages: Page[], version = REPORT_VERSION) {
   }
   return [...selected].sort((a, b) => a - b);
 }
+function standardFontDirectory() {
+  // Resolve packaged assets from the real function root. Bundler module IDs
+  // returned by require.resolve are not necessarily filesystem paths.
+  const candidates = [
+    join(process.cwd(), "node_modules/pdfjs-dist/standard_fonts"),
+    join(
+      process.cwd(),
+      "apps/my-impact-director/node_modules/pdfjs-dist/standard_fonts",
+    ),
+  ];
+  const directory = candidates.find((p) =>
+    existsSync(join(p, "LiberationSans-Regular.ttf")),
+  );
+  if (!directory) {
+    console.error("PDF_STANDARD_FONT_ASSETS_MISSING", { candidates });
+    throw Error("Packaged PDF standard fonts unavailable");
+  }
+  return directory + sep;
+}
 export async function renderVisualPages(
   bytes: Buffer,
   numbers: number[],
   width = 1600,
 ) {
-  // unpdf installs a placeholder DOMMatrix in Node. Native transparency groups
-  // need a real matrix (including a–f) when PDF.js transforms a clipping path.
-  const canvas = await import("@napi-rs/canvas");
-  if (!globalThis.DOMMatrix || !("a" in new globalThis.DOMMatrix()))
-    globalThis.DOMMatrix = canvas.DOMMatrix as unknown as typeof DOMMatrix;
   const CanvasFactory = await createIsomorphicCanvasFactory(
     () => import("@napi-rs/canvas"),
   );
   const pdf = await getDocumentProxy(new Uint8Array(bytes), {
     CanvasFactory,
+    // Serverless hosts have no system fonts. PDF.js needs its own standard
+    // fonts to render valid PDFs whose Helvetica/Times fonts are not embedded.
+    standardFontDataUrl: standardFontDirectory(),
+    useSystemFonts: false,
+    disableFontFace: true,
     isEvalSupported: false,
     stopAtErrors: true,
   });

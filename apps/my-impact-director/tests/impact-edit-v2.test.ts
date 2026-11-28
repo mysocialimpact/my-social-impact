@@ -212,16 +212,13 @@ test("PDF checks report actual small type and missing structure without claiming
 });
 test("v2 scoring receives actual images, anchored rubric and no unapproved external requests", async () => {
   const original = globalThis.fetch,
-    previous = process.env.AI_GATEWAY_API_KEY;
-  process.env.AI_GATEWAY_API_KEY = "synthetic-no-network";
+    previous = process.env.OPENAI_API_KEY;
+  process.env.OPENAI_API_KEY = "synthetic-no-network";
   let calls = 0;
   let structureScore = 1;
   try {
     globalThis.fetch = async (input, init) => {
-      assert.equal(
-        String(input),
-        "https://ai-gateway.vercel.sh/v1/chat/completions",
-      );
+      assert.equal(String(input), "https://api.openai.com/v1/chat/completions");
       calls++;
       const body = JSON.parse(String(init?.body)),
         content = body.messages[1].content,
@@ -336,8 +333,8 @@ test("v2 scoring receives actual images, anchored rubric and no unapproved exter
     assert.equal(calls, 3);
   } finally {
     globalThis.fetch = original;
-    if (previous === undefined) delete process.env.AI_GATEWAY_API_KEY;
-    else process.env.AI_GATEWAY_API_KEY = previous;
+    if (previous === undefined) delete process.env.OPENAI_API_KEY;
+    else process.env.OPENAI_API_KEY = previous;
   }
 });
 

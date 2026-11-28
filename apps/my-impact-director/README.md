@@ -74,7 +74,7 @@ Broader model calibration is incomplete. The ten authored fixtures remain in the
 - Anonymous reviews use random 256-bit HttpOnly browser-session tokens, stored only as SHA-256 hashes. Optional saving uses single-use, 30-minute email links and 30-day saved-review sessions. Existing My Social Impact accounts and server-verified founder access remain supported at `/api/readiness-account`; no new passwords are stored.
 - A private `director` schema in a dedicated Neon database. Runtime credentials have access to this schema without database administration privileges. Original PDFs are private database objects, never public URLs.
 - Durable PostgreSQL job stages, row locks, expiring leases, fencing tokens, persisted checkpoints, bounded retries and a protected scheduled worker. Requests initiate processing with Next.js `after`; production cron resumes work after interruptions.
-- Vercel AI Gateway with project OIDC authentication, OpenAI-only routing and zero data retention requested for document assessment. The deployed model is `openai/gpt-5.4-nano`; `gpt-5.4-mini` was unavailable on the Gateway free tier. The approved direct OpenAI key request was rejected by OpenAI Platform, so no direct key was saved and no billing plan changed. Provider 429 responses trigger shared backoff and do not consume a validation retry; total processing attempts remain bounded.
+- Direct OpenAI API with a dedicated project key and explicit organisation/project billing headers. Response storage is disabled and the configured organisation’s API data-retention controls apply. General stages retain `gpt-5.4-nano`; art-director stages retain `gpt-6.1-terra` with high reasoning. There is no Gateway billing fallback. Provider 429 responses retain shared backoff and bounded retry accounting.
 - Strict Zod intermediate schemas; deterministic score calculations; source quote/page validation before publishing; model-selected passage IDs resolve to exact source text, preventing copied-quotation drift; separate material claim analysis. No model-generated aggregate scores are accepted.
 - Service enquiries are stored for the founder, without sending emails. Inspection of report details requires owner sharing consent and a recorded purpose.
 
@@ -89,10 +89,11 @@ Use Node.js 24 and `npm ci`. Copy `.env.example` to a private `.env.local`; neve
 | `DATABASE_URL` | Restricted runtime connection for this application and environment |
 | `ACCOUNT_ORIGIN` | Existing account service origin |
 | `APP_ORIGIN` | Exact application origin; deployment URL is also accepted for CSRF checks |
-| `AI_MODEL` | Gateway model ID; update pricing assumptions when changing it |
+| `AI_MODEL` | Existing OpenAI model ID; the historical `openai/` prefix is accepted and removed for direct requests. Update pricing assumptions when changing models |
 | `CRON_SECRET` | Strong worker authentication secret and report-selection signing key |
 | `REVIEWS_ENABLED` | Defaults off; enable only after live validation |
-| `AI_GATEWAY_API_KEY` | Optional server-only local alternative to deployment OIDC |
+| `OPENAI_API_KEY` | Dedicated project key, stored as a Vercel Secret; required for direct API calls |
+| `OPENAI_ORGANIZATION_ID`, `OPENAI_PROJECT_ID` | Explicit billing context selected by the owner |
 | `EMAIL_ENABLED` | Enable only with a verified sender and successful live delivery check |
 | `RESEND_API_KEY` | Server-only application email credential |
 | `EMAIL_FROM` | Verified sender address accepted by Resend |
@@ -120,7 +121,7 @@ Browser checks use Playwright and axe on public pages and unauthenticated screen
 
 - PDFs up to 50 MB, 100 physical pages and 240,000 extracted characters; visual batches use five pages. Larger documents must be reduced or split before upload. Parsing, active-content screening and visual reading can reject unusual or protected PDFs.
 - Three new reports per visitor per day, twenty retained reports; anonymous network quotas prevent resetting the upload limit by clearing cookies; upload, search, retry, enquiry and sign-in rate limits. Report deletion preserves the daily upload and aggregate spend counters.
-- Estimated spend pauses at $4 per report or $20 per daily accounting window, with a separate 240-stage-request ceiling. Concurrent/in-flight or interrupted requests and web search charges can exceed recorded spend; these are application controls, not a provider billing guarantee. Inspect Gateway usage as well as the founder dashboard. No billing plans were changed.
+- Estimated spend pauses at $4 per report or $20 per daily accounting window, with a separate 240-stage-request ceiling. Concurrent/in-flight or interrupted requests and web search charges can exceed recorded spend; these are application controls, not a provider billing guarantee. Inspect the selected OpenAI project’s usage as well as the founder dashboard. No billing plans were changed.
 - Anonymous reports expire after seven days. Opening a saving link retains a report for 180 days; existing-account uploads also retain for 180 days. All private reads enforce expiry before the scheduled deletion runs. Deletion cascades through results and processing details; linked enquiries become unlinked. Daily cleanup requires the authenticated worker. Provider backups follow provider retention. Account/enquiry erasure requests need operational handling through the contact published in the privacy notice.
 - Source matching verifies quotations against extracted or AI-transcribed text. It cannot independently prove that OCR is faithful to pixels, that an organisation’s claim is true, or that reported evidence is complete. Check the original before relying on a material finding.
 - PDF exports embed DejaVu fonts. Unsupported characters are visibly represented by Unicode code points with an explanatory note, rather than silently removed.

@@ -67,7 +67,7 @@ test(
     ]);
     const originalFetch = globalThis.fetch;
     process.env.REVIEWS_ENABLED = "true";
-    process.env.AI_GATEWAY_API_KEY = "synthetic-contract-test-only";
+    process.env.OPENAI_API_KEY = "synthetic-contract-test-only";
     process.env.APP_ORIGIN = "https://test.example";
     const uid = "qa-" + randomUUID(),
       other = "qa-" + randomUUID(),
@@ -122,7 +122,7 @@ test(
           platformAccess: { founder: isFounder },
         });
       }
-      if (url === "https://ai-gateway.vercel.sh/v1/chat/completions") {
+      if (url === "https://api.openai.com/v1/chat/completions") {
         aiCalls++;
         const b = JSON.parse(String(init?.body));
         assert.equal(b.store, false);

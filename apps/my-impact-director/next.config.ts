@@ -1,7 +1,10 @@
 import type { NextConfig } from "next";
 const config: NextConfig = {
   poweredByHeader: false,
-  serverExternalPackages: ["pg", "unpdf", "@napi-rs/canvas"],
+  serverExternalPackages: ["pg", "unpdf", "@napi-rs/canvas", "pdfjs-dist"],
+  outputFileTracingIncludes: {
+    "/*": ["./node_modules/pdfjs-dist/standard_fonts/**/*"],
+  },
   async headers() {
     return [
       {

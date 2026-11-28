@@ -59,13 +59,10 @@ export default function Privacy() {
           States.
         </p>
         <p>
-          When you request a review, report content is sent through Vercel AI
-          Gateway to OpenAI for extraction and assessment. The application
-          requests zero data retention for each assessment call, disables
-          response storage and restricts routing to the configured provider. If
-          that policy is unavailable, processing fails rather than silently
-          relaxing it. These controls do not remove our own retention of your
-          saved review.
+          When you request a review, report content is sent directly to OpenAI
+          for extraction and assessment. Response storage is disabled. OpenAI’s
+          API data-retention controls for the configured organisation apply.
+          Your saved review follows our retention periods below.
         </p>
         <p>
           Public report discovery sends the organisation name to an AI
