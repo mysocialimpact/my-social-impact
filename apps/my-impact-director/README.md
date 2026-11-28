@@ -89,10 +89,11 @@ Use Node.js 24 and `npm ci`. Copy `.env.example` to a private `.env.local`; neve
 | `DATABASE_URL` | Restricted runtime connection for this application and environment |
 | `ACCOUNT_ORIGIN` | Existing account service origin |
 | `APP_ORIGIN` | Exact application origin; deployment URL is also accepted for CSRF checks |
-| `AI_MODEL` | Gateway model ID; update pricing assumptions when changing it |
+| `AI_MODEL` | Existing OpenAI model ID; the historical `openai/` prefix is accepted and removed for direct requests. Update pricing assumptions when changing models |
 | `CRON_SECRET` | Strong worker authentication secret and report-selection signing key |
 | `REVIEWS_ENABLED` | Defaults off; enable only after live validation |
-| `AI_GATEWAY_API_KEY` | Optional server-only local alternative to deployment OIDC |
+| `OPENAI_API_KEY` | Dedicated project key, stored as a Vercel Secret; required for direct API calls |
+| `OPENAI_ORGANIZATION_ID`, `OPENAI_PROJECT_ID` | Explicit billing context selected by the owner |
 | `EMAIL_ENABLED` | Enable only with a verified sender and successful live delivery check |
 | `RESEND_API_KEY` | Server-only application email credential |
 | `EMAIL_FROM` | Verified sender address accepted by Resend |
@@ -120,7 +121,7 @@ Browser checks use Playwright and axe on public pages and unauthenticated screen
 
 - PDFs up to 50 MB, 100 physical pages and 240,000 extracted characters; visual batches use five pages. Larger documents must be reduced or split before upload. Parsing, active-content screening and visual reading can reject unusual or protected PDFs.
 - Three new reports per visitor per day, twenty retained reports; anonymous network quotas prevent resetting the upload limit by clearing cookies; upload, search, retry, enquiry and sign-in rate limits. Report deletion preserves the daily upload and aggregate spend counters.
-- Estimated spend pauses at $4 per report or $20 per daily accounting window, with a separate 240-stage-request ceiling. Concurrent/in-flight or interrupted requests and web search charges can exceed recorded spend; these are application controls, not a provider billing guarantee. Inspect Gateway usage as well as the founder dashboard. No billing plans were changed.
+- Estimated spend pauses at $4 per report or $20 per daily accounting window, with a separate 240-stage-request ceiling. Concurrent/in-flight or interrupted requests and web search charges can exceed recorded spend; these are application controls, not a provider billing guarantee. Inspect the selected OpenAI project’s usage as well as the founder dashboard. No billing plans were changed.
 - Anonymous reports expire after seven days. Opening a saving link retains a report for 180 days; existing-account uploads also retain for 180 days. All private reads enforce expiry before the scheduled deletion runs. Deletion cascades through results and processing details; linked enquiries become unlinked. Daily cleanup requires the authenticated worker. Provider backups follow provider retention. Account/enquiry erasure requests need operational handling through the contact published in the privacy notice.
 - Source matching verifies quotations against extracted or AI-transcribed text. It cannot independently prove that OCR is faithful to pixels, that an organisation’s claim is true, or that reported evidence is complete. Check the original before relying on a material finding.
 - PDF exports embed DejaVu fonts. Unsupported characters are visibly represented by Unicode code points with an explanatory note, rather than silently removed.
