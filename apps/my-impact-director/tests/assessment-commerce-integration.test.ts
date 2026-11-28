@@ -632,6 +632,29 @@ test(
         (await customerProjectCredits(otherOwner.user))[0].available_pence,
         14900,
       );
+      const one = (await customerProjectCredits(advancedOnly.user))[0];
+      const two = (await customerProjectCredits(otherOwner.user))[0];
+      const project = {
+        action: "redeem",
+        projectRef: "INV-CAPPED",
+        projectFee: 10000,
+        commissionedAt: new Date().toISOString(),
+      } as const;
+      assert.deepEqual(
+        await manageAssessmentCommerce(internal, {
+          ...project,
+          id: String(one.id),
+        }),
+        { applied: 9900, remaining: 100 },
+      );
+      assert.deepEqual(
+        await manageAssessmentCommerce(internal, {
+          ...project,
+          id: String(two.id),
+          projectRef: "inv-capped",
+        }),
+        { applied: 100, remaining: 0 },
+      );
 
       const candidates = await Promise.all([
         reviewer("last-a"),

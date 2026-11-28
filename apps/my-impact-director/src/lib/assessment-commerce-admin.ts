@@ -73,7 +73,7 @@ export async function assessmentCommerceOverview() {
     ),
     query(`SELECT
       (SELECT count(DISTINCT report_id)::int FROM director.reviews WHERE first_viewed_at IS NOT NULL) AS reports_viewed,
-      (SELECT count(*)::int FROM director.assessment_project_redemptions) AS projects_commissioned`),
+      (SELECT count(DISTINCT lower(project_ref))::int FROM director.assessment_project_redemptions) AS projects_commissioned`),
   ]);
   return { tiers, promotions, credits, funnel };
 }
@@ -215,9 +215,31 @@ export async function manageAssessmentCommerce(
         409,
         "The project must have been commissioned within the eligible 60-day credit period, with a settled Human Intelligence package.",
       );
+    await client.query(
+      "SELECT pg_advisory_xact_lock(hashtextextended(lower($1),0))",
+      ["assessment-project:" + input.projectRef],
+    );
+    const {
+      rows: [project],
+    } = await client.query<{ applied: number; fee: number | null }>(
+      `SELECT COALESCE(sum(applied_pence),0)::int AS applied, min(project_fee_pence) AS fee
+       FROM director.assessment_project_redemptions WHERE lower(project_ref)=lower($1)`,
+      [input.projectRef],
+    );
+    if (project.fee !== null && project.fee !== input.projectFee)
+      throw new AppError(
+        409,
+        "The fee differs from the one already recorded for this project.",
+      );
+    const balance = input.projectFee - project.applied;
+    if (balance <= 0)
+      throw new AppError(
+        409,
+        "Credits already cover this project’s qualifying fee.",
+      );
     const { applied, remaining } = applyProjectCredit(
       credit.qualifying,
-      input.projectFee,
+      balance,
     );
     await client.query(
       `INSERT INTO director.assessment_project_redemptions

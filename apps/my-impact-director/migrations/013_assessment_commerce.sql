@@ -94,6 +94,9 @@ CREATE TABLE IF NOT EXISTS director.assessment_project_redemptions (
  recorded_at timestamptz NOT NULL DEFAULT now()
 );
 
+CREATE INDEX IF NOT EXISTS assessment_project_redemptions_ref
+ ON director.assessment_project_redemptions(lower(project_ref));
+
 REVOKE ALL ON director.assessment_promotions, director.assessment_orders,
  director.assessment_payment_events, director.assessment_project_credits,
  director.assessment_project_redemptions FROM PUBLIC;
