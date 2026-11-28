@@ -1,5 +1,6 @@
 /** Paid calibration is opt-in. The default prints a cost/test plan and makes no model requests. */
 import fs from "node:fs/promises";
+import { modelRates } from "../src/lib/ai";
 import path from "node:path";
 import { createHash } from "node:crypto";
 import { extractPages } from "../src/lib/documents";
@@ -98,9 +99,9 @@ console.log(
 if (!paid) process.exit(0);
 if (!(budget > 0 && budget <= 2))
   throw Error("Explicit approved --budget-usd must be >0 and <=2.00.");
-if (!process.env.AI_GATEWAY_API_KEY && !process.env.VERCEL_OIDC_TOKEN)
+if (!process.env.OPENAI_API_KEY)
   throw Error(
-    "Use the linked Vercel project OIDC env or existing Gateway key securely. No credential is printed or provisioned by this script.",
+    "Load the authorised OpenAI project key securely. No credential is printed or provisioned by this script.",
   );
 process.env.AI_MODEL = model;
 const originalFetch = globalThis.fetch,
@@ -135,22 +136,20 @@ try {
     accounted = saved.accounted;
     ledger = saved.ledger;
   }
-  const catalogue = await originalFetch(
-    "https://ai-gateway.vercel.sh/v1/models",
-  ).then((r) => r.json());
-  const listed = catalogue.data?.find((m: { id: string }) => m.id === model);
-  if (
-    !listed ||
-    Number(listed.pricing.input) !== inputRate ||
-    Number(listed.pricing.output) !== outputRate ||
-    listed.context_window !== 400000
-  )
+  const catalogue = await originalFetch("https://api.openai.com/v1/models", {
+    headers: { authorization: `Bearer ${process.env.OPENAI_API_KEY}` },
+  }).then((r) => r.json());
+  const listed = catalogue.data?.find(
+    (m: { id: string }) => m.id === model.replace(/^openai\//, ""),
+  );
+  const rates = modelRates(model);
+  if (!listed || rates.input !== inputRate || rates.output !== outputRate)
     throw Error(
-      "Catalogue changed; obtain a revised cost approval before testing.",
+      "Model or approved rates changed; review the budget before testing.",
     );
   await fs.mkdir(`${directory}/responses`, { recursive: true });
   globalThis.fetch = async (input, init) => {
-    if (String(input) !== "https://ai-gateway.vercel.sh/v1/chat/completions")
+    if (String(input) !== "https://api.openai.com/v1/chat/completions")
       throw Error(
         "Calibration blocks all other network requests, including email.",
       );
@@ -165,7 +164,7 @@ try {
     if (cached) return Response.json(JSON.parse(cached));
     const body = JSON.parse(payload);
     if (
-      body.model !== model ||
+      body.model !== model.replace(/^openai\//, "") ||
       body.max_completion_tokens !== 14000 ||
       body.tools
     )

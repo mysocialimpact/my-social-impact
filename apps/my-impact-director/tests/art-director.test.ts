@@ -83,8 +83,8 @@ test("qualitative contradictions trigger investigation, never a mechanical score
 });
 test("invalid visual responses retain charged usage for retry cost accounting", async () => {
   const original = globalThis.fetch,
-    oldKey = process.env.AI_GATEWAY_API_KEY;
-  process.env.AI_GATEWAY_API_KEY = "synthetic-only";
+    oldKey = process.env.OPENAI_API_KEY;
+  process.env.OPENAI_API_KEY = "synthetic-only";
   try {
     const pdf = await PDFDocument.create(),
       font = await pdf.embedFont(StandardFonts.Helvetica);
@@ -122,7 +122,7 @@ test("invalid visual responses retain charged usage for retry cost accounting", 
     );
   } finally {
     globalThis.fetch = original;
-    if (oldKey === undefined) delete process.env.AI_GATEWAY_API_KEY;
-    else process.env.AI_GATEWAY_API_KEY = oldKey;
+    if (oldKey === undefined) delete process.env.OPENAI_API_KEY;
+    else process.env.OPENAI_API_KEY = oldKey;
   }
 });

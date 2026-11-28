@@ -21,7 +21,7 @@ test("calibration defaults to no model calls and preserves a total budget across
     const hook = join(dir, "network.mjs");
     await writeFile(
       hook,
-      `globalThis.fetch=async input=>{if(String(input)==='https://ai-gateway.vercel.sh/v1/models')return Response.json({data:[{id:'openai/gpt-5.4-nano',context_window:400000,pricing:{input:'0.0000002',output:'0.00000125'}}]});throw Error('MODEL_CALL_ESCAPED_BUDGET_GUARD');};`,
+      `globalThis.fetch=async input=>{if(String(input)==='https://api.openai.com/v1/models')return Response.json({data:[{id:'gpt-5.4-nano',context_window:400000,pricing:{input:'0.0000002',output:'0.00000125'}}]});throw Error('MODEL_CALL_ESCAPED_BUDGET_GUARD');};`,
     );
     const run = (args: string[]) =>
       spawnSync(
@@ -39,7 +39,7 @@ test("calibration defaults to no model calls and preserves a total budget across
           cwd: process.cwd(),
           env: {
             ...process.env,
-            AI_GATEWAY_API_KEY: "synthetic-no-network",
+            OPENAI_API_KEY: "synthetic-no-network",
             IMPACT_EDIT_CALIBRATION_DIR: join(dir, "paid"),
           },
           encoding: "utf8",

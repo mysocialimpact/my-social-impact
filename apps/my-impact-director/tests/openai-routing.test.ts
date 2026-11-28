@@ -1,20 +1,38 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { z } from "zod";
-import { structured, searchWeb, AIError } from "../src/lib/ai";
+import {
+  structured,
+  searchWeb,
+  AIError,
+  aiAvailable,
+  modelRates,
+} from "../src/lib/ai";
 
 test("OpenAI project key routes assessments and discovery directly, without billing fallback", async () => {
   const oldFetch = globalThis.fetch,
     oldKey = process.env.OPENAI_API_KEY,
-    oldGateway = process.env.AI_GATEWAY_API_KEY;
+    oldGateway = process.env.AI_GATEWAY_API_KEY,
+    oldProject = process.env.OPENAI_PROJECT_ID,
+    oldOrg = process.env.OPENAI_ORGANIZATION_ID;
   process.env.OPENAI_API_KEY = "synthetic-openai-key";
   process.env.AI_GATEWAY_API_KEY = "synthetic-gateway-key";
+  process.env.OPENAI_PROJECT_ID = "proj_synthetic";
+  process.env.OPENAI_ORGANIZATION_ID = "org_synthetic";
   const requests: { url: string; body: Record<string, unknown> }[] = [];
   try {
     globalThis.fetch = async (url, init) => {
       assert.equal(
         new Headers(init?.headers).get("authorization"),
         "Bearer synthetic-openai-key",
+      );
+      assert.equal(
+        new Headers(init?.headers).get("OpenAI-Project"),
+        "proj_synthetic",
+      );
+      assert.equal(
+        new Headers(init?.headers).get("OpenAI-Organization"),
+        "org_synthetic",
       );
       requests.push({ url: String(url), body: JSON.parse(String(init?.body)) });
       if (String(url).endsWith("/responses"))
@@ -48,8 +66,14 @@ test("OpenAI project key routes assessments and discovery directly, without bill
       z.object({ ok: z.boolean() }).strict(),
       "Test only",
       { source: "synthetic" },
-      undefined,
-      [],
+      Buffer.from("synthetic PDF contract"),
+      [
+        {
+          page: 2,
+          dataUrl: "data:image/jpeg;base64,synthetic",
+          view: "full page",
+        },
+      ],
       {
         model: "openai/gpt-5.4-mini",
         reasoningEffort: "low",
@@ -57,13 +81,38 @@ test("OpenAI project key routes assessments and discovery directly, without bill
       },
     );
     assert.equal(result.data.ok, true);
+    assert.equal(result.usage.inputTokens, 1);
+    assert.equal(result.usage.outputTokens, 1);
+    assert.equal(result.usage.cost, 0.00000075 + 0.0000045);
+    assert.equal(result.usage.model, "gpt-5.4-mini");
+    assert.deepEqual(
+      modelRates("gpt-6.1-terra"),
+      modelRates("openai/gpt-6.1-terra"),
+    );
     assert.equal(requests[0].url, "https://api.openai.com/v1/chat/completions");
     assert.equal(requests[0].body.model, "gpt-5.4-mini");
     assert.equal(requests[0].body.store, false);
+    assert.equal(requests[0].body.reasoning_effort, "low");
+    assert.equal(requests[0].body.max_completion_tokens, 100);
+    const content = (requests[0].body.messages as { content: unknown[] }[])[1]
+      .content;
+    assert.deepEqual(content[1], {
+      type: "file",
+      file: {
+        filename: "report.pdf",
+        file_data: `data:application/pdf;base64,${Buffer.from("synthetic PDF contract").toString("base64")}`,
+      },
+    });
+    assert.deepEqual(content[3], {
+      type: "image_url",
+      image_url: { url: "data:image/jpeg;base64,synthetic", detail: "high" },
+    });
     assert.equal(requests[0].body.providerOptions, undefined);
     const links = await searchWeb("Synthetic QA");
     assert.equal(requests[1].url, "https://api.openai.com/v1/responses");
     assert.equal(links[0].url, "https://example.org/report.pdf");
+    assert.equal(requests[1].body.model, "gpt-5.4-mini");
+    assert.equal(requests[1].body.store, false);
     let failures = 0;
     globalThis.fetch = async (url) => {
       failures++;
@@ -85,31 +134,34 @@ test("OpenAI project key routes assessments and discovery directly, without bill
     else process.env.OPENAI_API_KEY = oldKey;
     if (oldGateway === undefined) delete process.env.AI_GATEWAY_API_KEY;
     else process.env.AI_GATEWAY_API_KEY = oldGateway;
+    if (oldProject === undefined) delete process.env.OPENAI_PROJECT_ID;
+    else process.env.OPENAI_PROJECT_ID = oldProject;
+    if (oldOrg === undefined) delete process.env.OPENAI_ORGANIZATION_ID;
+    else process.env.OPENAI_ORGANIZATION_ID = oldOrg;
   }
 });
-test("existing gateway operation is retained until an OpenAI project key is configured", async () => {
+test("missing direct key never silently resumes gateway billing", async () => {
   const oldFetch = globalThis.fetch,
     oldKey = process.env.OPENAI_API_KEY,
     oldGateway = process.env.AI_GATEWAY_API_KEY;
   delete process.env.OPENAI_API_KEY;
   process.env.AI_GATEWAY_API_KEY = "synthetic-gateway-key";
+  let calls = 0;
+  globalThis.fetch = async () => {
+    calls++;
+    throw Error("No provider request permitted");
+  };
   try {
-    globalThis.fetch = async (url, init) => {
-      assert.equal(
-        String(url),
-        "https://ai-gateway.vercel.sh/v1/chat/completions",
+    assert.equal(aiAvailable(), false);
+    for (const call of [
+      () => structured(z.object({ ok: z.boolean() }).strict(), "Synthetic", {}),
+      () => searchWeb("Synthetic"),
+    ])
+      await assert.rejects(
+        call,
+        (e: unknown) => e instanceof AIError && e.code === "AI_NOT_CONFIGURED",
       );
-      const body = JSON.parse(String(init?.body));
-      assert.equal(body.model, "openai/gpt-5.4-mini");
-      assert.equal(body.providerOptions.gateway.zeroDataRetention, true);
-      return Response.json({
-        id: "qa",
-        choices: [
-          { finish_reason: "stop", message: { content: '{"ok":true}' } },
-        ],
-      });
-    };
-    await structured(z.object({ ok: z.boolean() }), "Test", {});
+    assert.equal(calls, 0);
   } finally {
     globalThis.fetch = oldFetch;
     if (oldKey === undefined) delete process.env.OPENAI_API_KEY;

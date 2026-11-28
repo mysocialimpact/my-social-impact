@@ -19,7 +19,7 @@ test(
       "/my_impact_director_validation",
     );
     process.env.REVIEWS_ENABLED = "true";
-    process.env.AI_GATEWAY_API_KEY = "synthetic-contract-only";
+    process.env.OPENAI_API_KEY = "synthetic-contract-only";
     const original = globalThis.fetch;
     let inconsistent = false,
       auditCalls = 0;
@@ -43,10 +43,7 @@ test(
       limitations: ["Not a real professional assessment."],
     };
     globalThis.fetch = async (input, init) => {
-      assert.equal(
-        String(input),
-        "https://ai-gateway.vercel.sh/v1/chat/completions",
-      );
+      assert.equal(String(input), "https://api.openai.com/v1/chat/completions");
       const body = JSON.parse(String(init?.body)),
         p = JSON.parse(body.messages[1].content[0].text);
       let data: Record<string, unknown>;

@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { getVercelOidcToken } from "@vercel/functions/oidc";
 export class AIError extends Error {
   constructor(
     public code: string,
@@ -44,36 +43,30 @@ export function modelRates(model: string) {
     "openai/gpt-6.1-sol": { input: 0.000002, output: 0.00001 },
     "openai/gpt-6-astra": { input: 0.00001, output: 0.00005 },
   };
-  if (!rates[model]) throw new AIError("AI_MODEL_PRICE_UNVERIFIED", false);
-  return rates[model];
+  const rate = rates[`openai/${providerModel(model)}`];
+  if (!rate) throw new AIError("AI_MODEL_PRICE_UNVERIFIED", false);
+  return rate;
 }
 export type AIResult<T> = { data: T; usage: Usage };
 export function aiAvailable() {
-  return !!(
-    process.env.OPENAI_API_KEY ||
-    process.env.AI_GATEWAY_API_KEY ||
-    process.env.VERCEL_OIDC_TOKEN ||
-    process.env.VERCEL
-  );
-}
-function providerUrl(path: string) {
-  return (
-    (process.env.OPENAI_API_KEY
-      ? "https://api.openai.com/v1/"
-      : "https://ai-gateway.vercel.sh/v1/") + path
-  );
+  return !!process.env.OPENAI_API_KEY;
 }
 function providerModel(model: string) {
-  return process.env.OPENAI_API_KEY ? model.replace(/^openai\//, "") : model;
+  return model.replace(/^openai\//, "");
 }
-async function authorization() {
-  if (process.env.OPENAI_API_KEY) return process.env.OPENAI_API_KEY;
-  if (process.env.AI_GATEWAY_API_KEY) return process.env.AI_GATEWAY_API_KEY;
-  try {
-    return await getVercelOidcToken();
-  } catch {
+function openAIHeaders() {
+  if (!process.env.OPENAI_API_KEY)
     throw new AIError("AI_NOT_CONFIGURED", false);
-  }
+  return {
+    "content-type": "application/json",
+    authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+    ...(process.env.OPENAI_ORGANIZATION_ID
+      ? { "OpenAI-Organization": process.env.OPENAI_ORGANIZATION_ID }
+      : {}),
+    ...(process.env.OPENAI_PROJECT_ID
+      ? { "OpenAI-Project": process.env.OPENAI_PROJECT_ID }
+      : {}),
+  };
 }
 export async function structured<T extends z.ZodType>(
   schema: T,
@@ -113,12 +106,9 @@ export async function structured<T extends z.ZodType>(
       },
       { type: "image_url", image_url: { url: image.dataUrl, detail: "high" } },
     );
-  const response = await fetch(providerUrl("chat/completions"), {
+  const response = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
-    headers: {
-      "content-type": "application/json",
-      authorization: `Bearer ${await authorization()}`,
-    },
+    headers: openAIHeaders(),
     signal: AbortSignal.timeout(160000),
     body: JSON.stringify({
       model: providerModel(model),
@@ -137,13 +127,6 @@ export async function structured<T extends z.ZodType>(
           schema: jsonSchema,
         },
       },
-      ...(!process.env.OPENAI_API_KEY
-        ? {
-            providerOptions: {
-              gateway: { only: ["openai"], zeroDataRetention: true },
-            },
-          }
-        : {}),
     }),
   });
   if (!response.ok) {
@@ -177,10 +160,10 @@ export async function structured<T extends z.ZodType>(
     cost:
       it *
         rates.input *
-        (it > 272000 && model.startsWith("openai/gpt-6") ? 2 : 1) +
+        (it > 272000 && providerModel(model).startsWith("gpt-6") ? 2 : 1) +
       ot *
         rates.output *
-        (it > 272000 && model.startsWith("openai/gpt-6") ? 1.5 : 1),
+        (it > 272000 && providerModel(model).startsWith("gpt-6") ? 1.5 : 1),
     duration: Date.now() - start,
   };
   const choice = r.choices?.[0];
@@ -198,12 +181,9 @@ export async function structured<T extends z.ZodType>(
   return { data, usage };
 }
 export async function searchWeb(organisation: string) {
-  const r = await fetch(providerUrl("responses"), {
+  const r = await fetch("https://api.openai.com/v1/responses", {
     method: "POST",
-    headers: {
-      "content-type": "application/json",
-      authorization: `Bearer ${await authorization()}`,
-    },
+    headers: openAIHeaders(),
     signal: AbortSignal.timeout(100000),
     body: JSON.stringify({
       model: providerModel(process.env.AI_MODEL || "openai/gpt-5.4-mini"),

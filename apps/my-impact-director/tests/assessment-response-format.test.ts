@@ -6,8 +6,8 @@ import { reportActionsFor } from "../src/lib/report-verdict";
 
 test("all assessment action requests require pillar summaries in the OpenAI response format", async () => {
   const oldFetch = globalThis.fetch,
-    oldKey = process.env.AI_GATEWAY_API_KEY;
-  process.env.AI_GATEWAY_API_KEY = "synthetic-contract-only";
+    oldKey = process.env.OPENAI_API_KEY;
+  process.env.OPENAI_API_KEY = "synthetic-contract-only";
   const answer = {
     finding: "The synthetic source does not establish this information.",
     page: null,
@@ -82,7 +82,7 @@ test("all assessment action requests require pillar summaries in the OpenAI resp
     );
   } finally {
     globalThis.fetch = oldFetch;
-    if (oldKey === undefined) delete process.env.AI_GATEWAY_API_KEY;
-    else process.env.AI_GATEWAY_API_KEY = oldKey;
+    if (oldKey === undefined) delete process.env.OPENAI_API_KEY;
+    else process.env.OPENAI_API_KEY = oldKey;
   }
 });

@@ -1,4 +1,4 @@
-/** Offline comparison runner. Existing Gateway credentials only; no emails or production writes. */
+/** Offline comparison runner. Authorised OpenAI project key only; no emails or production writes. */
 import fs from "node:fs/promises";
 import path from "node:path";
 import { createHash } from "node:crypto";
@@ -62,10 +62,8 @@ if (!(budget > 0 && budget <= 5))
   throw Error(
     "Choose an explicit calibration budget greater than zero and no more than US$5.",
   );
-if (!process.env.AI_GATEWAY_API_KEY && !process.env.VERCEL_OIDC_TOKEN)
-  throw Error(
-    "An existing authorised Gateway credential or linked-project OIDC environment is required.",
-  );
+if (!process.env.OPENAI_API_KEY)
+  throw Error("An authorised OpenAI project key is required.");
 await fs.mkdir(out, { recursive: true });
 const lock = await fs.open(path.join(out, ".lock"), "wx"),
   native = globalThis.fetch;
@@ -102,7 +100,7 @@ async function save() {
   });
 }
 globalThis.fetch = async (input, init) => {
-  if (String(input) !== "https://ai-gateway.vercel.sh/v1/chat/completions")
+  if (String(input) !== "https://api.openai.com/v1/chat/completions")
     return native(input, init);
   const bodyText = String(init?.body),
     body = JSON.parse(bodyText),

@@ -21,7 +21,7 @@ test(
       "/my_impact_director_validation",
     );
     process.env.REVIEWS_ENABLED = "true";
-    process.env.AI_GATEWAY_API_KEY = "synthetic-contract-only";
+    process.env.OPENAI_API_KEY = "synthetic-contract-only";
     const original = globalThis.fetch,
       oldDirector = process.env.IMPACT_EDIT_DIRECTOR_MODEL;
     process.env.IMPACT_EDIT_DIRECTOR_MODEL = "openai/gpt-6-astra";
@@ -107,7 +107,7 @@ test(
       globalThis.fetch = async (input, init) => {
         assert.equal(
           String(input),
-          "https://ai-gateway.vercel.sh/v1/chat/completions",
+          "https://api.openai.com/v1/chat/completions",
         );
         calls++;
         const body = JSON.parse(String(init?.body)),
