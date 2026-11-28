@@ -1,17 +1,14 @@
 "use client";
 import { useState } from "react";
 import { useSession, api } from "./session";
-import { services, activeServices, type Service } from "@/lib/services";
+import { activeServices, type Service } from "@/lib/services";
 import { Arrow } from "./icons";
-import { ServiceContact } from "./service-contact";
 import Link from "next/link";
 export function Enquiry({
   service,
   reviewId = null,
-  chooseService = false,
 }: {
-  service: Service;
-  chooseService?: boolean;
+  service: Service | "general";
   reviewId?: string | null;
 }) {
   const { user } = useSession(),
@@ -21,7 +18,7 @@ export function Enquiry({
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const f = new FormData(e.currentTarget);
-    const organisation = String(f.get("organisation") || "").trim();
+
     setBusy(true);
     setError("");
     try {
@@ -30,8 +27,8 @@ export function Enquiry({
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
-          service: chooseService ? f.get("service") : service,
-          message: `${organisation ? `Organisation: ${organisation}\n\n` : ""}${String(f.get("message") || "")}`,
+          service: f.get("service"),
+          message: String(f.get("message") || ""),
           reviewId,
           shareReview: f.get("share") === "on",
           contactConsent: f.get("contact") === "on",
@@ -47,22 +44,7 @@ export function Enquiry({
     }
   }
   return (
-    <section className="enquiry" id="enquire">
-      <div>
-        <p className="eyebrow">GOOD CONVERSATIONS START SOMEWHERE.</p>
-        <h2>
-          What could we
-          <br />
-          <em>do together?</em>
-        </h2>
-        <p>
-          Tell us a little about your organisation and what you’d like to
-          achieve. No account needed.
-        </p>
-        <ServiceContact service={service} source="service" destination="email">
-          Or email Marcus directly
-        </ServiceContact>
-      </div>
+    <div className="about-enquiry">
       {sent ? (
         <div className="success" role="status">
           <h3>Your enquiry is saved.</h3>
@@ -77,23 +59,17 @@ export function Enquiry({
         </div>
       ) : (
         <form onSubmit={submit}>
-          {chooseService && (
-            <label>
-              I’m interested in
-              <select name="service" defaultValue={service}>
-                {activeServices.map(([key, value]) => (
-                  <option key={key} value={key}>
-                    {value.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-          )}
-          {!chooseService && (
-            <p className="enquiry-interest">
-              About: <strong>{services[service].name}</strong>
-            </p>
-          )}
+          <label>
+            What is your enquiry about?
+            <select name="service" defaultValue={service}>
+              <option value="general">General enquiry</option>
+              {activeServices.map(([key, value]) => (
+                <option key={key} value={key}>
+                  {value.name}
+                </option>
+              ))}
+            </select>
+          </label>
           <div className="form-pair">
             <label>
               Your name
@@ -118,14 +94,6 @@ export function Enquiry({
               />
             </label>
           </div>
-          <label>
-            Organisation (optional)
-            <input
-              name="organisation"
-              autoComplete="organization"
-              maxLength={160}
-            />
-          </label>
           <label>
             How can we help?
             <textarea
@@ -163,6 +131,6 @@ export function Enquiry({
           </button>
         </form>
       )}
-    </section>
+    </div>
   );
 }

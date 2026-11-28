@@ -72,7 +72,8 @@ export function Footer() {
           </div>
           <nav aria-label="Footer navigation">
             {[
-              ["Contact", "/contact"],
+              ["About", "/about"],
+              ["Contact", "/about#contact"],
               ["Methodology", "/methodology"],
               ["Ongoing support", "/#human-support"],
               ["Expert help", "/services"],

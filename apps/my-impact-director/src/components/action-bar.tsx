@@ -164,7 +164,7 @@ export function ActionShell({ children }: { children: React.ReactNode }) {
             href={
               review
                 ? `/services/expert-review?review=${review[1]}`
-                : "/contact"
+                : "/about#contact"
             }
           >
             {complete ? "Talk to your Impact Director" : "Contact Us"}
