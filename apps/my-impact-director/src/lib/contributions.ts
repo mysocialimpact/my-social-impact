@@ -88,7 +88,7 @@ export async function stripeRequest<T>(
   idempotency?: string,
   secret = process.env.STRIPE_SECRET_KEY || "",
 ): Promise<T> {
-  if (!/^sk_(test|live)_/.test(secret))
+  if (!/^(?:sk_(?:test|live)|rkcs_test)_/.test(secret))
     throw new AppError(503, "Secure payment is unavailable.");
   let response: Response;
   try {

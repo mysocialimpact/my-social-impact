@@ -25,7 +25,7 @@ export function assessmentStripeConfig(): AssessmentStripeConfig | null {
     ASSESSMENT_STRIPE_ACCOUNT: account = "",
   } = process.env;
   if (
-    !secret.startsWith("sk_test_") ||
+    !/^(?:sk|rkcs)_test_/.test(secret) ||
     !publishableKey.startsWith("pk_test_") ||
     !webhookSecret.startsWith("whsec_") ||
     !/^acct_[a-zA-Z0-9]+$/.test(account)
@@ -55,7 +55,12 @@ export async function verifyAssessmentMerchant(config: AssessmentStripeConfig) {
     id: string;
     charges_enabled: boolean;
   }>(config, "account");
-  if (account.id !== config.account || !account.charges_enabled) {
+  // Stripe CLI's anonymous Sandbox account can run test checkout before
+  // business onboarding. These restricted credentials cannot make live calls.
+  if (
+    account.id !== config.account ||
+    (!account.charges_enabled && !config.secret.startsWith("rkcs_test_"))
+  ) {
     throw new AppError(
       503,
       "The assessment payment account could not be verified.",

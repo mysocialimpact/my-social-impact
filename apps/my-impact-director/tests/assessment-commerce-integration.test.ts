@@ -81,6 +81,7 @@ test(
     Object.assign(process.env, env);
     const sessions = new Map<string, StripeSession>();
     const attempts = new Map<string, string>();
+    const creating = new Set<string>();
     const disputes = new Map<string, object[]>();
     const activeCodes = new Map([
       ["promo_first", { code: "QA50", max: 2 }],
@@ -141,6 +142,14 @@ test(
         const key = new Headers(options?.headers).get("idempotency-key")!;
         const prior = attempts.get(key);
         if (prior) return Response.json(sessions.get(prior));
+        if (creating.has(key))
+          return Response.json(
+            { error: { code: "idempotency_key_in_use" } },
+            { status: 409 },
+          );
+        creating.add(key);
+        await new Promise((resolve) => setTimeout(resolve, 80));
+        creating.delete(key);
         const id = "cs_test_" + ++stripeCreates;
         const params = options?.body as URLSearchParams;
         const amount =

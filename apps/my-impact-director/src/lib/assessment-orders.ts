@@ -339,6 +339,30 @@ export async function openAssessmentOrder(
     return reserved;
   });
   if (!order) return { internal: true as const, tier: input.tier };
+  // The reservation is already durable. Serialise Stripe creation so retries
+  // can resume it without racing the same provider idempotency key.
+  return transaction(async (client) => {
+    await lockAssessmentScope(client, order);
+    const {
+      rows: [current],
+    } = await client.query<AssessmentOrder>(
+      "SELECT * FROM director.assessment_orders WHERE id=$1",
+      [order.id],
+    );
+    if (!current || current.state === "expired")
+      throw new AppError(
+        409,
+        "This checkout has expired. Request a new calculation.",
+      );
+    return stripeCheckoutForOrder(client, current, config);
+  });
+}
+
+async function stripeCheckoutForOrder(
+  client: PoolClient,
+  order: AssessmentOrder,
+  config: AssessmentStripeConfig,
+) {
   if (order.stripe_session_id) {
     const session = await readAssessmentSession(
       config,
@@ -347,6 +371,11 @@ export async function openAssessmentOrder(
     validateSession(order, session);
     return checkoutResponse(order, session, config);
   }
+  if (order.state !== "creating")
+    throw new AppError(
+      409,
+      "The saved Stripe checkout reference is unavailable.",
+    );
   const params = new URLSearchParams({
     mode: "payment",
     ui_mode: "embedded",
@@ -378,10 +407,12 @@ export async function openAssessmentOrder(
     "mid-assessment-" + order.id,
   );
   validateSession(order, session);
-  const [recorded] = await query<AssessmentOrder>(
+  const {
+    rows: [recorded],
+  } = await client.query<AssessmentOrder>(
     `UPDATE director.assessment_orders
-     SET stripe_session_id=$2, state=CASE WHEN state='creating' THEN 'open' ELSE state END, updated_at=now()
-     WHERE id=$1 AND state IN ('creating','open','paid') AND (stripe_session_id IS NULL OR stripe_session_id=$2)
+     SET stripe_session_id=$2, state='open', updated_at=now()
+     WHERE id=$1 AND state='creating'
      RETURNING *`,
     [order.id, session.id],
   );

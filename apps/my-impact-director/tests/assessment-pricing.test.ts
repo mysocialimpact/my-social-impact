@@ -7,7 +7,10 @@ import {
   eligibleAssessmentPayments,
   type SettledAssessmentPayment,
 } from "../src/lib/assessment-pricing";
-import { assessmentStripeConfig } from "../src/lib/assessment-stripe";
+import {
+  assessmentStripeConfig,
+  verifyAssessmentMerchant,
+} from "../src/lib/assessment-stripe";
 
 test("direct prices and every upgrade use exact GBP pence with the founding discount applied once", () => {
   for (const [tier, previous, discount, total, due] of [
@@ -95,6 +98,10 @@ test("assessment checkout requires explicit Sandbox configuration and can never 
     VERCEL_TARGET_ENV: "preview",
   });
   assert.ok(assessmentStripeConfig());
+  process.env.ASSESSMENT_STRIPE_SECRET_KEY = "rkcs_test_fixture";
+  assert.ok(assessmentStripeConfig());
+  process.env.ASSESSMENT_STRIPE_SECRET_KEY = "rkcs_live_fixture";
+  assert.equal(assessmentStripeConfig(), null);
   process.env.ASSESSMENT_STRIPE_SECRET_KEY = "sk_live_fixture";
   assert.equal(assessmentStripeConfig(), null);
   process.env.ASSESSMENT_STRIPE_SECRET_KEY =
@@ -104,4 +111,26 @@ test("assessment checkout requires explicit Sandbox configuration and can never 
   process.env.VERCEL_TARGET_ENV = "preview";
   process.env.VERCEL_ENV = "production";
   assert.equal(assessmentStripeConfig(), null);
+});
+
+test("only a matching anonymous Stripe Sandbox can proceed without live charge capability", async (t) => {
+  const account = "acct_assessmentfixture";
+  const config = {
+    account,
+    secret: "rkcs_test_fixture",
+    publishableKey: "pk_test_fixture",
+    webhookSecret: "whsec_fixture",
+  };
+  t.mock.method(globalThis, "fetch", async () =>
+    Response.json({ id: account, charges_enabled: false }),
+  );
+  await verifyAssessmentMerchant(config);
+  await assert.rejects(
+    verifyAssessmentMerchant({ ...config, account: "acct_mismatch" }),
+    { status: 503 },
+  );
+  await assert.rejects(
+    verifyAssessmentMerchant({ ...config, secret: "sk_test_fixture" }),
+    { status: 503 },
+  );
 });
