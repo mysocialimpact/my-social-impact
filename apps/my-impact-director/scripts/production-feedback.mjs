@@ -20,10 +20,8 @@ try {
   await page.goto(base, { waitUntil: "networkidle" });
   await page.locator(".action-feedback").click();
   await page.waitForURL(/\/feedback/);
-  await page.getByRole("radio", { name: "4", exact: true }).check();
-  await page
-    .getByRole("textbox", { name: /What would make it better/ })
-    .fill(message);
+  await page.getByRole("radio", { name: "4 stars", exact: true }).check();
+  await page.getByRole("textbox", { name: /Your thoughts/ }).fill(message);
   const response = page.waitForResponse(
     (r) => r.url().endsWith("/api/feedback") && r.request().method() === "POST",
   );
@@ -33,7 +31,7 @@ try {
   const r = await response;
   assert.equal(r.status(), 201);
   const data = await r.json();
-  await page.getByRole("heading", { name: /Heard/ }).waitFor();
+  await page.getByRole("heading", { name: /Thank you for/ }).waitFor();
   const account = await (
     await context.request.get(base + "/api/account")
   ).json();
