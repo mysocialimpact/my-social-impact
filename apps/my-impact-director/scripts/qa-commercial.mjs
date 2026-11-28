@@ -205,12 +205,17 @@ try {
       const a = p.locator(".report-offers .service-contact-action a").nth(i);
       assert.equal(
         await a.getAttribute("href"),
-        "/contact?service=" + services[i],
+        "/about?service=" + services[i] + "#contact",
       );
       await a.click();
-      await p.waitForURL("**/contact?service=" + services[i]);
-      await p.locator(".contact-context").waitFor();
-      const email = p.getByRole("link", { name: "Email Marcus", exact: true });
+      await p.waitForURL("**/about?service=" + services[i] + "#contact");
+      assert.equal(
+        await p.locator("#contact select").inputValue(),
+        services[i],
+      );
+      const email = p
+        .locator("#contact address a")
+        .filter({ hasText: "marcus@" });
       const url = new URL(await email.getAttribute("href"));
       assert.equal(url.pathname, "marcus@mysocialimpact.org");
       assert.equal(
@@ -219,7 +224,10 @@ try {
       );
       assert.deepEqual([...url.searchParams.keys()], ["subject"]);
       await p
-        .getByRole("button", { name: "Copy email address", exact: true })
+        .getByRole("button", {
+          name: "Copy Marcus’s email address",
+          exact: true,
+        })
         .click();
       await p.getByText("Email address copied.", { exact: true }).waitFor();
       assert.ok(
@@ -243,17 +251,15 @@ try {
       if (service !== "human-director")
         await p.locator("#" + service + " summary").click();
       await p
-        .locator(`.chapter-support a[href="/contact?service=${service}"]`)
+        .locator(`.chapter-support a[href="/about?service=${service}#contact"]`)
         .click();
-      await p.waitForURL("**/contact?service=" + service);
-      assert.match(
-        await p.locator(".contact-context").innerText(),
-        /ongoing Impact Director support/,
-      );
+      await p.waitForURL("**/about?service=" + service + "#contact");
+      assert.equal(await p.locator("#contact select").inputValue(), service);
       assert.match(
         decodeURIComponent(
           await p
-            .getByRole("link", { name: "Email Marcus", exact: true })
+            .locator("#contact address a")
+            .filter({ hasText: "marcus@" })
             .getAttribute("href"),
         ),
         /Ongoing support enquiry/,

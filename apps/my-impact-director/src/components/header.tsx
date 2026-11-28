@@ -8,7 +8,9 @@ import { recordVisit } from "./service-contact";
 export function Header() {
   const [open, setOpen] = useState(false),
     path = usePathname(),
-    header = useRef<HTMLElement>(null);
+    header = useRef<HTMLElement>(null),
+    toggle = useRef<HTMLButtonElement>(null),
+    nav = useRef<HTMLElement>(null);
   const { user } = useSession(),
     signedIn = !!user && !user.anonymous;
   const inReview = /^\/reviews\/[a-f0-9-]{36}/.test(path);
@@ -40,12 +42,17 @@ export function Header() {
       );
   }, [path]);
   useEffect(() => {
+    if (!open) return;
+    nav.current?.querySelector("a")?.focus();
     const close = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpen(false);
+      if (e.key === "Escape") {
+        setOpen(false);
+        toggle.current?.focus();
+      }
     };
     window.addEventListener("keydown", close);
     return () => window.removeEventListener("keydown", close);
-  }, []);
+  }, [open]);
   return (
     <>
       <a className="skip" href="#main">
@@ -53,6 +60,10 @@ export function Header() {
       </a>
       <header
         ref={header}
+        onBlur={(event) => {
+          if (!event.currentTarget.contains(event.relatedTarget))
+            setOpen(false);
+        }}
         className="site-header campaign-header simple-header"
       >
         <Link className="brand" href="/" onClick={() => setOpen(false)}>
@@ -66,15 +77,26 @@ export function Header() {
           />
         </Link>
         <nav
+          ref={nav}
           id="main-nav"
           aria-label="Main navigation"
           className={open ? "is-open" : ""}
         >
           <Link
-            href="/contact"
-            aria-current={path === "/contact" ? "page" : undefined}
+            href="/"
+            aria-current={path === "/" ? "page" : undefined}
             onClick={() => setOpen(false)}
           >
+            Home
+          </Link>
+          <Link
+            href="/about"
+            aria-current={path === "/about" ? "page" : undefined}
+            onClick={() => setOpen(false)}
+          >
+            About
+          </Link>
+          <Link href="/about#contact" onClick={() => setOpen(false)}>
             Contact
           </Link>
           <Link
@@ -91,7 +113,7 @@ export function Header() {
             }
             onClick={() => setOpen(false)}
           >
-            {signedIn ? "Account" : "Log in"}
+            {signedIn ? "Account" : "Sign in"}
           </Link>
         </nav>
         <Link
@@ -104,6 +126,7 @@ export function Header() {
           {inReview ? "My review workspace" : "Try your first free review"}
         </Link>
         <button
+          ref={toggle}
           className="menu-toggle"
           aria-expanded={open}
           aria-controls="main-nav"

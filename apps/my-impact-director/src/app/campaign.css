@@ -4019,3 +4019,46 @@ body:not(:has(.permanent-actions)) {
 .human-contact .fine-print {
   color: #d9deec;
 }
+
+/* Switch to the disclosure menu while all five destinations still fit comfortably. */
+@media (min-width: 701px) and (max-width: 980px) {
+  .campaign-header.simple-header {
+    min-height: 74px;
+    padding: 10px 22px;
+    gap: 18px;
+  }
+  .campaign-header.simple-header .brand {
+    width: 155px;
+    flex-basis: 155px;
+  }
+  .campaign-header.simple-header .header-review {
+    margin-left: auto;
+  }
+  .campaign-header.simple-header .menu-toggle {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+    font-size: 14px;
+  }
+  .campaign-header.simple-header nav {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    margin: 0;
+    background: white;
+    padding: 12px 22px 20px;
+    border-bottom: 2px solid var(--ink);
+  }
+  .campaign-header.simple-header nav.is-open {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 2px;
+  }
+  .campaign-header.simple-header nav a {
+    padding: 10px 0;
+    min-height: 44px;
+  }
+}

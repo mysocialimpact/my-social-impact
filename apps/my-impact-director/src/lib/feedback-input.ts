@@ -12,6 +12,7 @@ const publicPages = new Set([
   "/privacy",
   "/terms",
   "/contact",
+  "/about",
   "/account",
   "/login",
   "/forgot-password",

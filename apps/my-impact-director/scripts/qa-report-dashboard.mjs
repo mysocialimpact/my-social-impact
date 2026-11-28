@@ -100,7 +100,9 @@ try {
       for (const service of ["discussion", "improvement", "preparation"])
         assert.equal(
           await page
-            .locator('.pub-offers a[href="/contact?service=' + service + '"]')
+            .locator(
+              '.pub-offers a[href="/about?service=' + service + '#contact"]',
+            )
             .count(),
           1,
         );

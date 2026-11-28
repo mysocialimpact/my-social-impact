@@ -7,9 +7,10 @@ import { getReview } from "@/lib/reviews";
 import { sameOrigin, failure, rateLimit, readJson } from "@/lib/security";
 const schema = z
   .object({
-    service: z.enum(
-      activeServices.map(([key]) => key) as [Service, ...Service[]],
-    ),
+    service: z.enum(["general", ...activeServices.map(([key]) => key)] as [
+      "general",
+      ...Service[],
+    ]),
     message: z.string().trim().min(10).max(5000),
     reviewId: z.uuid().nullable(),
     shareReview: z.boolean(),

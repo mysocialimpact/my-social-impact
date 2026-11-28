@@ -167,7 +167,7 @@ export function ReviewLearning({
                 <details>
                   <summary>What happened?</summary>
                   <p>{failure}</p>
-                  <Link href="/contact">Contact us</Link>
+                  <Link href="/about#contact">Contact us</Link>
                 </details>
               )}
             </>

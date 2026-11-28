@@ -213,7 +213,7 @@ const report: LearningSlide[] = [
     headline: "YOUR IMPACT DESERVES TO BE UNDERSTOOD.",
     explanation:
       "A good report makes evidence accessible, engaging and memorable. My Social Impact and The Ideas Shed can help with design, storytelling and digital presentation.",
-    href: "/contact?service=improvement",
+    href: "/about?service=improvement#contact",
     linkLabel: "Let’s bring your report to life ↗",
   },
 ];
