@@ -34,6 +34,7 @@ type Item = {
     { actor: string; action: string; reason: string; time: string }[] | null;
 };
 type Inbox = {
+  capability?: { model: string; status: string; checked: string };
   metrics: Record<string, number | string | null>;
   items: Item[];
   trend: Group[];
@@ -301,6 +302,15 @@ export function AdminFeedback() {
             </div>
           </div>
           <h3>Recurring themes</h3>
+          {data.capability && (
+            <p>
+              <small>
+                Analysis model · {data.capability.model} ·{" "}
+                {data.capability.status} · checked{" "}
+                {new Date(data.capability.checked).toLocaleString("en-GB")}
+              </small>
+            </p>
+          )}
           {data.themes.length ? (
             data.themes.map((t) => (
               <details key={t.theme + t.category}>
